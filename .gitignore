@@ -1,0 +1,56 @@
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.venv/
+venv/
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+.mutmut-cache
+
+# ── UV ────────────────────────────────────────────────────────────────────────
+# uv.lock IS committed — it is the shared workspace lockfile
+# .python-version is committed if present
+
+# ── Node / Frontend ───────────────────────────────────────────────────────────
+node_modules/
+frontend/dist/
+frontend/.parcel-cache/
+*.log
+npm-debug.log*
+
+# ── Environment ───────────────────────────────────────────────────────────────
+.env
+.env.local
+.env.*.local
+
+# ── Docker ────────────────────────────────────────────────────────────────────
+.docker/
+
+# ── Agent prompt candidates ───────────────────────────────────────────────────
+# Candidate prompts must be reviewed before merging to main
+agents/src/agents/prompts/*/candidates/*
+!agents/src/agents/prompts/*/candidates/.gitkeep
+
+# ── OS / Editor ───────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.vscode/
+.idea/
+
+# ── Alembic dev databases ─────────────────────────────────────────────────────
+*.db
+*.db-shm
+*.db-wal

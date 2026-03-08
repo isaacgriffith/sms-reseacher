@@ -1,0 +1,15 @@
+# .trivyignore — Accepted CVE exceptions for trivy image scanning
+#
+# Format:
+#   <CVE-ID>  # <base-image>: <rationale> | Review by: <YYYY-MM-DD>
+#
+# Policy:
+#   - Every entry MUST include: CVE ID, affected image, rationale, and a review date.
+#   - Additions require a PR review from at least one other engineer.
+#   - Review dates should be set no further than 90 days from acceptance.
+#   - Remove entries once an upstream fix is available and the base image is updated.
+#
+# Example (do not uncomment unless this CVE has been evaluated):
+#   CVE-2024-XXXXX  # python:3.14-slim: No fix available upstream; only exploitable
+#                   # via direct filesystem access not possible in our runtime config.
+#                   # Review by: 2026-06-08
