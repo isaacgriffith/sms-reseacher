@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+*.egg-info/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+.mutmut-cache
+
+# Node / Frontend
+node_modules/
+frontend/dist/
+
+# Environment & secrets
+.env
+.env.local
+.env.*.local
+
+# Git
+.git/
+.gitignore
+
+# Docker build artifacts
+Dockerfile*
+.dockerignore
+
+# Logs
+*.log
+
+# Dev databases
+*.db
+*.db-shm
+*.db-wal
+
+# Specs / docs
+specs/
+docs/

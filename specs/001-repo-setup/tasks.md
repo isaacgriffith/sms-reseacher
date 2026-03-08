@@ -87,8 +87,8 @@
 
 *Note*: `db/` implementation tasks are in Phase 2 (Foundational). This phase validates the import contract from `backend`'s perspective.
 
-- [ ] T034 [US4] Add integration test in `backend/` verifying `from db.models import Study, Paper, StudyPaper` and `from db.base import engine_factory` complete without `ImportError` — `backend/tests/integration/test_db_import.py`
-- [ ] T035 [P] [US4] Update `db/README.md` describing schema entities, Alembic usage (`uv run alembic upgrade head`), and how `backend` imports models — `db/README.md`
+- [x] T034 [US4] Add integration test in `backend/` verifying `from db.models import Study, Paper, StudyPaper` and `from db.base import engine_factory` complete without `ImportError` — `backend/tests/integration/test_db_import.py`
+- [x] T035 [P] [US4] Update `db/README.md` describing schema entities, Alembic usage (`uv run alembic upgrade head`), and how `backend` imports models — `db/README.md`
 
 ---
 
@@ -98,14 +98,14 @@
 
 **Independent Test**: `npm install && npm test` in `frontend/` exits 0 with at least one passing test.
 
-- [ ] T036 [US2] Create `frontend/package.json` with scripts `dev`, `build`, `lint`, `format:check`, `test`, `prepare`; deps: `react@18`, `react-dom@18`; devDeps: `typescript@5`, `vite@5`, `vitest`, `@testing-library/react`, `@testing-library/jest-dom`, `eslint@9`, `typescript-eslint`, `eslint-plugin-react-hooks`, `eslint-config-prettier`, `prettier@3`, `husky@9`, `lint-staged` — `frontend/package.json`
-- [ ] T037 [P] [US2] Create `frontend/tsconfig.json` with `"strict": true`, `"module": "ESNext"`, `"target": "ES2020"`, `"jsx": "react-jsx"` — `frontend/tsconfig.json`
-- [ ] T038 [P] [US2] Create `frontend/vite.config.ts` configuring Vite 5 build and embedding Vitest config (`globals: true`, `environment: "jsdom"`, `setupFiles`) — `frontend/vite.config.ts`
-- [ ] T039 [P] [US2] Create `frontend/eslint.config.js` (ESLint 9 flat config) including `typescript-eslint` recommended rules and `eslint-plugin-react-hooks` — `frontend/eslint.config.js`
-- [ ] T040 [P] [US2] Create `frontend/.prettierrc` with project formatting rules (single quotes, trailing commas, 100 char print width) and `frontend/.prettierignore` — `frontend/.prettierrc`
-- [ ] T041 [US2] Create `frontend/src/main.tsx` (React 18 `createRoot`) and `frontend/src/App.tsx` (minimal functional component returning placeholder UI) — `frontend/src/main.tsx`, `frontend/src/App.tsx`
-- [ ] T042 [P] [US2] Create placeholder Vitest test: renders `<App />` without crashing using `@testing-library/react` `render()` — `frontend/src/App.test.tsx`
-- [ ] T043 [P] [US2] Create `frontend/index.html` as Vite entry point referencing `src/main.tsx` — `frontend/index.html`
+- [x] T036 [US2] Create `frontend/package.json` with scripts `dev`, `build`, `lint`, `format:check`, `test`, `prepare`; deps: `react@18`, `react-dom@18`; devDeps: `typescript@5`, `vite@5`, `vitest`, `@testing-library/react`, `@testing-library/jest-dom`, `eslint@9`, `typescript-eslint`, `eslint-plugin-react-hooks`, `eslint-config-prettier`, `prettier@3`, `husky@9`, `lint-staged` — `frontend/package.json`
+- [x] T037 [P] [US2] Create `frontend/tsconfig.json` with `"strict": true`, `"module": "ESNext"`, `"target": "ES2020"`, `"jsx": "react-jsx"` — `frontend/tsconfig.json`
+- [x] T038 [P] [US2] Create `frontend/vite.config.ts` configuring Vite 5 build and embedding Vitest config (`globals: true`, `environment: "jsdom"`, `setupFiles`) — `frontend/vite.config.ts`
+- [x] T039 [P] [US2] Create `frontend/eslint.config.js` (ESLint 9 flat config) including `typescript-eslint` recommended rules and `eslint-plugin-react-hooks` — `frontend/eslint.config.js`
+- [x] T040 [P] [US2] Create `frontend/.prettierrc` with project formatting rules (single quotes, trailing commas, 100 char print width) and `frontend/.prettierignore` — `frontend/.prettierrc`
+- [x] T041 [US2] Create `frontend/src/main.tsx` (React 18 `createRoot`) and `frontend/src/App.tsx` (minimal functional component returning placeholder UI) — `frontend/src/main.tsx`, `frontend/src/App.tsx`
+- [x] T042 [P] [US2] Create placeholder Vitest test: renders `<App />` without crashing using `@testing-library/react` `render()` — `frontend/src/App.test.tsx`
+- [x] T043 [P] [US2] Create `frontend/index.html` as Vite entry point referencing `src/main.tsx` — `frontend/index.html`
 
 ---
 
@@ -115,9 +115,9 @@
 
 **Independent Test**: Introduce a deliberate Ruff violation in `backend/`; `git commit` rejects with the violation message.
 
-- [ ] T044 [US3] Create root `.pre-commit-config.yaml` with four local hooks (`ruff-check`, `ruff-format`, `mypy`, `pytest`) all using `language: system` and `uv run` as entry; `pass_filenames: false` on all; scoped to Python sub-project paths — `.pre-commit-config.yaml`
-- [ ] T045 [P] [US3] Install Husky in `frontend/`: create `frontend/.husky/pre-commit` script (`cd frontend && npx lint-staged`) — `frontend/.husky/pre-commit`
-- [ ] T046 [P] [US3] Create `frontend/.lintstagedrc` targeting `*.{ts,tsx}` with `["eslint --fix", "prettier --write"]` — `frontend/.lintstagedrc`
+- [x] T044 [US3] Create root `.pre-commit-config.yaml` with four local hooks (`ruff-check`, `ruff-format`, `mypy`, `pytest`) all using `language: system` and `uv run` as entry; `pass_filenames: false` on all; scoped to Python sub-project paths — `.pre-commit-config.yaml`
+- [x] T045 [P] [US3] Install Husky in `frontend/`: create `frontend/.husky/pre-commit` script (`cd frontend && npx lint-staged`) — `frontend/.husky/pre-commit`
+- [x] T046 [P] [US3] Create `frontend/.lintstagedrc` targeting `*.{ts,tsx}` with `["eslint --fix", "prettier --write"]` — `frontend/.lintstagedrc`
 
 ---
 
@@ -127,16 +127,16 @@
 
 **Independent Test**: `uv run --package sms-agent-eval agent-eval --help` exits 0 and lists `evaluate`, `report`, `compare`, `improve`.
 
-- [ ] T047 Create `agent-eval/pyproject.toml` for package `sms-agent-eval` (`requires-python = ">=3.14"`, deps: `typer[all]`, `rich`, `deepeval`, `litellm`, `jinja2`; workspace dep: `agents`; entry point: `agent-eval = "agent_eval.cli:app"`; full Ruff + MyPy strict + pytest config) — `agent-eval/pyproject.toml`
-- [ ] T048 [P] Implement `EvalReport` and `TestCaseResult` Pydantic models (`run_id` UUID, `agent_type`, `prompt_version`, `test_cases`, `overall_score`, `timestamp`; `case_id`, `input`, `output`, `scores`, `passed`) — `agent-eval/src/agent_eval/models.py`
-- [ ] T049 [P] Implement `LiteLLMJudge` class extending `DeepEvalBaseLLM`; wraps `litellm.completion`; `generate()` and `a_generate()` methods; provider/model/url from env vars — `agent-eval/src/agent_eval/judge/litellm_judge.py`
-- [ ] T050 Implement `evaluate` command: `--agent`, `--suite` (JSONL path), `--model`, `--provider`, `--ollama-url`, `--threshold`, `--output`; reads JSONL, runs agent, scores with `deepeval` metrics, writes `EvalReport` JSON; Rich table output; exit codes 0/1/2 — `agent-eval/src/agent_eval/commands/evaluate.py`
-- [ ] T051 [P] Implement `report` command: `--format` (table/json/markdown), `--output`; reads `EvalReport` JSON and renders with Rich — `agent-eval/src/agent_eval/commands/report.py`
-- [ ] T052 [P] Implement `compare` command: `BASELINE` and `CANDIDATE` positional args; loads both reports; Rich table showing metric deltas with ↑/↓ indicators — `agent-eval/src/agent_eval/commands/compare.py`
-- [ ] T053 [P] Implement `improve` command: `--report`, `--agent`, `--model`, `--provider`, `--ollama-url`, `--threshold`, `--output-dir`; identifies cases below threshold; calls LLM to suggest revised prompts; writes `system_candidate_{ts}.md` and `user_candidate_{ts}.md.j2` to `candidates/` — `agent-eval/src/agent_eval/commands/improve.py`
-- [ ] T054 Wire all four commands into Typer `app` with `--version` option and help text `"SMS Researcher — Agent Evaluation CLI"` — `agent-eval/src/agent_eval/cli.py`
-- [ ] T055 [P] Create unit test: invoke `agent-eval --help` via Typer test runner; assert exit 0; assert output contains `evaluate`, `report`, `compare`, `improve` — `agent-eval/tests/unit/test_cli_help.py`
-- [ ] T056 [P] Create unit test for `EvalReport` and `TestCaseResult` instantiation and JSON round-trip — `agent-eval/tests/unit/test_models.py`
+- [x] T047 Create `agent-eval/pyproject.toml` for package `sms-agent-eval` (`requires-python = ">=3.14"`, deps: `typer[all]`, `rich`, `deepeval`, `litellm`, `jinja2`; workspace dep: `agents`; entry point: `agent-eval = "agent_eval.cli:app"`; full Ruff + MyPy strict + pytest config) — `agent-eval/pyproject.toml`
+- [x] T048 [P] Implement `EvalReport` and `TestCaseResult` Pydantic models (`run_id` UUID, `agent_type`, `prompt_version`, `test_cases`, `overall_score`, `timestamp`; `case_id`, `input`, `output`, `scores`, `passed`) — `agent-eval/src/agent_eval/models.py`
+- [x] T049 [P] Implement `LiteLLMJudge` class extending `DeepEvalBaseLLM`; wraps `litellm.completion`; `generate()` and `a_generate()` methods; provider/model/url from env vars — `agent-eval/src/agent_eval/judge/litellm_judge.py`
+- [x] T050 Implement `evaluate` command: `--agent`, `--suite` (JSONL path), `--model`, `--provider`, `--ollama-url`, `--threshold`, `--output`; reads JSONL, runs agent, scores with `deepeval` metrics, writes `EvalReport` JSON; Rich table output; exit codes 0/1/2 — `agent-eval/src/agent_eval/commands/evaluate.py`
+- [x] T051 [P] Implement `report` command: `--format` (table/json/markdown), `--output`; reads `EvalReport` JSON and renders with Rich — `agent-eval/src/agent_eval/commands/report.py`
+- [x] T052 [P] Implement `compare` command: `BASELINE` and `CANDIDATE` positional args; loads both reports; Rich table showing metric deltas with ↑/↓ indicators — `agent-eval/src/agent_eval/commands/compare.py`
+- [x] T053 [P] Implement `improve` command: `--report`, `--agent`, `--model`, `--provider`, `--ollama-url`, `--threshold`, `--output-dir`; identifies cases below threshold; calls LLM to suggest revised prompts; writes `system_candidate_{ts}.md` and `user_candidate_{ts}.md.j2` to `candidates/` — `agent-eval/src/agent_eval/commands/improve.py`
+- [x] T054 Wire all four commands into Typer `app` with `--version` option and help text `"SMS Researcher — Agent Evaluation CLI"` — `agent-eval/src/agent_eval/cli.py`
+- [x] T055 [P] Create unit test: invoke `agent-eval --help` via Typer test runner; assert exit 0; assert output contains `evaluate`, `report`, `compare`, `improve` — `agent-eval/tests/unit/test_cli_help.py`
+- [x] T056 [P] Create unit test for `EvalReport` and `TestCaseResult` instantiation and JSON round-trip — `agent-eval/tests/unit/test_models.py`
 
 ---
 
@@ -146,22 +146,22 @@
 
 **Independent Test**: `uv run --package sms-researcher-mcp researcher-mcp` starts; `curl http://localhost:8002/sse` returns valid SSE; `search_papers(query="software engineering", limit=5)` returns ≥1 result with `title` and `doi`.
 
-- [ ] T057 Create `researcher-mcp/pyproject.toml` for package `sms-researcher-mcp` (`requires-python = ">=3.14"`, deps: `fastmcp`, `httpx`, `tenacity`, `pydantic>=2`; entry point: `researcher-mcp = "researcher_mcp.server:main"`; full Ruff + MyPy strict + pytest config) — `researcher-mcp/pyproject.toml`
-- [ ] T058 [P] Implement `ResearcherSettings` (pydantic-settings): `SEMANTIC_SCHOLAR_RPM=100`, `OPEN_ALEX_RPM=300`, `SCIHUB_ENABLED=false`, `SCIHUB_URL`, `UNPAYWALL_EMAIL` — `researcher-mcp/src/researcher_mcp/core/config.py`
-- [ ] T059 [P] Implement `make_retry_client()` factory returning `httpx.AsyncClient` with `tenacity` retry decorator applied (max 3 attempts, exponential backoff + full jitter, retry on HTTP 5xx and `httpx.TimeoutException`); implement token-bucket rate limiter applied per source — `researcher-mcp/src/researcher_mcp/core/http_client.py`
-- [ ] T060 Implement `SemanticScholarSource`: `search_papers()`, `get_paper()`, `search_authors()`, `get_author()` methods calling `api.semanticscholar.org`; returns typed Pydantic response objects including `source="semantic_scholar"` — `researcher-mcp/src/researcher_mcp/sources/semantic_scholar.py`
-- [ ] T061 [P] Implement `OpenAlexSource`: `search_papers()`, `get_paper()` as cascade fallback; maps OpenAlex work schema to shared response types; sets `source="open_alex"` — `researcher-mcp/src/researcher_mcp/sources/open_alex.py`
-- [ ] T062 [P] Implement `CrossRefSource`: `resolve_doi(doi)` querying `api.crossref.org/works/{doi}`; returns enriched paper metadata; sets `source="crossref"` — `researcher-mcp/src/researcher_mcp/sources/crossref.py`
-- [ ] T063 [P] Implement `UnpaywallSource`: `fetch_pdf(doi, output_path)` querying `api.unpaywall.org/{doi}`; downloads open-access PDF if `best_oa_location.url_for_pdf` present — `researcher-mcp/src/researcher_mcp/sources/unpaywall.py`
-- [ ] T064 [P] Implement `ArxivSource`: `fetch_pdf(doi, output_path)` resolving DOI to arXiv ID via CrossRef; downloads `arxiv.org/pdf/{arxiv_id}` — `researcher-mcp/src/researcher_mcp/sources/arxiv.py`
-- [ ] T065 [P] Implement `SciHubSource`: `fetch_pdf(doi, output_path)` gated by `SCIHUB_ENABLED` check at call time; if disabled raises `MCPError("SCIHUB_DISABLED")`; includes prominent legal warning docstring — `researcher-mcp/src/researcher_mcp/sources/scihub.py`
-- [ ] T066 Implement `@mcp.tool() search_papers` and `@mcp.tool() get_paper` with Semantic Scholar → OpenAlex cascade; CrossRef enrichment for DOI-prefixed IDs; response includes `source` + `warnings` fields — `researcher-mcp/src/researcher_mcp/tools/search.py`
-- [ ] T067 [P] Implement `@mcp.tool() search_authors` and `@mcp.tool() get_author` using `SemanticScholarSource` — `researcher-mcp/src/researcher_mcp/tools/authors.py`
-- [ ] T068 [P] Implement `@mcp.tool() fetch_paper_pdf` with Unpaywall → arXiv → SciHub (opt-in) cascade; returns `FetchResult` with `success`, `output_path`, `source`, `url`, `warnings` — `researcher-mcp/src/researcher_mcp/tools/pdf.py`
-- [ ] T069 Create `FastMCP` app instance; register all tools from `search.py`, `authors.py`, `pdf.py`; implement `main()` entrypoint running server on `0.0.0.0:8002` — `researcher-mcp/src/researcher_mcp/server.py`
-- [ ] T070 [P] Unit test: mock primary source to raise `httpx.HTTPStatusError(status=500)`; assert cascade selects secondary source and response `source` field equals `"open_alex"` — `researcher-mcp/tests/unit/test_cascade.py`
-- [ ] T071 [P] Unit test: mock `httpx.AsyncClient.get` to raise `httpx.TimeoutException` twice then succeed; assert tenacity retried exactly 3 times total and final response returned — `researcher-mcp/tests/unit/test_retry.py`
-- [ ] T072 [P] Unit test: with `SCIHUB_ENABLED=false` (default), calling `fetch_paper_pdf` after Unpaywall + arXiv both fail returns `success=False` and warning containing `"SciHub disabled"`; assert no outbound request to any scihub URL — `researcher-mcp/tests/unit/test_scihub_disabled.py`
+- [x] T057 Create `researcher-mcp/pyproject.toml` for package `sms-researcher-mcp` (`requires-python = ">=3.14"`, deps: `fastmcp`, `httpx`, `tenacity`, `pydantic>=2`; entry point: `researcher-mcp = "researcher_mcp.server:main"`; full Ruff + MyPy strict + pytest config) — `researcher-mcp/pyproject.toml`
+- [x] T058 [P] Implement `ResearcherSettings` (pydantic-settings): `SEMANTIC_SCHOLAR_RPM=100`, `OPEN_ALEX_RPM=300`, `SCIHUB_ENABLED=false`, `SCIHUB_URL`, `UNPAYWALL_EMAIL` — `researcher-mcp/src/researcher_mcp/core/config.py`
+- [x] T059 [P] Implement `make_retry_client()` factory returning `httpx.AsyncClient` with `tenacity` retry decorator applied (max 3 attempts, exponential backoff + full jitter, retry on HTTP 5xx and `httpx.TimeoutException`); implement token-bucket rate limiter applied per source — `researcher-mcp/src/researcher_mcp/core/http_client.py`
+- [x] T060 Implement `SemanticScholarSource`: `search_papers()`, `get_paper()`, `search_authors()`, `get_author()` methods calling `api.semanticscholar.org`; returns typed Pydantic response objects including `source="semantic_scholar"` — `researcher-mcp/src/researcher_mcp/sources/semantic_scholar.py`
+- [x] T061 [P] Implement `OpenAlexSource`: `search_papers()`, `get_paper()` as cascade fallback; maps OpenAlex work schema to shared response types; sets `source="open_alex"` — `researcher-mcp/src/researcher_mcp/sources/open_alex.py`
+- [x] T062 [P] Implement `CrossRefSource`: `resolve_doi(doi)` querying `api.crossref.org/works/{doi}`; returns enriched paper metadata; sets `source="crossref"` — `researcher-mcp/src/researcher_mcp/sources/crossref.py`
+- [x] T063 [P] Implement `UnpaywallSource`: `fetch_pdf(doi, output_path)` querying `api.unpaywall.org/{doi}`; downloads open-access PDF if `best_oa_location.url_for_pdf` present — `researcher-mcp/src/researcher_mcp/sources/unpaywall.py`
+- [x] T064 [P] Implement `ArxivSource`: `fetch_pdf(doi, output_path)` resolving DOI to arXiv ID via CrossRef; downloads `arxiv.org/pdf/{arxiv_id}` — `researcher-mcp/src/researcher_mcp/sources/arxiv.py`
+- [x] T065 [P] Implement `SciHubSource`: `fetch_pdf(doi, output_path)` gated by `SCIHUB_ENABLED` check at call time; if disabled raises `MCPError("SCIHUB_DISABLED")`; includes prominent legal warning docstring — `researcher-mcp/src/researcher_mcp/sources/scihub.py`
+- [x] T066 Implement `@mcp.tool() search_papers` and `@mcp.tool() get_paper` with Semantic Scholar → OpenAlex cascade; CrossRef enrichment for DOI-prefixed IDs; response includes `source` + `warnings` fields — `researcher-mcp/src/researcher_mcp/tools/search.py`
+- [x] T067 [P] Implement `@mcp.tool() search_authors` and `@mcp.tool() get_author` using `SemanticScholarSource` — `researcher-mcp/src/researcher_mcp/tools/authors.py`
+- [x] T068 [P] Implement `@mcp.tool() fetch_paper_pdf` with Unpaywall → arXiv → SciHub (opt-in) cascade; returns `FetchResult` with `success`, `output_path`, `source`, `url`, `warnings` — `researcher-mcp/src/researcher_mcp/tools/pdf.py`
+- [x] T069 Create `FastMCP` app instance; register all tools from `search.py`, `authors.py`, `pdf.py`; implement `main()` entrypoint running server on `0.0.0.0:8002` — `researcher-mcp/src/researcher_mcp/server.py`
+- [x] T070 [P] Unit test: mock primary source to raise `httpx.HTTPStatusError(status=500)`; assert cascade selects secondary source and response `source` field equals `"open_alex"` — `researcher-mcp/tests/unit/test_cascade.py`
+- [x] T071 [P] Unit test: mock `httpx.AsyncClient.get` to raise `httpx.TimeoutException` twice then succeed; assert tenacity retried exactly 3 times total and final response returned — `researcher-mcp/tests/unit/test_retry.py`
+- [x] T072 [P] Unit test: with `SCIHUB_ENABLED=false` (default), calling `fetch_paper_pdf` after Unpaywall + arXiv both fail returns `success=False` and warning containing `"SciHub disabled"`; assert no outbound request to any scihub URL — `researcher-mcp/tests/unit/test_scihub_disabled.py`
 
 ---
 
@@ -169,11 +169,11 @@
 
 **Goal**: `hadolint` passes on all Dockerfiles; `docker compose config` validates; `docker compose up` starts all services (SC-012, SC-013, SC-014).
 
-- [ ] T073 Create multi-stage `backend/Dockerfile`: stage 1 (`python:3.14-slim`) installs UV binary, copies workspace source, runs `uv sync --frozen --no-dev --package sms-backend`; stage 2 (`python:3.14-slim`) copies `.venv` + `src`, creates non-root `appuser`, sets `CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000"]` — `backend/Dockerfile`
-- [ ] T074 [P] Create multi-stage `researcher-mcp/Dockerfile`: stage 1 (`python:3.14-slim`) installs UV, syncs `sms-researcher-mcp` package; stage 2 (`python:3.14-slim`) copies `.venv` + `src`, creates `appuser`, sets `CMD ["researcher-mcp"]` — `researcher-mcp/Dockerfile`
-- [ ] T075 [P] Create multi-stage `frontend/Dockerfile`: stage 1 (`node:20-alpine`) runs `npm ci && npm run build`; stage 2 (`nginx:alpine`) copies `dist/` and custom `nginx.conf` — `frontend/Dockerfile`
-- [ ] T076 [P] Create `frontend/nginx.conf` with `try_files $uri $uri/ /index.html` for SPA routing — `frontend/nginx.conf`
-- [ ] T077 Create `docker-compose.yml` defining services: `db` (postgres:16-alpine, port 5432, healthcheck `pg_isready`), `backend` (backend/Dockerfile root context, port 8000, depends_on db healthy), `frontend` (frontend/Dockerfile, port 3000→80, depends_on backend), `researcher-mcp` (researcher-mcp/Dockerfile root context, port 8002, always-on), `ollama` (ollama/ollama, port 11434, profile `ollama`, healthcheck); all secrets via env vars with safe dev defaults — `docker-compose.yml`
+- [x] T073 Create multi-stage `backend/Dockerfile`: stage 1 (`python:3.14-slim`) installs UV binary, copies workspace source, runs `uv sync --frozen --no-dev --package sms-backend`; stage 2 (`python:3.14-slim`) copies `.venv` + `src`, creates non-root `appuser`, sets `CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000"]` — `backend/Dockerfile`
+- [x] T074 [P] Create multi-stage `researcher-mcp/Dockerfile`: stage 1 (`python:3.14-slim`) installs UV, syncs `sms-researcher-mcp` package; stage 2 (`python:3.14-slim`) copies `.venv` + `src`, creates `appuser`, sets `CMD ["researcher-mcp"]` — `researcher-mcp/Dockerfile`
+- [x] T075 [P] Create multi-stage `frontend/Dockerfile`: stage 1 (`node:20-alpine`) runs `npm ci && npm run build`; stage 2 (`nginx:alpine`) copies `dist/` and custom `nginx.conf` — `frontend/Dockerfile`
+- [x] T076 [P] Create `frontend/nginx.conf` with `try_files $uri $uri/ /index.html` for SPA routing — `frontend/nginx.conf`
+- [x] T077 Create `docker-compose.yml` defining services: `db` (postgres:16-alpine, port 5432, healthcheck `pg_isready`), `backend` (backend/Dockerfile root context, port 8000, depends_on db healthy), `frontend` (frontend/Dockerfile, port 3000→80, depends_on backend), `researcher-mcp` (researcher-mcp/Dockerfile root context, port 8002, always-on), `ollama` (ollama/ollama, port 11434, profile `ollama`, healthcheck); all secrets via env vars with safe dev defaults — `docker-compose.yml`
 
 ---
 
