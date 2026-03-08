@@ -1,0 +1,16 @@
+// @ts-nocheck
+import { render, screen } from '@testing-library/react';
+import '@testing-library/jest-dom';
+import { MemoryRouter } from 'react-router-dom';
+import App from './App';
+
+describe('App', () => {
+  it('renders without crashing', () => {
+    render(<MemoryRouter><App /></MemoryRouter>);
+  });
+
+  it('displays the application title', () => {
+    render(<MemoryRouter><App /></MemoryRouter>);
+    expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument();
+  });
+});

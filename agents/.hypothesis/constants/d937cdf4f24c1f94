@@ -1,0 +1,4 @@
+# file: /home/isaacg/git/sms-reseacher/agents/src/agents/services/quality_judge.py
+# hypothesis_version: 6.151.9
+
+[2048, '\\{.*\\}', '```', '```(?:json)?\\s*', 'action', 'current_phase', 'exclusion_criteria', 'extractions_done', 'inclusion_criteria', 'justification', 'need_for_review', 'pico_saved', 'priority', 'quality_judge', 'recommendations', 'reviewers', 'rubric_details', 'score', 'scores', 'search_evaluation', 'search_strategies', 'search_strategy', 'study_id', 'study_name', 'study_type', 'study_validity', 'target_rubric', 'test_retest_done', 'validity_dimensions', 'validity_filled']

@@ -1,0 +1,84 @@
+## Study Overview
+
+**Study ID**: {{ study_id }}
+**Study Name**: {{ study_name | default("unnamed study") }}
+**Study Type**: {{ study_type | default("SMS") }}
+**Current Phase**: {{ current_phase | default(1) }}
+
+---
+
+## PICO Framework
+
+{% if pico_components %}
+The study has the following PICO components defined:
+{% for component in pico_components %}
+- **{{ component.type | upper }}**: {{ component.content }}
+{% endfor %}
+{% else %}
+PICO components have not been defined yet.
+{% endif %}
+
+---
+
+## Search Strategy
+
+{% if search_strategies %}
+**Search strings used** ({{ search_strategies | length }}):
+{% for s in search_strategies %}
+- `{{ s.string_text }}` — version {{ s.version }}
+{% endfor %}
+
+**Databases / sources queried**: {{ databases | default("not recorded") }}
+**Test-retest validation performed**: {{ "Yes — search string iterated and refined" if test_retest_done else "No" }}
+{% else %}
+No search strategies have been executed.
+{% endif %}
+
+---
+
+## Inclusion / Exclusion Criteria
+
+{% if inclusion_criteria %}
+**Inclusion criteria** ({{ inclusion_criteria | length }}):
+{% for c in inclusion_criteria %}
+- {{ c }}
+{% endfor %}
+{% else %}
+No inclusion criteria defined.
+{% endif %}
+
+{% if exclusion_criteria %}
+**Exclusion criteria** ({{ exclusion_criteria | length }}):
+{% for c in exclusion_criteria %}
+- {{ c }}
+{% endfor %}
+{% else %}
+No exclusion criteria defined.
+{% endif %}
+
+---
+
+## Reviewer Configuration
+
+{% if reviewers %}
+**Reviewers** ({{ reviewers | length }}):
+{% for r in reviewers %}
+- {{ r.reviewer_type | upper }}: {{ r.agent_name or ("User #" ~ r.user_id) }}
+{% endfor %}
+{% else %}
+No reviewers configured.
+{% endif %}
+
+---
+
+## Data Extraction Summary
+
+{% if extraction_summary %}
+{{ extraction_summary }}
+{% else %}
+Data extraction has not been completed.
+{% endif %}
+
+---
+
+Generate pre-populated draft validity discussion text for all six dimensions based on this study's documented process. Return valid JSON only.

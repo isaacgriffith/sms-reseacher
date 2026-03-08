@@ -1,0 +1,75 @@
+## Study Topic
+
+{{ topic }}
+
+## PICO/C Framework (Variant: {{ variant }})
+
+{% if population %}
+**Population**: {{ population }}
+{% endif %}
+{% if intervention %}
+**Intervention**: {{ intervention }}
+{% endif %}
+{% if comparison %}
+**Comparison**: {{ comparison }}
+{% endif %}
+{% if outcome %}
+**Outcome**: {{ outcome }}
+{% endif %}
+{% if context %}
+**Context**: {{ context }}
+{% endif %}
+{% if extra_fields %}
+**Additional Components**:
+{% for key, value in extra_fields.items() %}
+- **{{ key }}**: {{ value }}
+{% endfor %}
+{% endif %}
+
+{% if objectives %}
+## Research Objectives
+
+{% for obj in objectives %}
+- {{ obj }}
+{% endfor %}
+{% endif %}
+
+{% if questions %}
+## Research Questions
+
+{% for q in questions %}
+- {{ q }}
+{% endfor %}
+{% endif %}
+
+{% if seed_keywords %}
+## Keywords from Seed Papers
+
+The following keywords and terms were extracted from seed papers and should inform synonym expansion:
+
+{% for kw in seed_keywords %}
+- {{ kw }}
+{% endfor %}
+{% endif %}
+
+{% if inclusion_criteria %}
+## Inclusion Criteria
+
+Papers must satisfy ALL of the following:
+{% for ic in inclusion_criteria %}
+{{ loop.index }}. {{ ic }}
+{% endfor %}
+{% endif %}
+
+{% if exclusion_criteria %}
+## Exclusion Criteria
+
+Papers matching ANY of the following are excluded:
+{% for ec in exclusion_criteria %}
+{{ loop.index }}. {{ ec }}
+{% endfor %}
+{% endif %}
+
+## Task
+
+Generate a comprehensive Boolean search string for this systematic mapping study. Apply synonym expansion, abbreviations, and thesaurus terms to maximize recall while maintaining precision. Explain your term selection decisions in the `expansion_notes` field.

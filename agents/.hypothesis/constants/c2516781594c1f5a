@@ -1,0 +1,4 @@
+# file: /home/isaacg/git/sms-reseacher/agents/src/agents/services/screener.py
+# hypothesis_version: 6.151.9
+
+['```', 'abstract', 'accept', 'accepted', 'duplicate', 'exclusion_criteria', 'inclusion_criteria', 'rejected', 'screener', 'structured_output', 'title']

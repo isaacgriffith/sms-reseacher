@@ -1,0 +1,4 @@
+# file: /home/isaacg/git/sms-reseacher/agents/src/agents/services/validity.py
+# hypothesis_version: 6.151.9
+
+[3000, '\\{.*\\}', '```', '```(?:json)?\\s*', 'current_phase', 'databases', 'descriptive', 'exclusion_criteria', 'extraction_summary', 'inclusion_criteria', 'interpretive', 'pico_components', 'repeatability', 'reviewers', 'search_strategies', 'study_id', 'study_name', 'study_type', 'test_retest_done', 'theoretical', 'validity']

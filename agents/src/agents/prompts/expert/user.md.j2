@@ -1,0 +1,25 @@
+## Study Topic
+
+{{ topic }}
+
+## PICO/C Framework (variant: {{ variant }})
+
+{% if population %}- **Population**: {{ population }}{% endif %}
+{% if intervention %}- **Intervention**: {{ intervention }}{% endif %}
+{% if comparison %}- **Comparison**: {{ comparison }}{% endif %}
+{% if outcome %}- **Outcome**: {{ outcome }}{% endif %}
+{% if context %}- **Context**: {{ context }}{% endif %}
+
+## Research Questions
+
+{% for rq in questions %}{{ loop.index }}. {{ rq }}
+{% endfor %}
+
+## Research Objectives
+
+{% for obj in objectives %}{{ loop.index }}. {{ obj }}
+{% endfor %}
+
+---
+
+Identify 10–20 high-confidence, highly relevant papers for this systematic mapping study. Return valid JSON only.

@@ -1,0 +1,30 @@
+{
+  "$schema": "https://stryker-mutator.io/schemas/stryker-config-schema/latest/stryker-config.schema.json",
+  "packageManager": "npm",
+  "reporters": ["clear-text"],
+  "testRunner": "vitest",
+  "coverageAnalysis": "perTest",
+  "mutate": [
+    "src/components/phase2/CriteriaForm.tsx",
+    "src/components/phase2/MetricsDashboard.tsx",
+    "src/components/phase2/PaperQueue.tsx",
+    "src/components/phase2/ReviewerPanel.tsx",
+    "src/components/phase2/SearchStringEditor.tsx",
+    "src/components/phase2/TestRetest.tsx",
+    "src/components/phase3/ExtractionView.tsx",
+    "src/components/results/ChartGallery.tsx",
+    "src/components/results/ExportPanel.tsx",
+    "src/services/jobs.ts"
+  ],
+  "thresholds": {
+    "high": 90,
+    "low": 85,
+    "break": 85
+  },
+  "mutator": {
+    "excludedMutations": ["ObjectLiteral", "StringLiteral"]
+  },
+  "vitest": {
+    "configFile": "vite.config.ts"
+  }
+}

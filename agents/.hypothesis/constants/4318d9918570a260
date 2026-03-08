@@ -1,0 +1,4 @@
+# file: /home/isaacg/git/sms-reseacher/agents/src/agents/core/prompt_loader.py
+# hypothesis_version: 6.151.9
+
+['content', 'prompts', 'role', 'system', 'system.md', 'user', 'user.md.j2', 'utf-8']
