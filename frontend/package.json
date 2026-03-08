@@ -9,6 +9,7 @@
     "lint": "eslint .",
     "format:check": "prettier --check .",
     "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "test:watch": "vitest",
     "prepare": "husky"
   },
@@ -31,7 +32,9 @@
     "typescript": "^5.4.5",
     "typescript-eslint": "^7.13.1",
     "vite": "^5.3.1",
-    "vitest": "^1.6.0"
+    "vitest": "^1.6.0",
+    "@stryker-mutator/core": "^8.2.0",
+    "@stryker-mutator/vitest-runner": "^8.2.0"
   },
   "lint-staged": {
     "*.{ts,tsx}": ["eslint --fix", "prettier --write"]

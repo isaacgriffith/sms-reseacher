@@ -181,7 +181,7 @@
 
 **Goal**: CI runs full test matrix, enforces 85% coverage + 85% mutation score, builds + scans + pushes all 3 images to GHCR on `main` merge (SC-008, SC-016, SC-021).
 
-- [ ] T078 Create `.github/workflows/ci.yml` with:
+- [x] T078 Create `.github/workflows/ci.yml` with:
   - **Trigger**: `push` to any branch and `pull_request`
   - **Jobs (all parallelized)**:
     - `python-lint`: `uv run ruff check` + `uv run mypy` across all 5 Python sub-projects
@@ -200,15 +200,15 @@
 
 **Goal**: All sub-projects have READMEs; mutmut + Stryker configured; hadolint in pre-commit; edge case docs match implementation.
 
-- [ ] T079 [P] Add `mutmut` to dev dependencies and configure `[tool.mutmut]` in each Python `pyproject.toml` (5 files); set `paths_to_mutate` to `src/` — `backend/pyproject.toml`, `agents/pyproject.toml`, `db/pyproject.toml`, `agent-eval/pyproject.toml`, `researcher-mcp/pyproject.toml`
-- [ ] T080 [P] Add `stryker` configuration (`stryker.config.json`) to `frontend/`; set `mutationScore` threshold to 85 — `frontend/stryker.config.json`, `frontend/package.json`
-- [ ] T081 [P] Add `hadolint` pre-commit hook to root `.pre-commit-config.yaml` (runs `hadolint backend/Dockerfile`, `hadolint researcher-mcp/Dockerfile`, `hadolint frontend/Dockerfile`) — `.pre-commit-config.yaml`
-- [ ] T082 [P] Create `backend/README.md` with setup steps, env vars, and link to quickstart — `backend/README.md`
-- [ ] T083 [P] Create `agents/README.md` with setup steps, prompt template format, MCP client usage — `agents/README.md`
-- [ ] T084 [P] Create `db/README.md` (already started in T035; finalize with Alembic commands) — `db/README.md`
-- [ ] T085 [P] Create `agent-eval/README.md` with CLI usage examples from contracts/agent-eval-cli.md — `agent-eval/README.md`
-- [ ] T086 [P] Create `researcher-mcp/README.md` with server startup, env vars, legal SciHub warning, MCP tool summary — `researcher-mcp/README.md`
-- [ ] T087 [P] Create root `README.md` linking to all sub-project READMEs and quickstart.md — `README.md`
+- [x] T079 [P] Add `mutmut` to dev dependencies and configure `[tool.mutmut]` in each Python `pyproject.toml` (5 files); set `paths_to_mutate` to `src/` — `backend/pyproject.toml`, `agents/pyproject.toml`, `db/pyproject.toml`, `agent-eval/pyproject.toml`, `researcher-mcp/pyproject.toml`
+- [x] T080 [P] Add `stryker` configuration (`stryker.config.json`) to `frontend/`; set `mutationScore` threshold to 85 — `frontend/stryker.config.json`, `frontend/package.json`
+- [x] T081 [P] Add `hadolint` pre-commit hook to root `.pre-commit-config.yaml` (runs `hadolint backend/Dockerfile`, `hadolint researcher-mcp/Dockerfile`, `hadolint frontend/Dockerfile`) — `.pre-commit-config.yaml`
+- [x] T082 [P] Create `backend/README.md` with setup steps, env vars, and link to quickstart — `backend/README.md`
+- [x] T083 [P] Create `agents/README.md` with setup steps, prompt template format, MCP client usage — `agents/README.md`
+- [x] T084 [P] Create `db/README.md` (already started in T035; finalize with Alembic commands) — `db/README.md`
+- [x] T085 [P] Create `agent-eval/README.md` with CLI usage examples from contracts/agent-eval-cli.md — `agent-eval/README.md`
+- [x] T086 [P] Create `researcher-mcp/README.md` with server startup, env vars, legal SciHub warning, MCP tool summary — `researcher-mcp/README.md`
+- [x] T087 [P] Create root `README.md` linking to all sub-project READMEs and quickstart.md — `README.md`
 
 ---
 

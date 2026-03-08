@@ -32,3 +32,27 @@ repos:
         args: ["backend/tests/unit", "agents/tests/unit", "db/tests/unit"]
         pass_filenames: false
         types: [python]
+
+      - id: hadolint-backend
+        name: hadolint (backend/Dockerfile)
+        language: system
+        entry: hadolint
+        args: ["backend/Dockerfile"]
+        pass_filenames: false
+        files: ^backend/Dockerfile$
+
+      - id: hadolint-researcher-mcp
+        name: hadolint (researcher-mcp/Dockerfile)
+        language: system
+        entry: hadolint
+        args: ["researcher-mcp/Dockerfile"]
+        pass_filenames: false
+        files: ^researcher-mcp/Dockerfile$
+
+      - id: hadolint-frontend
+        name: hadolint (frontend/Dockerfile)
+        language: system
+        entry: hadolint
+        args: ["frontend/Dockerfile"]
+        pass_filenames: false
+        files: ^frontend/Dockerfile$
