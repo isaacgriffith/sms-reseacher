@@ -4,10 +4,12 @@ import enum
 from datetime import datetime
 
 from sqlalchemy import (
+    Boolean,
     DateTime,
     Enum,
     ForeignKey,
     Integer,
+    SmallInteger,
     String,
     Text,
     UniqueConstraint,
@@ -73,6 +75,14 @@ class Study(Base):
         default=StudyStatus.DRAFT,
         server_default=StudyStatus.DRAFT.value,
     )
+    # Phase 2 extensions
+    topic: Mapped[str | None] = mapped_column(Text, nullable=True)
+    motivation: Mapped[str | None] = mapped_column(Text, nullable=True)
+    current_phase: Mapped[int] = mapped_column(SmallInteger, nullable=False, default=1, server_default="1")
+    research_group_id: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("research_group.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    snowball_threshold: Mapped[int] = mapped_column(SmallInteger, nullable=False, default=5, server_default="5")
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
@@ -104,6 +114,12 @@ class Paper(Base):
     metadata_: Mapped[dict | None] = mapped_column(
         "metadata", JSON, nullable=True, comment="Flexible bibliographic fields"
     )
+    # Phase 2 extensions
+    authors: Mapped[list | None] = mapped_column(JSON, nullable=True)
+    year: Mapped[int | None] = mapped_column(SmallInteger, nullable=True)
+    venue: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    source_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+    full_text_available: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default="0")
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )

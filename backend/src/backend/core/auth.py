@@ -1,66 +1,134 @@
-"""Stub JWT bearer-token authentication middleware.
+"""JWT bearer-token authentication and password hashing helpers.
 
-This module provides placeholder stubs for JWT-based authentication.
-Routes declare their dependency via ``Depends(get_current_user)``.
-
-Full implementation (token validation, user lookup, refresh tokens)
-is deferred to a later feature; the stub structure ensures no route
-changes are needed when auth is fully wired up.
+Provides:
+- ``hash_password`` / ``verify_password`` — bcrypt helpers
+- ``create_access_token`` — sign a JWT
+- ``get_current_user`` — FastAPI dependency that validates a Bearer JWT
 """
 
-from fastapi import Depends
-from fastapi.security import OAuth2PasswordBearer
+from datetime import UTC, datetime, timedelta
 
-from backend.core.config import get_logger
+import bcrypt
+from fastapi import Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer
+from jose import JWTError, jwt
+
+from backend.core.config import get_logger, get_settings
 
 logger = get_logger(__name__)
 
-# Token URL is a placeholder; auth endpoints are added in a later feature.
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/token", auto_error=False)
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login", auto_error=False)
+
+
+# ---------------------------------------------------------------------------
+# Password hashing
+# ---------------------------------------------------------------------------
+
+
+def hash_password(plain: str) -> str:
+    """Return a bcrypt hash of *plain*.
+
+    Args:
+        plain: The plaintext password to hash.
+
+    Returns:
+        A bcrypt-encoded string suitable for storage.
+    """
+    return bcrypt.hashpw(plain.encode(), bcrypt.gensalt()).decode()
+
+
+def verify_password(plain: str, hashed: str) -> bool:
+    """Return ``True`` if *plain* matches *hashed*.
+
+    Args:
+        plain: The plaintext password provided by the user.
+        hashed: The stored bcrypt hash.
+
+    Returns:
+        ``True`` if they match, ``False`` otherwise.
+    """
+    return bcrypt.checkpw(plain.encode(), hashed.encode())
+
+
+# ---------------------------------------------------------------------------
+# JWT tokens
+# ---------------------------------------------------------------------------
+
+
+def create_access_token(user_id: int, *, extra_claims: dict | None = None) -> str:
+    """Create and sign a JWT access token for *user_id*.
+
+    Args:
+        user_id: The primary key of the authenticated user.
+        extra_claims: Optional additional claims to embed in the token.
+
+    Returns:
+        A signed JWT string.
+    """
+    settings = get_settings()
+    expire = datetime.now(UTC) + timedelta(minutes=settings.access_token_expire_minutes)
+    payload: dict = {"sub": str(user_id), "exp": expire}
+    if extra_claims:
+        payload.update(extra_claims)
+    return jwt.encode(payload, settings.secret_key, algorithm=settings.algorithm)
+
+
+# ---------------------------------------------------------------------------
+# FastAPI dependency
+# ---------------------------------------------------------------------------
 
 
 class CurrentUser:
-    """Placeholder user object returned by the auth stub.
+    """Authenticated user extracted from a validated JWT."""
 
-    Replaced by a real ORM-backed user model when authentication
-    is fully implemented.
-    """
-
-    def __init__(self, user_id: str = "anonymous", is_authenticated: bool = False) -> None:
-        """Initialise a placeholder user.
+    def __init__(self, user_id: int, is_authenticated: bool = True) -> None:
+        """Initialise a current user.
 
         Args:
-            user_id: A stable identifier for the user.
-            is_authenticated: Whether a valid token was presented.
+            user_id: The database primary key of the user.
+            is_authenticated: Whether the JWT was valid.
         """
         self.user_id = user_id
         self.is_authenticated = is_authenticated
 
     def __repr__(self) -> str:
         """Return a debug representation."""
-        return f"<CurrentUser id={self.user_id!r} authenticated={self.is_authenticated}>"
+        return f"<CurrentUser id={self.user_id} authenticated={self.is_authenticated}>"
 
 
 async def get_current_user(
     token: str | None = Depends(oauth2_scheme),
 ) -> CurrentUser:
-    """Stub dependency that extracts (but does not validate) a bearer token.
+    """FastAPI dependency: validate a Bearer JWT and return the current user.
 
-    In the MVP harness this always returns an unauthenticated placeholder
-    so routes can be exercised without credentials.  When auth is
-    implemented, replace the body of this function with real JWT
-    validation — the ``Depends(get_current_user)`` call sites need
-    no changes.
+    Raises ``HTTP 401`` if the token is missing, expired, or invalid.
 
     Args:
-        token: Raw bearer token extracted from the ``Authorization`` header,
-               or ``None`` if the header is absent.
+        token: Raw bearer token from the ``Authorization`` header, or ``None``.
 
     Returns:
-        A :class:`CurrentUser` instance.  Currently always unauthenticated.
-    """
-    if token:
-        logger.debug("auth_stub_token_received", token_prefix=token[:8] + "...")
-        return CurrentUser(user_id="stub-user", is_authenticated=False)
+        A :class:`CurrentUser` with ``is_authenticated=True``.
 
-    return CurrentUser()
+    Raises:
+        HTTPException: 401 if the token is absent or invalid.
+    """
+    credentials_exc = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    if not token:
+        raise credentials_exc
+
+    settings = get_settings()
+    try:
+        payload = jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
+        sub: str | None = payload.get("sub")
+        if sub is None:
+            raise credentials_exc
+        user_id = int(sub)
+    except (JWTError, ValueError):
+        logger.warning("auth_token_invalid")
+        raise credentials_exc
+
+    return CurrentUser(user_id=user_id)
