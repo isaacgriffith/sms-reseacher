@@ -1,0 +1,96 @@
+# docker-compose_2.yml — variant for a remote Ollama service
+#
+# Use this file when Ollama is running on a separate host (e.g. a GPU server,
+# a NAS, or another machine on the same network) rather than as a local
+# container.
+#
+# Required environment variable:
+#   OLLAMA_BASE_URL  — full base URL of the remote Ollama instance,
+#                      e.g. http://192.168.1.50:11434
+#                      Defaults to http://host.docker.internal:11434 so that
+#                      "remote" includes an Ollama process running directly on
+#                      the Docker host without a container.
+#
+# Usage:
+#   docker compose -f docker-compose_2.yml up
+#
+# The local `ollama` container service is intentionally absent from this file.
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-sms}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-smspass}
+      POSTGRES_DB: ${POSTGRES_DB:-sms_researcher}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-sms} -d ${POSTGRES_DB:-sms_researcher}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://sms:smspass@db:5432/sms_researcher}
+      SECRET_KEY: ${SECRET_KEY:-change-me-in-production}
+      LLM_PROVIDER: ${LLM_PROVIDER:-ollama}
+      LLM_MODEL: ${LLM_MODEL:-llama3}
+      # Point at the remote Ollama instance — no local container required.
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      RESEARCHER_MCP_URL: ${RESEARCHER_MCP_URL:-http://researcher-mcp:8002}
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/api/v1/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+  researcher-mcp:
+    build:
+      context: .
+      dockerfile: researcher-mcp/Dockerfile
+    restart: unless-stopped
+    environment:
+      SEMANTIC_SCHOLAR_RPM: ${SEMANTIC_SCHOLAR_RPM:-100}
+      OPEN_ALEX_RPM: ${OPEN_ALEX_RPM:-300}
+      SCIHUB_ENABLED: ${SCIHUB_ENABLED:-false}
+      SCIHUB_URL: ${SCIHUB_URL:-https://sci-hub.se}
+      UNPAYWALL_EMAIL: ${UNPAYWALL_EMAIL:-researcher@example.com}
+    ports:
+      - "8002:8002"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8002/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+volumes:
+  postgres_data:
