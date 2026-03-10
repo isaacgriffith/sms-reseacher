@@ -82,32 +82,32 @@
 
 ### PICO/C & Seed Models (Migration 3)
 
-- [ ] T024 [P] [US1] Create `db/src/db/models/pico.py` with PICOComponent (id, study_id FK, variant Enum PICO/PICOS/PICOT/SPIDER/PCC, population/intervention/comparison/outcome/context Text nullable, extra_fields JSON nullable, ai_suggestions JSON nullable, updated_at)
-- [ ] T025 [P] [US1] Create `db/src/db/models/seeds.py` with SeedPaper (id, study_id FK, paper_id FK, added_by_user_id FK nullable, added_by_agent nullable, created_at) and SeedAuthor (id, study_id FK, author_name, institution nullable, profile_url nullable, added_by_user_id FK nullable, added_by_agent nullable, created_at)
-- [ ] T026 [US1] Create Alembic migration `db/alembic/versions/0004_pico_and_seeds.py` for PICOComponent, SeedPaper, SeedAuthor tables
+- [x] T024 [P] [US1] Create `db/src/db/models/pico.py` with PICOComponent (id, study_id FK, variant Enum PICO/PICOS/PICOT/SPIDER/PCC, population/intervention/comparison/outcome/context Text nullable, extra_fields JSON nullable, ai_suggestions JSON nullable, updated_at)
+- [x] T025 [P] [US1] Create `db/src/db/models/seeds.py` with SeedPaper (id, study_id FK, paper_id FK, added_by_user_id FK nullable, added_by_agent nullable, created_at) and SeedAuthor (id, study_id FK, author_name, institution nullable, profile_url nullable, added_by_user_id FK nullable, added_by_agent nullable, created_at)
+- [x] T026 [US1] Create Alembic migration `db/alembic/versions/0004_pico_and_seeds.py` for PICOComponent, SeedPaper, SeedAuthor tables
 
 ### AI Agents: Librarian & Expert
 
-- [ ] T027 [P] [US1] Create Jinja2 prompt templates `agents/src/agents/prompts/librarian/system.jinja2` and `user.jinja2` for seed paper and author suggestions
-- [ ] T028 [P] [US1] Create Jinja2 prompt templates `agents/src/agents/prompts/expert/system.jinja2` and `user.jinja2` for 10–20 high-confidence relevant papers
-- [ ] T029 [P] [US1] Implement `LibrarianAgent` in `agents/src/agents/services/librarian.py` using LLMClient + PromptLoader; returns structured `{papers: [...], authors: [...]}` Pydantic model
-- [ ] T030 [US1] Implement `ExpertAgent` in `agents/src/agents/services/expert.py`; returns structured list of up to 20 papers with title, authors, year, venue, rationale fields
+- [x] T027 [P] [US1] Create Jinja2 prompt templates `agents/src/agents/prompts/librarian/system.jinja2` and `user.jinja2` for seed paper and author suggestions
+- [x] T028 [P] [US1] Create Jinja2 prompt templates `agents/src/agents/prompts/expert/system.jinja2` and `user.jinja2` for 10–20 high-confidence relevant papers
+- [x] T029 [P] [US1] Implement `LibrarianAgent` in `agents/src/agents/services/librarian.py` using LLMClient + PromptLoader; returns structured `{papers: [...], authors: [...]}` Pydantic model
+- [x] T030 [US1] Implement `ExpertAgent` in `agents/src/agents/services/expert.py`; returns structured list of up to 20 papers with title, authors, year, venue, rationale fields
 
 ### Study & PICO API
 
-- [ ] T031 [US1] Implement study CRUD in `backend/src/backend/api/v1/studies.py`: `GET /groups/{group_id}/studies`, `POST /groups/{group_id}/studies` (wizard payload: name, type, motivation, objectives, questions, member_ids, reviewers, snowball_threshold), `GET /studies/{study_id}`, `PATCH /studies/{study_id}`, `POST /studies/{study_id}/archive`, `DELETE /studies/{study_id}`
-- [ ] T032 [US1] Add phase-gate unlock logic as a service helper in `backend/src/backend/services/phase_gate.py` (checks PICO saved → unlocks phase 2; search complete → unlocks phase 3; extraction complete → unlocks 4/5)
-- [ ] T033 [US1] Implement PICO/C endpoints in `backend/src/backend/api/v1/pico.py`: `GET /studies/{study_id}/pico`, `PUT /studies/{study_id}/pico` (saves PICOComponent, calls phase_gate), `POST /studies/{study_id}/pico/refine` (calls LibrarianAgent for component suggestions)
-- [ ] T034 [US1] Implement seed endpoints in `backend/src/backend/api/v1/seeds.py`: `GET/POST/DELETE /studies/{study_id}/seeds/papers`, `GET/POST /studies/{study_id}/seeds/authors`, `POST /studies/{study_id}/seeds/librarian` (enqueues LibrarianAgent job)
-- [ ] T035 [US1] Register studies, pico, seeds routers in `backend/src/backend/api/v1/router.py`
+- [x] T031 [US1] Implement study CRUD in `backend/src/backend/api/v1/studies.py`: `GET /groups/{group_id}/studies`, `POST /groups/{group_id}/studies` (wizard payload: name, type, motivation, objectives, questions, member_ids, reviewers, snowball_threshold), `GET /studies/{study_id}`, `PATCH /studies/{study_id}`, `POST /studies/{study_id}/archive`, `DELETE /studies/{study_id}`
+- [x] T032 [US1] Add phase-gate unlock logic as a service helper in `backend/src/backend/services/phase_gate.py` (checks PICO saved → unlocks phase 2; search complete → unlocks phase 3; extraction complete → unlocks 4/5)
+- [x] T033 [US1] Implement PICO/C endpoints in `backend/src/backend/api/v1/pico.py`: `GET /studies/{study_id}/pico`, `PUT /studies/{study_id}/pico` (saves PICOComponent, calls phase_gate), `POST /studies/{study_id}/pico/refine` (calls LibrarianAgent for component suggestions)
+- [x] T034 [US1] Implement seed endpoints in `backend/src/backend/api/v1/seeds.py`: `GET/POST/DELETE /studies/{study_id}/seeds/papers`, `GET/POST /studies/{study_id}/seeds/authors`, `POST /studies/{study_id}/seeds/librarian` (enqueues LibrarianAgent job)
+- [x] T035 [US1] Register studies, pico, seeds routers in `backend/src/backend/api/v1/router.py`
 
 ### Frontend: Study Wizard & Phase 1 UI
 
-- [ ] T036 [US1] Create `frontend/src/pages/StudiesPage.tsx` (lists studies for selected group with name, topic, type, current_phase/status, archive/delete actions)
-- [ ] T037 [US1] Create `frontend/src/components/studies/NewStudyWizard.tsx` — multi-step wizard: (1) Name+Type, (2) Assign members, (3) Configure reviewers (add human or AI agent), (4) Motivation+Objectives+Questions, (5) PICO/C form with variant selector
-- [ ] T038 [P] [US1] Create `frontend/src/components/phase1/PICOForm.tsx` with variant selector (PICO/PICOS/PICOT/SPIDER/PCC), text areas per component, "Refine with AI" button calling `/pico/refine`
-- [ ] T039 [P] [US1] Create `frontend/src/components/phase1/SeedPapers.tsx` (add/remove seed papers by DOI or manual entry, trigger Librarian agent, show suggestions list)
-- [ ] T040 [US1] Create `frontend/src/pages/StudyPage.tsx` as phase router (renders phase 1–5 tabs based on `unlocked_phases`, shows current progress)
+- [x] T036 [US1] Create `frontend/src/pages/StudiesPage.tsx` (lists studies for selected group with name, topic, type, current_phase/status, archive/delete actions)
+- [x] T037 [US1] Create `frontend/src/components/studies/NewStudyWizard.tsx` — multi-step wizard: (1) Name+Type, (2) Assign members, (3) Configure reviewers (add human or AI agent), (4) Motivation+Objectives+Questions, (5) PICO/C form with variant selector
+- [x] T038 [P] [US1] Create `frontend/src/components/phase1/PICOForm.tsx` with variant selector (PICO/PICOS/PICOT/SPIDER/PCC), text areas per component, "Refine with AI" button calling `/pico/refine`
+- [x] T039 [P] [US1] Create `frontend/src/components/phase1/SeedPapers.tsx` (add/remove seed papers by DOI or manual entry, trigger Librarian agent, show suggestions list)
+- [x] T040 [US1] Create `frontend/src/pages/StudyPage.tsx` as phase router (renders phase 1–5 tabs based on `unlocked_phases`, shows current progress)
 
 **Checkpoint**: Full US1 flow functional — wizard, PICO/C, seed management, Librarian suggestions.
 

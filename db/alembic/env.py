@@ -10,9 +10,11 @@ from sqlalchemy.ext.asyncio import create_async_engine
 from db.base import Base
 
 # Import all model modules so Alembic autogenerate can detect them
-import db.models  # noqa: F401
+import db.models  # noqa: F401 — imports Study, Paper, StudyPaper from package __init__
 import db.models.users  # noqa: F401
 import db.models.study  # noqa: F401
+import db.models.pico  # noqa: F401
+import db.models.seeds  # noqa: F401
 
 # Alembic Config object
 config = context.config

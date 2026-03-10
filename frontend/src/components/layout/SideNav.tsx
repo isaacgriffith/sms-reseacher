@@ -80,6 +80,7 @@ export default function SideNav() {
         </li>
       </ul>
 
+
       {/* Logout */}
       <button
         onClick={handleLogout}
