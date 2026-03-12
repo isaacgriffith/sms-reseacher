@@ -31,7 +31,39 @@
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+Verify the following gates before proceeding to implementation planning. Record any violations
+in the Complexity Tracking table below with justification.
+
+| Gate | Status | Notes |
+|------|--------|-------|
+| SOLID — no SRP violations in target modules | | |
+| SOLID — extension points exist (OCP) where variation expected | | |
+| Structural — no DRY violations (duplication) | | |
+| Structural — no YAGNI violations (speculative generality) | | |
+| Code clarity — no long methods (>20 lines) in touched code | | |
+| Code clarity — no switch/if-chain smells in touched code | | |
+| Code clarity — no common code smells identified | | |
+| Refactoring — pre-implementation review completed | | |
+| Refactoring — any found refactors added to task list with tests | | |
+| GRASP/patterns — responsibility assignments reviewed | | |
+| Test coverage — existing tests pass; refactor tests written first | | |
+| Toolchain (VII) — no unapproved deps or tool substitutions introduced | | |
+| Toolchain (VII) — FastAPI/SQLAlchemy 2.x/ARQ/LiteLLM patterns followed | | |
+| Observability (VIII) — new models have audit fields + structlog used | | |
+| Observability (VIII) — config via Pydantic BaseSettings + lru_cache | | |
+| Infrastructure (VIII) — Docker services have healthchecks if added | | |
+| Language (IX) — React components functional, props typed, ≤100 JSX lines | | |
+| Language (IX) — Hooks called at top level only (Rules of Hooks); no inline refs in deps | | |
+| Language (IX) — No React state mutation; no array-index keys in lists | | |
+| Language (IX) — >3 related useState → useReducer; useCallback only when justified | | |
+| Language (IX) — useEffect returns cleanup for all resource-acquiring effects | | |
+| Language (IX) — React.memo applied deliberately; useImperativeHandle used for imperative APIs | | |
+| Language (IX) — useWatch used (not watch) for reactive form field subscriptions | | |
+| Language (IX) — Vite env vars use VITE_ prefix + import.meta.env | | |
+| Language (IX) — Python: no plain dict for domain data; pathlib used | | |
+| Language (IX) — Python: no mutable defaults; specific exception handling | | |
+| Language (IX) — TypeScript: no any/enum/non-null(!) without justification | | |
+| Language (IX) — TypeScript: unknown + Zod at all external boundaries | | |
 
 ## Project Structure
 
@@ -96,9 +128,11 @@ directories captured above]
 
 ## Complexity Tracking
 
-> **Fill ONLY if Constitution Check has violations that must be justified**
+> **Fill if Constitution Check has violations that must be justified, OR if code smells /
+> refactoring opportunities were identified during pre-implementation review.**
 
-| Violation | Why Needed | Simpler Alternative Rejected Because |
-|-----------|------------|-------------------------------------|
-| [e.g., 4th project] | [current need] | [why 3 projects insufficient] |
-| [e.g., Repository pattern] | [specific problem] | [why direct DB access insufficient] |
+| Item | Type | Why Accepted / Resolution |
+|------|------|--------------------------|
+| [e.g., 4th project] | Architecture | [why 3 packages insufficient] |
+| [e.g., long method in X] | Code smell | Refactor task TXX added to plan |
+| [e.g., if-chain in Y] | Anti-pattern | Strategy pattern task TXX added to plan |

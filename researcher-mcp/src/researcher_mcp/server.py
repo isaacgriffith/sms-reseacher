@@ -8,7 +8,9 @@ from fastmcp import FastMCP
 
 from researcher_mcp.tools.authors import get_author, search_authors
 from researcher_mcp.tools.pdf import fetch_paper_pdf
+from researcher_mcp.tools.scraper import scrape_author_page, scrape_journal
 from researcher_mcp.tools.search import get_paper, search_papers
+from researcher_mcp.tools.snowball import get_citations, get_references
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +27,10 @@ mcp.add_tool(get_paper)
 mcp.add_tool(search_authors)
 mcp.add_tool(get_author)
 mcp.add_tool(fetch_paper_pdf)
+mcp.add_tool(get_references)
+mcp.add_tool(get_citations)
+mcp.add_tool(scrape_journal)
+mcp.add_tool(scrape_author_page)
 
 
 def main() -> None:

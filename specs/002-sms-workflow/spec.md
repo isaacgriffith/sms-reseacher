@@ -2,8 +2,10 @@
 
 **Feature Branch**: `002-sms-workflow`
 **Created**: 2026-03-10
-**Status**: Draft
+**Last Updated**: 2026-03-11
+**Status**: Active
 **Input**: User description: "analyze docs/systematic-mapping-studies.md to create a specification to implement the described process and UI"
+**Constitution**: Aligned to v1.4.0 (Principles I–IX)
 
 ---
 
@@ -177,7 +179,7 @@ An LLM-as-a-Judge agent evaluates the current state of the study against the fiv
 - **FR-010**: System MUST allow users to define and edit PICO(C) components for a study, supporting variants: PICO, PICOS, PICOT, SPIDER, PCC.
 - **FR-011**: System MUST provide AI-assisted refinement of each PICO(C) component based on the study's topic and research questions.
 - **FR-012**: System MUST allow users to add seed papers (known key papers) and seed authors to a study as the initial test set.
-- **FR-013**: System MUST provide a "Librarian" AI agent that suggests key papers, key authors, and research groups relevant to the study topic.
+- **FR-013**: System MUST provide a "Librarian" AI agent that suggests key papers and key authors relevant to the study topic. *(Research group discovery is out of scope for this iteration.)*
 - **FR-014**: System MUST provide an "Expert" AI agent that identifies a small set of 10–20 papers highly relevant to the research topic without hallucination.
 
 #### Phase 2: Study Identification
@@ -196,7 +198,7 @@ An LLM-as-a-Judge agent evaluates the current state of the study against the fiv
 - **FR-026**: System MUST stop snowball sampling when a round produces fewer non-duplicate papers than a configurable threshold (default: 5).
 - **FR-027**: System MUST track and display search metrics per phase: total identified, accepted, rejected, duplicates.
 - **FR-027a**: System MUST execute full database searches and batch data extraction as async background jobs, providing a live progress dashboard showing current phase, papers found so far, and percentage complete. Users MUST be able to navigate away from the progress view and return to it; results MUST be available when the job completes.
-- **FR-028**: System MUST support web-scraping-based search as an alternative to database search, using PICO(C) criteria to assess relevance.
+- **FR-028**: System MUST support web-scraping-based search as an alternative to database search, using PICO(C) criteria to assess relevance. *(Deferred: the underlying MCP scraper tools are implemented in this iteration (T061–T062); the full search-mode API endpoint, ARQ job variant, and frontend UI are planned for a subsequent iteration. FR-028 is partially satisfied.)*
 
 #### Phase 3: Data Extraction & Classification
 
@@ -204,9 +206,10 @@ An LLM-as-a-Judge agent evaluates the current state of the study against the fiv
 - **FR-030**: System MUST classify research type using decision rules R1–R6 in order, flagging conflicts for human review.
 - **FR-031**: System MUST apply the study's configured reviewer set (human and/or AI) to validate each extraction. Disagreements across any reviewers MUST be flagged for resolution. Reviewer composition is configured per study, not hardcoded.
 - **FR-032**: System MUST allow researchers to edit any extracted field and log the change with the original AI value preserved.
+- **FR-043**: System MUST use optimistic locking for concurrent edits to paper decisions and extraction fields. When a conflict is detected, the system MUST present the conflicting researcher with a diff view showing both versions and require them to resolve the conflict (keep theirs, keep the other's, or merge) before the save completes. No silent overwrites are permitted.
 - **FR-033**: System MUST generate a domain model (UML concept diagram) from the open coding, keywords, relationships, and summaries of accepted papers.
 - **FR-034**: System MUST generate a classification scheme with bubble charts classifying research by: venue, author, locale, institution, year, area/subtopic, research type, and research method.
-- **FR-035**: System MUST export all visualizations as publication-ready SVG files.
+- **FR-035**: System MUST export all visualizations as publication-ready SVG files. *(The "SVG Only" format in FR-042 is the export mechanism that satisfies this requirement; FR-035 and FR-042 SVG Only are complementary.)*
 
 #### Phase 4: Validity Discussion
 
@@ -218,7 +221,27 @@ An LLM-as-a-Judge agent evaluates the current state of the study against the fiv
 - **FR-038**: System MUST implement an LLM-as-a-Judge agent that evaluates the study against all five quality rubrics and produces a score for each.
 - **FR-039**: System MUST provide the judge's output as a scored report with justification per rubric and a prioritized list of improvement actions.
 - **FR-040**: System MUST allow re-running the quality evaluation at any time to reflect updates.
-- **FR-043**: System MUST use optimistic locking for concurrent edits to paper decisions and extraction fields. When a conflict is detected, the system MUST present the conflicting researcher with a diff view showing both versions and require them to resolve the conflict (keep theirs, keep the other's, or merge) before the save completes. No silent overwrites are permitted.
+
+#### Audit Trail & Operational Visibility
+
+- **FR-044**: System MUST maintain a complete, immutable audit log of all study-level data
+  mutations — including PICO(C) edits, search string changes, inclusion/exclusion criteria
+  changes, study metadata edits, seed paper/author additions and removals, and paper decision
+  overrides — capturing: actor identity, timestamp, the entity and field changed, and the
+  before/after values. Study admins MUST be able to view the full audit log for their study
+  from the study administration view.
+  *Note: Data extraction field edits are tracked separately by the `ExtractionFieldAudit`
+  entity (which preserves the original AI value for potential restoration). Extraction edits
+  are therefore excluded from the general `AuditRecord` audit log to avoid data duplication.*
+- **FR-045**: System MUST provide an administrative status dashboard showing the real-time
+  health of all system services (data storage, background job processing, external search
+  connections). The dashboard MUST allow an administrator to view details of any failed
+  background job and trigger a retry without requiring direct access to the underlying
+  infrastructure.
+- **FR-046**: System MUST NOT expose secrets, API keys, database credentials, or security
+  tokens through any user-visible interface, error message, log output visible to end users,
+  or exported artefact. All sensitive configuration MUST be managed externally from the
+  application codebase.
 
 #### Results & Reporting
 
@@ -248,6 +271,24 @@ An LLM-as-a-Judge agent evaluates the current state of the study against the fiv
 - **QualityReport**: A rubric-based evaluation of a study at a point in time, with scores and improvement recommendations.
 - **SearchMetrics**: Aggregate counts (identified, accepted, rejected, duplicates) per search phase/round for a study.
 
+### Non-Functional Requirements
+
+- **NFR-001**: Every persistent study entity MUST carry a creation timestamp and a
+  last-modification timestamp. These are system-managed fields — researchers MUST NOT be
+  able to alter them, and they MUST be reflected accurately in exported artefacts.
+- **NFR-002**: All study data modifications MUST be captured in an immutable audit record.
+  Silent overwrites of any study data are prohibited; every change MUST be attributable to
+  an actor and a moment in time. Extraction field edits are specifically tracked via
+  `ExtractionFieldAudit`; all other study-level mutations are tracked via `AuditRecord`
+  (see FR-044). These two mechanisms are complementary and non-overlapping.
+- **NFR-003**: All sensitive credentials required to operate the system (database access,
+  external search API keys, token-signing secrets) MUST be managed outside of any
+  application artefact or exported study bundle. Exposure of operational secrets through
+  any user-facing channel is a critical defect.
+- **NFR-004**: The system MUST be deployable as a set of independently health-checked
+  services. Each service MUST report its own readiness status; dependent services MUST
+  wait for their dependencies to be healthy before accepting traffic.
+
 ---
 
 ## Success Criteria *(mandatory)*
@@ -260,10 +301,12 @@ An LLM-as-a-Judge agent evaluates the current state of the study against the fiv
 - **SC-004**: The full search pipeline (initial search + one round of snowball sampling) for a study with up to 500 candidate papers completes without user intervention, producing a fully classified candidate list.
 - **SC-005**: Researchers can view the complete audit trail for any paper decision (original AI decision, any overrides, timestamps) within 2 clicks from the paper's detail view.
 - **SC-006**: Data extraction fields for an accepted paper are populated by the AI agent within 60 seconds of triggering extraction for a paper with accessible full text.
-- **SC-007**: The system generates all six required result visualizations (publication frequency, bar chart, venues, locale, authors, keyword bubble map) within 2 minutes of requesting the results report.
+- **SC-007**: The system generates all required result visualizations — publication frequency infographic, publications-per-year bar chart, venues, research locale, key authors, keyword bubble map, 8 classification scheme bubble charts, and the domain model — and makes them available as downloadable SVG files within 2 minutes of requesting the results report.
 - **SC-008**: All generated visualizations export as valid, publication-ready SVG files that render correctly in standard vector graphics software.
 - **SC-009**: The quality judge produces a complete rubric score report with improvement actions within 90 seconds of being triggered.
 - **SC-010**: The system supports at least 5 concurrent users working on independent studies within the same research group without data conflicts or performance degradation.
+- **SC-011**: A system administrator can view the real-time health of all dependent services and retry any failed background job from the administrative dashboard, without direct access to the underlying infrastructure.
+- **SC-012**: The complete audit log for a study — including all PICO edits, search string iterations, and extraction field changes — is accessible to a study admin within 2 clicks from the study administration view and renders within 3 seconds for studies with up to 500 logged events.
 
 ---
 
@@ -276,3 +319,5 @@ An LLM-as-a-Judge agent evaluates the current state of the study against the fiv
 - User authentication uses standard session-based auth with secure credential storage; OAuth or SSO integration is out of scope for this feature.
 - Multi-language paper support is out of scope; all papers must be in English (consistent with standard inclusion criteria examples in the domain document).
 - The New Study Wizard and all study management pages are designed for desktop/laptop browser use; mobile responsiveness is a nice-to-have, not a requirement.
+- The implementation follows the project's approved technology stack and toolchain conventions as defined in the project constitution; this specification intentionally avoids enumerating specific frameworks, libraries, or infrastructure tools so that it remains technology-agnostic at the requirements level.
+- All sensitive operational configuration (database credentials, external API keys, security tokens) is managed as environment variables outside of application code; no secrets are stored in the repository or included in exported study artefacts.

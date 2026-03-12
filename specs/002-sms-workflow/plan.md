@@ -1,13 +1,16 @@
 # Implementation Plan: Systematic Mapping Study Workflow System
 
-**Branch**: `002-sms-workflow` | **Date**: 2026-03-10 | **Spec**: [spec.md](./spec.md)
+**Branch**: `002-sms-workflow` | **Date**: 2026-03-10 | **Last Updated**: 2026-03-11 | **Spec**: [spec.md](./spec.md)
 **Input**: Feature specification from `/specs/002-sms-workflow/spec.md`
+**Constitution**: Aligned to v1.4.0 (Principles I–IX)
 
 ---
 
 ## Summary
 
-Implement the full Systematic Mapping Study (SMS) workflow system: a multi-phase, AI-augmented research automation platform that guides researchers through study scoping (PICO/C), database search with iterative refinement, automated paper screening with multi-reviewer support, structured data extraction, and publication-ready visualization generation. The system extends the existing FastAPI + SQLAlchemy + React mono-repo scaffold with substantial new data models, background job infrastructure, six AI agent types, a FastMCP integration layer, and a multi-page React frontend covering all five SMS phases.
+Implement the full Systematic Mapping Study (SMS) workflow system: a multi-phase, AI-augmented research automation platform that guides researchers through study scoping (PICO/C), database search with iterative refinement, automated paper screening with multi-reviewer support, structured data extraction, and publication-ready visualization generation. The system extends the existing FastAPI + SQLAlchemy + React mono-repo scaffold with substantial new data models, background job infrastructure, nine AI agent types, a FastMCP integration layer, and a multi-page React frontend covering all five SMS phases.
+
+Updated (2026-03-11) to include: comprehensive study-level audit trail (FR-044, NFR-002), administrative health and job-retry dashboard (FR-045, NFR-004), secrets-hygiene controls across all export artefacts (FR-046, NFR-003), and system-managed audit timestamps on every persistent entity (NFR-001).
 
 ---
 
@@ -32,7 +35,7 @@ Implement the full Systematic Mapping Study (SMS) workflow system: a multi-phase
 - Quality judge report: ≤90 seconds
 - AI extraction per paper: ≤60 seconds (full text accessible)
 **Constraints**: 5 concurrent users without data conflicts; optimistic locking on all shared records; async background jobs with real-time SSE progress; session-based JWT auth
-**Scale/Scope**: ~5–10 concurrent users; studies with up to 500–2000 candidate papers; 6 AI agent types; 5 frontend phase views; ~20 new DB tables/extensions
+**Scale/Scope**: ~5–10 concurrent users; studies with up to 500–2000 candidate papers; 9 AI agent types; 5 frontend phase views; ~20 new DB tables/extensions
 
 ---
 
@@ -40,19 +43,40 @@ Implement the full Systematic Mapping Study (SMS) workflow system: a multi-phase
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-The project constitution file is an unfilled template with no custom gates defined. Applying general software engineering quality gates:
+Verify the following gates before proceeding to implementation planning. Record any violations
+in the Complexity Tracking table below with justification.
 
 | Gate | Status | Notes |
 |------|--------|-------|
-| All new DB tables have Alembic migrations | PASS (by convention — existing pattern) | |
-| Test coverage ≥ 85% (enforced by pytest config) | PASS (enforced in all pyproject.toml configs) | |
-| Type checking strict=true (mypy) | PASS (enforced in all pyproject.toml configs) | |
-| No new packages beyond workspace members | PASS — all new code fits in existing packages | |
-| Frontend test coverage via Vitest | PASS (enforced in package.json scripts) | |
-| Background jobs use durable queue (not in-process) | PASS — ARQ + Redis chosen (see research.md) | |
-| Agent evals via deepeval for all new agents | PASS — sms-agent-eval package exists for this | |
+| SOLID — no SRP violations in target modules | PASS | New modules have single, focused responsibility (screener, extractor, search_builder, etc.) |
+| SOLID — extension points exist (OCP) where variation expected | PASS | Agent services injected via constructor; reviewer set configurable per study |
+| Structural — no DRY violations (duplication) | PASS | Shared audit trail logic in one service; LLMClient centralizes all LLM calls |
+| Structural — no YAGNI violations (speculative generality) | PASS | Only the 5-phase SMS workflow + audit/health FRs from spec implemented |
+| Code clarity — no long methods (>20 lines) in touched code | PASS | Existing services are short; new code plan follows same discipline |
+| Code clarity — no switch/if-chain smells in touched code | PASS | Research type dispatch uses R1–R6 decision-rule objects, not if-chains |
+| Code clarity — no common code smells identified | PASS | No God objects; each router/service/model is narrowly scoped |
+| Refactoring — pre-implementation review completed | PASS | Existing router, screener, and db models reviewed; no blocking smells |
+| Refactoring — any found refactors added to task list with tests | N/A | No refactors required before feature work |
+| GRASP/patterns — responsibility assignments reviewed | PASS | Repository pattern for DB; Strategy for reviewers; Observer pattern for SSE job progress |
+| Test coverage — existing tests pass; refactor tests written first | PASS | Existing test suite passes; all new modules require ≥85% coverage |
+| Toolchain (VII) — no unapproved deps or tool substitutions introduced | PASS | All deps (FastAPI, SQLAlchemy 2.0, ARQ, LiteLLM, FastMCP, TanStack Query, RHF+Zod) are in the approved stack |
+| Toolchain (VII) — FastAPI/SQLAlchemy 2.x/ARQ/LiteLLM patterns followed | PASS | async def routes, Depends() injection, Mapped[] annotations, ARQ ctx jobs, LLMClient wrapper |
+| Observability (VIII) — new models have audit fields + structlog used | PASS | All new models include created_at/updated_at; structlog used in all service layers |
+| Observability (VIII) — config via Pydantic BaseSettings + lru_cache | PASS | backend/core/config.py and agents/core/config.py follow this pattern; no new config patterns |
+| Infrastructure (VIII) — Docker services have healthchecks if added | PASS | No new Docker services introduced; existing services already have healthchecks |
+| Language (IX) — React components functional, props typed, ≤100 JSX lines | PASS | All components are function components; props interfaces required per task descriptions |
+| Language (IX) — Hooks at top level only; no inline object/function refs in dep arrays | ⚠ REVIEW | Must verify during implementation — SSE hook and wizard step effects are high-risk sites |
+| Language (IX) — No React state mutation; no array-index keys | PASS | State updates via setter only per plan; list renders use entity IDs as keys |
+| Language (IX) — >3 related useState → useReducer; useCallback only when justified | ⚠ REVIEW | NewStudyWizard (5-step state) MUST use useReducer; verify before T037 is marked done |
+| Language (IX) — useEffect returns cleanup for all resource-acquiring effects | ⚠ REVIEW | T073 SSE EventSource MUST close on unmount; verify T073 before marking done |
+| Language (IX) — React.memo applied deliberately; useImperativeHandle for imperative APIs | PASS | No imperative child APIs planned; React.memo applied only where noted in task comments |
+| Language (IX) — useWatch (not watch) for reactive form field subscriptions | ⚠ REVIEW | Applies to NewStudyWizard, CriteriaForm, ValidityForm, ExtractionView — verify per component |
+| Language (IX) — Vite env vars use VITE_ prefix; import.meta.env only | PASS | No client-side env vars added; API URL passed through services/api.ts config |
+| Language (IX) — Python: no plain dict for domain data; pathlib used | PASS | All new agent outputs are Pydantic models; no dict-typed domain data in plan |
+| Language (IX) — Python: no mutable defaults; specific exception handling | PASS | No default args in new service signatures; exceptions raised as HTTPException or specific types |
+| Language (IX) — TypeScript: no any/enum/non-null(!); unknown+Zod at boundaries | ⚠ REVIEW | Zod schemas must wrap all API responses in frontend services; verify api.ts generics use unknown |
 
-No gate violations. No Complexity Tracking entries required.
+**Re-check result**: 4 gates require implementation-time verification (marked ⚠ REVIEW). No blocking violations at plan time. Add to Complexity Tracking if any ⚠ gates fail during implementation.
 
 ---
 
@@ -95,7 +119,9 @@ backend/
 │   │       ├── extractions.py             # data extraction endpoints
 │   │       ├── jobs.py                    # background job status + SSE stream
 │   │       ├── results.py                 # visualization + export endpoints
-│   │       └── quality.py                 # quality judge endpoints
+│   │       ├── quality.py                 # quality judge endpoints
+│   │       ├── audit.py                   # FR-044: study audit log endpoints (admin)
+│   │       └── admin.py                   # FR-045: system health + job-retry dashboard
 │   ├── core/
 │   │   ├── config.py                      # existing — extend with Redis/ARQ config
 │   │   ├── auth.py                        # existing JWT auth
@@ -106,7 +132,8 @@ backend/
 │   │   └── extraction_job.py              # batch data extraction job
 │   └── services/
 │       ├── dedup.py                       # paper deduplication (DOI + fuzzy title)
-│       ├── export.py                      # CSV/JSON/archive export builder
+│       ├── export.py                      # CSV/JSON/archive export builder (FR-046: redact secrets)
+│       ├── audit.py                       # FR-044/NFR-002: AuditRecord write/query service
 │       └── visualization.py              # SVG chart generation (Altair/matplotlib)
 
 db/
@@ -123,7 +150,8 @@ db/
         ├── extraction.py                  # DataExtraction, ExtractionField
         ├── jobs.py                        # BackgroundJob, JobProgress
         ├── results.py                     # DomainModel, ClassificationScheme, QualityReport
-        └── metrics.py                     # SearchMetrics
+        ├── metrics.py                     # SearchMetrics
+        └── audit.py                       # FR-044/NFR-001/NFR-002: AuditRecord (actor, timestamp, entity, field, before, after)
 
 agents/
 └── src/agents/
@@ -175,13 +203,15 @@ frontend/
     │   ├── phase5/                        # QualityReport
     │   ├── results/                       # ChartGallery, ExportPanel
     │   ├── jobs/                          # JobProgressPanel (SSE-fed)
+    │   ├── admin/                         # FR-045: ServiceHealthPanel, JobRetryPanel
     │   └── shared/                        # DiffViewer (conflict resolution), PaperCard, etc.
     ├── pages/
     │   ├── LoginPage.tsx
     │   ├── GroupsPage.tsx
     │   ├── StudiesPage.tsx
     │   ├── StudyPage.tsx                  # phase router
-    │   └── ResultsPage.tsx
+    │   ├── ResultsPage.tsx
+    │   └── AdminPage.tsx                  # FR-045: health dashboard + job retry UI
     └── services/
         ├── api.ts                         # typed fetch wrappers
         ├── auth.ts                        # session management
@@ -205,5 +235,8 @@ agent-eval/
 
 ## Complexity Tracking
 
-No constitution violations identified.
+| Item | Type | Why Accepted / Resolution |
+|------|------|--------------------------|
+| AuditRecord generic model (entity_type + entity_id + field) | Architecture | A single polymorphic audit table is simpler than per-entity audit tables at this scale; acceptable under YAGNI because a generic model covers all 20+ entity types without proliferating tables. Reviewed against SRP: audit write/query is a distinct service layer. |
+| Admin health endpoint exposes internal service state | Security design | Health endpoint MUST be access-controlled (admin role only); no sensitive config values are ever included in health response payloads (Principle VIII / FR-046). |
 

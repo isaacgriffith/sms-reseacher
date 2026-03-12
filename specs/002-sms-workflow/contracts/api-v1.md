@@ -1,6 +1,6 @@
 # REST API Contracts: SMS Workflow System (v1)
 
-**Branch**: `002-sms-workflow` | **Date**: 2026-03-10
+**Branch**: `002-sms-workflow` | **Date**: 2026-03-10 | **Last Updated**: 2026-03-11 (Constitution v1.2.0)
 **Base path**: `/api/v1`
 **Auth**: Bearer JWT in `Authorization` header for all routes except `/auth/login`
 
@@ -391,6 +391,97 @@ Trigger export bundle generation.
 ### `GET /studies/{study_id}/export/{export_id}/download`
 Download completed export file.
 **Response 200**: File download with appropriate `Content-Type` (application/zip for archive, application/json, text/csv, or application/zip for SVGs).
+
+---
+
+## Audit Trail (FR-044)
+
+### `GET /studies/{study_id}/audit`
+Return the paginated study-level audit log. **Access**: study admin only.
+
+**Query params**: `entity_type=PICOComponent|SearchString|CandidatePaper|...` (optional filter),
+`actor_user_id=<int>` (optional), `page=1`, `page_size=50`
+
+**Response 200**:
+```json
+{
+  "items": [
+    {
+      "id": 1,
+      "actor": { "type": "user", "id": 3, "display_name": "Alice" },
+      "entity_type": "PICOComponent",
+      "entity_id": 7,
+      "action": "update",
+      "field_name": "population",
+      "before_value": "software developers",
+      "after_value": "professional software developers in industry settings",
+      "created_at": "2026-03-11T10:22:00Z"
+    }
+  ],
+  "total": 412,
+  "page": 1,
+  "page_size": 50
+}
+```
+
+**Response 403**: Not a study admin.
+
+---
+
+## Admin: Health & Job Management (FR-045)
+
+All `/admin/*` endpoints require the calling user to have the `admin` role in at least one
+research group. No sensitive configuration values (credentials, API keys) are exposed in
+any response payload.
+
+### `GET /admin/health`
+Return real-time operational health of all system services.
+
+**Response 200**:
+```json
+{
+  "status": "healthy|degraded|unhealthy",
+  "services": [
+    { "name": "database", "status": "healthy", "latency_ms": 4 },
+    { "name": "redis", "status": "healthy", "latency_ms": 1 },
+    { "name": "researcher_mcp", "status": "degraded", "detail": "HTTP 503 from upstream" },
+    { "name": "arq_worker", "status": "healthy", "active_jobs": 2, "queued_jobs": 5 }
+  ],
+  "checked_at": "2026-03-11T10:30:00Z"
+}
+```
+
+### `GET /admin/jobs`
+List background jobs across all studies, with optional status filter.
+
+**Query params**: `status=queued|running|completed|failed` (default: `failed`), `page=1`, `page_size=50`
+
+**Response 200**:
+```json
+{
+  "items": [
+    {
+      "id": "arq:job:abc123",
+      "study_id": 4,
+      "job_type": "full_search",
+      "status": "failed",
+      "error_message": "ACM rate limit exceeded",
+      "queued_at": "2026-03-11T09:00:00Z",
+      "completed_at": "2026-03-11T09:05:22Z"
+    }
+  ],
+  "total": 3,
+  "page": 1,
+  "page_size": 50
+}
+```
+
+### `POST /admin/jobs/{job_id}/retry`
+Re-enqueue a failed background job.
+
+**Response 202**: `{ "new_job_id": "arq:job:def456", "original_job_id": "arq:job:abc123" }`
+**Response 404**: Job not found.
+**Response 409**: Job is not in `failed` status; cannot retry.
 
 ---
 

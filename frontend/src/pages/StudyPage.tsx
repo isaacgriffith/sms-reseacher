@@ -8,6 +8,11 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '../services/api';
 import PICOForm from '../components/phase1/PICOForm';
 import SeedPapers from '../components/phase1/SeedPapers';
+import CriteriaForm from '../components/phase2/CriteriaForm';
+import SearchStringEditor from '../components/phase2/SearchStringEditor';
+import TestRetest from '../components/phase2/TestRetest';
+import JobProgressPanel from '../components/jobs/JobProgressPanel';
+import PaperQueue from '../components/phase2/PaperQueue';
 
 interface StudyDetail {
   id: number;
@@ -36,6 +41,7 @@ const PHASE_META = [
 export default function StudyPage() {
   const { studyId } = useParams<{ studyId: string }>();
   const [activePhase, setActivePhase] = useState(1);
+  const [activeJobId, setActiveJobId] = useState<string | null>(null);
 
   const { data: study, isLoading, error } = useQuery<StudyDetail>({
     queryKey: ['study', studyId],
@@ -142,13 +148,53 @@ export default function StudyPage() {
         </div>
       )}
 
-      {activePhase === 2 && (
-        <div style={{ color: '#64748b' }}>
-          <p>Phase 2: Search String Builder — coming in the next sprint.</p>
+      {activePhase === 2 && study.id && (
+        <div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginBottom: '2rem' }}>
+            <CriteriaForm studyId={study.id} />
+            <SearchStringEditor studyId={study.id} />
+          </div>
+          <TestRetest studyId={study.id} />
         </div>
       )}
 
-      {activePhase > 2 && (
+      {activePhase === 3 && study.id && (
+        <div>
+          <div style={{ marginBottom: '1.5rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <h3 style={{ margin: 0, fontSize: '1rem', color: '#111827' }}>Full Paper Search</h3>
+              <button
+                onClick={async () => {
+                  try {
+                    const res = (await api.post(
+                      `/api/v1/studies/${study.id}/searches`,
+                      { databases: ['acm', 'ieee', 'scopus'], phase_tag: 'initial-search' }
+                    )) as { job_id: string; search_execution_id: number };
+                    setActiveJobId(res.job_id);
+                  } catch {
+                    // error handled by user
+                  }
+                }}
+                style={{
+                  padding: '0.5rem 1rem',
+                  background: '#2563eb',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '0.375rem',
+                  cursor: 'pointer',
+                  fontSize: '0.875rem',
+                }}
+              >
+                Run Full Search
+              </button>
+            </div>
+            <JobProgressPanel jobId={activeJobId} />
+          </div>
+          <PaperQueue studyId={study.id} />
+        </div>
+      )}
+
+      {activePhase > 3 && (
         <div style={{ color: '#64748b' }}>
           <p>Phase {activePhase} content will be available in a future sprint.</p>
         </div>

@@ -15,6 +15,11 @@ import db.models.users  # noqa: F401
 import db.models.study  # noqa: F401
 import db.models.pico  # noqa: F401
 import db.models.seeds  # noqa: F401
+import db.models.criteria  # noqa: F401
+import db.models.search  # noqa: F401
+import db.models.search_exec  # noqa: F401
+import db.models.candidate  # noqa: F401
+import db.models.jobs  # noqa: F401
 
 # Alembic Config object
 config = context.config

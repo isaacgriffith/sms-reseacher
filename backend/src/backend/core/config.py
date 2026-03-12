@@ -41,6 +41,11 @@ class Settings(BaseSettings):
     # researcher-mcp
     researcher_mcp_url: str = "http://localhost:8002/sse"
 
+    # Redis / ARQ background jobs
+    redis_url: str = "redis://localhost:6379/0"
+    arq_max_jobs: int = 10
+    arq_job_timeout: int = 3600  # seconds; covers longest expected search run
+
 
 @lru_cache
 def get_settings() -> Settings:

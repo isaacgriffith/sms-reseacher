@@ -27,11 +27,9 @@ class WorkerSettings:
     Import each job module so ARQ can discover the decorated functions.
     """
 
-    # Job modules will be imported and functions listed here as implemented.
-    # Example once search_job.py exists:
-    #   from backend.jobs.search_job import run_full_search, run_snowball
-    #   functions = [run_full_search, run_snowball]
-    functions: list = []
+    from backend.jobs.search_job import run_full_search, run_snowball, run_test_search
+
+    functions = [run_test_search, run_full_search, run_snowball]
 
     max_jobs: int = 10
     job_timeout: int = 3600

@@ -1,12 +1,52 @@
 # Data Model: Systematic Mapping Study Workflow System
 
-**Branch**: `002-sms-workflow` | **Date**: 2026-03-10
+**Branch**: `002-sms-workflow` | **Date**: 2026-03-10 | **Last Updated**: 2026-03-11 (Constitution v1.2.0)
 
 ---
 
 ## Overview
 
 This document describes the full data model for the SMS Workflow feature. It extends the existing scaffold (`Study`, `Paper`, `StudyPaper`) with ~18 new tables and significant extensions to existing ones. All tables use SQLAlchemy 2.0 async mapped columns with PostgreSQL 16 in production and SQLite+aiosqlite for tests.
+
+---
+
+## Audit Field Requirement (NFR-001)
+
+Per Constitution v1.2.0 Principle VIII and NFR-001, **every persistent entity MUST carry
+`created_at` and `updated_at` columns** (both `DateTime(timezone=True)`, system-managed).
+Models with domain-specific timestamp names (e.g., `generated_at`, `queued_at`) MUST add
+the standard pair alongside those domain fields. The table below lists models requiring
+an `updated_at` addition vs. those that already comply:
+
+| Model | `created_at` | `updated_at` | Action required |
+|-------|:---:|:---:|-----------------|
+| `Study` (extended) | ✅ | ✅ (existing) | None |
+| `ResearchGroup` | ✅ | ➕ add | Add `updated_at` |
+| `User` | ✅ | ➕ add | Add `updated_at` |
+| `GroupMembership` | (`joined_at`) | ➕ add | Alias `joined_at` → `created_at`; add `updated_at` |
+| `StudyMember` | (`joined_at`) | ➕ add | Same as above |
+| `Reviewer` | ✅ | ➕ add | Add `updated_at` |
+| `PICOComponent` | ➕ add | ✅ | Add `created_at` |
+| `SeedPaper` | ✅ | ➕ add | Add `updated_at` |
+| `SeedAuthor` | ✅ | ➕ add | Add `updated_at` |
+| `InclusionCriterion` | ✅ | ➕ add | Add `updated_at` |
+| `ExclusionCriterion` | ✅ | ➕ add | Add `updated_at` |
+| `SearchString` | ✅ | ➕ add | Add `updated_at` |
+| `SearchStringIteration` | ✅ | ➕ add | Add `updated_at` |
+| `SearchExecution` | ➕ add | ➕ add | Add both (domain fields retained) |
+| `CandidatePaper` | ✅ | ✅ | None |
+| `PaperDecision` | ✅ | ➕ add | Add `updated_at` |
+| `DataExtraction` | ✅ | ✅ | None |
+| `ExtractionFieldAudit` | ✅ (`changed_at`) | ➕ add | Add `updated_at` (immutable in practice; add for consistency) |
+| `BackgroundJob` | ✅ (`queued_at`) | ➕ add | Add `updated_at` (domain timestamps retained) |
+| `SearchMetrics` | ✅ (`computed_at`) | ➕ add | Add `updated_at` |
+| `DomainModel` | ✅ (`generated_at`) | ➕ add | Add `updated_at` |
+| `ClassificationScheme` | ✅ (`generated_at`) | ➕ add | Add `updated_at` |
+| `QualityReport` | ✅ (`generated_at`) | ➕ add | Add `updated_at` |
+| `AuditRecord` | ✅ | N/A (immutable) | Append-only; no `updated_at` by design |
+
+All `updated_at` columns MUST use `onupdate=func.now()` so SQLAlchemy auto-refreshes them.
+This will be addressed in a dedicated migration (see migration step 9 below).
 
 ---
 
@@ -301,7 +341,12 @@ Structured extraction for one accepted paper within a study.
 
 ### `ExtractionFieldAudit`
 
-Preserves the original AI value when a human edits an extraction field.
+Preserves the original AI value when a human edits an extraction field. This is an
+**extraction-specific** audit mechanism: its purpose is to enable "restore original AI
+value" workflows and fine-grained extraction diff views. It is **separate from and
+non-overlapping with** the general `AuditRecord` table (see below). Extraction field
+edits are recorded here; `AuditRecord` does NOT record extraction edits to avoid
+duplication (per FR-044 and NFR-002).
 
 | Field | Type | Notes |
 |-------|------|-------|
@@ -395,6 +440,37 @@ Aggregate counts per search execution (one row per `SearchExecution`).
 | `recommendations` | `JSON` | `[{priority, action, target_rubric}]` |
 | `generated_at` | `DateTime(tz)` | |
 
+### `AuditRecord` *(new — FR-044, NFR-002)*
+
+Immutable, append-only record of study-level data mutations **excluding** data extraction
+field edits (which are handled by `ExtractionFieldAudit`). Written by the
+`backend/src/backend/services/audit.py` service layer; never updated or deleted.
+
+**Scope** — entities whose mutations produce `AuditRecord` rows:
+`Study` (metadata), `PICOComponent`, `SearchString`, `InclusionCriterion`,
+`ExclusionCriterion`, `SeedPaper`, `SeedAuthor`, `CandidatePaper` decisions and
+conflict resolutions, `StudyMember` (add/remove). `DataExtraction` field edits are
+explicitly excluded (tracked by `ExtractionFieldAudit`).
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `id` | `Integer PK` | |
+| `study_id` | `FK → Study` | Which study this mutation belongs to |
+| `actor_user_id` | `FK → User \| None` | Null for AI/system-initiated mutations |
+| `actor_agent` | `String(255) \| None` | Agent name for AI-initiated mutations |
+| `entity_type` | `String(64)` | e.g., `"PICOComponent"`, `"SearchString"`, `"CandidatePaper"` |
+| `entity_id` | `Integer` | PK of the mutated row |
+| `action` | `Enum(create, update, delete)` | |
+| `field_name` | `String(128) \| None` | Null for create/delete; specific field name for updates |
+| `before_value` | `JSON \| None` | Previous value (serialized); null for creates |
+| `after_value` | `JSON \| None` | New value (serialized); null for deletes |
+| `created_at` | `DateTime(tz)` | Immutable record timestamp |
+
+Indexes: `(study_id, created_at DESC)` for study admin audit log queries;
+`(entity_type, entity_id)` for entity-specific history.
+
+No `updated_at` — this table is append-only by design.
+
 ---
 
 ## State Transitions
@@ -462,3 +538,4 @@ Each new table and each extension to an existing table requires a separate, orde
 6. `extraction` — DataExtraction, ExtractionFieldAudit
 7. `jobs_and_metrics` — BackgroundJob, SearchMetrics
 8. `results` — DomainModel, ClassificationScheme, QualityReport
+9. `audit_trail` — AuditRecord + add missing `updated_at` columns to all models listed in the Audit Field Requirement table above

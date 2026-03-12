@@ -44,6 +44,27 @@ description: "Task list template for feature implementation"
   ============================================================================
 -->
 
+## Refactoring Tasks (Pre-feature, if required by Constitution)
+
+<!--
+  If pre-implementation review (Constitution Principle IV) identified code smells,
+  SOLID violations, or anti-patterns in files to be touched, list them here FIRST.
+  Each refactoring task MUST:
+    1. Have an existing or newly-written test that covers it (sub-task if needed).
+    2. Be committed separately from feature tasks (refactor: commit prefix).
+    3. Be verified passing before the dependent feature task begins.
+-->
+
+- [ ] TREF1 [P] Write tests covering [method/class] before refactoring in tests/[path]
+- [ ] TREF2 Decompose [long method / brain method] in [file] into [N] focused helpers
+- [ ] TREF3 Replace [if-chain / switch] in [file] with [strategy/polymorphism/dispatch map]
+- [ ] TREF4 [P] Eliminate duplication between [file-A] and [file-B] via [shared abstraction]
+
+> **Remove any TREF tasks that do not apply. If no refactoring is needed, remove this
+> section entirely from the generated tasks.md.**
+
+---
+
 ## Phase 1: Setup (Shared Infrastructure)
 
 **Purpose**: Project initialization and basic structure
@@ -249,3 +270,23 @@ With multiple developers:
 - Commit after each task or logical group
 - Stop at any checkpoint to validate story independently
 - Avoid: vague tasks, same file conflicts, cross-story dependencies that break independence
+- Constitution compliance: each task MUST respect Principles I–IX (SOLID, DRY, YAGNI,
+  Code Clarity, Refactoring, GRASP/Patterns, Testing, Toolchain, Observability, Language)
+- Refactoring tasks MUST precede dependent feature tasks and MUST have tests written first
+- No long methods (>20 lines), switch/if-chain smells, or common code smells in new code
+- Apply GRASP responsibility patterns and recognized design patterns where they naturally fit
+- New DB models MUST include created_at/updated_at audit fields (Principle VIII)
+- New configuration MUST use Pydantic BaseSettings + lru_cache get_settings() (Principle VIII)
+- New agent services MUST route LLM calls through LLMClient; prompts in prompts/ (Principle VII)
+- New Docker services MUST include healthcheck blocks (Principle VIII)
+- React components MUST be functional, have a named props interface, and be ≤100 JSX lines (IX)
+- React hooks MUST follow Rules of Hooks (top-level only); dependency arrays MUST be complete
+  with no inline object/function references; resource-acquiring effects MUST return cleanup (IX)
+- >3 related useState → useReducer; useCallback MUST only wrap props to React.memo children
+  or hook dependencies — not every handler function (IX)
+- React.memo SHOULD be applied deliberately to expensive pure components only (IX)
+- useImperativeHandle + forwardRef MUST be used for any imperative child API (IX)
+- react-hook-form: useWatch MUST be used (not watch) for reactive field subscriptions (IX)
+- Python domain data MUST use Pydantic/dataclass/TypedDict — not plain dict (Principle IX)
+- Python paths MUST use pathlib.Path; mutable default args and bare except are forbidden (IX)
+- TypeScript MUST NOT use any/enum/non-null(!); use unknown+Zod at external boundaries (IX)
