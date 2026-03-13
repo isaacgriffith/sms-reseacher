@@ -5,11 +5,12 @@ from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.core.auth import CurrentUser, get_current_user
+from backend.core.auth import CurrentUser, get_current_user, require_study_member
 from backend.core.config import get_logger
 from backend.core.database import get_db
+from backend.services import audit as audit_svc
+from db.models.audit import AuditAction
 from db.models.criteria import ExclusionCriterion, InclusionCriterion
-from db.models.study import StudyMember
 
 router = APIRouter(tags=["criteria"])
 logger = get_logger(__name__)
@@ -41,18 +42,6 @@ class AddCriterionRequest(BaseModel):
 # ---------------------------------------------------------------------------
 
 
-async def _require_study_member(
-    study_id: int, current_user: CurrentUser, db: AsyncSession
-) -> None:
-    result = await db.execute(
-        select(StudyMember).where(
-            StudyMember.study_id == study_id,
-            StudyMember.user_id == current_user.user_id,
-        )
-    )
-    if result.scalar_one_or_none() is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Study not found")
-
 
 # ---------------------------------------------------------------------------
 # Inclusion Criteria
@@ -70,7 +59,7 @@ async def list_inclusion_criteria(
     db: AsyncSession = Depends(get_db),
 ) -> list[CriterionResponse]:
     """Return all inclusion criteria for a study ordered by order_index."""
-    await _require_study_member(study_id, current_user, db)
+    await require_study_member(study_id, current_user, db)
 
     result = await db.execute(
         select(InclusionCriterion)
@@ -101,7 +90,7 @@ async def add_inclusion_criterion(
     db: AsyncSession = Depends(get_db),
 ) -> CriterionResponse:
     """Add a new inclusion criterion to a study."""
-    await _require_study_member(study_id, current_user, db)
+    await require_study_member(study_id, current_user, db)
 
     criterion = InclusionCriterion(
         study_id=study_id,
@@ -109,6 +98,17 @@ async def add_inclusion_criterion(
         order_index=body.order_index,
     )
     db.add(criterion)
+    await db.flush()
+    await audit_svc.record(
+        db,
+        study_id=study_id,
+        actor_user_id=current_user.user_id,
+        actor_agent=None,
+        entity_type="InclusionCriterion",
+        entity_id=criterion.id,
+        action=AuditAction.CREATE,
+        after_value={"description": criterion.description, "order_index": criterion.order_index},
+    )
     await db.commit()
 
     return CriterionResponse(
@@ -131,7 +131,7 @@ async def delete_inclusion_criterion(
     db: AsyncSession = Depends(get_db),
 ) -> None:
     """Delete an inclusion criterion from a study."""
-    await _require_study_member(study_id, current_user, db)
+    await require_study_member(study_id, current_user, db)
 
     result = await db.execute(
         select(InclusionCriterion).where(
@@ -145,7 +145,18 @@ async def delete_inclusion_criterion(
             status_code=status.HTTP_404_NOT_FOUND, detail="Criterion not found"
         )
 
+    criterion_id_val = criterion.id
     await db.delete(criterion)
+    await db.flush()
+    await audit_svc.record(
+        db,
+        study_id=study_id,
+        actor_user_id=current_user.user_id,
+        actor_agent=None,
+        entity_type="InclusionCriterion",
+        entity_id=criterion_id_val,
+        action=AuditAction.DELETE,
+    )
     await db.commit()
 
 
@@ -165,7 +176,7 @@ async def list_exclusion_criteria(
     db: AsyncSession = Depends(get_db),
 ) -> list[CriterionResponse]:
     """Return all exclusion criteria for a study ordered by order_index."""
-    await _require_study_member(study_id, current_user, db)
+    await require_study_member(study_id, current_user, db)
 
     result = await db.execute(
         select(ExclusionCriterion)
@@ -196,7 +207,7 @@ async def add_exclusion_criterion(
     db: AsyncSession = Depends(get_db),
 ) -> CriterionResponse:
     """Add a new exclusion criterion to a study."""
-    await _require_study_member(study_id, current_user, db)
+    await require_study_member(study_id, current_user, db)
 
     criterion = ExclusionCriterion(
         study_id=study_id,
@@ -204,6 +215,17 @@ async def add_exclusion_criterion(
         order_index=body.order_index,
     )
     db.add(criterion)
+    await db.flush()
+    await audit_svc.record(
+        db,
+        study_id=study_id,
+        actor_user_id=current_user.user_id,
+        actor_agent=None,
+        entity_type="ExclusionCriterion",
+        entity_id=criterion.id,
+        action=AuditAction.CREATE,
+        after_value={"description": criterion.description, "order_index": criterion.order_index},
+    )
     await db.commit()
 
     return CriterionResponse(
@@ -226,7 +248,7 @@ async def delete_exclusion_criterion(
     db: AsyncSession = Depends(get_db),
 ) -> None:
     """Delete an exclusion criterion from a study."""
-    await _require_study_member(study_id, current_user, db)
+    await require_study_member(study_id, current_user, db)
 
     result = await db.execute(
         select(ExclusionCriterion).where(
@@ -240,5 +262,16 @@ async def delete_exclusion_criterion(
             status_code=status.HTTP_404_NOT_FOUND, detail="Criterion not found"
         )
 
+    criterion_id_val = criterion.id
     await db.delete(criterion)
+    await db.flush()
+    await audit_svc.record(
+        db,
+        study_id=study_id,
+        actor_user_id=current_user.user_id,
+        actor_agent=None,
+        entity_type="ExclusionCriterion",
+        entity_id=criterion_id_val,
+        action=AuditAction.DELETE,
+    )
     await db.commit()

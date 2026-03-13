@@ -14,6 +14,12 @@ from backend.api.v1.searches import router as searches_router
 from backend.api.v1.jobs import router as jobs_router
 from backend.api.v1.papers import router as papers_router
 from backend.api.v1.metrics import router as metrics_router
+from backend.api.v1.extractions import router as extractions_router
+from backend.api.v1.results import router as results_router
+from backend.api.v1.quality import router as quality_router
+from backend.api.v1.validity import router as validity_router
+from backend.api.v1.audit import router as audit_router
+from backend.api.v1.admin import router as admin_router
 
 api_router = APIRouter(prefix="/api/v1")
 api_router.include_router(health.router)
@@ -28,3 +34,9 @@ api_router.include_router(searches_router)
 api_router.include_router(jobs_router)
 api_router.include_router(papers_router)
 api_router.include_router(metrics_router)
+api_router.include_router(extractions_router)
+api_router.include_router(results_router)
+api_router.include_router(quality_router)
+api_router.include_router(validity_router)
+api_router.include_router(audit_router)
+api_router.include_router(admin_router)

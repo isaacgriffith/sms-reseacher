@@ -1,6 +1,18 @@
-## Fields to Extract
+## Paper Metadata
 
-{{ data_fields }}
+**Title**: {{ title }}
+**Authors**: {{ authors | tojson }}
+**Year**: {{ year | default("unknown") }}
+**Venue**: {{ venue | default("unknown") }}
+**DOI**: {{ doi | default("N/A") }}
+
+## Research Questions
+
+The study has the following research questions. For each, extract the relevant answer from the paper text.
+
+{% for rq in research_questions %}
+- **{{ rq.id }}**: {{ rq.text }}
+{% endfor %}
 
 ## Paper Text
 
@@ -8,4 +20,4 @@
 
 ---
 
-Extract the requested fields from the paper text above. Return valid JSON only.
+Apply the R1–R6 classification rules to determine `research_type`, then extract all fields. Return valid JSON only.

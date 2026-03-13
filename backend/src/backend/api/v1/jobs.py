@@ -10,11 +10,10 @@ from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.core.auth import CurrentUser, get_current_user
+from backend.core.auth import CurrentUser, get_current_user, require_study_member
 from backend.core.config import get_logger
 from backend.core.database import get_db
 from db.models.jobs import BackgroundJob, JobStatus
-from db.models.study import StudyMember
 
 router = APIRouter(tags=["jobs"])
 logger = get_logger(__name__)
@@ -30,19 +29,6 @@ class BackgroundJobResponse(BaseModel):
     progress_pct: int
     progress_detail: dict | None
     error_message: str | None
-
-
-async def _require_study_member(
-    study_id: int, current_user: CurrentUser, db: AsyncSession
-) -> None:
-    result = await db.execute(
-        select(StudyMember).where(
-            StudyMember.study_id == study_id,
-            StudyMember.user_id == current_user.user_id,
-        )
-    )
-    if result.scalar_one_or_none() is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Study not found")
 
 
 @router.get(
@@ -123,7 +109,7 @@ async def list_study_jobs(
     db: AsyncSession = Depends(get_db),
 ) -> list[BackgroundJobResponse]:
     """Return the 20 most recent background jobs for a study."""
-    await _require_study_member(study_id, current_user, db)
+    await require_study_member(study_id, current_user, db)
 
     result = await db.execute(
         select(BackgroundJob)

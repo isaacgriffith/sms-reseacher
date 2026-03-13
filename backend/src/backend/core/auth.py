@@ -4,6 +4,7 @@ Provides:
 - ``hash_password`` / ``verify_password`` — bcrypt helpers
 - ``create_access_token`` — sign a JWT
 - ``get_current_user`` — FastAPI dependency that validates a Bearer JWT
+- ``require_study_member`` — shared guard that raises HTTP 403 for non-members
 """
 
 from datetime import UTC, datetime, timedelta
@@ -132,3 +133,44 @@ async def get_current_user(
         raise credentials_exc
 
     return CurrentUser(user_id=user_id)
+
+
+# ---------------------------------------------------------------------------
+# Shared study-membership guard (TREF6 — replaces 8 private duplicates)
+# ---------------------------------------------------------------------------
+
+
+async def require_study_member(
+    study_id: int,
+    current_user: "CurrentUser",
+    db: "AsyncSession",
+) -> None:
+    """Raise HTTP 403 if *current_user* is not a member of *study_id*.
+
+    Use this shared guard instead of per-router private ``_require_study_member``
+    functions to enforce DRY (Principle II) and correct error semantics
+    (403 Forbidden, not 404 Not Found).
+
+    Args:
+        study_id: The study to check membership against.
+        current_user: The authenticated user.
+        db: An active async database session.
+
+    Raises:
+        HTTPException: 403 if the user is not a study member.
+    """
+    from sqlalchemy import select
+
+    from db.models.study import StudyMember
+
+    result = await db.execute(
+        select(StudyMember).where(
+            StudyMember.study_id == study_id,
+            StudyMember.user_id == current_user.user_id,
+        )
+    )
+    if result.scalar_one_or_none() is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied: not a member of this study",
+        )

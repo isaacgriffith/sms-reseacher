@@ -2,10 +2,13 @@
  * Multi-step wizard for creating a new study.
  * Steps: (1) Name+Type, (2) Assign members, (3) Configure reviewers,
  *        (4) Motivation+Objectives+Questions, (5) PICO/C variant selector
+ *
+ * Principle IX.5: >3 related useState → useReducer with typed WizardAction
+ * Principle IX: useWatch replaces watch() for form-field subscriptions
  */
 
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useReducer } from 'react';
+import { useForm, useWatch } from 'react-hook-form';
 import { api, ApiError } from '../../services/api';
 
 interface ReviewerConfig {
@@ -32,23 +35,87 @@ interface Props {
   onCreated: (studyId: number) => void;
 }
 
+// ---------------------------------------------------------------------------
+// Wizard state — useReducer replaces the 5 useState calls (Principle IX.5)
+// ---------------------------------------------------------------------------
+
+interface WizardState {
+  step: number;
+  reviewers: ReviewerConfig[];
+  newAgentName: string;
+  submitError: string | null;
+  isSubmitting: boolean;
+}
+
+type WizardAction =
+  | { type: 'NEXT_STEP' }
+  | { type: 'PREV_STEP' }
+  | { type: 'ADD_REVIEWER'; payload: ReviewerConfig }
+  | { type: 'REMOVE_REVIEWER'; payload: number }
+  | { type: 'SET_NEW_AGENT_NAME'; payload: string }
+  | { type: 'SUBMIT_START' }
+  | { type: 'SUBMIT_ERROR'; payload: string }
+  | { type: 'SUBMIT_RESET' };
+
+const INITIAL_STATE: WizardState = {
+  step: 1,
+  reviewers: [{ type: 'ai_agent', agent_name: 'screener-v2' }],
+  newAgentName: '',
+  submitError: null,
+  isSubmitting: false,
+};
+
+function wizardReducer(state: WizardState, action: WizardAction): WizardState {
+  switch (action.type) {
+    case 'NEXT_STEP':
+      return { ...state, step: state.step + 1 };
+    case 'PREV_STEP':
+      return { ...state, step: state.step - 1 };
+    case 'ADD_REVIEWER':
+      return {
+        ...state,
+        reviewers: [...state.reviewers, action.payload],
+        newAgentName: '',
+      };
+    case 'REMOVE_REVIEWER':
+      return {
+        ...state,
+        reviewers: state.reviewers.filter((_, i) => i !== action.payload),
+      };
+    case 'SET_NEW_AGENT_NAME':
+      return { ...state, newAgentName: action.payload };
+    case 'SUBMIT_START':
+      return { ...state, submitError: null, isSubmitting: true };
+    case 'SUBMIT_ERROR':
+      return { ...state, submitError: action.payload, isSubmitting: false };
+    case 'SUBMIT_RESET':
+      return { ...state, submitError: null, isSubmitting: false };
+    default:
+      return state;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Constants
+// ---------------------------------------------------------------------------
+
 const STUDY_TYPES = ['SMS', 'SLR', 'Tertiary', 'Rapid'];
 const PICO_VARIANTS = ['PICO', 'PICOS', 'PICOT', 'SPIDER', 'PCC'];
 const TOTAL_STEPS = 5;
 
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
+
 export default function NewStudyWizard({ groupId, onClose, onCreated }: Props) {
-  const [step, setStep] = useState(1);
-  const [reviewers, setReviewers] = useState<ReviewerConfig[]>([
-    { type: 'ai_agent', agent_name: 'screener-v2' },
-  ]);
-  const [newAgentName, setNewAgentName] = useState('');
-  const [submitError, setSubmitError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [state, dispatch] = useReducer(wizardReducer, INITIAL_STATE);
+  const { step, reviewers, newAgentName, submitError, isSubmitting } = state;
 
   const {
     register,
     handleSubmit,
-    watch,
+    control,
+    trigger,
     formState: { errors },
   } = useForm<WizardData>({
     defaultValues: {
@@ -58,19 +125,23 @@ export default function NewStudyWizard({ groupId, onClose, onCreated }: Props) {
     },
   });
 
+  // Principle IX: useWatch replaces watch() for form-field subscriptions
+  const selectedPicoVariant = useWatch({ control, name: 'pico_variant' });
+
   const addAiReviewer = () => {
     if (!newAgentName.trim()) return;
-    setReviewers((rs) => [...rs, { type: 'ai_agent', agent_name: newAgentName.trim() }]);
-    setNewAgentName('');
+    dispatch({
+      type: 'ADD_REVIEWER',
+      payload: { type: 'ai_agent', agent_name: newAgentName.trim() },
+    });
   };
 
   const removeReviewer = (idx: number) => {
-    setReviewers((rs) => rs.filter((_, i) => i !== idx));
+    dispatch({ type: 'REMOVE_REVIEWER', payload: idx });
   };
 
   const onSubmit = handleSubmit(async (data) => {
-    setSubmitError(null);
-    setIsSubmitting(true);
+    dispatch({ type: 'SUBMIT_START' });
     try {
       const body = {
         name: data.name,
@@ -91,8 +162,10 @@ export default function NewStudyWizard({ groupId, onClose, onCreated }: Props) {
       const study = await api.post<{ id: number }>(`/api/v1/groups/${groupId}/studies`, body);
       onCreated(study.id);
     } catch (err) {
-      setSubmitError(err instanceof ApiError ? err.detail : 'Failed to create study');
-      setIsSubmitting(false);
+      dispatch({
+        type: 'SUBMIT_ERROR',
+        payload: err instanceof ApiError ? err.detail : 'Failed to create study',
+      });
     }
   });
 
@@ -135,7 +208,7 @@ export default function NewStudyWizard({ groupId, onClose, onCreated }: Props) {
               Step {step} of {TOTAL_STEPS}
             </p>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: '#64748b' }}>×</button>
+          <button onClick={onClose} aria-label="Close" style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: '#64748b' }}>×</button>
         </div>
 
         {/* Progress bar */}
@@ -150,7 +223,7 @@ export default function NewStudyWizard({ groupId, onClose, onCreated }: Props) {
               <h3 style={{ margin: '0 0 1rem' }}>Study Name & Type</h3>
               <div style={fieldStyle}>
                 <label style={labelStyle}>Study name *</label>
-                <input style={inputStyle} {...register('name', { required: 'Name is required' })} />
+                <input style={inputStyle} placeholder="Study name" {...register('name', { required: 'Name is required' })} />
                 {errors.name && <span style={errorStyle}>{errors.name.message}</span>}
               </div>
               <div style={fieldStyle}>
@@ -196,7 +269,12 @@ export default function NewStudyWizard({ groupId, onClose, onCreated }: Props) {
                 ))}
               </ul>
               <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                <input value={newAgentName} onChange={(e) => setNewAgentName(e.target.value)} placeholder="Agent name (e.g. screener-v2)" style={{ flex: 1, ...inputStyle }} />
+                <input
+                  value={newAgentName}
+                  onChange={(e) => dispatch({ type: 'SET_NEW_AGENT_NAME', payload: e.target.value })}
+                  placeholder="Agent name (e.g. screener-v2)"
+                  style={{ flex: 1, ...inputStyle }}
+                />
                 <button type="button" onClick={addAiReviewer} style={{ padding: '0.5rem 0.75rem', background: '#2563eb', color: '#fff', border: 'none', borderRadius: '0.375rem', cursor: 'pointer', whiteSpace: 'nowrap' }}>+ AI Reviewer</button>
               </div>
             </div>
@@ -230,7 +308,7 @@ export default function NewStudyWizard({ groupId, onClose, onCreated }: Props) {
               </p>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}>
                 {PICO_VARIANTS.map((v) => (
-                  <label key={v} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem', border: `2px solid ${watch('pico_variant') === v ? '#2563eb' : '#e2e8f0'}`, borderRadius: '0.375rem', cursor: 'pointer', fontSize: '0.875rem' }}>
+                  <label key={v} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem', border: `2px solid ${selectedPicoVariant === v ? '#2563eb' : '#e2e8f0'}`, borderRadius: '0.375rem', cursor: 'pointer', fontSize: '0.875rem' }}>
                     <input type="radio" value={v} {...register('pico_variant')} style={{ accentColor: '#2563eb' }} />
                     {v}
                   </label>
@@ -247,7 +325,7 @@ export default function NewStudyWizard({ groupId, onClose, onCreated }: Props) {
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '2rem' }}>
             <button
               type="button"
-              onClick={() => setStep((s) => s - 1)}
+              onClick={() => dispatch({ type: 'PREV_STEP' })}
               disabled={step === 1}
               style={{ padding: '0.5rem 1rem', background: 'transparent', border: '1px solid #cbd5e1', borderRadius: '0.375rem', cursor: step === 1 ? 'not-allowed' : 'pointer', color: '#64748b' }}
             >
@@ -256,7 +334,13 @@ export default function NewStudyWizard({ groupId, onClose, onCreated }: Props) {
             {step < TOTAL_STEPS ? (
               <button
                 type="button"
-                onClick={() => setStep((s) => s + 1)}
+                onClick={async () => {
+                  if (step === 1) {
+                    const valid = await trigger(['name', 'topic']);
+                    if (!valid) return;
+                  }
+                  dispatch({ type: 'NEXT_STEP' });
+                }}
                 style={{ padding: '0.5rem 1.25rem', background: '#2563eb', color: '#fff', border: 'none', borderRadius: '0.375rem', cursor: 'pointer' }}
               >
                 Next

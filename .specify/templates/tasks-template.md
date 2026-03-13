@@ -290,3 +290,5 @@ With multiple developers:
 - Python domain data MUST use Pydantic/dataclass/TypedDict — not plain dict (Principle IX)
 - Python paths MUST use pathlib.Path; mutable default args and bare except are forbidden (IX)
 - TypeScript MUST NOT use any/enum/non-null(!); use unknown+Zod at external boundaries (IX)
+- All functions/methods/classes MUST have Google-style docstrings (Python) or JSDoc (TS);
+  CLI command handlers MUST include a brief command description only — no Args/Returns (III)

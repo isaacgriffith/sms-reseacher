@@ -9,14 +9,23 @@ This is a research project by Isaac Griffith, PhD, licensed under the MIT Licens
 Update this file as the project's structure, language, build system, and workflow are established.
 
 ## Active Technologies
-- Python 3.12 (backend, agents, db); TypeScript 5.4 / Node 20 LTS (frontend) (001-repo-setup)
-- PostgreSQL (production), SQLite + aiosqlite (development/test) (001-repo-setup)
-- Python 3.12 (backend, agents, db, agent-eval); TypeScript 5.4 / Node 20 LTS (frontend) (001-repo-setup)
-- PostgreSQL 16 (production / Docker Compose); SQLite + aiosqlite (unit/integration tests) (001-repo-setup)
-- Python 3.14 (backend, agents, db, agent-eval, researcher-mcp); TypeScript 5.4 / Node 20 LTS (frontend) (001-repo-setup)
-- PostgreSQL 16 (production / Docker Compose); SQLite + `aiosqlite` (unit/integration tests) (001-repo-setup)
-- Python 3.14 (backend, agents, db, researcher-mcp); TypeScript 5.4 / Node 20 LTS (frontend) (002-sms-workflow)
-- PostgreSQL 16 (production/Docker); SQLite + aiosqlite (unit/integration tests) (002-sms-workflow)
+
+### Runtime & Language
+- Python 3.14 (backend, agents, db, agent-eval, researcher-mcp); TypeScript 5.4 / Node 20 LTS (frontend)
+- PostgreSQL 16 (production/Docker Compose); SQLite + `aiosqlite` (unit/integration tests)
+
+### Python Libraries (002-sms-workflow)
+- **Job queue**: ARQ (async Redis-based background task queue)
+- **Charting / visualisation**: matplotlib, networkx, plotly + kaleido (PDF/PNG export)
+- **String matching / deduplication**: rapidfuzz
+- **LLM evals**: deepeval + hypothesis (metamorphic tests)
+- **FastMCP**: FastMCP 2.0+ (`@mcp.tool` decorator pattern)
+
+### Frontend Libraries (002-sms-workflow)
+- **Data visualisation**: D3.js (network graphs, result charts)
+- **State / data fetching**: TanStack Query (React Query) with `refetchInterval` polling
+- **Forms**: React Hook Form with `useWatch` (not `watch()`)
 
 ## Recent Changes
 - 001-repo-setup: Added Python 3.12 (backend, agents, db); TypeScript 5.4 / Node 20 LTS (frontend)
+- 002-sms-workflow: Finalised library choices — ARQ, matplotlib, networkx, plotly/kaleido, rapidfuzz, D3.js

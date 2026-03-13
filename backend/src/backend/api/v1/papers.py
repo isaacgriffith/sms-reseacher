@@ -5,12 +5,13 @@ from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.core.auth import CurrentUser, get_current_user
+from backend.core.auth import CurrentUser, get_current_user, require_study_member
 from backend.core.config import get_logger
 from backend.core.database import get_db
+from backend.services import audit as audit_svc
 from db.models import Paper
+from db.models.audit import AuditAction
 from db.models.candidate import CandidatePaper
-from db.models.study import StudyMember
 
 router = APIRouter(tags=["papers"])
 logger = get_logger(__name__)
@@ -42,19 +43,6 @@ class CandidatePaperResponse(BaseModel):
     paper: PaperResponse
 
 
-async def _require_study_member(
-    study_id: int, current_user: CurrentUser, db: AsyncSession
-) -> None:
-    result = await db.execute(
-        select(StudyMember).where(
-            StudyMember.study_id == study_id,
-            StudyMember.user_id == current_user.user_id,
-        )
-    )
-    if result.scalar_one_or_none() is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Study not found")
-
-
 @router.get(
     "/studies/{study_id}/papers",
     response_model=list[CandidatePaperResponse],
@@ -70,7 +58,7 @@ async def list_candidate_papers(
     db: AsyncSession = Depends(get_db),
 ) -> list[CandidatePaperResponse]:
     """Return paginated candidate papers, optionally filtered by status and phase."""
-    await _require_study_member(study_id, current_user, db)
+    await require_study_member(study_id, current_user, db)
 
     query = select(CandidatePaper).where(CandidatePaper.study_id == study_id)
 
@@ -125,7 +113,7 @@ async def get_candidate_paper(
     db: AsyncSession = Depends(get_db),
 ) -> CandidatePaperResponse:
     """Return a single candidate paper with its metadata."""
-    await _require_study_member(study_id, current_user, db)
+    await require_study_member(study_id, current_user, db)
 
     cp_result = await db.execute(
         select(CandidatePaper).where(
@@ -187,6 +175,7 @@ class DecisionResponse(BaseModel):
     reasons: list | None
     is_override: bool
     overrides_decision_id: int | None
+    decided_at: str | None = None
 
 
 class ResolveConflictRequest(BaseModel):
@@ -274,7 +263,7 @@ async def submit_decision(
       if found, sets conflict_flag=True on the CandidatePaper.
     - Updates CandidatePaper.current_status to the new decision.
     """
-    await _require_study_member(study_id, current_user, db)
+    await require_study_member(study_id, current_user, db)
     await _require_reviewer_in_study(body.reviewer_id, study_id, db)
 
     cp = await _load_candidate(study_id, candidate_id, db)
@@ -321,6 +310,17 @@ async def submit_decision(
     else:
         cp.conflict_flag = False
 
+    await audit_svc.record(
+        db,
+        study_id=study_id,
+        actor_user_id=current_user.user_id,
+        actor_agent=None,
+        entity_type="PaperDecision",
+        entity_id=pd.id,
+        action=AuditAction.CREATE,
+        after_value={"candidate_paper_id": candidate_id, "decision": body.decision,
+                     "reviewer_id": body.reviewer_id},
+    )
     await db.commit()
 
     return DecisionResponse(
@@ -331,6 +331,7 @@ async def submit_decision(
         reasons=pd.reasons,
         is_override=pd.is_override,
         overrides_decision_id=pd.overrides_decision_id,
+        decided_at=pd.created_at.isoformat() if pd.created_at else None,
     )
 
 
@@ -358,7 +359,7 @@ async def resolve_conflict(
     CandidatePaper.current_status to the resolved decision, and
     clears conflict_flag.
     """
-    await _require_study_member(study_id, current_user, db)
+    await require_study_member(study_id, current_user, db)
     await _require_reviewer_in_study(body.reviewer_id, study_id, db)
 
     cp = await _load_candidate(study_id, candidate_id, db)
@@ -391,6 +392,18 @@ async def resolve_conflict(
     cp.current_status = CandidatePaperStatus(body.decision)
     cp.conflict_flag = False
 
+    await db.flush()
+    await audit_svc.record(
+        db,
+        study_id=study_id,
+        actor_user_id=current_user.user_id,
+        actor_agent=None,
+        entity_type="PaperDecision",
+        entity_id=pd.id,
+        action=AuditAction.CREATE,
+        after_value={"candidate_paper_id": candidate_id, "decision": body.decision,
+                     "is_override": True, "conflict_resolved": True},
+    )
     await db.commit()
 
     return DecisionResponse(
@@ -401,6 +414,7 @@ async def resolve_conflict(
         reasons=pd.reasons,
         is_override=pd.is_override,
         overrides_decision_id=None,
+        decided_at=pd.created_at.isoformat() if pd.created_at else None,
     )
 
 
@@ -421,7 +435,7 @@ async def list_decisions(
     db: AsyncSession = Depends(get_db),
 ) -> list[DecisionResponse]:
     """Return the full decision audit trail for a candidate paper."""
-    await _require_study_member(study_id, current_user, db)
+    await require_study_member(study_id, current_user, db)
     await _load_candidate(study_id, candidate_id, db)
 
     from db.models.candidate import PaperDecision
@@ -441,6 +455,7 @@ async def list_decisions(
             reasons=d.reasons,
             is_override=bool(d.is_override),
             overrides_decision_id=d.overrides_decision_id,
+            decided_at=d.created_at.isoformat() if d.created_at else None,
         )
         for d in decisions
     ]

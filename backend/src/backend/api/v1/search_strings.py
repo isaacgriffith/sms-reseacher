@@ -5,14 +5,15 @@ from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.core.auth import CurrentUser, get_current_user
+from backend.core.auth import CurrentUser, get_current_user, require_study_member
 from backend.core.config import get_logger
 from backend.core.database import get_db
+from backend.services import audit as audit_svc
+from db.models.audit import AuditAction
 from db.models.criteria import ExclusionCriterion, InclusionCriterion
 from db.models.pico import PICOComponent
 from db.models import Study
 from db.models.search import SearchString, SearchStringIteration
-from db.models.study import StudyMember
 
 router = APIRouter(tags=["search_strings"])
 logger = get_logger(__name__)
@@ -69,19 +70,6 @@ class TestSearchRequest(BaseModel):
 # ---------------------------------------------------------------------------
 
 
-async def _require_study_member(
-    study_id: int, current_user: CurrentUser, db: AsyncSession
-) -> None:
-    result = await db.execute(
-        select(StudyMember).where(
-            StudyMember.study_id == study_id,
-            StudyMember.user_id == current_user.user_id,
-        )
-    )
-    if result.scalar_one_or_none() is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Study not found")
-
-
 async def _build_response(ss: SearchString, db: AsyncSession) -> SearchStringResponse:
     """Build a SearchStringResponse including iterations."""
     iters_result = await db.execute(
@@ -127,7 +115,7 @@ async def list_search_strings(
     db: AsyncSession = Depends(get_db),
 ) -> list[SearchStringResponse]:
     """Return all search strings for a study, newest first."""
-    await _require_study_member(study_id, current_user, db)
+    await require_study_member(study_id, current_user, db)
 
     result = await db.execute(
         select(SearchString)
@@ -156,7 +144,7 @@ async def create_search_string(
     db: AsyncSession = Depends(get_db),
 ) -> SearchStringResponse:
     """Create a new search string manually (no AI generation)."""
-    await _require_study_member(study_id, current_user, db)
+    await require_study_member(study_id, current_user, db)
 
     # Determine next version number
     existing = await db.execute(
@@ -173,6 +161,17 @@ async def create_search_string(
         created_by_user_id=current_user.user_id,
     )
     db.add(ss)
+    await db.flush()
+    await audit_svc.record(
+        db,
+        study_id=study_id,
+        actor_user_id=current_user.user_id,
+        actor_agent=None,
+        entity_type="SearchString",
+        entity_id=ss.id,
+        action=AuditAction.CREATE,
+        after_value={"version": next_version, "string_text": body.string_text},
+    )
     await db.commit()
 
     return await _build_response(ss, db)
@@ -200,7 +199,7 @@ async def generate_search_string(
     calls the AI agent, creates a SearchString record, and computes recall
     against the seed paper test set as the first SearchStringIteration.
     """
-    await _require_study_member(study_id, current_user, db)
+    await require_study_member(study_id, current_user, db)
 
     # Load study
     study_result = await db.execute(select(Study).where(Study.id == study_id))
@@ -288,6 +287,17 @@ async def generate_search_string(
         ai_adequacy_judgment=result.expansion_notes,
     )
     db.add(iteration)
+    await db.flush()
+    await audit_svc.record(
+        db,
+        study_id=study_id,
+        actor_user_id=current_user.user_id,
+        actor_agent=None,
+        entity_type="SearchString",
+        entity_id=ss.id,
+        action=AuditAction.CREATE,
+        after_value={"version": next_version, "created_by_agent": "search-builder"},
+    )
     await db.commit()
 
     return await _build_response(ss, db)
@@ -310,7 +320,7 @@ async def get_search_string(
     db: AsyncSession = Depends(get_db),
 ) -> SearchStringResponse:
     """Return a single search string with all iterations."""
-    await _require_study_member(study_id, current_user, db)
+    await require_study_member(study_id, current_user, db)
 
     result = await db.execute(
         select(SearchString).where(
@@ -344,7 +354,7 @@ async def update_iteration(
     db: AsyncSession = Depends(get_db),
 ) -> IterationResponse:
     """Set human_approved on a SearchStringIteration."""
-    await _require_study_member(study_id, current_user, db)
+    await require_study_member(study_id, current_user, db)
 
     # Verify search string belongs to study
     ss_result = await db.execute(
@@ -353,7 +363,8 @@ async def update_iteration(
             SearchString.study_id == study_id,
         )
     )
-    if ss_result.scalar_one_or_none() is None:
+    ss = ss_result.scalar_one_or_none()
+    if ss is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Search string not found")
 
     iter_result = await db.execute(
@@ -367,6 +378,10 @@ async def update_iteration(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Iteration not found")
 
     iteration.human_approved = body.human_approved
+    if body.human_approved:
+        ss.is_active = True
+    # TODO(T123): record AuditRecord(entity_type="SearchString", action="update",
+    #   field_name="is_active", after_value=True) once the audit trail model exists.
     await db.commit()
 
     return IterationResponse(
@@ -402,7 +417,7 @@ async def test_search_string(
     Returns the job ID for polling. The job will create a new
     SearchStringIteration with recall metrics when complete.
     """
-    await _require_study_member(study_id, current_user, db)
+    await require_study_member(study_id, current_user, db)
 
     ss_result = await db.execute(
         select(SearchString).where(

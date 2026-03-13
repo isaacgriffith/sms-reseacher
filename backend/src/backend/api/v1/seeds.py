@@ -1,16 +1,19 @@
 """Seed paper and seed author endpoints."""
 
+import uuid
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from backend.core.auth import CurrentUser, get_current_user
+from backend.core.auth import CurrentUser, get_current_user, require_study_member
 from backend.core.config import get_logger
 from backend.core.database import get_db
+from backend.services import audit as audit_svc
 from db.models import Paper, Study
+from db.models.audit import AuditAction
 from db.models.pico import PICOComponent
 from db.models.seeds import SeedAuthor, SeedPaper
-from db.models.study import StudyMember
 
 router = APIRouter(tags=["seeds"])
 logger = get_logger(__name__)
@@ -73,19 +76,6 @@ class AddSeedAuthorRequest(BaseModel):
 # ---------------------------------------------------------------------------
 
 
-async def _require_study_member(
-    study_id: int, current_user: CurrentUser, db: AsyncSession
-) -> None:
-    result = await db.execute(
-        select(StudyMember).where(
-            StudyMember.study_id == study_id,
-            StudyMember.user_id == current_user.user_id,
-        )
-    )
-    if result.scalar_one_or_none() is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Study not found")
-
-
 # ---------------------------------------------------------------------------
 # Seed Papers
 # ---------------------------------------------------------------------------
@@ -108,7 +98,7 @@ async def list_seed_papers(
         current_user: Injected from the validated JWT; must be a study member.
         db: Injected async database session.
     """
-    await _require_study_member(study_id, current_user, db)
+    await require_study_member(study_id, current_user, db)
 
     seeds_result = await db.execute(
         select(SeedPaper, Paper)
@@ -157,7 +147,7 @@ async def add_seed_paper(
         current_user: Injected from the validated JWT; must be a study member.
         db: Injected async database session.
     """
-    await _require_study_member(study_id, current_user, db)
+    await require_study_member(study_id, current_user, db)
 
     paper: Paper | None = None
 
@@ -200,6 +190,17 @@ async def add_seed_paper(
         added_by_user_id=current_user.user_id,
     )
     db.add(seed)
+    await db.flush()
+    await audit_svc.record(
+        db,
+        study_id=study_id,
+        actor_user_id=current_user.user_id,
+        actor_agent=None,
+        entity_type="SeedPaper",
+        entity_id=seed.id,
+        action=AuditAction.CREATE,
+        after_value={"paper_id": paper.id},
+    )
     await db.commit()
 
     return SeedPaperResponse(
@@ -235,7 +236,7 @@ async def delete_seed_paper(
         current_user: Injected from the validated JWT; must be a study member.
         db: Injected async database session.
     """
-    await _require_study_member(study_id, current_user, db)
+    await require_study_member(study_id, current_user, db)
 
     result = await db.execute(
         select(SeedPaper).where(SeedPaper.id == seed_id, SeedPaper.study_id == study_id)
@@ -244,7 +245,18 @@ async def delete_seed_paper(
     if seed is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Seed paper not found")
 
+    seed_id_val = seed.id
     await db.delete(seed)
+    await db.flush()
+    await audit_svc.record(
+        db,
+        study_id=study_id,
+        actor_user_id=current_user.user_id,
+        actor_agent=None,
+        entity_type="SeedPaper",
+        entity_id=seed_id_val,
+        action=AuditAction.DELETE,
+    )
     await db.commit()
 
 
@@ -276,7 +288,7 @@ async def trigger_librarian(
     Returns:
         ``{"suggestions": {"papers": [...], "authors": [...]}}``
     """
-    await _require_study_member(study_id, current_user, db)
+    await require_study_member(study_id, current_user, db)
 
     study_result = await db.execute(select(Study).where(Study.id == study_id))
     study = study_result.scalar_one_or_none()
@@ -320,6 +332,78 @@ async def trigger_librarian(
 
 
 # ---------------------------------------------------------------------------
+# Expert agent trigger
+# ---------------------------------------------------------------------------
+
+
+@router.post(
+    "/studies/{study_id}/seeds/expert",
+    response_model=dict,
+    status_code=status.HTTP_202_ACCEPTED,
+    summary="Trigger Expert agent for seed paper suggestions",
+)
+async def trigger_expert(
+    study_id: int,
+    current_user: CurrentUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Enqueue an ExpertAgent background job to suggest seed papers.
+
+    Creates a BackgroundJob record and enqueues ``run_expert_seed_suggestion``
+    via ARQ.  On completion the job inserts returned papers as :class:`SeedPaper`
+    records (``added_by_agent="expert"``).  The full ExpertAgent response is
+    stored in ``progress_detail`` for frontend display.
+
+    Args:
+        study_id: The study to generate expert suggestions for.
+        current_user: Injected from the validated JWT; must be a study member.
+        db: Injected async database session.
+
+    Returns:
+        ``{"job_id": "<uuid>"}``
+    """
+    await require_study_member(study_id, current_user, db)
+
+    study_result = await db.execute(select(Study).where(Study.id == study_id))
+    study = study_result.scalar_one_or_none()
+    if study is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Study not found")
+
+    from db.models.jobs import BackgroundJob, JobStatus, JobType
+
+    job_id = str(uuid.uuid4())
+
+    # Try to enqueue via ARQ
+    try:
+        from arq import create_pool
+        from arq.connections import RedisSettings
+
+        from backend.core.config import get_settings
+
+        settings = get_settings()
+        redis = await create_pool(RedisSettings.from_dsn(settings.redis_url))
+        arq_job = await redis.enqueue_job("run_expert_seed_suggestion", study_id, job_id)
+        await redis.aclose()
+        if arq_job:
+            job_id = arq_job.job_id
+    except Exception as exc:
+        logger.warning("trigger_expert: redis unavailable: %s", exc)
+
+    bg_job = BackgroundJob(
+        id=job_id,
+        study_id=study_id,
+        job_type=JobType.EXPERT_SEED,
+        status=JobStatus.QUEUED,
+        progress_pct=0,
+    )
+    db.add(bg_job)
+    await db.commit()
+
+    logger.info("expert_seed_job_queued", study_id=study_id, job_id=job_id)
+    return {"job_id": job_id}
+
+
+# ---------------------------------------------------------------------------
 # Seed Authors
 # ---------------------------------------------------------------------------
 
@@ -335,7 +419,7 @@ async def list_seed_authors(
     db: AsyncSession = Depends(get_db),
 ) -> list[SeedAuthorResponse]:
     """Return all seed authors for a study."""
-    await _require_study_member(study_id, current_user, db)
+    await require_study_member(study_id, current_user, db)
 
     result = await db.execute(
         select(SeedAuthor)
@@ -366,7 +450,7 @@ async def add_seed_author(
     db: AsyncSession = Depends(get_db),
 ) -> SeedAuthorResponse:
     """Add an author as a seed for a study's search."""
-    await _require_study_member(study_id, current_user, db)
+    await require_study_member(study_id, current_user, db)
 
     author = SeedAuthor(
         study_id=study_id,
@@ -376,6 +460,17 @@ async def add_seed_author(
         added_by_user_id=current_user.user_id,
     )
     db.add(author)
+    await db.flush()
+    await audit_svc.record(
+        db,
+        study_id=study_id,
+        actor_user_id=current_user.user_id,
+        actor_agent=None,
+        entity_type="SeedAuthor",
+        entity_id=author.id,
+        action=AuditAction.CREATE,
+        after_value={"author_name": author.author_name},
+    )
     await db.commit()
 
     return SeedAuthorResponse(

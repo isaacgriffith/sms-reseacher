@@ -96,6 +96,22 @@ class Study(Base):
     metadata_: Mapped[dict | None] = mapped_column(
         "metadata", JSON, nullable=True, comment="Flexible study metadata (objectives, questions)"
     )
+    # Validity discussion (Phase 4) — six text dimensions, stored as a JSON object
+    validity: Mapped[dict | None] = mapped_column(
+        JSON,
+        nullable=True,
+        comment=(
+            "Validity discussion dimensions: descriptive, theoretical, "
+            "generalizability_internal, generalizability_external, "
+            "interpretive, repeatability"
+        ),
+    )
+    # Phase-gate staleness timestamps — set by the endpoint that produces each phase's data
+    pico_saved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    search_run_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    extraction_started_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )

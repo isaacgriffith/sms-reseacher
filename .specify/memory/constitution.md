@@ -1,27 +1,23 @@
 <!--
 SYNC IMPACT REPORT
 ==================
-Version change: 1.3.0 → 1.4.0
-Bump rationale: MINOR — materially expanded Principle IX React guidance with 8 new rules:
-  Rules of Hooks (gotcha), inline dependency pitfall (gotcha), excessive useState /
-  useReducer preference, useCallback-only-when-justified (expanded), mandatory useEffect
-  cleanup (reinforced as standalone best-practice rule), React.memo guidance, useImperativeHandle
-  + forwardRef pattern, and react-hook-form useWatch vs watch discipline.
+Version change: 1.4.0 → 1.5.0
+Bump rationale: MINOR — new mandatory documentation rule added (Principle III and
+  Principle IX): all functions, methods, and classes MUST include Google-style (Python)
+  or JSDoc (TypeScript) doc comments; CLI command handlers are exempt from parameter /
+  return-value documentation sections.
 
 Modified principles:
-  - IX. Language-Specific Best Practices & Gotcha Avoidance — React sections expanded;
-    no rules removed or redefined.
+  - III. Code Clarity & Anti-Pattern Avoidance — new "Documentation" bullet added.
+  - IX. Language-Specific Best Practices — new bullet in Python section (Google-style
+    docstrings enforcement); new bullet in TypeScript section (JSDoc requirements).
 
 Added sections:
-  - React/Vite Gotchas: 2 new bullets (Rules of Hooks, inline dependency references)
-  - React Best Practices: 5 new bullets (useReducer preference, useEffect mandatory
-    cleanup, React.memo guidance, useImperativeHandle, useWatch vs watch)
-  - React Best Practices: useMemo/useCallback rule materially expanded
-  - Code Quality Standards table: 3 new rows
+  - Code Quality Standards table: 1 new row (Documentation).
 
 Templates updated:
-  ✅ .specify/templates/plan-template.md — React IX gate row updated
-  ✅ .specify/templates/tasks-template.md — Notes footer updated
+  ✅ .specify/templates/plan-template.md — Constitution Check table: new gate row added
+  ✅ .specify/templates/tasks-template.md — Notes footer: documentation rule added
   ⚠ .specify/templates/spec-template.md — no changes required (generic enough)
   ⚠ .specify/templates/commands/ — directory not present; no updates needed
 
@@ -89,6 +85,16 @@ All generated and modified code MUST avoid the following anti-patterns:
   Inappropriate Intimacy, Message Chains, Middle Man, Speculative Generality, Dead Code.
 - **God Objects / God Modules**: No single class or module MUST accumulate responsibilities
   beyond a focused role. Split proactively before the violation solidifies.
+- **Documentation**: All functions, methods, and classes MUST include doc comments.
+  - **Python**: Google-style docstrings are REQUIRED, with `Args:`, `Returns:`, and `Raises:`
+    sections where applicable. This is enforced by ruff's `D` rule set (with `D203`/`D213`
+    ignored for Google-style compatibility).
+  - **TypeScript/JavaScript**: JSDoc comments (`/** ... */`) are REQUIRED for all exported
+    functions, classes, and methods. A single-sentence description is the minimum; `@param`
+    and `@returns` tags MUST be included for non-trivial signatures.
+  - **CLI command handlers** are the only exception: they MUST include a brief description of
+    the command, but MUST NOT document parameters or return values (these are self-described
+    by the CLI framework's help text and would create maintenance duplication).
 
 *Rationale*: Clean, navigable code is a prerequisite for AI-assisted development, peer review,
 and long-term maintainability of the SMS research platform.
@@ -435,7 +441,7 @@ avoided:
   for conditional rendering, derived display, or cross-field validation, `useWatch` MUST be
   used instead of the `watch()` function returned by `useForm()`. The `watch()` function
   causes the entire form component to re-render on every keystroke; `useWatch` isolates
-  re-renders to the subscribing component or hook, preserving form performance. `watch()`ww
+  re-renders to the subscribing component or hook, preserving form performance. `watch()`
   MAY be used only outside the render path (e.g., in a submit handler or a `useEffect`).
 - **Error boundaries**: Every major page section that fetches async data MUST be wrapped in
   an `ErrorBoundary` component. Unhandled render errors MUST NOT crash the entire
@@ -453,6 +459,12 @@ avoided:
 - **Type annotations everywhere**: All function signatures (parameters and return type) and
   class attributes MUST carry explicit type annotations. Bare untyped code is a mypy strict
   violation and MUST NOT be merged.
+- **Google-style docstrings**: All Python functions, methods, and classes MUST use Google-
+  style docstrings with `Args:`, `Returns:`, and `Raises:` sections where applicable.
+  Enforced by ruff's `D` rule set with `D203`/`D213` ignored. CLI command handler functions
+  are the sole exception: they MUST include a brief one-line description of the command only
+  — `Args:` and `Returns:` sections MUST NOT be added to CLI handlers (the CLI framework's
+  help text is the authoritative documentation for those).
 - **Structured data objects**: Plain `dict` MUST NOT be used to represent domain entities
   or API payloads in internal code. Use Pydantic models (API layer), `dataclasses`, or
   `typing.TypedDict` (where mutability is genuinely needed).
@@ -482,9 +494,9 @@ avoided:
 - **`typing.Protocol` for structural interfaces**: When defining duck-typed interfaces,
   `typing.Protocol` MUST be used rather than ABCs unless runtime `isinstance` checks against
   the interface are required.
-- **Async discipline**: `async def` functions MUST NOT call blocking I/O (file reads, `time.sleep`,
-  synchronous DB drivers) without offloading to a thread pool via `asyncio.to_thread`. Mixing
-  sync and async boundaries carelessly causes event-loop stalls.
+- **Async discipline**: `async def` functions MUST NOT call blocking I/O (file reads,
+  `time.sleep`, synchronous DB drivers) without offloading to a thread pool via
+  `asyncio.to_thread`. Mixing sync and async boundaries carelessly causes event-loop stalls.
 - **`__slots__` for hot-path value objects**: Classes instantiated in tight loops or large
   numbers (e.g., per-document data containers) SHOULD declare `__slots__` to reduce per-
   instance memory overhead.
@@ -494,9 +506,16 @@ avoided:
 - **No `any`**: The `any` type MUST NOT appear in new code. Use `unknown` for genuinely
   unknown external data, then narrow with type guards or Zod parsing. ESLint rule
   `@typescript-eslint/no-explicit-any` MUST be enabled and enforced.
+- **JSDoc for exported symbols**: All exported TypeScript functions, classes, and methods
+  MUST include JSDoc comments (`/** ... */`). A single-sentence description is the minimum
+  required. `@param` and `@returns` tags MUST be included for functions with non-trivial
+  signatures (more than one parameter, or a non-void/non-boolean return). CLI command
+  handler functions MUST include a brief description of the command only — `@param` and
+  `@returns` tags MUST NOT be added to CLI handlers.
 - **Discriminated unions over class hierarchies**: When modeling variants of a data type
   (e.g., API response states, job statuses), discriminated unions MUST be preferred over
-  class inheritance hierarchies. Example: `type Result = { kind: "ok"; value: T } | { kind: "err"; error: string }`.
+  class inheritance hierarchies. Example:
+  `type Result = { kind: "ok"; value: T } | { kind: "err"; error: string }`.
 - **`unknown` + Zod at boundaries**: All data entering the system from external sources
   (API responses, URL params, localStorage) MUST be typed `unknown` and parsed through a Zod
   schema before use. Casting external data directly with `as SomeType` is forbidden.
@@ -563,6 +582,7 @@ The following gates apply at specification, planning, and implementation time:
 | Settings pattern | Config MUST use Pydantic BaseSettings + lru_cache get_settings() |
 | Logging | MUST use structlog; no print() in production paths |
 | Docker health checks | Every compose service MUST have a healthcheck block |
+| Documentation | All functions/methods MUST have Google-style (Python) or JSDoc (TS) doc comments; CLI handlers: brief command description only — no Args/Returns/params |
 | React components | MUST be functional; MUST have named props interface; MUST be ≤ 100 JSX lines |
 | React hooks | MUST follow Rules of Hooks (top-level only); complete dep arrays; no inline refs in deps |
 | React state | MUST be treated as immutable; >3 related useState → useReducer |
@@ -656,4 +676,4 @@ and AI coding agents operating within this repository.
 - Language-specific gates (Principle IX) MUST be checked during code review for all React,
   Python, and TypeScript code changes.
 
-**Version**: 1.4.0 | **Ratified**: 2026-03-11 | **Last Amended**: 2026-03-11
+**Version**: 1.5.0 | **Ratified**: 2026-03-11 | **Last Amended**: 2026-03-12

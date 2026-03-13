@@ -43,6 +43,9 @@ class PICOComponent(Base):
     ai_suggestions: Mapped[dict | None] = mapped_column(
         JSON, nullable=True, comment="Last AI refinement suggestions per component"
     )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,

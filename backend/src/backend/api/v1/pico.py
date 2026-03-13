@@ -1,5 +1,6 @@
 """PICO/C component endpoints."""
 
+from datetime import UTC, datetime
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -7,13 +8,14 @@ from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.core.auth import CurrentUser, get_current_user
+from backend.core.auth import CurrentUser, get_current_user, require_study_member
 from backend.core.config import get_logger
 from backend.core.database import get_db
+from backend.services import audit as audit_svc
 from backend.services.phase_gate import compute_current_phase
 from db.models import Study
+from db.models.audit import AuditAction
 from db.models.pico import PICOComponent, PICOVariant
-from db.models.study import StudyMember
 
 router = APIRouter(tags=["pico"])
 logger = get_logger(__name__)
@@ -63,19 +65,6 @@ class RefineRequest(BaseModel):
 # ---------------------------------------------------------------------------
 
 
-async def _require_study_member(
-    study_id: int, current_user: CurrentUser, db: AsyncSession
-) -> None:
-    """Raise 404 if current_user is not a member of study_id."""
-    result = await db.execute(
-        select(StudyMember).where(
-            StudyMember.study_id == study_id,
-            StudyMember.user_id == current_user.user_id,
-        )
-    )
-    if result.scalar_one_or_none() is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Study not found")
-
 
 def _pico_to_response(pico: PICOComponent) -> PICOResponse:
     return PICOResponse(
@@ -121,7 +110,7 @@ async def get_pico(
     Raises:
         HTTPException: 404 if the study or PICO record is not found.
     """
-    await _require_study_member(study_id, current_user, db)
+    await require_study_member(study_id, current_user, db)
 
     result = await db.execute(
         select(PICOComponent).where(PICOComponent.study_id == study_id)
@@ -162,7 +151,7 @@ async def upsert_pico(
         HTTPException: 404 if the study is not found.
         HTTPException: 422 if the variant is invalid.
     """
-    await _require_study_member(study_id, current_user, db)
+    await require_study_member(study_id, current_user, db)
 
     try:
         variant = PICOVariant(body.variant)
@@ -177,6 +166,7 @@ async def upsert_pico(
     )
     pico = result.scalar_one_or_none()
 
+    is_create = pico is None
     if pico is None:
         pico = PICOComponent(
             study_id=study_id,
@@ -198,13 +188,26 @@ async def upsert_pico(
         pico.context = body.context
         pico.extra_fields = body.extra_fields
 
-    # Update study's current_phase via phase gate
+    # Update study's current_phase via phase gate and stamp pico_saved_at
     new_phase = await compute_current_phase(study_id, db)
     study_result = await db.execute(select(Study).where(Study.id == study_id))
     study = study_result.scalar_one_or_none()
     if study is not None:
         study.current_phase = max(study.current_phase, new_phase)
+        study.pico_saved_at = datetime.now(UTC)
 
+    await db.flush()
+    await audit_svc.record(
+        db,
+        study_id=study_id,
+        actor_user_id=current_user.user_id,
+        actor_agent=None,
+        entity_type="PICOComponent",
+        entity_id=pico.id,
+        action=AuditAction.CREATE if is_create else AuditAction.UPDATE,
+        after_value={"variant": variant.value, "population": body.population,
+                     "intervention": body.intervention, "outcome": body.outcome},
+    )
     await db.commit()
     logger.info("pico_saved", study_id=study_id, variant=variant.value)
     return _pico_to_response(pico)
@@ -235,7 +238,7 @@ async def refine_pico(
     Raises:
         HTTPException: 404 if the study or PICO record is not found.
     """
-    await _require_study_member(study_id, current_user, db)
+    await require_study_member(study_id, current_user, db)
 
     pico_result = await db.execute(
         select(PICOComponent).where(PICOComponent.study_id == study_id)

@@ -1,0 +1,73 @@
+## Study Snapshot
+
+**Study ID**: {{ study_id }}
+**Study Name**: {{ study_name | default("unknown") }}
+**Study Type**: {{ study_type | default("SMS") }}
+**Current Phase**: {{ current_phase | default(1) }}
+
+### PICO Saved
+
+{{ "Yes — PICO components are defined." if pico_saved else "No — PICO has not been saved." }}
+
+### Search Strategy
+
+{% if search_strategies %}
+The following search string iterations have been executed:
+{% for s in search_strategies %}
+- **String {{ loop.index }}**: `{{ s.query_string }}` — executed {{ s.result_count | default("?") }} results
+{% endfor %}
+{% else %}
+No search strategies have been executed.
+{% endif %}
+
+**Test-Retest Validation Performed**: {{ "Yes" if test_retest_done else "No" }}
+
+### Reviewer Configuration
+
+{% if reviewers %}
+{{ reviewers | length }} reviewer(s) configured:
+{% for r in reviewers %}
+- {{ r.reviewer_type | upper }}: {{ r.agent_name or r.user_id }}
+{% endfor %}
+{% else %}
+No reviewers configured.
+{% endif %}
+
+### Inclusion / Exclusion Criteria
+
+{% if inclusion_criteria %}
+**Inclusion criteria** ({{ inclusion_criteria | length }}):
+{% for c in inclusion_criteria %}
+- {{ c }}
+{% endfor %}
+{% else %}
+No inclusion criteria defined.
+{% endif %}
+
+{% if exclusion_criteria %}
+**Exclusion criteria** ({{ exclusion_criteria | length }}):
+{% for c in exclusion_criteria %}
+- {{ c }}
+{% endfor %}
+{% else %}
+No exclusion criteria defined.
+{% endif %}
+
+### Extractions
+
+{{ "Data extractions have been completed for accepted papers." if extractions_done else "No data extractions have been completed." }}
+
+### Validity Discussion
+
+{% if validity_filled %}
+The validity section has been filled in. Dimensions present:
+{% for dim, text in validity_dimensions.items() %}
+- **{{ dim }}**: {{ "filled" if text else "empty" }}
+{% endfor %}
+{% else %}
+The validity discussion section has not been filled.
+{% endif %}
+
+---
+
+Evaluate this study snapshot against all five rubrics. Return valid JSON only.

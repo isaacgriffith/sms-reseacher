@@ -2,7 +2,7 @@
 
 **Branch**: `002-sms-workflow` | **Date**: 2026-03-10 | **Last Updated**: 2026-03-11 | **Spec**: [spec.md](./spec.md)
 **Input**: Feature specification from `/specs/002-sms-workflow/spec.md`
-**Constitution**: Aligned to v1.4.0 (Principles I–IX)
+**Constitution**: Aligned to v1.5.0 (Principles I–IX)
 
 ---
 
@@ -63,7 +63,7 @@ in the Complexity Tracking table below with justification.
 | Toolchain (VII) — FastAPI/SQLAlchemy 2.x/ARQ/LiteLLM patterns followed | PASS | async def routes, Depends() injection, Mapped[] annotations, ARQ ctx jobs, LLMClient wrapper |
 | Observability (VIII) — new models have audit fields + structlog used | PASS | All new models include created_at/updated_at; structlog used in all service layers |
 | Observability (VIII) — config via Pydantic BaseSettings + lru_cache | PASS | backend/core/config.py and agents/core/config.py follow this pattern; no new config patterns |
-| Infrastructure (VIII) — Docker services have healthchecks if added | PASS | No new Docker services introduced; existing services already have healthchecks |
+| Infrastructure (VIII) — Docker services have healthchecks if added | PASS | No new Docker services introduced; existing services already have healthchecks. NFR-004 satisfied: each service (backend, worker, db, redis, researcher-mcp) MUST have a `healthcheck:` block in `docker-compose.yml`; T134 admin dashboard reads these statuses at runtime |
 | Language (IX) — React components functional, props typed, ≤100 JSX lines | PASS | All components are function components; props interfaces required per task descriptions |
 | Language (IX) — Hooks at top level only; no inline object/function refs in dep arrays | ⚠ REVIEW | Must verify during implementation — SSE hook and wizard step effects are high-risk sites |
 | Language (IX) — No React state mutation; no array-index keys | PASS | State updates via setter only per plan; list renders use entity IDs as keys |
@@ -75,6 +75,7 @@ in the Complexity Tracking table below with justification.
 | Language (IX) — Python: no plain dict for domain data; pathlib used | PASS | All new agent outputs are Pydantic models; no dict-typed domain data in plan |
 | Language (IX) — Python: no mutable defaults; specific exception handling | PASS | No default args in new service signatures; exceptions raised as HTTPException or specific types |
 | Language (IX) — TypeScript: no any/enum/non-null(!); unknown+Zod at boundaries | ⚠ REVIEW | Zod schemas must wrap all API responses in frontend services; verify api.ts generics use unknown |
+| Code clarity (III) — all functions/methods/classes have Google-style docstrings (Python) or JSDoc (TypeScript); CLI handlers: brief description only, no Args/Returns | ⚠ REVIEW | Added in v1.5.0; verify during T159 polish pass — ruff `D` rule set enforces Python; ESLint jsdoc plugin for TypeScript |
 
 **Re-check result**: 4 gates require implementation-time verification (marked ⚠ REVIEW). No blocking violations at plan time. Add to Complexity Tracking if any ⚠ gates fail during implementation.
 
@@ -131,10 +132,10 @@ backend/
 │   │   ├── search_job.py                  # full search + snowball job
 │   │   └── extraction_job.py              # batch data extraction job
 │   └── services/
-│       ├── dedup.py                       # paper deduplication (DOI + fuzzy title)
-│       ├── export.py                      # CSV/JSON/archive export builder (FR-046: redact secrets)
+│       ├── dedup.py                       # paper deduplication: exact DOI match → fuzzy title (rapidfuzz WRatio ≥92) + author overlap (≥1 matching author surname); tie-break = earlier candidate_paper.id wins; "duplicate" tagged with duplicate_of_id pointing to the surviving record
+│       ├── export.py                      # CSV/JSON/archive export builder (FR-046: redact secrets — see export redaction note below)
 │       ├── audit.py                       # FR-044/NFR-002: AuditRecord write/query service
-│       └── visualization.py              # SVG chart generation (Altair/matplotlib)
+│       └── visualization.py              # SVG chart generation: matplotlib (frequency infographic, publications-per-year, venues, research locale, key authors) + plotly/kaleido (keyword bubble map, classification bubble charts); D3.js renders domain model in frontend
 
 db/
 └── src/db/
@@ -239,4 +240,5 @@ agent-eval/
 |------|------|--------------------------|
 | AuditRecord generic model (entity_type + entity_id + field) | Architecture | A single polymorphic audit table is simpler than per-entity audit tables at this scale; acceptable under YAGNI because a generic model covers all 20+ entity types without proliferating tables. Reviewed against SRP: audit write/query is a distinct service layer. |
 | Admin health endpoint exposes internal service state | Security design | Health endpoint MUST be access-controlled (admin role only); no sensitive config values are ever included in health response payloads (Principle VIII / FR-046). |
+| Export redaction (FR-046 / NFR-003) | Security design | `export.py` MUST use an explicit allowlist of exportable fields (defined in spec.md FR-046). Implementation: iterate `Settings.__fields__` and strip any key present in the exported payload; additionally strip `user.email`, `user.id`, and all FK-derived identifiers — replace with `display_name` strings. No auto-serialization of ORM objects; export uses hand-rolled serializers that only include allowlisted fields. |
 

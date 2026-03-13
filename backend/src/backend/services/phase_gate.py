@@ -6,12 +6,21 @@ Phase unlock rules (enforced at service layer, not DB):
   - Phase 2: pico_components non-empty
   - Phase 3: at least one SearchExecution with status=completed
   - Phase 4 & 5: at least one DataExtraction with status != pending
+
+Staleness rules (FR-008a):
+  - Phase 2 data is stale if PICO was re-saved after the last search ran.
+  - Phase 3 data is stale if a new search ran after extraction started.
 """
+
+from typing import TYPE_CHECKING
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.models.pico import PICOComponent
+
+if TYPE_CHECKING:
+    from db.models import Study
 
 
 async def get_unlocked_phases(study_id: int, db: AsyncSession) -> list[int]:
@@ -63,7 +72,6 @@ async def get_unlocked_phases(study_id: int, db: AsyncSession) -> list[int]:
 
         extraction_result = await db.execute(
             select(DataExtraction)
-            .join(DataExtraction.candidate_paper)
             .where(
                 DataExtraction.extraction_status != ExtractionStatus.PENDING,
             )
@@ -74,6 +82,37 @@ async def get_unlocked_phases(study_id: int, db: AsyncSession) -> list[int]:
         pass
 
     return unlocked
+
+
+def compute_staleness_flags(study: "Study") -> dict[str, bool]:
+    """Return a mapping of phase labels to staleness booleans.
+
+    A downstream phase is stale when an upstream edit post-dates its last
+    execution timestamp (FR-008a invalidation rules).
+
+    Rules:
+    - ``"search"`` (phase 3 input) is stale when PICO was re-saved after the
+      last search ran: ``pico_saved_at > search_run_at``.
+    - ``"extraction"`` (phase 4/5 input) is stale when a new search ran after
+      extraction started: ``search_run_at > extraction_started_at``.
+
+    Args:
+        study: The :class:`Study` ORM object with phase timestamp fields.
+
+    Returns:
+        Dict with keys ``"search"`` and ``"extraction"`` mapping to ``bool``.
+    """
+    search_stale = bool(
+        study.pico_saved_at is not None
+        and study.search_run_at is not None
+        and study.pico_saved_at > study.search_run_at
+    )
+    extraction_stale = bool(
+        study.search_run_at is not None
+        and study.extraction_started_at is not None
+        and study.search_run_at > study.extraction_started_at
+    )
+    return {"search": search_stale, "extraction": extraction_stale}
 
 
 async def compute_current_phase(study_id: int, db: AsyncSession) -> int:

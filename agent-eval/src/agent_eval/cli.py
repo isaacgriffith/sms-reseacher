@@ -5,6 +5,7 @@ from __future__ import annotations
 import typer
 
 from agent_eval.commands.compare import run_compare
+from agent_eval.commands.eval_all import run_eval_all
 from agent_eval.commands.evaluate import run_evaluate
 from agent_eval.commands.improve import run_improve
 from agent_eval.commands.report import run_report
@@ -19,6 +20,7 @@ app.command("evaluate")(run_evaluate)
 app.command("report")(run_report)
 app.command("compare")(run_compare)
 app.command("improve")(run_improve)
+app.command("eval-all")(run_eval_all)
 
 
 def version_callback(value: bool) -> None:

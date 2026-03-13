@@ -1,0 +1,30 @@
+## Study Topic
+
+{{ topic }}
+
+## Research Questions
+
+{% for rq in research_questions %}{{ loop.index }}. {{ rq }}
+{% endfor %}
+
+## Aggregated Open Codings ({{ open_codings | length }} codes across {{ paper_count }} papers)
+
+{% for coding in open_codings %}
+- **{{ coding.code }}**: {{ coding.definition }}{% if coding.evidence_quote %} — *"{{ coding.evidence_quote }}"*{% endif %}
+{% endfor %}
+
+## Aggregated Keywords
+
+{{ keywords | join(", ") }}
+
+{% if summaries %}
+## Paper Summaries ({{ summaries | length }} papers)
+
+{% for summary in summaries %}
+{{ loop.index }}. {{ summary }}
+{% endfor %}
+{% endif %}
+
+---
+
+Based on the open codings, keywords, and summaries above, build a domain model of the concepts and relationships present across this body of literature. Return valid JSON only.

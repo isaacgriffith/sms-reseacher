@@ -1,5 +1,5 @@
 [project]
-name = "sms-db"
+name = "db"
 version = "0.1.0"
 description = "SQLAlchemy models and Alembic migrations for SMS Researcher"
 requires-python = ">=3.14"

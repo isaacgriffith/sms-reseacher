@@ -24,6 +24,7 @@ interface Decision {
   reasons: Array<{ criterion_id?: number; criterion_type?: string; text: string }> | null;
   is_override: boolean;
   overrides_decision_id: number | null;
+  decided_at: string | null;
 }
 
 interface PaperCardProps {
@@ -167,7 +168,7 @@ export default function PaperCard({
       {decisions.length > 0 && (
         <div style={{ padding: '0.75rem 1rem', borderBottom: conflictFlag ? '1px solid #fbbf24' : undefined }}>
           <h5 style={{ margin: '0 0 0.625rem', fontSize: '0.8125rem', color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            Decision History
+            Audit Trail
           </h5>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             {decisions.map((d) => (
@@ -198,6 +199,13 @@ export default function PaperCard({
 
 function DecisionEntry({ decision }: { decision: Decision }) {
   const color = DECISION_COLORS[decision.decision] ?? '#6b7280';
+  const timestamp = decision.decided_at
+    ? new Date(decision.decided_at).toLocaleString(undefined, {
+        dateStyle: 'short',
+        timeStyle: 'short',
+      })
+    : null;
+
   return (
     <div style={{ display: 'flex', gap: '0.625rem', alignItems: 'flex-start' }}>
       <span
@@ -211,20 +219,30 @@ function DecisionEntry({ decision }: { decision: Decision }) {
         }}
       />
       <div style={{ flex: 1 }}>
-        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
           <span
             style={{ fontSize: '0.8125rem', fontWeight: 600, color, textTransform: 'capitalize' }}
           >
             {decision.decision}
           </span>
           {decision.is_override && (
-            <span style={{ fontSize: '0.6875rem', color: '#6b7280', fontStyle: 'italic' }}>
-              (override)
+            <span style={{ fontSize: '0.6875rem', color: '#b45309', fontStyle: 'italic', background: '#fef3c7', padding: '0.0625rem 0.3rem', borderRadius: '0.25rem' }}>
+              override
+            </span>
+          )}
+          {decision.overrides_decision_id != null && (
+            <span style={{ fontSize: '0.6875rem', color: '#6b7280' }}>
+              ↳ overrides #{decision.overrides_decision_id}
             </span>
           )}
           <span style={{ fontSize: '0.75rem', color: '#9ca3af' }}>
             Reviewer #{decision.reviewer_id}
           </span>
+          {timestamp && (
+            <span style={{ fontSize: '0.6875rem', color: '#9ca3af', marginLeft: 'auto' }}>
+              {timestamp}
+            </span>
+          )}
         </div>
         {decision.reasons && decision.reasons.length > 0 && (
           <ul style={{ margin: '0.25rem 0 0', paddingLeft: '1rem' }}>

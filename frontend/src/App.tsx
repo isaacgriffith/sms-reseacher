@@ -5,6 +5,7 @@ import AppShell from './components/layout/AppShell';
 import GroupsPage from './components/groups/GroupsPage';
 import StudiesPage from './pages/StudiesPage';
 import StudyPage from './pages/StudyPage';
+import AdminPage from './pages/AdminPage';
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const token = useAuthStore((s) => s.token);
@@ -28,6 +29,7 @@ function App() {
         <Route path="groups" element={<GroupsPage />} />
         <Route path="groups/:groupId/studies" element={<StudiesPage />} />
         <Route path="studies/:studyId" element={<StudyPage />} />
+        <Route path="admin" element={<AdminPage />} />
       </Route>
     </Routes>
   );

@@ -15,7 +15,12 @@ class JobType(str, enum.Enum):
     FULL_SEARCH = "full_search"
     SNOWBALL_SEARCH = "snowball_search"
     BATCH_EXTRACTION = "batch_extraction"
+    GENERATE_RESULTS = "generate_results"
+    EXPORT = "export"
     QUALITY_EVAL = "quality_eval"
+    VALIDITY_PREFILL = "validity_prefill"
+    EXPERT_SEED = "expert_seed"
+    TEST_SEARCH = "test_search"
 
 
 class JobStatus(str, enum.Enum):
@@ -55,6 +60,12 @@ class BackgroundJob(Base):
     )
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
 
     def __repr__(self) -> str:
         """Return a debug representation."""

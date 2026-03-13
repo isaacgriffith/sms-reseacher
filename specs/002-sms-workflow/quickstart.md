@@ -41,8 +41,8 @@ ACCESS_TOKEN_EXPIRE_MINUTES=480
 LLM_API_KEY=<openai-key or ollama endpoint>
 LLM_MODEL=gpt-4o  # or ollama/llama3.2 for local
 
-# researcher-mcp
-RESEARCHER_MCP_URL=http://localhost:8002
+# researcher-mcp (SSE endpoint)
+RESEARCHER_MCP_URL=http://localhost:8002/sse
 SCIHUB_ENABLED=false  # opt-in only; ensure legal compliance
 ```
 
@@ -113,8 +113,11 @@ cd agents && uv run pytest
 # Frontend
 cd frontend && npm test
 
-# Agent evals
-cd agent-eval && uv run agent-eval run --all
+# Agent evals (all pipelines — stub mode, no LLM credentials required)
+cd agent-eval && uv run agent-eval eval-all
+
+# Agent evals (live mode — requires LLM credentials)
+cd agent-eval && uv run agent-eval eval-all --run-agent
 ```
 
 ---

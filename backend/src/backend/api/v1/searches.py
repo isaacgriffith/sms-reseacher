@@ -1,16 +1,18 @@
 """Search execution endpoints: trigger full search and retrieve executions."""
 
+from datetime import UTC, datetime
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.core.auth import CurrentUser, get_current_user
+from backend.core.auth import CurrentUser, get_current_user, require_study_member
 from backend.core.config import get_logger
 from backend.core.database import get_db
+from db.models import Study
 from db.models.search import SearchString
 from db.models.search_exec import SearchExecution, SearchExecutionStatus
-from db.models.study import StudyMember
 
 router = APIRouter(tags=["searches"])
 logger = get_logger(__name__)
@@ -35,19 +37,6 @@ class SearchExecutionResponse(BaseModel):
     job_id: str | None
 
 
-async def _require_study_member(
-    study_id: int, current_user: CurrentUser, db: AsyncSession
-) -> None:
-    result = await db.execute(
-        select(StudyMember).where(
-            StudyMember.study_id == study_id,
-            StudyMember.user_id == current_user.user_id,
-        )
-    )
-    if result.scalar_one_or_none() is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Study not found")
-
-
 @router.post(
     "/studies/{study_id}/searches",
     response_model=dict,
@@ -65,7 +54,7 @@ async def start_full_search(
     Requires an active search string. Creates a BackgroundJob record and
     returns ``{job_id, search_execution_id}``.
     """
-    await _require_study_member(study_id, current_user, db)
+    await require_study_member(study_id, current_user, db)
 
     # Find the active search string
     ss_result = await db.execute(
@@ -119,6 +108,12 @@ async def start_full_search(
 
     search_exec.job_id = job_id
 
+    # Stamp search_run_at on the study for staleness tracking
+    study_result = await db.execute(select(Study).where(Study.id == study_id))
+    study = study_result.scalar_one_or_none()
+    if study is not None:
+        study.search_run_at = datetime.now(UTC)
+
     # Create BackgroundJob record
     from db.models.jobs import BackgroundJob, JobStatus, JobType
     import uuid
@@ -148,7 +143,7 @@ async def list_searches(
     db: AsyncSession = Depends(get_db),
 ) -> list[SearchExecutionResponse]:
     """Return all search executions for a study, newest first."""
-    await _require_study_member(study_id, current_user, db)
+    await require_study_member(study_id, current_user, db)
 
     result = await db.execute(
         select(SearchExecution)

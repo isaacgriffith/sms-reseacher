@@ -64,6 +64,7 @@ in the Complexity Tracking table below with justification.
 | Language (IX) — Python: no mutable defaults; specific exception handling | | |
 | Language (IX) — TypeScript: no any/enum/non-null(!) without justification | | |
 | Language (IX) — TypeScript: unknown + Zod at all external boundaries | | |
+| Code clarity — all functions/methods/classes have doc comments (Google-style / JSDoc); CLI handlers: brief description only, no Args/Returns | | |
 
 ## Project Structure
 

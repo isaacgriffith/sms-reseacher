@@ -11,7 +11,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.core.auth import CurrentUser, get_current_user
 from backend.core.config import get_logger
 from backend.core.database import get_db
-from backend.services.phase_gate import get_unlocked_phases
+from backend.services import audit as audit_svc
+from backend.services.phase_gate import compute_staleness_flags, get_unlocked_phases
+from db.models.audit import AuditAction
 from db.models import Study, StudyStatus, StudyType  # package __init__ exports these
 from db.models.study import Reviewer, ReviewerType, StudyMember, StudyMemberRole
 from db.models.users import GroupMembership, ResearchGroup
@@ -85,6 +87,7 @@ class StudyDetail(BaseModel):
     research_questions: list[str]
     snowball_threshold: int
     unlocked_phases: list[int]
+    stale_phases: dict[str, bool]
     created_at: str
     updated_at: str
 
@@ -271,6 +274,7 @@ async def create_study(
         research_questions=meta.get("research_questions", []),
         snowball_threshold=study.snowball_threshold,
         unlocked_phases=[1],
+        stale_phases=compute_staleness_flags(study),
         created_at=study.created_at.isoformat(),
         updated_at=study.updated_at.isoformat(),
     )
@@ -312,6 +316,7 @@ async def get_study(
         research_questions=meta.get("research_questions", []),
         snowball_threshold=study.snowball_threshold,
         unlocked_phases=unlocked,
+        stale_phases=compute_staleness_flags(study),
         created_at=study.created_at.isoformat(),
         updated_at=study.updated_at.isoformat(),
     )
@@ -357,6 +362,17 @@ async def patch_study(
     if body.research_objectives is not None or body.research_questions is not None:
         study.metadata_ = meta
 
+    await db.flush()
+    await audit_svc.record(
+        db,
+        study_id=study_id,
+        actor_user_id=current_user.user_id,
+        actor_agent=None,
+        entity_type="Study",
+        entity_id=study_id,
+        action=AuditAction.UPDATE,
+        after_value=body.model_dump(exclude_none=True),
+    )
     await db.commit()
 
     unlocked = await get_unlocked_phases(study_id, db)
@@ -372,6 +388,7 @@ async def patch_study(
         research_questions=meta.get("research_questions", []),
         snowball_threshold=study.snowball_threshold,
         unlocked_phases=unlocked,
+        stale_phases=compute_staleness_flags(study),
         created_at=study.created_at.isoformat(),
         updated_at=study.updated_at.isoformat(),
     )

@@ -11,6 +11,9 @@ from db.models.search import SearchString, SearchStringIteration
 from db.models.search_exec import SearchExecution, SearchMetrics
 from db.models.candidate import CandidatePaper, CandidatePaperStatus, PaperDecision, PaperDecisionType
 from db.models.jobs import BackgroundJob, JobStatus, JobType
+from db.models.audit import AuditAction, AuditRecord
+from db.models.extraction import DataExtraction, ExtractionFieldAudit, ExtractionStatus, ResearchType
+from db.models.results import ChartType, ClassificationScheme, DomainModel, QualityReport
 
 __all__ = [
     "Base",
@@ -42,4 +45,14 @@ __all__ = [
     "BackgroundJob",
     "JobStatus",
     "JobType",
+    "AuditRecord",
+    "AuditAction",
+    "DataExtraction",
+    "ExtractionFieldAudit",
+    "ExtractionStatus",
+    "ResearchType",
+    "DomainModel",
+    "ClassificationScheme",
+    "ChartType",
+    "QualityReport",
 ]

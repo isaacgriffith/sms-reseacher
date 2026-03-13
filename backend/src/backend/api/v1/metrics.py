@@ -1,15 +1,14 @@
 """Search metrics aggregation endpoint."""
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.core.auth import CurrentUser, get_current_user
+from backend.core.auth import CurrentUser, get_current_user, require_study_member
 from backend.core.config import get_logger
 from backend.core.database import get_db
 from db.models.search_exec import SearchExecution, SearchMetrics
-from db.models.study import StudyMember
 
 router = APIRouter(tags=["metrics"])
 logger = get_logger(__name__)
@@ -34,19 +33,6 @@ class StudyMetricsResponse(BaseModel):
     totals: PhaseMetrics
 
 
-async def _require_study_member(
-    study_id: int, current_user: CurrentUser, db: AsyncSession
-) -> None:
-    result = await db.execute(
-        select(StudyMember).where(
-            StudyMember.study_id == study_id,
-            StudyMember.user_id == current_user.user_id,
-        )
-    )
-    if result.scalar_one_or_none() is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Study not found")
-
-
 @router.get(
     "/studies/{study_id}/metrics",
     response_model=StudyMetricsResponse,
@@ -58,7 +44,7 @@ async def get_study_metrics(
     db: AsyncSession = Depends(get_db),
 ) -> StudyMetricsResponse:
     """Return per-phase and total search metrics for a study."""
-    await _require_study_member(study_id, current_user, db)
+    await require_study_member(study_id, current_user, db)
 
     executions_result = await db.execute(
         select(SearchExecution)
