@@ -1,0 +1,4 @@
+# file: /home/isaacg/git/sms-reseacher/agents/src/agents/core/llm_client.py
+# hypothesis_version: 6.151.9
+
+[0.0, 2048, 'api_base', 'max_tokens', 'messages', 'model', 'ollama', 'temperature', 'tools']

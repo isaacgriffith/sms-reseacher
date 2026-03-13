@@ -1,0 +1,4 @@
+# file: /home/isaacg/git/sms-reseacher/agents/src/agents/services/extractor.py
+# hypothesis_version: 6.151.9
+
+[4096, '\\{.*\\}', '```', '```(?:json)?\\s*', 'author_details', 'authors', 'doi', 'evaluation', 'extractor', 'keywords', 'open_codings', 'opinion', 'other', 'paper_text', 'personal_experience', 'philosophical', 'question_data', 'research_questions', 'research_type', 'solution_proposal', 'summary', 'title', 'unknown', 'validation', 'venue', 'venue_name', 'venue_type', 'year']

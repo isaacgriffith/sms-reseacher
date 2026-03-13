@@ -1,0 +1,4 @@
+# file: /home/isaacg/git/sms-reseacher/agents/src/agents/core/config.py
+# hypothesis_version: 6.151.9
+
+['.env', 'anthropic', 'claude-sonnet-4-6', 'ignore', 'ollama', 'utf-8']

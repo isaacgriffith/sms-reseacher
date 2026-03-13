@@ -1,0 +1,4 @@
+# file: /home/isaacg/git/sms-reseacher/agents/src/agents/services/domain_modeler.py
+# hypothesis_version: 6.151.9
+
+[4096, '\\{.*\\}', '```', '```(?:json)?\\s*', 'concepts', 'domain_modeler', 'from', 'keywords', 'label', 'open_codings', 'other', 'paper_count', 'populate_by_name', 'relationships', 'research_questions', 'summaries', 'to', 'topic', 'type']
