@@ -132,10 +132,9 @@ export default function PaperQueue({ studyId }: PaperQueueProps) {
 
       {!isLoading && papers.length === 0 && (
         <p style={{ color: '#9ca3af', fontSize: '0.875rem' }}>
-          No candidate papers found.{' '}
           {statusFilter || phaseFilter
-            ? 'Try adjusting your filters.'
-            : 'Run a full search to populate the paper queue.'}
+            ? 'No papers match the current filters.'
+            : 'No papers in queue. Run a full search to populate the paper queue.'}
         </p>
       )}
 

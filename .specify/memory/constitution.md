@@ -1,6 +1,84 @@
 <!--
 SYNC IMPACT REPORT
 ==================
+Version change: 1.6.0 → 1.6.1
+Bump rationale: PATCH — e2e tooling canonised: Playwright (TypeScript) is the approved
+  full-stack e2e tool; Cypress superseded. CI provisioning requirement added.
+
+Modified sections:
+  - VI. Testing Discipline — UI/UX Testing: Playwright named as approved e2e tool;
+    Cypress superseded; full-stack e2e requirement and CI services provisioning added.
+
+Templates updated:
+  ⚠ .specify/templates/ — no template changes required
+
+Deferred TODOs: none
+-->
+
+<!--
+SYNC IMPACT REPORT
+==================
+Version change: 1.5.2 → 1.6.0
+Bump rationale: MINOR — new mandatory principle added (Development Workflow step 9 and
+  Code Quality Standards table row): all features MUST update CLAUDE.md, root README.md,
+  affected subproject README.md(s), root CHANGELOG.md, and affected subproject
+  CHANGELOG.md(s) before the feature branch is merged.
+
+Added sections:
+  - Development Workflow step 9: Feature Completion Documentation
+  - Code Quality Standards table: new "Feature completion docs" row
+
+Templates updated:
+  ✅ .specify/templates/tasks-template.md — Phase N+1 "Feature Completion Documentation"
+     block added with TDOC1–TDOC5 tasks
+  ✅ .specify/templates/plan-template.md — Constitution Check table: new gate row added
+  ⚠ .specify/templates/spec-template.md — no changes required (generic enough)
+
+Deferred TODOs: none
+-->
+
+<!--
+SYNC IMPACT REPORT
+==================
+Version change: 1.5.1 → 1.5.2
+Bump rationale: PATCH — mutation testing CI cadence codified for both `cosmic-ray`
+  (Python) and `stryker` (TypeScript): manually-triggered `workflow_dispatch` workflows
+  plus automatic trigger at end of every speckit feature implementation. Per-PR execution
+  explicitly prohibited.
+
+Modified sections:
+  - VI. Testing Discipline — Mutation Testing: cadence rule added for both tools.
+  - Development Workflow step 6: clarified mutation score gate references manual/speckit
+    workflow, not per-commit.
+
+Templates updated:
+  ⚠ .specify/templates/ — no template changes required
+
+Deferred TODOs: none
+-->
+
+<!--
+SYNC IMPACT REPORT
+==================
+Version change: 1.5.0 → 1.5.1
+Bump rationale: PATCH — mutation testing tool clarified: `cosmic-ray` replaces `mutmut`
+  as the standard Python mutation testing tool (Principle VII Python Toolchain and
+  Code Quality Standards table).
+
+Modified sections:
+  - VII. Technology Stack & Tooling Standards — Python Toolchain: mutation testing
+    tool updated from `mutmut` to `cosmic-ray`.
+  - Code Quality Standards table: Mutation score row updated (mutmut → cosmic-ray).
+
+Templates updated:
+  ⚠ .specify/templates/ — no template changes required
+
+Deferred TODOs: none
+-->
+
+<!--
+SYNC IMPACT REPORT
+==================
 Version change: 1.4.0 → 1.5.0
 Bump rationale: MINOR — new mandatory documentation rule added (Principle III and
   Principle IX): all functions, methods, and classes MUST include Google-style (Python)
@@ -157,17 +235,24 @@ task list.
 #### UI/UX Testing
 
 - All frontend components and user-facing flows MUST be covered by automated UI/UX tests.
-  Acceptable tooling includes Playwright, Cypress, or React Testing Library (component level).
-- Tests MUST verify: correct rendering of state, user interaction flows (click, input, submit),
-  error states, loading states, and accessibility where applicable.
-- UI tests MUST be run in CI on every PR targeting the `main` branch.
+  **Playwright** (TypeScript) is the approved e2e tool for full-stack browser and API tests.
+  React Testing Library is approved for component-level tests. Cypress is superseded.
+- E2e tests MUST exercise the full stack (frontend → backend → db) for each primary user
+  journey. Component tests MUST verify: correct rendering of state, user interaction flows
+  (click, input, submit), error states, and loading states.
+- E2e tests (`npx playwright test`) MUST be run in CI on every PR targeting `main`, with
+  all required services provisioned via GitHub Actions `services:` containers.
 
 #### Mutation Testing
 
 - All test suites MUST be validated for quality using mutation testing. The minimum acceptable
   mutation score is **85% mutants killed**.
-- Python code MUST use `mutmut` or `cosmic-ray` for mutation analysis.
+- Python code MUST use `cosmic-ray` for mutation analysis. (`mutmut` is superseded.)
 - TypeScript code MUST use `stryker` for mutation analysis.
+- Mutation testing MUST NOT run automatically on every PR (runtime cost). Both `cosmic-ray`
+  (Python) and `stryker` (TypeScript) MUST each be exposed as a **manually-triggered**
+  GitHub Actions workflow (`workflow_dispatch`) AND MUST be triggered automatically at the
+  completion of every speckit feature implementation (`/speckit.implement` final step).
 - Mutation scores MUST be recorded in the PR description. Scores below 85% require explicit
   remediation tasks to improve test assertions before merge.
 
@@ -228,7 +313,7 @@ without amending this document is a blocking violation.
   Python source directory. Dockerfile linting via `hadolint` MUST also be registered.
 - **Testing framework**: `pytest` with `asyncio_mode = "auto"` is the standard. All async
   tests MUST be written with `async def` and rely on the automatic asyncio event loop.
-- **Mutation testing**: `mutmut` on `src/` against `tests/` is the standard tool.
+- **Mutation testing**: `cosmic-ray` on `src/` against `tests/` is the standard tool. `mutmut` is superseded.
 
 #### TypeScript/Frontend Toolchain
 
@@ -571,7 +656,7 @@ The following gates apply at specification, planning, and implementation time:
 | Unit test coverage | MUST be ≥ 85% line/branch coverage per module |
 | Integration test coverage | MUST be ≥ 85% coverage across integrated paths |
 | UI/UX test coverage | MUST cover all user-facing flows and component states |
-| Mutation score | MUST be ≥ 85% mutants killed (mutmut / stryker) |
+| Mutation score | MUST be ≥ 85% mutants killed (cosmic-ray / stryker) |
 | Agent metamorphic tests | MUST be present in agents/tests/metamorphic/ for every agent |
 | Agent deepeval pipeline | MUST exist in agent-eval/ for every agent at creation time |
 | Ruff (Python) | MUST pass with line-length 100; no D203/D213; zero violations |
@@ -583,6 +668,7 @@ The following gates apply at specification, planning, and implementation time:
 | Logging | MUST use structlog; no print() in production paths |
 | Docker health checks | Every compose service MUST have a healthcheck block |
 | Documentation | All functions/methods MUST have Google-style (Python) or JSDoc (TS) doc comments; CLI handlers: brief command description only — no Args/Returns/params |
+| Feature completion docs | `CLAUDE.md`, root `README.md`, affected subproject `README.md`s, root `CHANGELOG.md`, and affected subproject `CHANGELOG.md`s MUST all be updated before merge |
 | React components | MUST be functional; MUST have named props interface; MUST be ≤ 100 JSX lines |
 | React hooks | MUST follow Rules of Hooks (top-level only); complete dep arrays; no inline refs in deps |
 | React state | MUST be treated as immutable; >3 related useState → useReducer |
@@ -630,7 +716,8 @@ The following workflow MUST be followed for every task in the implementation pla
      in `.pre-commit-config.yaml`) MUST exit clean with zero violations.
    - Type checker (mypy / tsc) MUST report no errors.
    - Full test suite MUST pass with coverage ≥ 85%.
-   - Mutation score MUST be ≥ 85% on changed modules.
+   - Mutation score MUST be ≥ 85% on changed modules (verified via the manually-triggered
+     or speckit end-of-feature mutation workflow, not per-commit).
    Pre-commit checks are non-negotiable gates — bypassing them with `--no-verify` is
    forbidden except in an emergency, and ANY such bypass MUST be documented in the PR with
    a follow-up remediation task.
@@ -645,6 +732,24 @@ The following workflow MUST be followed for every task in the implementation pla
    duplicates an already-approved tool (e.g., a second HTTP client, a second form library),
    the new dependency MUST NOT be merged without a constitution amendment approving the
    substitution or co-existence.
+
+9. **Feature completion documentation**: When a feature is marked complete (all tasks done,
+   quality gates passed), the following documentation MUST be updated before the feature
+   branch is merged:
+   - **`CLAUDE.md`** (repository root): MUST reflect any new commands, tools, workflows,
+     environment setup steps, or operational procedures introduced by the feature.
+   - **`README.md`** (repository root): MUST reflect any user-facing changes to the
+     project's purpose, capabilities, usage, or architecture.
+   - **Subproject `README.md`**: Any subproject directory (`backend/`, `agents/`, `db/`,
+     `frontend/`, `researcher-mcp/`, etc.) whose source code was modified MUST have its
+     own `README.md` updated to reflect those changes.
+   - **`CHANGELOG.md`** (repository root): MUST receive a new entry under the current
+     version/date recording what was added, changed, fixed, or removed by the feature.
+   - **Subproject `CHANGELOG.md`**: Any subproject whose source code was modified MUST
+     have its own `CHANGELOG.md` updated with the same level of detail.
+   These documentation tasks MUST appear as explicit tasks in the feature's `tasks.md`
+   and MUST be completed before the feature task is marked done. Omitting or deferring
+   documentation updates is a blocking violation.
 
 ## Governance
 
@@ -676,4 +781,4 @@ and AI coding agents operating within this repository.
 - Language-specific gates (Principle IX) MUST be checked during code review for all React,
   Python, and TypeScript code changes.
 
-**Version**: 1.5.0 | **Ratified**: 2026-03-11 | **Last Amended**: 2026-03-12
+**Version**: 1.6.1 | **Ratified**: 2026-03-11 | **Last Amended**: 2026-03-15

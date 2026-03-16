@@ -123,7 +123,7 @@ export default function ResultsPage() {
         )}
         {activeTab === 'domain_model' && !domainModel && !isLoading && (
           <div style={emptyStyle}>
-            Domain model not generated yet. Click <strong>Generate Results</strong> above.
+            No domain model available yet. Click <strong>Generate Results</strong> above.
           </div>
         )}
 

@@ -44,6 +44,7 @@ dev = [
     "pytest-asyncio>=0.23",
     "pytest-cov>=5",
     "anyio[trio]>=4",
+    "cosmic-ray>=8.3",
 ]
 
 [tool.ruff]
@@ -65,6 +66,6 @@ addopts = "--cov=src/backend --cov-report=term-missing --cov-fail-under=85"
 branch = true
 source = ["src/backend"]
 
-[tool.mutmut]
-paths_to_mutate = "src/"
-tests_dir = "tests/"
+[tool.cosmic-ray]
+module-path = "src/backend"
+timeout = 30.0

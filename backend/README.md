@@ -14,8 +14,15 @@ uv run --package sms-backend uvicorn backend.main:app --reload --port 8000
 # Run tests
 uv run --package sms-backend pytest backend/tests/
 
+# Run tests with coverage (minimum 85% line coverage required)
+uv run --package sms-backend pytest backend/tests/ --cov=backend --cov-report=term-missing
+
+# Mutation testing (run via GitHub Actions workflow_dispatch, or locally)
+uv run cosmic-ray run backend/cosmic-ray.toml
+
 # Lint and type-check
 uv run ruff check backend/src
+uv run ruff format --check backend/src
 uv run mypy backend/src
 ```
 
@@ -35,7 +42,17 @@ uv run mypy backend/src
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `GET` | `/api/v1/health` | Health check — returns `{"status": "ok", "version": "0.1.0"}` |
+| `GET` | `/api/v1/health` | Health check |
+| Various | `/api/v1/studies/*` | Study CRUD and status transitions |
+| Various | `/api/v1/papers/*` | Paper management and search |
+| Various | `/api/v1/criteria/*` | Inclusion/exclusion criteria |
+| Various | `/api/v1/pico/*` | PICO element management |
+| Various | `/api/v1/search-strings/*` | Search string generation and versioning |
+| Various | `/api/v1/quality/*` | Quality assessment criteria and scoring |
+| Various | `/api/v1/results/*` | Result aggregation and export |
+| Various | `/api/v1/jobs/*` | Background job status |
+
+Full interactive API documentation is available at `http://localhost:8000/docs` when the server is running.
 
 ## Project Structure
 
@@ -49,12 +66,15 @@ backend/
 │   │   ├── config.py       # pydantic-settings Settings class
 │   │   ├── auth.py         # JWT bearer-token middleware stub
 │   │   └── logging.py      # structlog request-scoped middleware
-│   └── api/v1/
-│       ├── router.py       # APIRouter mounted at /api/v1
-│       └── health.py       # GET /api/v1/health
+│   ├── api/v1/
+│   │   ├── router.py       # APIRouter mounted at /api/v1
+│   │   ├── health.py       # GET /api/v1/health
+│   │   └── [domain].py     # studies, papers, criteria, pico, search_strings, quality, results, jobs
+│   ├── services/           # Business logic layer
+│   └── jobs/               # ARQ background job definitions
 └── tests/
-    ├── unit/test_health.py
-    └── integration/test_db_import.py
+    ├── unit/
+    └── integration/
 ```
 
 See [quickstart.md](../specs/001-repo-setup/quickstart.md) for full onboarding instructions.

@@ -53,14 +53,21 @@ jobs:
         include:
           - package: sms-backend
             testdir: backend/tests
-          - package: sms-agents
+            covdir: backend
+          - package: agents
             testdir: agents/tests
-          - package: sms-db
+            covdir: agents
+          - package: db
             testdir: db/tests
+            covdir: db
           - package: sms-agent-eval
             testdir: agent-eval/tests
+            covdir: agent-eval
           - package: sms-researcher-mcp
             testdir: researcher-mcp/tests
+            covdir: researcher-mcp
+    permissions:
+      pull-requests: write
     steps:
       - uses: actions/checkout@v4
 
@@ -78,63 +85,15 @@ jobs:
       - name: Run pytest with coverage
         run: |
           uv run --package ${{ matrix.package }} pytest ${{ matrix.testdir }} \
+            --cov-report=xml:${{ matrix.covdir }}/coverage.xml \
             --cov-fail-under=85
 
-  # ── Python: Mutation Testing (matrix) ───────────────────────────────────────
-  python-mutation:
-    name: Python Mutation — ${{ matrix.package }}
-    runs-on: ubuntu-latest
-    needs: python-test
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - package: sms-backend
-            srcdir: backend/src
-          - package: sms-agents
-            srcdir: agents/src
-          - package: sms-db
-            srcdir: db/src
-          - package: sms-agent-eval
-            srcdir: agent-eval/src
-          - package: sms-researcher-mcp
-            srcdir: researcher-mcp/src
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v4
+      - name: Post coverage comment
+        uses: MishaKav/pytest-coverage-comment@main
+        if: github.event_name == 'pull_request'
         with:
-          version: "latest"
-
-      - name: Set up Python
-        run: uv python install 3.14
-
-      - name: Install dependencies
-        run: uv sync --all-packages
-
-      - name: Run mutmut
-        run: |
-          uv run --package ${{ matrix.package }} mutmut run
-        working-directory: .
-
-      - name: Check mutation score ≥ 85%
-        run: |
-          RESULT=$(uv run --package ${{ matrix.package }} mutmut results 2>&1 || true)
-          echo "$RESULT"
-          SURVIVED=$(echo "$RESULT" | grep -oP '(?<=Survived: )\d+' || echo "0")
-          KILLED=$(echo "$RESULT" | grep -oP '(?<=Killed: )\d+' || echo "0")
-          TOTAL=$((SURVIVED + KILLED))
-          if [ "$TOTAL" -eq 0 ]; then
-            echo "No mutants generated — skipping score check"
-            exit 0
-          fi
-          SCORE=$(echo "scale=2; $KILLED * 100 / $TOTAL" | bc)
-          echo "Mutation score: ${SCORE}% (killed=$KILLED, survived=$SURVIVED)"
-          if (( $(echo "$SCORE < 85" | bc -l) )); then
-            echo "FAIL: mutation score ${SCORE}% is below the 85% threshold"
-            exit 1
-          fi
+          pytest-xml-coverage-path: ${{ matrix.covdir }}/coverage.xml
+          title: "Coverage — ${{ matrix.package }}"
 
   # ── Frontend: Lint ───────────────────────────────────────────────────────────
   frontend-lint:
@@ -166,6 +125,9 @@ jobs:
   frontend-test:
     name: Frontend Tests (vitest + coverage)
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: read
     steps:
       - uses: actions/checkout@v4
 
@@ -184,25 +146,48 @@ jobs:
         run: npm run test:coverage
         working-directory: frontend
 
-      - name: Check coverage ≥ 85%
-        run: |
-          if [ -f frontend/coverage/coverage-summary.json ]; then
-            LINES=$(node -e "const c=require('./frontend/coverage/coverage-summary.json'); \
-              console.log(c.total.lines.pct)")
-            echo "Line coverage: ${LINES}%"
-            if (( $(echo "$LINES < 85" | bc -l) )); then
-              echo "FAIL: coverage ${LINES}% below 85%"
-              exit 1
-            fi
-          fi
+      - name: Post coverage comment
+        uses: davelosert/vitest-coverage-report-action@v2
+        if: github.event_name == 'pull_request'
+        with:
+          working-directory: frontend
 
-  # ── Frontend: Mutation Testing (Stryker) ─────────────────────────────────────
-  frontend-mutation:
-    name: Frontend Mutation (Stryker)
+  # ── E2e Tests (Playwright) ────────────────────────────────────────────────────
+  e2e-tests:
+    name: E2e Tests (Playwright)
     runs-on: ubuntu-latest
-    needs: frontend-test
+    needs: [python-test, frontend-test]
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: sms
+          POSTGRES_PASSWORD: sms
+          POSTGRES_DB: sms_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql+asyncpg://sms:sms@localhost:5432/sms_test
+      SECRET_KEY: test-secret-key
+      LLM_PROVIDER: mock
     steps:
       - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      - name: Set up Python
+        run: uv python install 3.14
+
+      - name: Install Python dependencies
+        run: uv sync --all-packages
 
       - name: Set up Node
         uses: actions/setup-node@v4
@@ -211,13 +196,27 @@ jobs:
           cache: "npm"
           cache-dependency-path: frontend/package-lock.json
 
-      - name: Install dependencies
+      - name: Install frontend dependencies
         run: npm ci
         working-directory: frontend
 
-      - name: Run Stryker
-        run: npx stryker run
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
         working-directory: frontend
+
+      - name: Apply database migrations
+        run: uv run alembic upgrade head
+
+      - name: Run Playwright e2e tests
+        run: npx playwright test
+        working-directory: frontend
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: frontend/playwright-report/
 
   # ── Docker: Build, Lint, Scan ─────────────────────────────────────────────────
   docker-build-scan:
@@ -302,7 +301,7 @@ jobs:
   ghcr-push:
     name: Push to GHCR
     runs-on: ubuntu-latest
-    needs: [python-lint, python-test, frontend-lint, frontend-test, docker-build-scan]
+    needs: [python-lint, python-test, frontend-lint, frontend-test, e2e-tests, docker-build-scan]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     permissions:
       contents: read

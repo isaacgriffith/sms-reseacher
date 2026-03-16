@@ -60,10 +60,33 @@ interface AuthState {
   clearSession: () => void;
 }
 
+// Cached snapshot — returned by reference so useSyncExternalStore can use
+// Object.is() equality checks without triggering spurious re-renders.
+let _snapshot: AuthState = {
+  token: null,
+  user: null,
+  setSession,
+  clearSession,
+};
+
+function getAuthSnapshot(): AuthState {
+  const token = localStorage.getItem(TOKEN_KEY);
+  const userRaw = localStorage.getItem(USER_KEY);
+  const tokenChanged = token !== _snapshot.token;
+  const userChanged = userRaw !== (_snapshot.user ? JSON.stringify(_snapshot.user) : null);
+  if (!tokenChanged && !userChanged) return _snapshot;
+  let user: AuthUser | null = null;
+  if (userRaw) {
+    try { user = JSON.parse(userRaw) as AuthUser; } catch { /* ignore */ }
+  }
+  _snapshot = { token, user, setSession, clearSession };
+  return _snapshot;
+}
+
 export function useAuthStore<T>(selector: (state: AuthState) => T): T {
   return useSyncExternalStore(
     subscribe,
-    () => selector({ token: getToken(), user: getCurrentUser(), setSession, clearSession }),
+    () => selector(getAuthSnapshot()),
     () => selector({ token: null, user: null, setSession, clearSession }),
   );
 }

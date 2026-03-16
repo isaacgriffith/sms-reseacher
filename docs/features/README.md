@@ -9,7 +9,8 @@ This directory contains high-level feature documents (PRDs) for all planned work
 | [003](./003-slr-workflow.md) | Systematic Literature Review (SLR) Workflow | Planned | 002 |
 | [004](./004-rapid-review-workflow.md) | Rapid Review Workflow | Planned | 002 |
 | [005](./005-tertiary-studies-workflow.md) | Tertiary Studies Workflow | Planned | 002, 003 |
-| [006](./006-project-setup-improvements.md) | Project Setup & Quality Improvements | Planned | 001, 002 |
+| 
+[006](./006-project-setup-improvements.md) | Project Setup & Quality Improvements | Planned | 001, 002 |
 | [007](./007-frontend-improvements.md) | Frontend Improvements (MUI, 2FA, Swagger) | Planned | 001, 002 |
 | [008](./008-models-and-agents.md) | Models & Agents Management | Planned | 001, 002 |
 | [009](./009-research-protocol-definition.md) | Research Protocol Definition | Planned | 002, 003, 004 |

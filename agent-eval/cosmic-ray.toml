@@ -1,0 +1,8 @@
+[cosmic-ray]
+module-path = "agent-eval/src/agent_eval"
+timeout = 30.0
+excluded-modules = []
+test-command = "uv run --package sms-agent-eval pytest agent-eval/tests/unit -x -q"
+
+[cosmic-ray.distributor]
+name = "local"

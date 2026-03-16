@@ -168,6 +168,19 @@ describe('useJobProgress', () => {
     expect(url).not.toContain('token=');
   });
 
+  it('EventSource URL is exactly the base path when no token is stored', () => {
+    renderHook(() => useJobProgress('job-url-clean'));
+    const url: string = MockEventSourceClass.mock.calls.at(-1)?.[0] ?? '';
+    expect(url).toBe('/api/v1/jobs/job-url-clean/progress');
+  });
+
+  it('calls localStorage.getItem with key "auth_token"', () => {
+    const getItemSpy = vi.fn().mockReturnValue(null);
+    vi.stubGlobal('localStorage', { getItem: getItemSpy });
+    renderHook(() => useJobProgress('job-key-check'));
+    expect(getItemSpy).toHaveBeenCalledWith('auth_token');
+  });
+
   it('defaults status to "running" when progress event has no status field', () => {
     const { result } = renderHook(() => useJobProgress('job-default-status'));
 

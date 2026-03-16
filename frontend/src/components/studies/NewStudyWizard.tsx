@@ -199,7 +199,7 @@ export default function NewStudyWizard({ groupId, onClose, onCreated }: Props) {
 
   return (
     <div style={panelStyle} onClick={onClose}>
-      <div style={dialogStyle} onClick={(e) => e.stopPropagation()}>
+      <div role="dialog" aria-modal="true" aria-label="New Study" data-testid="new-study-wizard" style={dialogStyle} onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
           <div>
@@ -222,13 +222,13 @@ export default function NewStudyWizard({ groupId, onClose, onCreated }: Props) {
             <div>
               <h3 style={{ margin: '0 0 1rem' }}>Study Name & Type</h3>
               <div style={fieldStyle}>
-                <label style={labelStyle}>Study name *</label>
-                <input style={inputStyle} placeholder="Study name" {...register('name', { required: 'Name is required' })} />
+                <label htmlFor="wizard-name" style={labelStyle}>Study name *</label>
+                <input id="wizard-name" style={inputStyle} placeholder="Study name" {...register('name', { required: 'Name is required' })} />
                 {errors.name && <span style={errorStyle}>{errors.name.message}</span>}
               </div>
               <div style={fieldStyle}>
-                <label style={labelStyle}>Topic *</label>
-                <input style={inputStyle} placeholder="Brief topic description" {...register('topic', { required: 'Topic is required' })} />
+                <label htmlFor="wizard-topic" style={labelStyle}>Topic *</label>
+                <input id="wizard-topic" style={inputStyle} placeholder="Brief topic description" {...register('topic', { required: 'Topic is required' })} />
                 {errors.topic && <span style={errorStyle}>{errors.topic.message}</span>}
               </div>
               <div style={fieldStyle}>

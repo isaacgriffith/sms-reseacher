@@ -15,7 +15,12 @@ SAMPLE_CONTEXTS: dict[str, dict[str, str]] = {
         "abstract": "This paper presents a controlled experiment on TDD in agile teams.",
     },
     "extractor": {
-        "data_fields": "research_method, sample_size, programming_language",
+        "title": "Controlled Experiment on TDD",
+        "authors": ["Alice", "Bob"],
+        "year": 2022,
+        "venue": "ICSE",
+        "doi": "10.1145/1234567",
+        "research_questions": [{"id": "RQ1", "text": "What is the effect of TDD?"}],
         "paper_text": "We conducted a controlled experiment with 42 participants using Python.",
     },
     "synthesiser": {

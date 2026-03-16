@@ -11,8 +11,15 @@ uv sync
 # Run tests
 uv run --package sms-agents pytest agents/tests/
 
+# Run tests with coverage (minimum 85% line coverage required)
+uv run --package sms-agents pytest agents/tests/ --cov=agents --cov-report=term-missing
+
+# Mutation testing (run via GitHub Actions workflow_dispatch, or locally)
+uv run cosmic-ray run agents/cosmic-ray.toml
+
 # Lint and type-check
 uv run ruff check agents/src
+uv run ruff format --check agents/src
 uv run mypy agents/src
 ```
 

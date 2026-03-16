@@ -40,6 +40,24 @@ Links a `Study` to a `Paper` with an inclusion decision.
 | `paper_id` | Integer FK → paper.id | Composite PK, CASCADE delete |
 | `inclusion_status` | Enum | `pending`, `included`, `excluded` |
 
+## Development
+
+```bash
+# From repo root
+uv sync
+
+# Run tests with coverage (minimum 85% line coverage required)
+uv run --package sms-db pytest db/tests/ --cov=db --cov-report=term-missing
+
+# Mutation testing (run via GitHub Actions workflow_dispatch, or locally)
+uv run cosmic-ray run db/cosmic-ray.toml
+
+# Lint and type-check
+uv run ruff check db/src
+uv run ruff format --check db/src
+uv run mypy db/src
+```
+
 ## Alembic Usage
 
 ```bash

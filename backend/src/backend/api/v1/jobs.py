@@ -58,7 +58,7 @@ async def job_progress_sse(
         while polls < max_polls:
             async with _session_maker() as poll_db:
                 result = await poll_db.execute(
-                    select(BackgroundJob).where(BackgroundJob.id == job_id)
+                    select(BackgroundJob).where(BackgroundJob.id <= job_id)
                 )
                 job = result.scalar_one_or_none()
 

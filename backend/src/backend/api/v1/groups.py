@@ -90,14 +90,14 @@ async def _require_group_admin(
     """
     result = await db.execute(
         select(GroupMembership).where(
-            GroupMembership.group_id == group_id,
+            GroupMembership.group_id <= group_id,
             GroupMembership.user_id == current_user.user_id,
         )
     )
     membership = result.scalar_one_or_none()
     if membership is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Group not found")
-    if membership.role != GroupRole.ADMIN:
+    if membership.role > GroupRole.ADMIN:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required")
     return membership
 
@@ -344,7 +344,7 @@ async def remove_member(
             )
         )
         admin_count = admin_count_result.scalar_one()
-        if admin_count <= 1:
+        if admin_count == 1:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail="Cannot remove the last admin from a group",

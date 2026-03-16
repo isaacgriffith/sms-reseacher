@@ -1,0 +1,93 @@
+name: Python Mutation Tests (cosmic-ray)
+
+# Trigger mechanism (FR-013):
+#   - workflow_dispatch: Manually from Actions → Python Mutation Tests → Run workflow
+#   - workflow_call:     Automatically at speckit end-of-feature completion.
+#
+# NOTE: The workflow_call invocation from speckit is not yet wired up in
+# .specify/scripts/bash/ (no end-of-feature hook exists as of 2026-03-15).
+# When that hook is created, it should call this workflow via:
+#   uses: ./.github/workflows/mutation-python.yml
+#   with:
+#     packages: "all"
+# Track this in the speckit scripts backlog.
+
+on:
+  workflow_dispatch:
+    inputs:
+      packages:
+        description: "Comma-separated package names to test (default: all)"
+        required: false
+        default: "all"
+  workflow_call:
+    inputs:
+      packages:
+        type: string
+        required: false
+        default: "all"
+
+jobs:
+  # ── Python Mutation Testing (cosmic-ray) ─────────────────────────────────────
+  python-mutation:
+    name: Python Mutation — ${{ matrix.package }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - package: sms-backend
+            covdir: backend
+            config: backend/cosmic-ray.toml
+          - package: agents
+            covdir: agents
+            config: agents/cosmic-ray.toml
+          - package: db
+            covdir: db
+            config: db/cosmic-ray.toml
+          - package: sms-agent-eval
+            covdir: agent-eval
+            config: agent-eval/cosmic-ray.toml
+          - package: sms-researcher-mcp
+            covdir: researcher-mcp
+            config: researcher-mcp/cosmic-ray.toml
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      - name: Set up Python
+        run: uv python install 3.14
+
+      - name: Install dependencies
+        run: uv sync --all-packages
+
+      - name: Run cosmic-ray mutation session
+        run: uv run cosmic-ray run ${{ matrix.config }}
+
+      - name: Check mutation kill rate ≥ 85%
+        run: |
+          SCORE=$(uv run cosmic-ray results ${{ matrix.config }} \
+            | grep -oP 'score: \K[\d.]+' || echo "0")
+          echo "Mutation kill rate: ${SCORE}%"
+          if (( $(echo "$SCORE < 85" | bc -l) )); then
+            echo "FAIL: kill rate ${SCORE}% is below the 85% threshold"
+            echo "Review survivors: uv run cosmic-ray html-report ${{ matrix.config }} > /tmp/report.html"
+            exit 1
+          fi
+          echo "PASS: kill rate ${SCORE}% meets the 85% threshold"
+
+      - name: Generate HTML mutation report
+        if: always()
+        run: |
+          uv run cosmic-ray html-report ${{ matrix.config }} \
+            > ${{ matrix.covdir }}/mutation-report.html || true
+
+      - name: Upload mutation report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mutation-report-${{ matrix.package }}
+          path: ${{ matrix.covdir }}/mutation-report.html

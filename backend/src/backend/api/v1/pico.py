@@ -126,7 +126,7 @@ async def get_pico(
 @router.put(
     "/studies/{study_id}/pico",
     response_model=PICOResponse,
-    summary="Create or replace PICO/C components",
+    summary="Create or update the PICO/C components for a study",
 )
 async def upsert_pico(
     study_id: int,

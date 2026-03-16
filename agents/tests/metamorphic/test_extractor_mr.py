@@ -12,7 +12,11 @@ Note: GeMTest (https://github.com/tum-i4/gemtest) is a documented
 alternative for automated MR composition.
 """
 
+from __future__ import annotations
+
 import itertools
+import json
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -20,7 +24,7 @@ from hypothesis import given
 from hypothesis import strategies as st
 
 from agents.core.llm_client import LLMClient
-from agents.services.extractor import ExtractorAgent
+from agents.services.extractor import ExtractionResult, ExtractorAgent
 
 PAPER_TEXT = (
     "We conducted a controlled experiment with 42 Python developers. "
@@ -28,11 +32,36 @@ PAPER_TEXT = (
 )
 
 FIELDS = ["research_method", "sample_size", "programming_language"]
-STUB_RESPONSE = '{"research_method": "controlled experiment", "sample_size": 42, "programming_language": "Python"}'
+
+# Full ExtractionResult-compatible stub response
+_STUB_RESULT: dict[str, Any] = {
+    "research_type": "evaluation",
+    "venue_type": "journal",
+    "venue_name": "TSE",
+    "author_details": [],
+    "summary": "A controlled experiment on TDD.",
+    "open_codings": [],
+    "keywords": ["TDD", "Python"],
+    "question_data": {},
+}
+STUB_RESPONSE = json.dumps(_STUB_RESULT)
+
+SAMPLE_METADATA = {
+    "title": "TDD Experiment",
+    "authors": [],
+    "year": 2022,
+    "venue": "TSE",
+    "doi": "10.1145/9999",
+    "research_questions": [{"id": "RQ1", "text": "Effect of TDD on defects?"}],
+}
 
 
 def make_stub_agent() -> ExtractorAgent:
-    """Return an ExtractorAgent backed by a deterministic stub."""
+    """Return an ExtractorAgent backed by a deterministic stub LLM.
+
+    Returns:
+        An :class:`ExtractorAgent` whose LLM always returns :data:`STUB_RESPONSE`.
+    """
     stub_client = MagicMock(spec=LLMClient)
     stub_client.complete = AsyncMock(return_value=STUB_RESPONSE)
     return ExtractorAgent(llm_client=stub_client)
@@ -45,11 +74,15 @@ class TestExtractorMR:
     async def test_field_order_permutation_same_response(
         self, fields_order: tuple[str, ...]
     ) -> None:
-        """Stub returns identical JSON regardless of field order (MR structure test)."""
+        """Stub returns identical ExtractionResult regardless of field order."""
         agent = make_stub_agent()
-        fields_str = ", ".join(fields_order)
-        result = await agent.run(fields_str, PAPER_TEXT)
-        assert result == STUB_RESPONSE
+        result = await agent.run(
+            paper_text=PAPER_TEXT,
+            title=SAMPLE_METADATA["title"],
+            research_questions=SAMPLE_METADATA["research_questions"],
+        )
+        assert isinstance(result, ExtractionResult)
+        assert result.research_type == _STUB_RESULT["research_type"]
 
     @given(
         fields=st.lists(
@@ -62,11 +95,18 @@ class TestExtractorMR:
     async def test_field_order_hypothesis(self, fields: list[str]) -> None:
         """Hypothesis: any ordering of fields produces identical stub output."""
         agent = make_stub_agent()
-        result = await agent.run(", ".join(fields), PAPER_TEXT)
-        assert result == STUB_RESPONSE
+        result = await agent.run(
+            paper_text=PAPER_TEXT,
+            title=SAMPLE_METADATA["title"],
+        )
+        assert isinstance(result, ExtractionResult)
 
     async def test_single_field_extraction(self) -> None:
-        """Single-field extraction still returns a valid response."""
+        """Single-field extraction still returns a valid ExtractionResult."""
         agent = make_stub_agent()
-        result = await agent.run("research_method", PAPER_TEXT)
-        assert result  # non-empty
+        result = await agent.run(
+            paper_text=PAPER_TEXT,
+            title="TDD Experiment",
+        )
+        assert isinstance(result, ExtractionResult)
+        assert result.research_type  # non-empty

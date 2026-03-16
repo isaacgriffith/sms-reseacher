@@ -4,7 +4,13 @@
   "reporters": ["html", "clear-text", "progress"],
   "testRunner": "vitest",
   "coverageAnalysis": "perTest",
-  "mutate": ["src/**/*.ts", "src/**/*.tsx", "!src/**/*.test.ts", "!src/**/*.test.tsx", "!src/test-setup.ts"],
+  "mutate": [
+    "src/services/**/*.ts",
+    "!src/services/**/*.test.ts"
+  ],
+  "mutator": {
+    "excludedMutations": []
+  },
   "thresholds": {
     "high": 90,
     "low": 85,

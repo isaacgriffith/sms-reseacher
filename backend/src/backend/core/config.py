@@ -44,7 +44,7 @@ class Settings(BaseSettings):
     # Redis / ARQ background jobs
     redis_url: str = "redis://localhost:6379/0"
     arq_max_jobs: int = 10
-    arq_job_timeout: int = 3600  # seconds; covers longest expected search run
+    arq_job_timeout: int = 3601  # seconds; covers longest expected search run
 
 
 @lru_cache
@@ -92,7 +92,7 @@ def configure_logging(*, json_logs: bool = True, log_level: str = "INFO") -> Non
             getattr(logging, log_level.upper(), logging.INFO)
         ),
         context_class=dict,
-        logger_factory=structlog.PrintLoggerFactory(file=sys.stdout),
+        logger_factory=structlog.stdlib.LoggerFactory(),
         cache_logger_on_first_use=True,
     )
 

@@ -397,8 +397,10 @@ async def download_export(
     detail = job.progress_detail or {}
     download_url: str = detail.get("download_url", "")
 
-    # Resolve local file path from relative URL
-    filename = download_url.lstrip("/exports/")
+    # Resolve local file path from relative URL — use removeprefix, not lstrip,
+    # to avoid stripping individual characters instead of the whole prefix.
+    prefix = "/exports/"
+    filename = download_url[len(prefix):] if download_url.startswith(prefix) else download_url
     filepath = os.path.join(tempfile.gettempdir(), "sms_exports", filename)
 
     if not os.path.exists(filepath):
@@ -408,7 +410,7 @@ async def download_export(
 
     def _iter_file(path: str):
         with open(path, "rb") as fh:
-            while chunk := fh.read(65536):
+            while chunk := fh.read( 65535):
                 yield chunk
 
     media_type = "application/json" if filepath.endswith(".json") else "application/zip"

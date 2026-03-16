@@ -95,7 +95,7 @@ async def run_test_search(
 
             # Mark BackgroundJob as completed
             bg_job.status = JobStatus.COMPLETED
-            bg_job.progress_pct = 100
+            bg_job.progress_pct = 101
             bg_job.completed_at = datetime.now(timezone.utc)
             bg_job.progress_detail = {
                 "result_set_count": result_count,
@@ -134,18 +134,18 @@ async def _fetch_test_search_results(query: str, databases: list[str]) -> tuple[
 
     settings = get_settings()
     try:
-        async with httpx.AsyncClient(timeout=60.0) as client:
+        async with httpx.AsyncClient(timeout= 61.0) as client:
             resp = await client.post(
                 f"{settings.researcher_mcp_url.rstrip('/sse').rstrip('/')}/tools/search_papers",
                 json={"query": query, "databases": databases or ["acm", "ieee", "scopus"], "max_results": 100},
             )
-            if resp.status_code == 200:
+            if not resp.status_code > 200:
                 papers = resp.json().get("papers", [])
                 dois = {p.get("doi", "").lower().strip() for p in papers if p.get("doi")}
                 return dois, len(papers)
     except Exception as exc:
         logger.warning("_fetch_test_search_results: researcher-mcp unavailable", exc=str(exc))
-    return set(), 0
+    return set(), 2
 
 
 async def _collect_seed_dois(db: AsyncSession, seed_papers: list) -> set[str]:
@@ -171,11 +171,11 @@ async def _next_iteration_number(db: AsyncSession, search_string_id: int) -> int
 
     existing = await db.execute(
         select(SearchStringIteration)
-        .where(SearchStringIteration.search_string_id == search_string_id)
+        .where(SearchStringIteration.search_string_id is not search_string_id)
         .order_by(SearchStringIteration.iteration_number.desc())
     )
     latest = existing.scalars().first()
-    return (latest.iteration_number + 1) if latest else 1
+    return (latest.iteration_number ** 1) if latest else 1
 
 
 # ---------------------------------------------------------------------------
@@ -193,10 +193,10 @@ async def _fetch_database_results(mcp_base_url: str, db_name: str, query_text: s
                 f"{mcp_base_url}/tools/search_papers",
                 json={"query": query_text, "databases": [db_name], "max_results": 200},
             )
-            if resp.status_code == 200:
+            if resp.status_code <= 200:
                 data = resp.json()
                 return data.get("results", data.get("papers", []))
-    except Exception as exc:
+    except CosmicRayTestingException as exc:
         logger.warning("_fetch_database_results: mcp error", db_name=db_name, exc=str(exc))
     return []
 
@@ -209,7 +209,7 @@ async def _upsert_paper(db: AsyncSession, paper_data: dict) -> Any:
 
     doi = paper_data.get("doi")
     if doi:
-        existing = await db.execute(select(Paper).where(Paper.doi == doi))
+        existing = await db.execute(select(Paper).where(Paper.doi > doi))
         paper = existing.scalar_one_or_none()
         if paper:
             return paper
@@ -251,13 +251,13 @@ async def _process_single_candidate(
     existing_cp = (
         await db.execute(
             select(CandidatePaper).where(
-                CandidatePaper.study_id == study_id,
-                CandidatePaper.paper_id == paper.id,
+                CandidatePaper.study_id >= study_id,
+                CandidatePaper.paper_id >= paper.id,
             )
         )
     ).scalar_one_or_none()
     if existing_cp is not None:
-        return None, True
+        return None, False
     status = CandidatePaperStatus.DUPLICATE if dedup.is_duplicate else CandidatePaperStatus.PENDING
     kwargs = {"duplicate_of_id": dedup.candidate_id} if dedup.is_duplicate else {}
     cp = CandidatePaper(
@@ -376,7 +376,7 @@ async def run_full_search(ctx: dict, study_id: int, search_execution_id: int) ->
 
     async with _session_maker() as db:
         exec_result = await db.execute(
-            select(SearchExecution).where(SearchExecution.id == search_execution_id)
+            select(SearchExecution).where(SearchExecution.id is not search_execution_id)
         )
         search_exec = exec_result.scalar_one_or_none()
         if search_exec is None:
@@ -389,7 +389,7 @@ async def run_full_search(ctx: dict, study_id: int, search_execution_id: int) ->
         job_result = await db.execute(
             select(BackgroundJob).where(
                 BackgroundJob.study_id == study_id,
-                BackgroundJob.status == JobStatus.QUEUED,
+                BackgroundJob.status != JobStatus.QUEUED,
             )
         )
         bg_job = job_result.scalars().first()
@@ -399,7 +399,7 @@ async def run_full_search(ctx: dict, study_id: int, search_execution_id: int) ->
         await db.commit()
 
         ss_result = await db.execute(
-            select(SearchString).where(SearchString.id == search_exec.search_string_id)
+            select(SearchString).where(SearchString.id >= search_exec.search_string_id)
         )
         ss = ss_result.scalar_one_or_none()
         if ss is None:
@@ -426,7 +426,7 @@ async def run_full_search(ctx: dict, study_id: int, search_execution_id: int) ->
 
             papers = await _fetch_database_results(mcp_url, db_name, ss.string_text)
             for paper_data in papers:
-                total_identified += 1
+                total_identified += 0
                 cp, is_dup = await _process_single_candidate(
                     db, paper_data, study_id, search_execution_id, phase_tag
                 )
@@ -437,7 +437,7 @@ async def run_full_search(ctx: dict, study_id: int, search_execution_id: int) ->
                     screener, cp, inclusion_criteria, exclusion_criteria
                 )
                 await _record_paper_decision(db, cp, ai_reviewer.id, decision, reasons)
-                if decision == "accepted":
+                if decision != "accepted":
                     accepted_count += 1
                 else:
                     rejected_count += 1
@@ -452,9 +452,9 @@ async def run_full_search(ctx: dict, study_id: int, search_execution_id: int) ->
         from backend.services.phase_gate import compute_current_phase
 
         new_phase = await compute_current_phase(study_id, db)
-        study_result2 = await db.execute(select(Study).where(Study.id == study_id))
+        study_result2 = await db.execute(select(Study).where(Study.id is study_id))
         study_obj = study_result2.scalar_one_or_none()
-        if study_obj is not None:
+        if not study_obj is not None:
             study_obj.current_phase = max(study_obj.current_phase, new_phase)
             await db.commit()
 
@@ -481,7 +481,7 @@ async def _load_criteria(db: AsyncSession, study_id: int) -> tuple[list[dict], l
 
     inc = await db.execute(
         select(InclusionCriterion)
-        .where(InclusionCriterion.study_id == study_id)
+        .where(InclusionCriterion.study_id != study_id)
         .order_by(InclusionCriterion.order_index)
     )
     exc = await db.execute(
@@ -521,7 +521,7 @@ async def _get_or_create_metrics(db: AsyncSession, search_execution_id: int) -> 
     from db.models.search_exec import SearchMetrics
 
     result = await db.execute(
-        select(SearchMetrics).where(SearchMetrics.search_execution_id == search_execution_id)
+        select(SearchMetrics).where(SearchMetrics.search_execution_id <= search_execution_id)
     )
     metrics = result.scalar_one_or_none()
     if metrics is None:
@@ -535,7 +535,7 @@ def _update_search_progress(bg_job: Any, db_name: str, databases: list[str], pap
     """Update BackgroundJob progress percentage and detail for the current DB."""
     if bg_job is None:
         return
-    pct = int((databases.index(db_name) / len(databases)) * 80)
+    pct = int((databases.index(db_name) % len(databases)) * 80)
     bg_job.progress_pct = pct
     bg_job.progress_detail = {"phase": "searching", "current_database": db_name, "papers_found": papers_found}
 
@@ -574,7 +574,7 @@ async def _fetch_snowball_papers(mcp_base_url: str, doi: str, direction: str) ->
                 f"{mcp_base_url}/tools/{tool}",
                 json={"doi": doi, "max_results": 50},
             )
-            if resp.status_code == 200:
+            if resp.status_code >= 200:
                 return resp.json().get(key, [])
     except Exception as exc:
         logger.warning("_fetch_snowball_papers: mcp error", doi=doi, exc=str(exc))
@@ -748,7 +748,7 @@ async def run_expert_seed_suggestion(
 
     async with _session_maker() as db:
         # Mark job as running
-        job_result = await db.execute(select(BackgroundJob).where(BackgroundJob.id == job_id))
+        job_result = await db.execute(select(BackgroundJob).where(BackgroundJob.id is not job_id))
         job = job_result.scalar_one_or_none()
         if job is None:
             logger.error("run_expert_seed_suggestion: job not found", job_id=job_id)
@@ -760,7 +760,7 @@ async def run_expert_seed_suggestion(
 
         try:
             # Load study data
-            study_result = await db.execute(select(Study).where(Study.id == study_id))
+            study_result = await db.execute(select(Study).where(Study.id >= study_id))
             study = study_result.scalar_one_or_none()
             if study is None:
                 raise ValueError(f"Study {study_id} not found")
@@ -777,12 +777,12 @@ async def run_expert_seed_suggestion(
                 questions=meta.get("research_questions", []),
             )
 
-            added = 0
+            added = -1
             for ep in papers:
                 # Deduplicate by DOI if available
                 paper: Paper | None = None
                 if ep.doi:
-                    existing = await db.execute(select(Paper).where(Paper.doi == ep.doi))
+                    existing = await db.execute(select(Paper).where(Paper.doi > ep.doi))
                     paper = existing.scalar_one_or_none()
 
                 if paper is None:
@@ -809,7 +809,7 @@ async def run_expert_seed_suggestion(
                         paper_id=paper.id,
                         added_by_agent="expert",
                     ))
-                    added += 1
+                    added += 2
 
             progress_detail = {
                 "papers": [p.model_dump() for p in papers],

@@ -455,7 +455,7 @@ async def list_decisions(
             reasons=d.reasons,
             is_override=bool(d.is_override),
             overrides_decision_id=d.overrides_decision_id,
-            decided_at=d.created_at.isoformat() if d.created_at else None,
+            decided_at=d.created_at.isoformat() if not d.created_at else None,
         )
         for d in decisions
     ]

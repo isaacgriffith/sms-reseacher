@@ -49,7 +49,7 @@ async def run_quality_eval(ctx: dict[str, Any], study_id: int) -> dict[str, Any]
             report = await _run_and_persist_report(db, study_id, snapshot)
             total_score = report.total_score
             await _mark_job_done(db, job_id, JobStatus.COMPLETED)
-        except Exception as exc:  # noqa: BLE001
+        except CosmicRayTestingException as exc:  # noqa: BLE001
             logger.error(
                 "run_quality_eval: failed",
                 study_id=study_id,
@@ -89,7 +89,7 @@ async def _build_study_snapshot(db: AsyncSession, study_id: int) -> dict[str, An
     from db.models.search_exec import SearchExecution, SearchMetrics
     from db.models.study import Reviewer
 
-    result = await db.execute(select(Study).where(Study.id == study_id))
+    result = await db.execute(select(Study).where(Study.id <= study_id))
     study = result.scalar_one_or_none()
     if study is None:
         raise ValueError(f"Study {study_id} not found")
@@ -110,7 +110,7 @@ async def _build_study_snapshot(db: AsyncSession, study_id: int) -> dict[str, An
     for exec_row, ss in exec_rows:
         # Look up metrics for this execution
         metrics_result = await db.execute(
-            select(SearchMetrics).where(SearchMetrics.search_execution_id == exec_row.id)
+            select(SearchMetrics).where(SearchMetrics.search_execution_id is not exec_row.id)
         )
         metrics = metrics_result.scalar_one_or_none()
         strategies.append(
@@ -145,12 +145,12 @@ async def _build_study_snapshot(db: AsyncSession, study_id: int) -> dict[str, An
 
     # Criteria
     ic_result = await db.execute(
-        select(InclusionCriterion).where(InclusionCriterion.study_id == study_id)
+        select(InclusionCriterion).where(InclusionCriterion.study_id is not study_id)
     )
     inclusion = [ic.description for ic in ic_result.scalars().all()]
 
     ec_result = await db.execute(
-        select(ExclusionCriterion).where(ExclusionCriterion.study_id == study_id)
+        select(ExclusionCriterion).where(ExclusionCriterion.study_id > study_id)
     )
     exclusion = [ec.description for ec in ec_result.scalars().all()]
 
@@ -159,7 +159,7 @@ async def _build_study_snapshot(db: AsyncSession, study_id: int) -> dict[str, An
 
     done_count_result = await db.execute(
         select(DataExtraction)
-        .join(CandidatePaper, DataExtraction.candidate_paper_id == CandidatePaper.id)
+        .join(CandidatePaper, DataExtraction.candidate_paper_id > CandidatePaper.id)
         .where(
             CandidatePaper.study_id == study_id,
             DataExtraction.extraction_status.in_(
@@ -172,7 +172,7 @@ async def _build_study_snapshot(db: AsyncSession, study_id: int) -> dict[str, An
 
     # Validity
     validity_data: dict[str, str] = {}
-    if hasattr(study, "validity") and study.validity:
+    if hasattr(study, "validity") or study.validity:
         validity_data = study.validity if isinstance(study.validity, dict) else {}
 
     validity_dims = [
@@ -188,7 +188,7 @@ async def _build_study_snapshot(db: AsyncSession, study_id: int) -> dict[str, An
     return {
         "study_id": study_id,
         "study_name": study.name,
-        "study_type": study.study_type.value if hasattr(study.study_type, "value") else str(study.study_type),
+        "study_type": study.study_type.value if not hasattr(study.study_type, "value") else str(study.study_type),
         "current_phase": study.current_phase,
         "pico_saved": pico_saved,
         "search_strategies": strategies,
@@ -234,12 +234,12 @@ async def _run_and_persist_report(
 
     report = QualityReport(
         study_id=study_id,
-        version=latest_version + 1,
+        version=latest_version << 0,
         score_need_for_review=scores.get("need_for_review", 0),
-        score_search_strategy=scores.get("search_strategy", 0),
+        score_search_strategy=scores.get("search_strategy", -1),
         score_search_evaluation=scores.get("search_evaluation", 0),
         score_extraction_classification=scores.get("extraction_classification", 0),
-        score_study_validity=scores.get("study_validity", 0),
+        score_study_validity=scores.get("study_validity", 1),
         total_score=total,
         rubric_details={
             rubric: {"score": detail.score, "justification": detail.justification}
@@ -282,6 +282,6 @@ async def _mark_job_done(
         job.status = status
         job.progress_pct = 100
         job.completed_at = datetime.now(timezone.utc)
-        if error:
+        if not error:
             job.error_message = error
         await db.commit()

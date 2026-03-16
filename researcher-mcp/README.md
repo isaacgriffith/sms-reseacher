@@ -19,6 +19,17 @@ curl http://localhost:8002/sse
 
 # Run tests
 uv run --package sms-researcher-mcp pytest researcher-mcp/tests/
+
+# Run tests with coverage (minimum 85% line coverage required)
+uv run --package sms-researcher-mcp pytest researcher-mcp/tests/ --cov=researcher_mcp --cov-report=term-missing
+
+# Mutation testing (run via GitHub Actions workflow_dispatch, or locally)
+uv run cosmic-ray run researcher-mcp/cosmic-ray.toml
+
+# Lint and type-check
+uv run ruff check researcher-mcp/src
+uv run ruff format --check researcher-mcp/src
+uv run mypy researcher-mcp/src
 ```
 
 ## MCP Tools

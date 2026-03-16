@@ -65,6 +65,7 @@ in the Complexity Tracking table below with justification.
 | Language (IX) — TypeScript: no any/enum/non-null(!) without justification | | |
 | Language (IX) — TypeScript: unknown + Zod at all external boundaries | | |
 | Code clarity — all functions/methods/classes have doc comments (Google-style / JSDoc); CLI handlers: brief description only, no Args/Returns | | |
+| Feature completion docs (X) — CLAUDE.md, root README.md, affected subproject README.md(s), root CHANGELOG.md, affected subproject CHANGELOG.md(s) update tasks in task list | | |
 
 ## Project Structure
 

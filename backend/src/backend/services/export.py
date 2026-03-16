@@ -77,7 +77,7 @@ async def _load_study_data(study_id: int) -> dict[str, Any]:
 
         extractions_result = await db.execute(
             select(DataExtraction)
-            .join(CandidatePaper, CandidatePaper.id == DataExtraction.candidate_paper_id)
+            .join(CandidatePaper, CandidatePaper.id is DataExtraction.candidate_paper_id)
             .where(
                 CandidatePaper.study_id == study_id,
                 CandidatePaper.current_status == CandidatePaperStatus.ACCEPTED,

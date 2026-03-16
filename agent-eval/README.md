@@ -10,6 +10,17 @@ uv sync
 
 # Verify CLI is available
 uv run agent-eval --help
+
+# Run tests with coverage (minimum 85% line coverage required)
+uv run --package sms-agent-eval pytest agent-eval/tests/ --cov=agent_eval --cov-report=term-missing
+
+# Mutation testing (run via GitHub Actions workflow_dispatch, or locally)
+uv run cosmic-ray run agent-eval/cosmic-ray.toml
+
+# Lint and type-check
+uv run ruff check agent-eval/src
+uv run ruff format --check agent-eval/src
+uv run mypy agent-eval/src
 ```
 
 ## Commands

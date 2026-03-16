@@ -171,12 +171,34 @@ Examples of foundational tasks (adjust based on your project):
 
 **Purpose**: Improvements that affect multiple user stories
 
-- [ ] TXXX [P] Documentation updates in docs/
 - [ ] TXXX Code cleanup and refactoring
 - [ ] TXXX Performance optimization across all stories
 - [ ] TXXX [P] Additional unit tests (if requested) in tests/unit/
 - [ ] TXXX Security hardening
 - [ ] TXXX Run quickstart.md validation
+
+---
+
+## Phase N+1: Feature Completion Documentation *(mandatory — Constitution Principle X)*
+
+**Purpose**: Update all required documentation before the feature branch is merged.
+
+> **These tasks MUST be completed before the feature is marked done. Omitting them is a
+> blocking violation of Constitution Principle X (Feature Completion Documentation).**
+
+- [ ] TDOC1 [P] Update `CLAUDE.md` at repository root to reflect new commands, tools,
+      workflows, or environment setup steps introduced by this feature
+- [ ] TDOC2 [P] Update `README.md` at repository root to reflect user-facing changes to
+      project capabilities, usage, or architecture
+- [ ] TDOC3 [P] Update `CHANGELOG.md` at repository root with a new entry describing what
+      was added, changed, fixed, or removed (follow Keep a Changelog format)
+- [ ] TDOC4 [P] Update `README.md` in each subproject directory whose source code was
+      modified (backend/, agents/, db/, frontend/, researcher-mcp/, etc.)
+- [ ] TDOC5 [P] Update `CHANGELOG.md` in each subproject directory whose source code was
+      modified with the same level of detail as the root changelog entry
+
+> **Remove TDOC4/TDOC5 entries for subprojects that were NOT modified by this feature.
+> All TDOC tasks that apply MUST be completed and committed before merge.**
 
 ---
 
@@ -270,8 +292,9 @@ With multiple developers:
 - Commit after each task or logical group
 - Stop at any checkpoint to validate story independently
 - Avoid: vague tasks, same file conflicts, cross-story dependencies that break independence
-- Constitution compliance: each task MUST respect Principles I–IX (SOLID, DRY, YAGNI,
-  Code Clarity, Refactoring, GRASP/Patterns, Testing, Toolchain, Observability, Language)
+- Constitution compliance: each task MUST respect Principles I–X (SOLID, DRY, YAGNI,
+  Code Clarity, Refactoring, GRASP/Patterns, Testing, Toolchain, Observability, Language,
+  Feature Completion Documentation)
 - Refactoring tasks MUST precede dependent feature tasks and MUST have tests written first
 - No long methods (>20 lines), switch/if-chain smells, or common code smells in new code
 - Apply GRASP responsibility patterns and recognized design patterns where they naturally fit

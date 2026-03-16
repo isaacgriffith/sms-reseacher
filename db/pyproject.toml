@@ -36,6 +36,6 @@ addopts = "--cov=src/db --cov-report=term-missing --cov-fail-under=85"
 branch = true
 source = ["src/db"]
 
-[tool.mutmut]
-paths_to_mutate = "src/"
-tests_dir = "tests/"
+[tool.cosmic-ray]
+module-path = "src/db"
+timeout = 30.0

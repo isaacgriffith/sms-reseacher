@@ -1,0 +1,8 @@
+[cosmic-ray]
+module-path = "agents/src/agents"
+timeout = 30.0
+excluded-modules = []
+test-command = "uv run --package agents pytest agents/tests/unit -x -q"
+
+[cosmic-ray.distributor]
+name = "local"

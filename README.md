@@ -45,13 +45,13 @@ See [quickstart.md](specs/001-repo-setup/quickstart.md#docker-local-deployment) 
 
 ## Tech Stack
 
-- **Python**: UV workspace, Ruff, MyPy strict, pytest + pytest-asyncio, mutmut
-- **TypeScript**: Vite 5, Vitest, ESLint 9, Prettier 3, Stryker
+- **Python**: UV workspace, Ruff (lint + format), MyPy strict, pytest + pytest-asyncio, cosmic-ray (mutation)
+- **TypeScript**: Vite 5, Vitest (coverage), ESLint 9, Prettier 3, Stryker (mutation)
 - **Database**: SQLAlchemy 2.x async + Alembic; PostgreSQL 16 (prod) / SQLite (dev/test)
 - **LLM**: LiteLLM abstraction — Anthropic Claude or local Ollama
 - **MCP**: FastMCP (server) + `mcp` SDK (client)
 - **Docker**: Multi-stage `python:3.14-slim` + `nginx:alpine`; images pushed to GHCR on `main`
-- **CI**: GitHub Actions — lint, test (≥85% coverage), mutation (≥85%), Docker scan, GHCR push
+- **CI**: GitHub Actions — lint, test (≥85% line coverage with PR comment), mutation (≥85% kill rate, manual trigger), Docker scan, GHCR push
 
 ## License
 

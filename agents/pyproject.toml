@@ -26,6 +26,7 @@ dev = [
     "pytest-cov>=5",
     "hypothesis>=6.100",
     "anyio[trio]>=4",
+    "cosmic-ray>=8.3",
 ]
 
 [tool.ruff]
@@ -47,6 +48,6 @@ addopts = "--cov=src/agents --cov-report=term-missing --cov-fail-under=85"
 branch = true
 source = ["src/agents"]
 
-[tool.mutmut]
-paths_to_mutate = "src/"
-tests_dir = "tests/"
+[tool.cosmic-ray]
+module-path = "src/agents"
+timeout = 30.0

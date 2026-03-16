@@ -14,7 +14,7 @@ logger = get_logger(__name__)
 
 async def record(
     session: AsyncSession,
-    *,
+    /,
     study_id: int,
     actor_user_id: int | None,
     actor_agent: str | None,
