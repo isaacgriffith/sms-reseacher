@@ -4,6 +4,32 @@ All notable changes to this subproject are documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased] — feature/004-frontend-improvements
+
+### Added
+- `PUT /me/password` — password change with complexity validation and `token_version` session
+  invalidation; audit event `PASSWORD_CHANGED`
+- `POST /me/2fa/setup`, `/confirm`, `/disable`, `/backup-codes/regenerate` — full TOTP
+  lifecycle with encrypted secret (Fernet/HKDF), QR code generation, bcrypt-hashed backup codes
+- `POST /auth/login/totp` — second-step login consuming partial JWT (`stage: totp_required`)
+- `GET /api/v1/openapi.json` — authenticated OpenAPI schema; default `/docs`/`/redoc` disabled
+- `GET /me/preferences`, `PUT /me/preferences/theme` — user preference endpoints
+- `SecurityAuditEvent` and `BackupCode` ORM models + Alembic migration
+- `backend.core.totp` — `pyotp` wrapper for secret generation, URI, QR PNG, verification
+- `backend.core.encryption` — Fernet + HKDF encryption for secrets at rest
+- `backend.services.totp_service` — TOTP lifecycle with brute-force lockout logic
+- `backend.services.password_service` — password change with complexity enforcement
+- Integration tests: `test_me_password`, `test_me_preferences`, `test_me_totp`,
+  `test_auth_totp`, `test_openapi_auth`
+
+### Changed
+- `get_current_user` now performs a DB lookup to validate `token_version`; missing users
+  return 401 instead of propagating to the endpoint
+- `POST /auth/login` checks `totp_enabled` and returns partial token when 2FA is required
+- `GET /auth/me` response includes `theme_preference` and `totp_enabled`
+
+---
+
 ## [Unreleased] — feature/003-project-setup-improvements
 
 ### Changed

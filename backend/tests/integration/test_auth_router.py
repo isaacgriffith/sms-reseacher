@@ -87,10 +87,15 @@ class TestMe:
         assert resp.status_code == 401
 
     @pytest.mark.asyncio
-    async def test_token_for_nonexistent_user_returns_404(self, client):
-        """JWT with a user_id that has no DB row → 404 Not Found."""
+    async def test_token_for_nonexistent_user_returns_401(self, client):
+        """JWT with a user_id that has no DB row → 401 Unauthorized.
+
+        get_current_user performs a DB lookup for token_version validation;
+        a missing user is treated as an invalid credential (401) rather than
+        revealing the absence of the account (404).
+        """
         token = create_access_token(user_id=999_999)
         resp = await client.get(
             f"{BASE}/me", headers={"Authorization": f"Bearer {token}"}
         )
-        assert resp.status_code == 404
+        assert resp.status_code == 401

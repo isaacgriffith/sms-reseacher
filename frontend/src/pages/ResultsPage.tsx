@@ -10,6 +10,11 @@ import { api } from '../services/api';
 import ChartGallery from '../components/results/ChartGallery';
 import DomainModelViewer from '../components/results/DomainModelViewer';
 import ExportPanel from '../components/results/ExportPanel';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
+import Container from '@mui/material/Container';
+import Alert from '@mui/material/Alert';
 
 interface DomainModel {
   id: number;
@@ -68,52 +73,66 @@ export default function ResultsPage() {
   const domainModel = results?.domain_model ?? null;
 
   return (
-    <div style={{ maxWidth: '72rem', margin: '0 auto', padding: '1.5rem' }}>
+    <Container maxWidth={false} sx={{ maxWidth: '72rem', margin: '0 auto', padding: '1.5rem' }}>
       {/* Page header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-        <h2 style={{ margin: 0, fontSize: '1.25rem', color: '#111827' }}>Results</h2>
-        <button
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+        <Typography variant="h5" sx={{ margin: 0, fontSize: '1.25rem', color: '#111827' }}>Results</Typography>
+        <Button
+          variant="contained"
           onClick={() => generateMutation.mutate()}
           disabled={generateMutation.isPending}
-          style={generateMutation.isPending ? disabledBtnStyle : primaryBtnStyle}
+          sx={{ padding: '0.5rem 1.25rem', fontSize: '0.875rem', fontWeight: 600 }}
         >
           {generateMutation.isPending ? 'Queued…' : 'Generate Results'}
-        </button>
-      </div>
+        </Button>
+      </Box>
 
       {generateMutation.isSuccess && (
-        <div style={bannerStyle}>
+        <Alert severity="info" sx={{ marginBottom: '1rem' }}>
           Result generation job queued (job #{generateMutation.data?.job_id}). Charts will appear shortly.
-        </div>
+        </Alert>
       )}
       {generateMutation.isError && (
-        <div style={errorBannerStyle}>Failed to enqueue generation job. Try again.</div>
+        <Alert severity="error" sx={{ marginBottom: '1rem' }}>Failed to enqueue generation job. Try again.</Alert>
       )}
 
-      {isLoading && <p style={{ color: '#6b7280', fontSize: '0.875rem' }}>Loading results…</p>}
+      {isLoading && <Typography sx={{ color: '#6b7280', fontSize: '0.875rem' }}>Loading results…</Typography>}
       {error && (
-        <p style={{ color: '#ef4444', fontSize: '0.875rem' }}>Failed to load results.</p>
+        <Typography sx={{ color: '#ef4444', fontSize: '0.875rem' }}>Failed to load results.</Typography>
       )}
 
       {/* Tabs */}
-      <div style={tabBarStyle}>
+      <Box sx={{ display: 'flex', gap: '0.25rem', borderBottom: '1px solid #e2e8f0' }}>
         {([
           { id: 'charts', label: `Charts (${charts.length})` },
           { id: 'domain_model', label: 'Domain Model' },
           { id: 'export', label: 'Export' },
         ] as Array<{ id: TabId; label: string }>).map((tab) => (
-          <button
+          <Button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            style={activeTab === tab.id ? activeTabStyle : inactiveTabStyle}
+            sx={{
+              padding: '0.5rem 1rem',
+              background: 'transparent',
+              border: 'none',
+              borderBottom: activeTab === tab.id ? '2px solid #2563eb' : '2px solid transparent',
+              cursor: 'pointer',
+              fontSize: '0.875rem',
+              fontWeight: 500,
+              marginBottom: '-1px',
+              color: activeTab === tab.id ? '#2563eb' : '#6b7280',
+              borderRadius: 0,
+              minWidth: 'auto',
+              textTransform: 'none',
+            }}
           >
             {tab.label}
-          </button>
+          </Button>
         ))}
-      </div>
+      </Box>
 
       {/* Tab content */}
-      <div style={{ marginTop: '1.25rem' }}>
+      <Box sx={{ marginTop: '1.25rem' }}>
         {activeTab === 'charts' && (
           <ChartGallery studyId={numericStudyId} charts={charts} />
         )}
@@ -122,90 +141,24 @@ export default function ResultsPage() {
           <DomainModelViewer domainModel={domainModel} />
         )}
         {activeTab === 'domain_model' && !domainModel && !isLoading && (
-          <div style={emptyStyle}>
+          <Box
+            sx={{
+              padding: '2rem',
+              textAlign: 'center',
+              color: '#6b7280',
+              fontSize: '0.875rem',
+              border: '1px dashed #d1d5db',
+              borderRadius: '0.5rem',
+            }}
+          >
             No domain model available yet. Click <strong>Generate Results</strong> above.
-          </div>
+          </Box>
         )}
 
         {activeTab === 'export' && (
           <ExportPanel studyId={numericStudyId} />
         )}
-      </div>
-    </div>
+      </Box>
+    </Container>
   );
 }
-
-// ---------------------------------------------------------------------------
-// Styles
-// ---------------------------------------------------------------------------
-
-const primaryBtnStyle: React.CSSProperties = {
-  padding: '0.5rem 1.25rem',
-  background: '#2563eb',
-  color: '#fff',
-  border: 'none',
-  borderRadius: '0.375rem',
-  cursor: 'pointer',
-  fontSize: '0.875rem',
-  fontWeight: 600,
-};
-
-const disabledBtnStyle: React.CSSProperties = {
-  ...primaryBtnStyle,
-  background: '#93c5fd',
-  cursor: 'not-allowed',
-};
-
-const bannerStyle: React.CSSProperties = {
-  marginBottom: '1rem',
-  padding: '0.625rem 1rem',
-  background: '#eff6ff',
-  color: '#1d4ed8',
-  border: '1px solid #bfdbfe',
-  borderRadius: '0.375rem',
-  fontSize: '0.875rem',
-};
-
-const errorBannerStyle: React.CSSProperties = {
-  ...bannerStyle,
-  background: '#fef2f2',
-  color: '#dc2626',
-  border: '1px solid #fecaca',
-};
-
-const tabBarStyle: React.CSSProperties = {
-  display: 'flex',
-  gap: '0.25rem',
-  borderBottom: '1px solid #e2e8f0',
-};
-
-const tabBase: React.CSSProperties = {
-  padding: '0.5rem 1rem',
-  background: 'transparent',
-  border: 'none',
-  borderBottom: '2px solid transparent',
-  cursor: 'pointer',
-  fontSize: '0.875rem',
-  fontWeight: 500,
-  marginBottom: '-1px',
-};
-
-const activeTabStyle: React.CSSProperties = {
-  ...tabBase,
-  color: '#2563eb',
-  borderBottom: '2px solid #2563eb',
-};
-
-const inactiveTabStyle: React.CSSProperties = {
-  ...tabBase,
-  color: '#6b7280',
-};
-
-const emptyStyle: React.CSSProperties = {
-  padding: '2rem',
-  textAlign: 'center',
-  color: '#6b7280',
-  fontSize: '0.875rem',
-  border: '1px dashed #d1d5db',
-  borderRadius: '0.5rem',
-};

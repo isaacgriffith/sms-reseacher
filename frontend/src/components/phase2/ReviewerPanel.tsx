@@ -6,18 +6,15 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../services/api';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
+import TextField from '@mui/material/TextField';
 
 interface Criterion {
   id: number;
   description: string;
   order_index: number;
-}
-
-interface Reviewer {
-  id: number;
-  reviewer_type: string;
-  user_id: number | null;
-  agent_name: string | null;
 }
 
 interface ReviewerPanelProps {
@@ -111,69 +108,78 @@ export default function ReviewerPanel({
     !submitDecision.isPending;
 
   return (
-    <div
-      style={{
+    <Box
+      sx={{
         border: '1px solid #e2e8f0',
         borderRadius: '0.5rem',
         padding: '1rem',
         background: '#f8fafc',
       }}
     >
-      <h4 style={{ margin: '0 0 0.875rem', fontSize: '0.9375rem', color: '#111827' }}>
+      <Typography variant="subtitle2" sx={{ margin: '0 0 0.875rem', fontSize: '0.9375rem', color: '#111827' }}>
         Submit Decision
-      </h4>
+      </Typography>
 
       {/* Reviewer ID input (simplified — in real use would be populated from auth context) */}
-      <div style={{ marginBottom: '0.875rem' }}>
-        <label style={labelStyle}>Reviewer ID</label>
-        <input
+      <Box sx={{ marginBottom: '0.875rem' }}>
+        <Typography component="label" sx={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: '#374151', marginBottom: '0.375rem' }}>
+          Reviewer ID
+        </Typography>
+        <TextField
           type="number"
           value={reviewerId ?? ''}
           onChange={(e) => setReviewerId(e.target.value ? Number(e.target.value) : null)}
           placeholder="Enter reviewer ID…"
-          style={inputStyle}
+          size="small"
+          fullWidth
         />
-      </div>
+      </Box>
 
       {/* Decision buttons */}
-      <div style={{ marginBottom: '0.875rem' }}>
-        <label style={labelStyle}>Decision</label>
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
+      <Box sx={{ marginBottom: '0.875rem' }}>
+        <Typography component="label" sx={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: '#374151', marginBottom: '0.375rem' }}>
+          Decision
+        </Typography>
+        <Box sx={{ display: 'flex', gap: '0.5rem' }}>
           {(['accepted', 'rejected', 'duplicate'] as DecisionType[]).map((d) => {
             const style = DECISION_STYLES[d];
             const isSelected = selectedDecision === d;
             return (
-              <button
+              <Button
                 key={d}
                 onClick={() => setSelectedDecision(isSelected ? null : d)}
-                style={{
+                variant="outlined"
+                sx={{
                   padding: '0.5rem 1rem',
                   background: isSelected ? style.text : '#fff',
                   color: isSelected ? '#fff' : style.text,
                   border: `2px solid ${style.border}`,
-                  borderRadius: '0.375rem',
-                  cursor: 'pointer',
                   fontSize: '0.875rem',
                   fontWeight: 600,
                   textTransform: 'capitalize',
-                  transition: 'all 0.1s',
+                  '&:hover': {
+                    background: isSelected ? style.text : style.bg,
+                    border: `2px solid ${style.border}`,
+                  },
                 }}
               >
                 {d}
-              </button>
+              </Button>
             );
           })}
-        </div>
-      </div>
+        </Box>
+      </Box>
 
       {/* Criteria reason selector */}
       {selectedDecision && (inclusion.length > 0 || exclusion.length > 0) && (
-        <div style={{ marginBottom: '0.875rem' }}>
-          <label style={labelStyle}>Reasons (select criteria)</label>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem', maxHeight: '160px', overflowY: 'auto' }}>
+        <Box sx={{ marginBottom: '0.875rem' }}>
+          <Typography component="label" sx={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: '#374151', marginBottom: '0.375rem' }}>
+            Reasons (select criteria)
+          </Typography>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: '0.375rem', maxHeight: '160px', overflowY: 'auto' }}>
             {inclusion.length > 0 && (
-              <div>
-                <div style={groupLabelStyle}>Inclusion Criteria</div>
+              <Box>
+                <Typography sx={{ fontSize: '0.6875rem', fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', padding: '0.25rem 0' }}>Inclusion Criteria</Typography>
                 {inclusion.map((c) => (
                   <CriterionCheckbox
                     key={c.id}
@@ -182,11 +188,11 @@ export default function ReviewerPanel({
                     onChange={() => toggleReason(c.id)}
                   />
                 ))}
-              </div>
+              </Box>
             )}
             {exclusion.length > 0 && (
-              <div>
-                <div style={groupLabelStyle}>Exclusion Criteria</div>
+              <Box>
+                <Typography sx={{ fontSize: '0.6875rem', fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', padding: '0.25rem 0' }}>Exclusion Criteria</Typography>
                 {exclusion.map((c) => (
                   <CriterionCheckbox
                     key={c.id}
@@ -195,58 +201,55 @@ export default function ReviewerPanel({
                     onChange={() => toggleReason(c.id)}
                   />
                 ))}
-              </div>
+              </Box>
             )}
-          </div>
-        </div>
+          </Box>
+        </Box>
       )}
 
       {/* Override annotation */}
-      <div style={{ marginBottom: '0.875rem' }}>
-        <label style={labelStyle}>Additional notes / override annotation</label>
-        <textarea
+      <Box sx={{ marginBottom: '0.875rem' }}>
+        <Typography component="label" sx={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: '#374151', marginBottom: '0.375rem' }}>
+          Additional notes / override annotation
+        </Typography>
+        <TextField
           value={annotationText}
           onChange={(e) => setAnnotationText(e.target.value)}
           placeholder="Optional annotation…"
+          multiline
           rows={2}
-          style={{
-            ...inputStyle,
-            resize: 'vertical',
-            fontFamily: 'inherit',
-          }}
+          fullWidth
+          size="small"
         />
-      </div>
+      </Box>
 
       {/* Submit */}
-      <button
+      <Button
+        variant="contained"
         onClick={handleSubmit}
         disabled={!canSubmit}
-        style={{
+        sx={{
           padding: '0.5rem 1.25rem',
           background: canSubmit ? '#2563eb' : '#93c5fd',
-          color: '#fff',
-          border: 'none',
-          borderRadius: '0.375rem',
-          cursor: canSubmit ? 'pointer' : 'not-allowed',
           fontSize: '0.875rem',
           fontWeight: 600,
         }}
       >
         {submitDecision.isPending ? 'Submitting…' : 'Submit Decision'}
-      </button>
+      </Button>
 
       {submitDecision.isError && (
-        <p style={{ margin: '0.5rem 0 0', color: '#ef4444', fontSize: '0.8125rem' }}>
+        <Typography sx={{ margin: '0.5rem 0 0', color: '#ef4444', fontSize: '0.8125rem' }}>
           Failed to submit decision. Please try again.
-        </p>
+        </Typography>
       )}
 
       {submitDecision.isSuccess && (
-        <p style={{ margin: '0.5rem 0 0', color: '#16a34a', fontSize: '0.8125rem' }}>
+        <Typography sx={{ margin: '0.5rem 0 0', color: '#16a34a', fontSize: '0.8125rem' }}>
           Decision submitted.
-        </p>
+        </Typography>
       )}
-    </div>
+    </Box>
   );
 }
 
@@ -279,40 +282,9 @@ function CriterionCheckbox({
         onChange={onChange}
         style={{ flexShrink: 0, marginTop: '2px' }}
       />
-      <span style={{ fontSize: '0.8125rem', color: '#374151' }}>
+      <Typography component="span" sx={{ fontSize: '0.8125rem', color: '#374151' }}>
         {criterion.description}
-      </span>
+      </Typography>
     </label>
   );
 }
-
-// ---------------------------------------------------------------------------
-// Shared styles
-// ---------------------------------------------------------------------------
-
-const labelStyle: React.CSSProperties = {
-  display: 'block',
-  fontSize: '0.8125rem',
-  fontWeight: 600,
-  color: '#374151',
-  marginBottom: '0.375rem',
-};
-
-const groupLabelStyle: React.CSSProperties = {
-  fontSize: '0.6875rem',
-  fontWeight: 700,
-  color: '#9ca3af',
-  textTransform: 'uppercase',
-  letterSpacing: '0.05em',
-  padding: '0.25rem 0',
-};
-
-const inputStyle: React.CSSProperties = {
-  width: '100%',
-  padding: '0.375rem 0.625rem',
-  border: '1px solid #d1d5db',
-  borderRadius: '0.375rem',
-  fontSize: '0.875rem',
-  background: '#fff',
-  boxSizing: 'border-box',
-};

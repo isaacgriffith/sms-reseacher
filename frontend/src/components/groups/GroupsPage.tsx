@@ -6,6 +6,10 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api, ApiError } from '../../services/api';
 import GroupCard, { GroupSummary } from './GroupCard';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
+import TextField from '@mui/material/TextField';
 
 export default function GroupsPage() {
   const queryClient = useQueryClient();
@@ -39,32 +43,27 @@ export default function GroupsPage() {
     }
   };
 
-  if (isLoading) return <p>Loading groups…</p>;
-  if (error) return <p style={{ color: 'red' }}>Failed to load groups.</p>;
+  if (isLoading) return <Typography>Loading groups…</Typography>;
+  if (error) return <Typography sx={{ color: 'red' }}>Failed to load groups.</Typography>;
 
   return (
-    <div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
-        <h2 style={{ margin: 0 }}>Research Groups</h2>
-        <button
+    <Box>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+        <Typography variant="h5" sx={{ margin: 0 }}>Research Groups</Typography>
+        <Button
+          variant="contained"
           onClick={() => setShowCreate((v) => !v)}
-          style={{
-            padding: '0.5rem 1rem',
-            background: '#2563eb',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '0.375rem',
-            cursor: 'pointer',
-          }}
+          sx={{ padding: '0.5rem 1rem' }}
         >
           {showCreate ? 'Cancel' : 'New Group'}
-        </button>
-      </div>
+        </Button>
+      </Box>
 
       {showCreate && (
-        <form
+        <Box
+          component="form"
           onSubmit={handleCreate}
-          style={{
+          sx={{
             display: 'flex',
             gap: '0.75rem',
             alignItems: 'center',
@@ -74,35 +73,34 @@ export default function GroupsPage() {
             borderRadius: '0.5rem',
           }}
         >
-          <input
+          <TextField
             value={newGroupName}
             onChange={(e) => setNewGroupName(e.target.value)}
             placeholder="Group name"
-            style={{ flex: 1, padding: '0.5rem', borderRadius: '0.375rem', border: '1px solid #cbd5e1' }}
+            size="small"
+            sx={{ flex: 1 }}
           />
-          <button
+          <Button
             type="submit"
+            variant="contained"
             disabled={createMutation.isPending}
-            style={{
+            sx={{
               padding: '0.5rem 1rem',
               background: '#16a34a',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '0.375rem',
-              cursor: createMutation.isPending ? 'not-allowed' : 'pointer',
+              '&:hover': { background: '#15803d' },
             }}
           >
             {createMutation.isPending ? 'Creating…' : 'Create'}
-          </button>
-          {createError && <span style={{ color: 'red', fontSize: '0.875rem' }}>{createError}</span>}
-        </form>
+          </Button>
+          {createError && <Typography component="span" sx={{ color: 'red', fontSize: '0.875rem' }}>{createError}</Typography>}
+        </Box>
       )}
 
       {groups && groups.length === 0 ? (
-        <p style={{ color: '#475569' }}>You are not a member of any research groups yet.</p>
+        <Typography sx={{ color: '#475569' }}>You are not a member of any research groups yet.</Typography>
       ) : (
-        <div
-          style={{
+        <Box
+          sx={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
             gap: '1rem',
@@ -111,8 +109,8 @@ export default function GroupsPage() {
           {groups?.map((g) => (
             <GroupCard key={g.id} group={g} />
           ))}
-        </div>
+        </Box>
       )}
-    </div>
+    </Box>
   );
 }

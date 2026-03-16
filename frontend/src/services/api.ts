@@ -2,7 +2,55 @@
  * Typed fetch wrapper with Bearer token injection and JSON error handling.
  */
 
+import { z } from 'zod';
+
 import { getToken } from './auth';
+
+// ---------------------------------------------------------------------------
+// Login response — discriminated union with Zod schemas
+// ---------------------------------------------------------------------------
+
+export const LoginSuccessSchema = z.object({
+  type: z.literal('success').default('success'),
+  access_token: z.string(),
+  token_type: z.string(),
+  user_id: z.number(),
+  display_name: z.string(),
+});
+export type LoginSuccess = z.infer<typeof LoginSuccessSchema>;
+
+export const LoginTotpRequiredSchema = z.object({
+  type: z.literal('totp_required').default('totp_required'),
+  requires_totp: z.literal(true),
+  partial_token: z.string(),
+});
+export type LoginTotpRequired = z.infer<typeof LoginTotpRequiredSchema>;
+
+export type LoginResult = LoginSuccess | LoginTotpRequired;
+
+/** Post credentials and return a typed discriminated union. */
+export async function loginUser(email: string, password: string): Promise<LoginResult> {
+  const response = await fetch(`${BASE_URL}/api/v1/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  });
+
+  if (!response.ok) {
+    let detail = response.statusText;
+    try {
+      const data = await response.json();
+      detail = data?.detail ?? detail;
+    } catch { /* ignore */ }
+    throw new ApiError(response.status, detail);
+  }
+
+  const raw = await response.json();
+  if (raw?.requires_totp === true) {
+    return LoginTotpRequiredSchema.parse(raw);
+  }
+  return LoginSuccessSchema.parse(raw);
+}
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? '';
 

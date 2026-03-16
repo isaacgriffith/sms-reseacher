@@ -6,6 +6,9 @@
 
 import { useMutation } from '@tanstack/react-query';
 import { api } from '../../services/api';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
 
 interface ConflictPayload {
   error: string;
@@ -75,19 +78,46 @@ export default function DiffViewer({
   };
 
   return (
-    <div style={overlayStyle}>
-      <div style={dialogStyle}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-          <h3 style={{ margin: 0, fontSize: '1rem', color: '#111827' }}>Edit Conflict Detected</h3>
-          <button onClick={onDismiss} style={closeBtnStyle} aria-label="Dismiss">✕</button>
-        </div>
+    <Box
+      sx={{
+        position: 'fixed',
+        inset: 0,
+        background: 'rgba(0,0,0,0.45)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 50,
+      }}
+    >
+      <Box
+        sx={{
+          background: '#fff',
+          borderRadius: '0.75rem',
+          padding: '1.5rem',
+          maxWidth: '56rem',
+          width: '95%',
+          maxHeight: '90vh',
+          overflowY: 'auto',
+          boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
+        }}
+      >
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+          <Typography variant="subtitle1" sx={{ margin: 0, fontSize: '1rem', color: '#111827' }}>Edit Conflict Detected</Typography>
+          <Button
+            onClick={onDismiss}
+            aria-label="Dismiss"
+            sx={{ background: 'transparent', border: 'none', fontSize: '1rem', cursor: 'pointer', color: '#6b7280', padding: '0.25rem', minWidth: 'auto' }}
+          >
+            ✕
+          </Button>
+        </Box>
 
-        <p style={{ margin: '0 0 1rem', fontSize: '0.875rem', color: '#6b7280' }}>
+        <Typography sx={{ margin: '0 0 1rem', fontSize: '0.875rem', color: '#6b7280' }}>
           Another user edited this extraction while you were working. Choose how to resolve the conflict.
-        </p>
+        </Typography>
 
         {/* Diff table */}
-        <div style={{ overflowX: 'auto', marginBottom: '1.25rem' }}>
+        <Box sx={{ overflowX: 'auto', marginBottom: '1.25rem' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8125rem' }}>
             <thead>
               <tr>
@@ -111,83 +141,57 @@ export default function DiffViewer({
               })}
             </tbody>
           </table>
-        </div>
+        </Box>
 
         {mutation.isError && (
-          <p style={{ color: '#ef4444', fontSize: '0.8125rem', marginBottom: '0.75rem' }}>
+          <Typography sx={{ color: '#ef4444', fontSize: '0.8125rem', marginBottom: '0.75rem' }}>
             Resolution failed. Please try again.
-          </p>
+          </Typography>
         )}
 
         {/* Action buttons */}
-        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-          <button
+        <Box sx={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+          <Button
+            variant="contained"
             onClick={keepMine}
             disabled={mutation.isPending}
-            style={{ ...actionBtnStyle, background: '#2563eb', color: '#fff' }}
+            sx={{ padding: '0.5rem 1rem', background: '#2563eb', fontSize: '0.875rem', fontWeight: 500 }}
           >
             Keep Mine
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="contained"
             onClick={keepTheirs}
             disabled={mutation.isPending}
-            style={{ ...actionBtnStyle, background: '#16a34a', color: '#fff' }}
+            sx={{ padding: '0.5rem 1rem', background: '#16a34a', '&:hover': { background: '#15803d' }, fontSize: '0.875rem', fontWeight: 500 }}
           >
             Keep Theirs
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="contained"
             onClick={merge}
             disabled={mutation.isPending}
-            style={{ ...actionBtnStyle, background: '#7c3aed', color: '#fff' }}
+            sx={{ padding: '0.5rem 1rem', background: '#7c3aed', '&:hover': { background: '#6d28d9' }, fontSize: '0.875rem', fontWeight: 500 }}
           >
             Merge
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="outlined"
             onClick={onDismiss}
             disabled={mutation.isPending}
-            style={{ ...actionBtnStyle, background: 'transparent', color: '#374151', border: '1px solid #d1d5db' }}
+            sx={{ padding: '0.5rem 1rem', color: '#374151', borderColor: '#d1d5db', fontSize: '0.875rem', fontWeight: 500 }}
           >
             Cancel
-          </button>
-        </div>
-      </div>
-    </div>
+          </Button>
+        </Box>
+      </Box>
+    </Box>
   );
 }
 
 // ---------------------------------------------------------------------------
 // Styles
 // ---------------------------------------------------------------------------
-
-const overlayStyle: React.CSSProperties = {
-  position: 'fixed',
-  inset: 0,
-  background: 'rgba(0,0,0,0.45)',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  zIndex: 50,
-};
-
-const dialogStyle: React.CSSProperties = {
-  background: '#fff',
-  borderRadius: '0.75rem',
-  padding: '1.5rem',
-  maxWidth: '56rem',
-  width: '95%',
-  maxHeight: '90vh',
-  overflowY: 'auto',
-  boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
-};
-
-const closeBtnStyle: React.CSSProperties = {
-  background: 'transparent',
-  border: 'none',
-  fontSize: '1rem',
-  cursor: 'pointer',
-  color: '#6b7280',
-  padding: '0.25rem',
-};
 
 const thStyle: React.CSSProperties = {
   padding: '0.5rem 0.75rem',
@@ -204,13 +208,4 @@ const tdStyle: React.CSSProperties = {
   padding: '0.5rem 0.75rem',
   borderBottom: '1px solid #f1f5f9',
   verticalAlign: 'top',
-};
-
-const actionBtnStyle: React.CSSProperties = {
-  padding: '0.5rem 1rem',
-  border: 'none',
-  borderRadius: '0.375rem',
-  cursor: 'pointer',
-  fontSize: '0.875rem',
-  fontWeight: 500,
 };

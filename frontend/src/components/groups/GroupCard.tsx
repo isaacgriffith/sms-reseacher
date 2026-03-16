@@ -3,6 +3,10 @@
  */
 
 import { useNavigate } from 'react-router-dom';
+import Card from '@mui/material/Card';
+import CardContent from '@mui/material/CardContent';
+import Typography from '@mui/material/Typography';
+import Chip from '@mui/material/Chip';
 
 export interface GroupSummary {
   id: number;
@@ -19,41 +23,34 @@ export default function GroupCard({ group }: GroupCardProps) {
   const navigate = useNavigate();
 
   return (
-    <div
+    <Card
       onClick={() => navigate(`/groups/${group.id}/studies`)}
-      style={{
-        padding: '1.25rem',
-        border: '1px solid #e2e8f0',
-        borderRadius: '0.5rem',
+      sx={{
         cursor: 'pointer',
-        background: '#fff',
         transition: 'box-shadow 0.15s',
+        '&:hover': { boxShadow: '0 4px 12px rgba(0,0,0,0.1)' },
       }}
-      onMouseEnter={(e) => {
-        (e.currentTarget as HTMLDivElement).style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
-      }}
-      onMouseLeave={(e) => {
-        (e.currentTarget as HTMLDivElement).style.boxShadow = 'none';
-      }}
+      variant="outlined"
     >
-      <h3 style={{ margin: '0 0 0.5rem', fontSize: '1.125rem' }}>{group.name}</h3>
-      <p style={{ margin: '0 0 0.25rem', color: '#475569', fontSize: '0.875rem' }}>
-        {group.study_count} {group.study_count === 1 ? 'study' : 'studies'}
-      </p>
-      <span
-        style={{
-          display: 'inline-block',
-          padding: '0.125rem 0.5rem',
-          background: group.role === 'admin' ? '#dbeafe' : '#f1f5f9',
-          color: group.role === 'admin' ? '#1d4ed8' : '#475569',
-          borderRadius: '9999px',
-          fontSize: '0.75rem',
-          fontWeight: 600,
-          textTransform: 'capitalize',
-        }}
-      >
-        {group.role}
-      </span>
-    </div>
+      <CardContent sx={{ padding: '1.25rem' }}>
+        <Typography variant="h6" sx={{ margin: '0 0 0.5rem', fontSize: '1.125rem' }}>{group.name}</Typography>
+        <Typography sx={{ margin: '0 0 0.25rem', color: '#475569', fontSize: '0.875rem' }}>
+          {group.study_count} {group.study_count === 1 ? 'study' : 'studies'}
+        </Typography>
+        <Chip
+          label={group.role}
+          size="small"
+          sx={{
+            background: group.role === 'admin' ? '#dbeafe' : '#f1f5f9',
+            color: group.role === 'admin' ? '#1d4ed8' : '#475569',
+            fontSize: '0.75rem',
+            fontWeight: 600,
+            textTransform: 'capitalize',
+            height: 'auto',
+            padding: '0.125rem 0',
+          }}
+        />
+      </CardContent>
+    </Card>
   );
 }

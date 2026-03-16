@@ -7,6 +7,9 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../../services/api';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import Paper from '@mui/material/Paper';
 
 interface PhaseMetrics {
   phase_tag: string;
@@ -54,9 +57,9 @@ function FunnelBar({
 }) {
   const pct = max > 0 ? Math.round((value / max) * 100) : 0;
   return (
-    <div style={{ marginBottom: '0.5rem' }}>
-      <div
-        style={{
+    <Box sx={{ marginBottom: '0.5rem' }}>
+      <Box
+        sx={{
           display: 'flex',
           justifyContent: 'space-between',
           fontSize: '0.8125rem',
@@ -64,26 +67,26 @@ function FunnelBar({
           marginBottom: '0.2rem',
         }}
       >
-        <span>{label}</span>
-        <span style={{ fontWeight: 600, color }}>
+        <Typography component="span" sx={{ fontSize: '0.8125rem' }}>{label}</Typography>
+        <Typography component="span" sx={{ fontWeight: 600, color, fontSize: '0.8125rem' }}>
           {value.toLocaleString()}
           {max > 0 && (
-            <span style={{ fontWeight: 400, color: '#9ca3af', marginLeft: '0.25rem' }}>
+            <Typography component="span" sx={{ fontWeight: 400, color: '#9ca3af', marginLeft: '0.25rem', fontSize: '0.8125rem' }}>
               ({pct}%)
-            </span>
+            </Typography>
           )}
-        </span>
-      </div>
-      <div
-        style={{
+        </Typography>
+      </Box>
+      <Box
+        sx={{
           height: '0.5rem',
           background: '#f1f5f9',
           borderRadius: '9999px',
           overflow: 'hidden',
         }}
       >
-        <div
-          style={{
+        <Box
+          sx={{
             width: `${pct}%`,
             height: '100%',
             background: color,
@@ -91,36 +94,38 @@ function FunnelBar({
             transition: 'width 0.3s ease',
           }}
         />
-      </div>
-    </div>
+      </Box>
+    </Box>
   );
 }
 
 function PhaseCard({ phase }: { phase: PhaseMetrics }) {
   const max = phase.total_identified;
   return (
-    <div
-      style={{
+    <Paper
+      variant="outlined"
+      sx={{
         border: '1px solid #e2e8f0',
         borderRadius: '0.5rem',
         padding: '1rem',
         background: '#fff',
       }}
     >
-      <div
-        style={{
+      <Box
+        sx={{
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
           marginBottom: '0.875rem',
         }}
       >
-        <h4 style={{ margin: 0, fontSize: '0.9375rem', color: '#111827' }}>
+        <Typography variant="subtitle2" sx={{ margin: 0, fontSize: '0.9375rem', color: '#111827' }}>
           {phase.phase_tag === 'all' ? 'All Phases (Totals)' : phase.phase_tag}
-        </h4>
+        </Typography>
         {phase.phase_tag !== 'all' && (
-          <span
-            style={{
+          <Typography
+            component="span"
+            sx={{
               fontSize: '0.6875rem',
               color: '#6b7280',
               background: '#f1f5f9',
@@ -129,9 +134,9 @@ function PhaseCard({ phase }: { phase: PhaseMetrics }) {
             }}
           >
             exec #{phase.search_execution_id}
-          </span>
+          </Typography>
         )}
-      </div>
+      </Box>
 
       {(['total_identified', 'accepted', 'rejected', 'duplicates'] as const).map((key) => (
         <FunnelBar
@@ -142,7 +147,7 @@ function PhaseCard({ phase }: { phase: PhaseMetrics }) {
           color={BAR_COLORS[key]}
         />
       ))}
-    </div>
+    </Paper>
   );
 }
 
@@ -160,16 +165,16 @@ export default function MetricsDashboard({ studyId }: MetricsDashboardProps) {
 
   if (isLoading) {
     return (
-      <div style={{ padding: '1.5rem', color: '#6b7280', fontSize: '0.875rem' }}>
+      <Box sx={{ padding: '1.5rem', color: '#6b7280', fontSize: '0.875rem' }}>
         Loading metrics…
-      </div>
+      </Box>
     );
   }
 
   if (isError) {
     return (
-      <div
-        style={{
+      <Box
+        sx={{
           padding: '1rem',
           border: '1px solid #fecaca',
           borderRadius: '0.5rem',
@@ -179,14 +184,14 @@ export default function MetricsDashboard({ studyId }: MetricsDashboardProps) {
         }}
       >
         Failed to load metrics: {(error as Error)?.message ?? 'Unknown error'}
-      </div>
+      </Box>
     );
   }
 
   if (!data || data.phases.length === 0) {
     return (
-      <div
-        style={{
+      <Box
+        sx={{
           padding: '2rem',
           textAlign: 'center',
           color: '#6b7280',
@@ -197,20 +202,20 @@ export default function MetricsDashboard({ studyId }: MetricsDashboardProps) {
         }}
       >
         No search metrics yet. Run a search to see the funnel.
-      </div>
+      </Box>
     );
   }
 
   return (
-    <section>
-      <h3 style={{ margin: '0 0 1rem', fontSize: '1rem', color: '#111827', fontWeight: 700 }}>
+    <Box component="section">
+      <Typography variant="subtitle1" sx={{ margin: '0 0 1rem', fontSize: '1rem', color: '#111827', fontWeight: 700 }}>
         Search Metrics
-      </h3>
+      </Typography>
 
       {/* Per-phase cards */}
       {data.phases.length > 0 && (
-        <div
-          style={{
+        <Box
+          sx={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
             gap: '0.75rem',
@@ -220,13 +225,13 @@ export default function MetricsDashboard({ studyId }: MetricsDashboardProps) {
           {data.phases.map((phase) => (
             <PhaseCard key={phase.phase_tag} phase={phase} />
           ))}
-        </div>
+        </Box>
       )}
 
       {/* Totals card (only shown when >1 phase) */}
       {data.phases.length > 1 && (
         <PhaseCard phase={data.totals} />
       )}
-    </section>
+    </Box>
   );
 }

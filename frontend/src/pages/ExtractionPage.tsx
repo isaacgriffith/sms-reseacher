@@ -10,6 +10,10 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../services/api';
 import ExtractionView from '../components/phase3/ExtractionView';
 import DiffViewer from '../components/shared/DiffViewer';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import Container from '@mui/material/Container';
+import Paper from '@mui/material/Paper';
 
 interface Extraction {
   id: number;
@@ -56,40 +60,41 @@ export default function ExtractionPage() {
   };
 
   return (
-    <div style={{ maxWidth: '72rem', margin: '0 auto', padding: '1.5rem' }}>
-      <h2 style={{ margin: '0 0 1.5rem', fontSize: '1.25rem', color: '#111827' }}>
+    <Container maxWidth={false} sx={{ maxWidth: '72rem', margin: '0 auto', padding: '1.5rem' }}>
+      <Typography variant="h5" sx={{ margin: '0 0 1.5rem', fontSize: '1.25rem', color: '#111827' }}>
         Data Extraction
-      </h2>
+      </Typography>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '18rem 1fr', gap: '1.5rem', alignItems: 'start' }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: '18rem 1fr', gap: '1.5rem', alignItems: 'start' }}>
         {/* Sidebar: extraction list */}
-        <div style={{ border: '1px solid #e2e8f0', borderRadius: '0.5rem', overflow: 'hidden' }}>
-          <div style={{ padding: '0.75rem 1rem', background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-            <h3 style={{ margin: 0, fontSize: '0.875rem', fontWeight: 600, color: '#374151' }}>
+        <Paper variant="outlined" sx={{ border: '1px solid #e2e8f0', borderRadius: '0.5rem', overflow: 'hidden' }}>
+          <Box sx={{ padding: '0.75rem 1rem', background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+            <Typography variant="subtitle2" sx={{ margin: 0, fontSize: '0.875rem', fontWeight: 600, color: '#374151' }}>
               Papers ({extractions.length})
-            </h3>
-          </div>
+            </Typography>
+          </Box>
 
           {isLoading && (
-            <p style={{ padding: '1rem', color: '#6b7280', fontSize: '0.875rem' }}>Loading…</p>
+            <Typography sx={{ padding: '1rem', color: '#6b7280', fontSize: '0.875rem' }}>Loading…</Typography>
           )}
           {error && (
-            <p style={{ padding: '1rem', color: '#ef4444', fontSize: '0.875rem' }}>
+            <Typography sx={{ padding: '1rem', color: '#ef4444', fontSize: '0.875rem' }}>
               Failed to load extractions.
-            </p>
+            </Typography>
           )}
           {!isLoading && extractions.length === 0 && (
-            <p style={{ padding: '1rem', color: '#9ca3af', fontSize: '0.875rem' }}>
+            <Typography sx={{ padding: '1rem', color: '#9ca3af', fontSize: '0.875rem' }}>
               No extractions yet. Run batch extraction from the study page.
-            </p>
+            </Typography>
           )}
 
-          <div>
+          <Box>
             {extractions.map((ex) => (
-              <button
+              <Box
                 key={ex.id}
+                component="button"
                 onClick={() => setSelectedId(ex.id)}
-                style={{
+                sx={{
                   display: 'block',
                   width: '100%',
                   padding: '0.75rem 1rem',
@@ -101,33 +106,33 @@ export default function ExtractionPage() {
                   borderLeft: selectedId === ex.id ? '3px solid #2563eb' : '3px solid transparent',
                 }}
               >
-                <div style={{ fontSize: '0.8125rem', fontWeight: 500, color: '#111827' }}>
+                <Box sx={{ fontSize: '0.8125rem', fontWeight: 500, color: '#111827' }}>
                   Paper #{ex.candidate_paper_id}
-                </div>
-                <div style={{ display: 'flex', gap: '0.375rem', marginTop: '0.25rem', flexWrap: 'wrap' }}>
+                </Box>
+                <Box sx={{ display: 'flex', gap: '0.375rem', marginTop: '0.25rem', flexWrap: 'wrap' }}>
                   <StatusBadge status={ex.extraction_status} />
-                  <span style={{ fontSize: '0.6875rem', color: '#9ca3af' }}>
+                  <Typography component="span" sx={{ fontSize: '0.6875rem', color: '#9ca3af' }}>
                     {ex.research_type.replace('_', ' ')}
-                  </span>
-                </div>
-              </button>
+                  </Typography>
+                </Box>
+              </Box>
             ))}
-          </div>
-        </div>
+          </Box>
+        </Paper>
 
         {/* Main: extraction detail */}
-        <div>
+        <Box>
           {selectedId ? (
-            <div style={{ border: '1px solid #e2e8f0', borderRadius: '0.5rem', padding: '1.25rem' }}>
+            <Paper variant="outlined" sx={{ border: '1px solid #e2e8f0', borderRadius: '0.5rem', padding: '1.25rem' }}>
               <ExtractionView
                 studyId={numericStudyId}
                 extractionId={selectedId}
                 onConflict={handleConflict}
               />
-            </div>
+            </Paper>
           ) : (
-            <div
-              style={{
+            <Box
+              sx={{
                 border: '1px dashed #d1d5db',
                 borderRadius: '0.5rem',
                 padding: '3rem',
@@ -137,10 +142,10 @@ export default function ExtractionPage() {
               }}
             >
               Select a paper from the list to view or edit its extraction.
-            </div>
+            </Box>
           )}
-        </div>
-      </div>
+        </Box>
+      </Box>
 
       {/* DiffViewer modal */}
       {conflict && selectedId && (
@@ -152,7 +157,7 @@ export default function ExtractionPage() {
           onDismiss={handleDismiss}
         />
       )}
-    </div>
+    </Container>
   );
 }
 
@@ -170,8 +175,9 @@ const STATUS_COLORS: Record<string, string> = {
 function StatusBadge({ status }: { status: string }) {
   const color = STATUS_COLORS[status] ?? '#6b7280';
   return (
-    <span
-      style={{
+    <Typography
+      component="span"
+      sx={{
         padding: '0.0625rem 0.375rem',
         background: `${color}18`,
         color,
@@ -182,6 +188,6 @@ function StatusBadge({ status }: { status: string }) {
       }}
     >
       {status.replace('_', ' ')}
-    </span>
+    </Typography>
   );
 }

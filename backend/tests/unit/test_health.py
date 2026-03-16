@@ -73,13 +73,17 @@ class TestHealthEndpoint:
             response = await c.get("/api/v1/health")
         assert response.status_code == 401
 
-    async def test_health_with_valid_jwt_returns_200(self) -> None:
-        """Health endpoint returns 200 with a real JWT token."""
-        app = create_app()
-        token = create_access_token(user_id=1)
+    async def test_health_with_auth_override_returns_200(self) -> None:
+        """Health endpoint returns 200 when auth dependency is satisfied.
+
+        Uses the dependency override pattern so no DB is required.
+        Full JWT validation (including token_version DB lookup) is covered
+        by the integration test suite.
+        """
+        app = _make_app_with_auth_override()
         async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
             response = await c.get(
                 "/api/v1/health",
-                headers={"Authorization": f"Bearer {token}"},
+                headers={"Authorization": "Bearer ignored-by-override"},
             )
         assert response.status_code == 200

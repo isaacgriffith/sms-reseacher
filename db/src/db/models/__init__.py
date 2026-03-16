@@ -4,7 +4,20 @@ This package supersedes the top-level ``models.py`` file.  All core models
 (Study, Paper, StudyPaper) are defined here so that ``from db.models import Study``
 continues to work correctly when the ``models/`` package takes precedence over
 ``models.py`` in Python's import resolution.
+
+Feature 004 additions — re-exported here for single stable import path:
+- :class:`~db.models.backup_codes.BackupCode`
+- :class:`~db.models.security_audit.SecurityAuditEvent`
+- :class:`~db.models.users.ThemePreference`
+- :class:`~db.models.security_audit.SecurityEventType`
 """
+
+# Feature 004: new models and enums (imported first so Alembic autogenerate
+# detects them when env.py imports this package).
+from db.models.backup_codes import BackupCode as BackupCode  # noqa: F401
+from db.models.security_audit import SecurityAuditEvent as SecurityAuditEvent  # noqa: F401
+from db.models.users import ThemePreference as ThemePreference  # noqa: F401
+from db.models.security_audit import SecurityEventType as SecurityEventType  # noqa: F401
 
 import enum
 from datetime import datetime

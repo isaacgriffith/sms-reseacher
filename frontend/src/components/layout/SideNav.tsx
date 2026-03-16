@@ -4,6 +4,12 @@
 
 import { NavLink, useNavigate } from 'react-router-dom';
 import { clearSession, useAuthStore } from '../../services/auth';
+import Box from '@mui/material/Box';
+import Avatar from '@mui/material/Avatar';
+import Typography from '@mui/material/Typography';
+import List from '@mui/material/List';
+import ListItem from '@mui/material/ListItem';
+import Button from '@mui/material/Button';
 
 export default function SideNav() {
   const user = useAuthStore((s) => s.user);
@@ -24,8 +30,9 @@ export default function SideNav() {
     : '?';
 
   return (
-    <nav
-      style={{
+    <Box
+      component="nav"
+      sx={{
         width: '220px',
         minHeight: '100vh',
         background: '#1e293b',
@@ -38,31 +45,27 @@ export default function SideNav() {
       }}
     >
       {/* Avatar + name */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '2rem' }}>
-        <div
-          style={{
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '2rem' }}>
+        <Avatar
+          sx={{
             width: 40,
             height: 40,
-            borderRadius: '50%',
             background: '#2563eb',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
             fontWeight: 700,
             fontSize: '0.875rem',
             flexShrink: 0,
           }}
         >
           {initials}
-        </div>
-        <span style={{ fontSize: '0.875rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        </Avatar>
+        <Typography sx={{ fontSize: '0.875rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {user?.displayName ?? 'Unknown'}
-        </span>
-      </div>
+        </Typography>
+      </Box>
 
       {/* Navigation links */}
-      <ul style={{ listStyle: 'none', padding: 0, margin: 0, flex: 1 }}>
-        <li style={{ marginBottom: '0.5rem' }}>
+      <List sx={{ listStyle: 'none', padding: 0, margin: 0, flex: 1 }}>
+        <ListItem sx={{ marginBottom: '0.5rem', padding: 0 }}>
           <NavLink
             to="/groups"
             style={({ isActive }) => ({
@@ -73,30 +76,65 @@ export default function SideNav() {
               background: isActive ? '#334155' : 'transparent',
               textDecoration: 'none',
               fontSize: '0.9375rem',
+              width: '100%',
             })}
           >
             Research Groups
           </NavLink>
-        </li>
-      </ul>
+        </ListItem>
+        <ListItem sx={{ marginBottom: '0.5rem', padding: 0 }}>
+          <NavLink
+            to="/preferences"
+            style={({ isActive }) => ({
+              display: 'block',
+              padding: '0.5rem 0.75rem',
+              borderRadius: '0.375rem',
+              color: isActive ? '#fff' : '#cbd5e1',
+              background: isActive ? '#334155' : 'transparent',
+              textDecoration: 'none',
+              fontSize: '0.9375rem',
+              width: '100%',
+            })}
+          >
+            Preferences
+          </NavLink>
+        </ListItem>
+        <ListItem sx={{ marginBottom: '0.5rem', padding: 0 }}>
+          <NavLink
+            to="/api-docs"
+            style={({ isActive }) => ({
+              display: 'block',
+              padding: '0.5rem 0.75rem',
+              borderRadius: '0.375rem',
+              color: isActive ? '#fff' : '#cbd5e1',
+              background: isActive ? '#334155' : 'transparent',
+              textDecoration: 'none',
+              fontSize: '0.9375rem',
+              width: '100%',
+            })}
+          >
+            API Docs
+          </NavLink>
+        </ListItem>
+      </List>
 
 
       {/* Logout */}
-      <button
+      <Button
         onClick={handleLogout}
-        style={{
+        variant="outlined"
+        sx={{
           padding: '0.5rem 0.75rem',
-          background: 'transparent',
           border: '1px solid #475569',
-          borderRadius: '0.375rem',
           color: '#cbd5e1',
-          cursor: 'pointer',
           fontSize: '0.875rem',
           textAlign: 'left',
+          justifyContent: 'flex-start',
+          '&:hover': { border: '1px solid #cbd5e1' },
         }}
       >
         Sign out
-      </button>
-    </nav>
+      </Button>
+    </Box>
   );
 }

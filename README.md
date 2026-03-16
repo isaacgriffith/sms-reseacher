@@ -43,6 +43,19 @@ docker compose up       # starts frontend + backend + db + researcher-mcp
 
 See [quickstart.md](specs/001-repo-setup/quickstart.md#docker-local-deployment) for Docker details.
 
+## Frontend Routes
+
+| Route | Description | Auth required |
+|-------|-------------|---------------|
+| `/login` | Sign in (password + optional TOTP second step) | No |
+| `/groups` | Research groups list | Yes |
+| `/groups/:id/studies` | Studies for a group | Yes |
+| `/studies/:id` | Study workspace | Yes |
+| `/preferences` | Password change, theme selector, 2FA management | Yes |
+| `/api-docs` | Interactive Swagger UI (auto-generated from backend) | Yes |
+
+> MUI v5 migration complete — all components use `@mui/material`.
+
 ## Tech Stack
 
 - **Python**: UV workspace, Ruff (lint + format), MyPy strict, pytest + pytest-asyncio, cosmic-ray (mutation)
@@ -50,6 +63,8 @@ See [quickstart.md](specs/001-repo-setup/quickstart.md#docker-local-deployment) 
 - **Database**: SQLAlchemy 2.x async + Alembic; PostgreSQL 16 (prod) / SQLite (dev/test)
 - **LLM**: LiteLLM abstraction — Anthropic Claude or local Ollama
 - **MCP**: FastMCP (server) + `mcp` SDK (client)
+- **Security**: TOTP 2FA (`pyotp`), encrypted secrets (Fernet), bcrypt backup codes, JWT `token_version` session invalidation
+- **UI**: MUI v5 (`@mui/material`), TanStack Query v5, React Hook Form + Zod, `swagger-ui-react`
 - **Docker**: Multi-stage `python:3.14-slim` + `nginx:alpine`; images pushed to GHCR on `main`
 - **CI**: GitHub Actions — lint, test (≥85% line coverage with PR comment), mutation (≥85% kill rate, manual trigger), Docker scan, GHCR push
 

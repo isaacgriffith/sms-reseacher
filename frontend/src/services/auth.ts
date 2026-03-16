@@ -12,6 +12,7 @@ export interface AuthUser {
   id: number;
   email: string;
   displayName: string;
+  themePreference?: 'light' | 'dark' | 'system';
 }
 
 // ---------------------------------------------------------------------------
@@ -35,6 +36,13 @@ export function getCurrentUser(): AuthUser | null {
 export function setSession(token: string, user: AuthUser): void {
   localStorage.setItem(TOKEN_KEY, token);
   localStorage.setItem(USER_KEY, JSON.stringify(user));
+  window.dispatchEvent(new Event('sms-auth-change'));
+}
+
+export function updateUserFields(updates: Partial<AuthUser>): void {
+  const current = getCurrentUser();
+  if (!current) return;
+  localStorage.setItem(USER_KEY, JSON.stringify({ ...current, ...updates }));
   window.dispatchEvent(new Event('sms-auth-change'));
 }
 

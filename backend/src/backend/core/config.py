@@ -46,6 +46,11 @@ class Settings(BaseSettings):
     arq_max_jobs: int = 10
     arq_job_timeout: int = 3601  # seconds; covers longest expected search run
 
+    # TOTP two-factor authentication (feature 004-frontend-improvements)
+    totp_lockout_attempts: int = 5
+    totp_lockout_minutes: int = 15
+    totp_issuer_name: str = "SMS Researcher"
+
 
 @lru_cache
 def get_settings() -> Settings:

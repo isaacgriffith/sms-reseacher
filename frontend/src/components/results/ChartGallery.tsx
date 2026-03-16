@@ -3,6 +3,11 @@
  * plus a publications-by-year bar chart. Each chart has a download button.
  */
 
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
+import Paper from '@mui/material/Paper';
+
 interface Chart {
   id: number;
   chart_type: string;
@@ -29,20 +34,35 @@ const CHART_LABELS: Record<string, string> = {
 export default function ChartGallery({ studyId, charts }: ChartGalleryProps) {
   if (charts.length === 0) {
     return (
-      <div style={emptyStyle}>
+      <Box
+        sx={{
+          padding: '2rem',
+          textAlign: 'center',
+          color: '#6b7280',
+          fontSize: '0.875rem',
+          border: '1px dashed #d1d5db',
+          borderRadius: '0.5rem',
+        }}
+      >
         No charts generated yet. Click <strong>Generate Results</strong> to build them.
-      </div>
+      </Box>
     );
   }
 
   return (
-    <div>
-      <div style={gridStyle}>
+    <Box>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+          gap: '1rem',
+        }}
+      >
         {charts.map((chart) => (
           <ChartCard key={chart.id} studyId={studyId} chart={chart} />
         ))}
-      </div>
-    </div>
+      </Box>
+    </Box>
   );
 }
 
@@ -74,20 +94,39 @@ function ChartCard({ studyId, chart }: ChartCardProps) {
     : null;
 
   return (
-    <div style={cardStyle}>
-      <div style={cardHeaderStyle}>
-        <span style={cardTitleStyle}>{label}</span>
-        <button
+    <Paper variant="outlined" sx={{ border: '1px solid #e2e8f0', borderRadius: '0.5rem', padding: '0.875rem', background: '#fff' }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.625rem' }}>
+        <Typography component="span" sx={{ fontSize: '0.8125rem', fontWeight: 600, color: '#374151', textTransform: 'capitalize' }}>{label}</Typography>
+        <Button
+          variant="outlined"
+          size="small"
           onClick={handleDownload}
           disabled={!chart.svg_content}
-          style={chart.svg_content ? downloadBtnStyle : disabledBtnStyle}
           title="Download SVG"
+          sx={{
+            padding: '0.125rem 0.5rem',
+            fontSize: '0.6875rem',
+            fontWeight: 600,
+            background: chart.svg_content ? '#eff6ff' : '#f1f5f9',
+            color: chart.svg_content ? '#2563eb' : '#9ca3af',
+            borderColor: chart.svg_content ? '#bfdbfe' : '#e2e8f0',
+          }}
         >
           ↓ SVG
-        </button>
-      </div>
+        </Button>
+      </Box>
 
-      <div style={chartContainerStyle}>
+      <Box
+        sx={{
+          height: '160px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: '#f8fafc',
+          borderRadius: '0.375rem',
+          overflow: 'hidden',
+        }}
+      >
         {svgSrc ? (
           <img
             src={svgSrc}
@@ -95,82 +134,13 @@ function ChartCard({ studyId, chart }: ChartCardProps) {
             style={{ width: '100%', height: '100%', objectFit: 'contain' }}
           />
         ) : (
-          <div style={{ color: '#9ca3af', fontSize: '0.8125rem' }}>No data</div>
+          <Typography sx={{ color: '#9ca3af', fontSize: '0.8125rem' }}>No data</Typography>
         )}
-      </div>
+      </Box>
 
-      <div style={{ marginTop: '0.375rem', fontSize: '0.6875rem', color: '#9ca3af' }}>
+      <Typography sx={{ marginTop: '0.375rem', fontSize: '0.6875rem', color: '#9ca3af' }}>
         v{chart.version}
-      </div>
-    </div>
+      </Typography>
+    </Paper>
   );
 }
-
-// ---------------------------------------------------------------------------
-// Styles
-// ---------------------------------------------------------------------------
-
-const gridStyle: React.CSSProperties = {
-  display: 'grid',
-  gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-  gap: '1rem',
-};
-
-const cardStyle: React.CSSProperties = {
-  border: '1px solid #e2e8f0',
-  borderRadius: '0.5rem',
-  padding: '0.875rem',
-  background: '#fff',
-};
-
-const cardHeaderStyle: React.CSSProperties = {
-  display: 'flex',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  marginBottom: '0.625rem',
-};
-
-const cardTitleStyle: React.CSSProperties = {
-  fontSize: '0.8125rem',
-  fontWeight: 600,
-  color: '#374151',
-  textTransform: 'capitalize' as const,
-};
-
-const chartContainerStyle: React.CSSProperties = {
-  height: '160px',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  background: '#f8fafc',
-  borderRadius: '0.375rem',
-  overflow: 'hidden',
-};
-
-const downloadBtnStyle: React.CSSProperties = {
-  padding: '0.125rem 0.5rem',
-  background: '#eff6ff',
-  color: '#2563eb',
-  border: '1px solid #bfdbfe',
-  borderRadius: '0.25rem',
-  cursor: 'pointer',
-  fontSize: '0.6875rem',
-  fontWeight: 600,
-};
-
-const disabledBtnStyle: React.CSSProperties = {
-  ...downloadBtnStyle,
-  background: '#f1f5f9',
-  color: '#9ca3af',
-  border: '1px solid #e2e8f0',
-  cursor: 'not-allowed',
-};
-
-const emptyStyle: React.CSSProperties = {
-  padding: '2rem',
-  textAlign: 'center',
-  color: '#6b7280',
-  fontSize: '0.875rem',
-  border: '1px dashed #d1d5db',
-  borderRadius: '0.5rem',
-};

@@ -4,6 +4,35 @@ All notable changes to this subproject are documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased] — feature/004-frontend-improvements
+
+### Added
+- **Preferences page** (`/preferences`): tabbed UI for Password, Theme, and 2FA settings
+- **Password change form**: React Hook Form + Zod (min 12 chars, uppercase, digit, special);
+  real-time complexity indicator via `useWatch`
+- **Theme selector**: MUI `ToggleButtonGroup` — Light / Dark / System; persisted to DB and
+  localStorage; `useColorMode` hook registers `matchMedia` listener for System mode
+- **Two-factor authentication UI**: `TwoFactorSetupDialog` (4-step `useReducer` flow with
+  Stepper — idle → QR display → code entry → backup codes); `TwoFactorSettings` panel
+  (status badge, disable form, backup code regeneration)
+- **TOTP login second step**: `LoginPage` shows TOTP code input after `requires_totp: true`
+  response; handles 429 lockout message and "Back to sign in" navigation
+- **API docs page** (`/api-docs`): TanStack Query fetches authenticated OpenAPI schema;
+  renders `<SwaggerUI>` from `swagger-ui-react`
+- **Side nav**: "Preferences" and "API Docs" links added
+- `useTotp` hooks: `useTotpSetup`, `useTotpConfirm`, `useTotpDisable`, `useBackupCodesRegenerate`
+- `loginUser` function in `api.ts` with Zod discriminated union (`LoginSuccess | LoginTotpRequired`)
+- E2e Playwright specs: `preferences-password`, `two-factor-auth`, `theme`, `api-docs`
+- Vitest tests: `useColorMode`, `ThemeSelector`, `TwoFactorSetupDialog`, `TwoFactorSettings`
+
+### Changed
+- **Full MUI v5 migration**: all 30+ components replaced inline styles with MUI `sx` prop,
+  `Box`, `Typography`, `Button`, `TextField`, `Alert`, `Paper`, `Card`, `Grid`, `Tabs`, etc.
+- `ThemeContext`: reads `themePreference` from auth store; `setThemePreference` calls API
+- `LoginPage`: migrated to MUI; now handles optional TOTP second-step screen
+
+---
+
 ## [Unreleased] — feature/003-project-setup-improvements
 
 ### Added

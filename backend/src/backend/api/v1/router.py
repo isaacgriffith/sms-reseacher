@@ -20,6 +20,10 @@ from backend.api.v1.quality import router as quality_router
 from backend.api.v1.validity import router as validity_router
 from backend.api.v1.audit import router as audit_router
 from backend.api.v1.admin import router as admin_router
+from backend.api.v1.me.password import router as me_password_router
+from backend.api.v1.me.preferences import router as me_preferences_router
+from backend.api.v1.me.totp import router as me_totp_router
+from backend.api.v1.openapi_route import router as openapi_router
 
 api_router = APIRouter(prefix="/api/v1")
 api_router.include_router(health.router)
@@ -40,3 +44,7 @@ api_router.include_router(quality_router)
 api_router.include_router(validity_router)
 api_router.include_router(audit_router)
 api_router.include_router(admin_router)
+api_router.include_router(me_password_router, prefix="/me")
+api_router.include_router(me_preferences_router, prefix="/me")
+api_router.include_router(me_totp_router, prefix="/me")
+api_router.include_router(openapi_router)

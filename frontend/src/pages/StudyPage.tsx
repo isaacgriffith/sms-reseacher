@@ -13,6 +13,9 @@ import SearchStringEditor from '../components/phase2/SearchStringEditor';
 import TestRetest from '../components/phase2/TestRetest';
 import JobProgressPanel from '../components/jobs/JobProgressPanel';
 import PaperQueue from '../components/phase2/PaperQueue';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
 
 interface StudyDetail {
   id: number;
@@ -49,31 +52,31 @@ export default function StudyPage() {
     enabled: !!studyId,
   });
 
-  if (isLoading) return <p>Loading study…</p>;
-  if (error || !study) return <p style={{ color: 'red' }}>Failed to load study.</p>;
+  if (isLoading) return <Typography>Loading study…</Typography>;
+  if (error || !study) return <Typography sx={{ color: 'red' }}>Failed to load study.</Typography>;
 
   const unlocked = new Set(study.unlocked_phases);
 
   return (
-    <div>
+    <Box>
       {/* Study header */}
-      <div style={{ marginBottom: '1.5rem' }}>
-        <h2 style={{ margin: '0 0 0.25rem' }}>{study.name}</h2>
+      <Box sx={{ marginBottom: '1.5rem' }}>
+        <Typography variant="h5" sx={{ margin: '0 0 0.25rem' }}>{study.name}</Typography>
         {study.topic && (
-          <p style={{ margin: '0 0 0.5rem', color: '#64748b' }}>{study.topic}</p>
+          <Typography sx={{ margin: '0 0 0.5rem', color: '#64748b' }}>{study.topic}</Typography>
         )}
-        <div style={{ display: 'flex', gap: '1rem', fontSize: '0.875rem', color: '#64748b' }}>
-          <span>{study.study_type}</span>
-          <span>·</span>
-          <span style={{ textTransform: 'capitalize' }}>{study.status}</span>
-          <span>·</span>
-          <span>Snowball threshold: {study.snowball_threshold}</span>
-        </div>
-      </div>
+        <Box sx={{ display: 'flex', gap: '1rem', fontSize: '0.875rem', color: '#64748b' }}>
+          <Typography component="span" sx={{ fontSize: '0.875rem', color: '#64748b' }}>{study.study_type}</Typography>
+          <Typography component="span" sx={{ fontSize: '0.875rem', color: '#64748b' }}>·</Typography>
+          <Typography component="span" sx={{ fontSize: '0.875rem', color: '#64748b', textTransform: 'capitalize' }}>{study.status}</Typography>
+          <Typography component="span" sx={{ fontSize: '0.875rem', color: '#64748b' }}>·</Typography>
+          <Typography component="span" sx={{ fontSize: '0.875rem', color: '#64748b' }}>Snowball threshold: {study.snowball_threshold}</Typography>
+        </Box>
+      </Box>
 
       {/* Phase tabs */}
-      <div
-        style={{
+      <Box
+        sx={{
           display: 'flex',
           gap: '0',
           marginBottom: '2rem',
@@ -84,10 +87,10 @@ export default function StudyPage() {
           const isUnlocked = unlocked.has(phase);
           const isActive = activePhase === phase;
           return (
-            <button
+            <Button
               key={phase}
               onClick={() => isUnlocked && setActivePhase(phase)}
-              style={{
+              sx={{
                 padding: '0.625rem 1rem',
                 background: 'transparent',
                 border: 'none',
@@ -100,6 +103,9 @@ export default function StudyPage() {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.375rem',
+                borderRadius: 0,
+                minWidth: 'auto',
+                textTransform: 'none',
               }}
             >
               <span>{icon}</span>
@@ -107,63 +113,65 @@ export default function StudyPage() {
                 Phase {phase}: {label}
               </span>
               {!isUnlocked && <span style={{ fontSize: '0.75rem' }}>🔒</span>}
-            </button>
+            </Button>
           );
         })}
-      </div>
+      </Box>
 
       {/* Phase content */}
       {activePhase === 1 && study.id && (
-        <div>
+        <Box>
           {/* Research context summary */}
           {(study.research_questions.length > 0 || study.research_objectives.length > 0) && (
-            <div style={{ marginBottom: '2rem', padding: '1rem', background: '#f8fafc', borderRadius: '0.5rem' }}>
+            <Box sx={{ marginBottom: '2rem', padding: '1rem', background: '#f8fafc', borderRadius: '0.5rem' }}>
               {study.research_objectives.length > 0 && (
-                <div style={{ marginBottom: '0.75rem' }}>
-                  <h4 style={{ margin: '0 0 0.5rem', fontSize: '0.875rem', color: '#374151' }}>Research Objectives</h4>
+                <Box sx={{ marginBottom: '0.75rem' }}>
+                  <Typography variant="subtitle2" sx={{ margin: '0 0 0.5rem', fontSize: '0.875rem', color: '#374151' }}>Research Objectives</Typography>
                   <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
                     {study.research_objectives.map((o, i) => (
                       <li key={i} style={{ fontSize: '0.875rem', color: '#4b5563' }}>{o}</li>
                     ))}
                   </ul>
-                </div>
+                </Box>
               )}
               {study.research_questions.length > 0 && (
-                <div>
-                  <h4 style={{ margin: '0 0 0.5rem', fontSize: '0.875rem', color: '#374151' }}>Research Questions</h4>
+                <Box>
+                  <Typography variant="subtitle2" sx={{ margin: '0 0 0.5rem', fontSize: '0.875rem', color: '#374151' }}>Research Questions</Typography>
                   <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
                     {study.research_questions.map((q, i) => (
                       <li key={i} style={{ fontSize: '0.875rem', color: '#4b5563' }}>{q}</li>
                     ))}
                   </ul>
-                </div>
+                </Box>
               )}
-            </div>
+            </Box>
           )}
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
             <PICOForm studyId={study.id} />
             <SeedPapers studyId={study.id} />
-          </div>
-        </div>
+          </Box>
+        </Box>
       )}
 
       {activePhase === 2 && study.id && (
-        <div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginBottom: '2rem' }}>
+        <Box>
+          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginBottom: '2rem' }}>
             <CriteriaForm studyId={study.id} />
             <SearchStringEditor studyId={study.id} />
-          </div>
+          </Box>
           <TestRetest studyId={study.id} />
-        </div>
+        </Box>
       )}
 
       {activePhase === 3 && study.id && (
-        <div>
-          <div style={{ marginBottom: '1.5rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <h3 style={{ margin: 0, fontSize: '1rem', color: '#111827' }}>Full Paper Search</h3>
-              <button
+        <Box>
+          <Box sx={{ marginBottom: '1.5rem' }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <Typography variant="subtitle1" sx={{ margin: 0, fontSize: '1rem', color: '#111827' }}>Full Paper Search</Typography>
+              <Button
+                variant="contained"
+                size="small"
                 onClick={async () => {
                   try {
                     const res = (await api.post(
@@ -175,30 +183,22 @@ export default function StudyPage() {
                     // error handled by user
                   }
                 }}
-                style={{
-                  padding: '0.5rem 1rem',
-                  background: '#2563eb',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: '0.375rem',
-                  cursor: 'pointer',
-                  fontSize: '0.875rem',
-                }}
+                sx={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}
               >
                 Run Full Search
-              </button>
-            </div>
+              </Button>
+            </Box>
             <JobProgressPanel jobId={activeJobId} />
-          </div>
+          </Box>
           <PaperQueue studyId={study.id} />
-        </div>
+        </Box>
       )}
 
       {activePhase > 3 && (
-        <div style={{ color: '#64748b' }}>
-          <p>Phase {activePhase} content will be available in a future sprint.</p>
-        </div>
+        <Box sx={{ color: '#64748b' }}>
+          <Typography>Phase {activePhase} content will be available in a future sprint.</Typography>
+        </Box>
       )}
-    </div>
+    </Box>
   );
 }

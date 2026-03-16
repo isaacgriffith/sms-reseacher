@@ -5,6 +5,10 @@
  */
 
 import { useEffect, useRef } from 'react';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
+import Paper from '@mui/material/Paper';
 
 interface Concept {
   name: string;
@@ -56,31 +60,60 @@ export default function DomainModelViewer({ domainModel }: DomainModelViewerProp
 
   if (concepts.length === 0) {
     return (
-      <div style={emptyStyle}>
+      <Box
+        sx={{
+          padding: '2rem',
+          textAlign: 'center',
+          color: '#6b7280',
+          fontSize: '0.875rem',
+          border: '1px dashed #d1d5db',
+          borderRadius: '0.5rem',
+        }}
+      >
         Domain model not available. Generate results first.
-      </div>
+      </Box>
     );
   }
 
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-        <span style={{ fontSize: '0.8125rem', color: '#6b7280' }}>
+    <Box>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+        <Typography component="span" sx={{ fontSize: '0.8125rem', color: '#6b7280' }}>
           {concepts.length} concepts · {relationships.length} relationships · v{domainModel.version}
-        </span>
-        <button onClick={handleExportSvg} style={exportBtnStyle}>
+        </Typography>
+        <Button
+          variant="outlined"
+          size="small"
+          onClick={handleExportSvg}
+          sx={{
+            padding: '0.25rem 0.75rem',
+            background: '#eff6ff',
+            color: '#2563eb',
+            borderColor: '#bfdbfe',
+            fontSize: '0.8125rem',
+            fontWeight: 600,
+          }}
+        >
           Export SVG
-        </button>
-      </div>
-      <div style={svgContainerStyle}>
+        </Button>
+      </Box>
+      <Paper
+        variant="outlined"
+        sx={{
+          border: '1px solid #e2e8f0',
+          borderRadius: '0.5rem',
+          background: '#f8fafc',
+          overflow: 'hidden',
+        }}
+      >
         <svg
           ref={svgRef}
           width="100%"
           height="480"
           style={{ display: 'block' }}
         />
-      </div>
-    </div>
+      </Paper>
+    </Box>
   );
 }
 
@@ -210,34 +243,3 @@ async function renderGraph(
     nodeGroup.attr('transform', (d: any) => `translate(${d.x},${d.y})`);
   });
 }
-
-// ---------------------------------------------------------------------------
-// Styles
-// ---------------------------------------------------------------------------
-
-const svgContainerStyle: React.CSSProperties = {
-  border: '1px solid #e2e8f0',
-  borderRadius: '0.5rem',
-  background: '#f8fafc',
-  overflow: 'hidden',
-};
-
-const exportBtnStyle: React.CSSProperties = {
-  padding: '0.25rem 0.75rem',
-  background: '#eff6ff',
-  color: '#2563eb',
-  border: '1px solid #bfdbfe',
-  borderRadius: '0.375rem',
-  cursor: 'pointer',
-  fontSize: '0.8125rem',
-  fontWeight: 600,
-};
-
-const emptyStyle: React.CSSProperties = {
-  padding: '2rem',
-  textAlign: 'center',
-  color: '#6b7280',
-  fontSize: '0.875rem',
-  border: '1px dashed #d1d5db',
-  borderRadius: '0.5rem',
-};

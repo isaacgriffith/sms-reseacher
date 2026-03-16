@@ -6,6 +6,10 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../../services/api';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
+import TextField from '@mui/material/TextField';
 
 interface Paper {
   id: number;
@@ -66,38 +70,39 @@ export default function PaperQueue({ studyId }: PaperQueueProps) {
   };
 
   return (
-    <div>
-      <div
-        style={{
+    <Box>
+      <Box
+        sx={{
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
           marginBottom: '1rem',
         }}
       >
-        <h3 style={{ margin: 0, fontSize: '1rem', color: '#111827' }}>Paper Queue</h3>
-        <button
+        <Typography variant="subtitle1" sx={{ margin: 0, fontSize: '1rem', color: '#111827' }}>Paper Queue</Typography>
+        <Button
+          variant="outlined"
           onClick={() => refetch()}
-          style={{
-            padding: '0.25rem 0.75rem',
-            background: 'transparent',
-            border: '1px solid #d1d5db',
-            borderRadius: '0.375rem',
-            cursor: 'pointer',
-            fontSize: '0.8125rem',
-            color: '#374151',
-          }}
+          size="small"
+          sx={{ fontSize: '0.8125rem', color: '#374151' }}
         >
           Refresh
-        </button>
-      </div>
+        </Button>
+      </Box>
 
       {/* Filters */}
-      <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+      <Box sx={{ display: 'flex', gap: '0.75rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
         <select
           value={statusFilter}
           onChange={(e) => { setStatusFilter(e.target.value); setPage(0); }}
-          style={selectStyle}
+          style={{
+            padding: '0.375rem 0.625rem',
+            border: '1px solid #d1d5db',
+            borderRadius: '0.375rem',
+            fontSize: '0.875rem',
+            background: '#fff',
+            cursor: 'pointer',
+          }}
         >
           <option value="">All statuses</option>
           <option value="pending">Pending</option>
@@ -106,51 +111,46 @@ export default function PaperQueue({ studyId }: PaperQueueProps) {
           <option value="duplicate">Duplicate</option>
         </select>
 
-        <input
+        <TextField
           value={phaseFilter}
           onChange={(e) => { setPhaseFilter(e.target.value); setPage(0); }}
           placeholder="Filter by phase tag…"
-          style={{
-            padding: '0.375rem 0.625rem',
-            border: '1px solid #d1d5db',
-            borderRadius: '0.375rem',
-            fontSize: '0.875rem',
-            minWidth: '180px',
-          }}
+          size="small"
+          sx={{ minWidth: '180px' }}
         />
 
         {(statusFilter || phaseFilter) && (
-          <button onClick={handleResetFilters} style={clearBtnStyle}>
+          <Button variant="outlined" size="small" onClick={handleResetFilters} sx={{ fontSize: '0.8125rem', color: '#374151' }}>
             Clear filters
-          </button>
+          </Button>
         )}
-      </div>
+      </Box>
 
       {/* Paper list */}
-      {isLoading && <p style={{ color: '#6b7280', fontSize: '0.875rem' }}>Loading papers…</p>}
-      {error && <p style={{ color: '#ef4444', fontSize: '0.875rem' }}>Failed to load papers.</p>}
+      {isLoading && <Typography sx={{ color: '#6b7280', fontSize: '0.875rem' }}>Loading papers…</Typography>}
+      {error && <Typography sx={{ color: '#ef4444', fontSize: '0.875rem' }}>Failed to load papers.</Typography>}
 
       {!isLoading && papers.length === 0 && (
-        <p style={{ color: '#9ca3af', fontSize: '0.875rem' }}>
+        <Typography sx={{ color: '#9ca3af', fontSize: '0.875rem' }}>
           {statusFilter || phaseFilter
             ? 'No papers match the current filters.'
             : 'No papers in queue. Run a full search to populate the paper queue.'}
-        </p>
+        </Typography>
       )}
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
         {papers.map((cp) => (
-          <div
+          <Box
             key={cp.id}
-            style={{
+            sx={{
               border: '1px solid #e2e8f0',
               borderRadius: '0.5rem',
               padding: '0.875rem',
               background: '#fff',
             }}
           >
-            <div
-              style={{
+            <Box
+              sx={{
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'flex-start',
@@ -158,8 +158,9 @@ export default function PaperQueue({ studyId }: PaperQueueProps) {
                 marginBottom: '0.375rem',
               }}
             >
-              <span
-                style={{
+              <Typography
+                component="span"
+                sx={{
                   fontWeight: 600,
                   fontSize: '0.875rem',
                   color: '#111827',
@@ -167,9 +168,10 @@ export default function PaperQueue({ studyId }: PaperQueueProps) {
                 }}
               >
                 {cp.paper.title}
-              </span>
-              <span
-                style={{
+              </Typography>
+              <Typography
+                component="span"
+                sx={{
                   flexShrink: 0,
                   padding: '0.125rem 0.5rem',
                   borderRadius: '9999px',
@@ -181,11 +183,11 @@ export default function PaperQueue({ studyId }: PaperQueueProps) {
                 }}
               >
                 {cp.current_status}
-              </span>
-            </div>
+              </Typography>
+            </Box>
 
-            <div
-              style={{
+            <Box
+              sx={{
                 display: 'flex',
                 gap: '1rem',
                 fontSize: '0.75rem',
@@ -193,11 +195,12 @@ export default function PaperQueue({ studyId }: PaperQueueProps) {
                 flexWrap: 'wrap',
               }}
             >
-              {cp.paper.year && <span>{cp.paper.year}</span>}
-              {cp.paper.venue && <span>{cp.paper.venue}</span>}
-              {cp.paper.doi && <span>DOI: {cp.paper.doi}</span>}
-              <span
-                style={{
+              {cp.paper.year && <Typography component="span" sx={{ fontSize: '0.75rem', color: '#6b7280' }}>{cp.paper.year}</Typography>}
+              {cp.paper.venue && <Typography component="span" sx={{ fontSize: '0.75rem', color: '#6b7280' }}>{cp.paper.venue}</Typography>}
+              {cp.paper.doi && <Typography component="span" sx={{ fontSize: '0.75rem', color: '#6b7280' }}>DOI: {cp.paper.doi}</Typography>}
+              <Typography
+                component="span"
+                sx={{
                   padding: '0.0625rem 0.375rem',
                   background: '#f1f5f9',
                   borderRadius: '0.25rem',
@@ -205,12 +208,12 @@ export default function PaperQueue({ studyId }: PaperQueueProps) {
                 }}
               >
                 {cp.phase_tag}
-              </span>
-            </div>
+              </Typography>
+            </Box>
 
             {cp.paper.abstract && (
-              <p
-                style={{
+              <Typography
+                sx={{
                   margin: '0.5rem 0 0',
                   fontSize: '0.8125rem',
                   color: '#4b5563',
@@ -222,73 +225,45 @@ export default function PaperQueue({ studyId }: PaperQueueProps) {
                 }}
               >
                 {cp.paper.abstract}
-              </p>
+              </Typography>
             )}
-          </div>
+          </Box>
         ))}
-      </div>
+      </Box>
 
       {/* Pagination */}
       {(papers.length === PAGE_SIZE || page > 0) && (
-        <div
-          style={{
+        <Box
+          sx={{
             display: 'flex',
             gap: '0.5rem',
             justifyContent: 'center',
             marginTop: '1rem',
           }}
         >
-          <button
+          <Button
+            variant="outlined"
+            size="small"
             onClick={() => setPage((p) => Math.max(0, p - 1))}
             disabled={page === 0}
-            style={paginationBtnStyle(page === 0)}
+            sx={{ fontSize: '0.875rem', color: page === 0 ? '#9ca3af' : '#374151', opacity: page === 0 ? 0.6 : 1 }}
           >
             ← Previous
-          </button>
-          <span style={{ padding: '0.375rem 0.625rem', fontSize: '0.875rem', color: '#374151' }}>
+          </Button>
+          <Typography component="span" sx={{ padding: '0.375rem 0.625rem', fontSize: '0.875rem', color: '#374151' }}>
             Page {page + 1}
-          </span>
-          <button
+          </Typography>
+          <Button
+            variant="outlined"
+            size="small"
             onClick={() => setPage((p) => p + 1)}
             disabled={papers.length < PAGE_SIZE}
-            style={paginationBtnStyle(papers.length < PAGE_SIZE)}
+            sx={{ fontSize: '0.875rem', color: papers.length < PAGE_SIZE ? '#9ca3af' : '#374151', opacity: papers.length < PAGE_SIZE ? 0.6 : 1 }}
           >
             Next →
-          </button>
-        </div>
+          </Button>
+        </Box>
       )}
-    </div>
+    </Box>
   );
-}
-
-const selectStyle: React.CSSProperties = {
-  padding: '0.375rem 0.625rem',
-  border: '1px solid #d1d5db',
-  borderRadius: '0.375rem',
-  fontSize: '0.875rem',
-  background: '#fff',
-  cursor: 'pointer',
-};
-
-const clearBtnStyle: React.CSSProperties = {
-  padding: '0.375rem 0.625rem',
-  background: 'transparent',
-  border: '1px solid #d1d5db',
-  borderRadius: '0.375rem',
-  cursor: 'pointer',
-  fontSize: '0.8125rem',
-  color: '#374151',
-};
-
-function paginationBtnStyle(disabled: boolean): React.CSSProperties {
-  return {
-    padding: '0.375rem 0.75rem',
-    background: disabled ? '#f9fafb' : '#fff',
-    border: '1px solid #d1d5db',
-    borderRadius: '0.375rem',
-    cursor: disabled ? 'not-allowed' : 'pointer',
-    fontSize: '0.875rem',
-    color: disabled ? '#9ca3af' : '#374151',
-    opacity: disabled ? 0.6 : 1,
-  };
 }

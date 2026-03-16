@@ -40,6 +40,9 @@ def create_app() -> FastAPI:
         title=settings.app_name,
         version=settings.app_version,
         lifespan=lifespan,
+        openapi_url=None,
+        docs_url=None,
+        redoc_url=None,
     )
 
     app.add_middleware(RequestLoggingMiddleware)

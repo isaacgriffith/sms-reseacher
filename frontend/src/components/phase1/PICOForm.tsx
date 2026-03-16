@@ -6,6 +6,9 @@
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { api, ApiError } from '../../services/api';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
 
 interface PICOData {
   variant: string;
@@ -114,19 +117,19 @@ export default function PICOForm({ studyId }: Props) {
     }
   };
 
-  if (loading) return <p>Loading PICO/C…</p>;
+  if (loading) return <Typography>Loading PICO/C…</Typography>;
 
   return (
-    <div>
-      <h3 style={{ margin: '0 0 1rem' }}>PICO/C Framework</h3>
+    <Box>
+      <Typography variant="h6" sx={{ margin: '0 0 1rem' }}>PICO/C Framework</Typography>
 
       <form onSubmit={onSubmit}>
         {/* Variant selector */}
-        <div style={{ marginBottom: '1.5rem' }}>
-          <label style={{ display: 'block', fontWeight: 500, marginBottom: '0.5rem' }}>
+        <Box sx={{ marginBottom: '1.5rem' }}>
+          <Typography component="label" sx={{ display: 'block', fontWeight: 500, marginBottom: '0.5rem' }}>
             Framework variant
-          </label>
-          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+          </Typography>
+          <Box sx={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
             {VARIANTS.map((v) => (
               <label
                 key={v}
@@ -144,71 +147,63 @@ export default function PICOForm({ studyId }: Props) {
                 {v}
               </label>
             ))}
-          </div>
-        </div>
+          </Box>
+        </Box>
 
         {/* Component fields */}
         {Object.entries(COMPONENT_LABELS).map(([key, label]) => (
-          <div key={key} style={{ marginBottom: '1.25rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
-              <label style={{ fontWeight: 500, fontSize: '0.9rem' }}>{label}</label>
-              <button
+          <Box key={key} sx={{ marginBottom: '1.25rem' }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+              <Typography component="label" sx={{ fontWeight: 500, fontSize: '0.9rem' }}>{label}</Typography>
+              <Button
                 type="button"
+                variant="outlined"
+                size="small"
                 onClick={() => handleRefine(key)}
                 disabled={refining === key}
-                style={{
+                sx={{
                   padding: '0.2rem 0.6rem',
-                  background: 'transparent',
-                  border: '1px solid #2563eb',
-                  borderRadius: '0.25rem',
-                  color: '#2563eb',
-                  cursor: refining === key ? 'not-allowed' : 'pointer',
                   fontSize: '0.75rem',
+                  borderColor: '#2563eb',
+                  color: '#2563eb',
                 }}
               >
                 {refining === key ? 'Refining…' : '✨ Refine with AI'}
-              </button>
-            </div>
+              </Button>
+            </Box>
             <textarea
               rows={3}
               style={{ width: '100%', padding: '0.5rem', boxSizing: 'border-box', borderRadius: '0.25rem', border: '1px solid #cbd5e1', resize: 'vertical' }}
               {...register(key as keyof PICOData)}
             />
             {suggestions[key] && suggestions[key].length > 0 && (
-              <div style={{ marginTop: '0.5rem', padding: '0.75rem', background: '#f0f9ff', borderRadius: '0.375rem', fontSize: '0.875rem' }}>
-                <p style={{ margin: '0 0 0.5rem', fontWeight: 500, color: '#0369a1' }}>AI suggestions:</p>
+              <Box sx={{ marginTop: '0.5rem', padding: '0.75rem', background: '#f0f9ff', borderRadius: '0.375rem', fontSize: '0.875rem' }}>
+                <Typography sx={{ margin: '0 0 0.5rem', fontWeight: 500, color: '#0369a1' }}>AI suggestions:</Typography>
                 <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
                   {suggestions[key].map((s, i) => <li key={i} style={{ marginBottom: '0.25rem' }}>{s}</li>)}
                 </ul>
-              </div>
+              </Box>
             )}
-          </div>
+          </Box>
         ))}
 
-        {saveError && <p style={{ color: 'red', fontSize: '0.875rem' }}>{saveError}</p>}
+        {saveError && <Typography sx={{ color: 'red', fontSize: '0.875rem' }}>{saveError}</Typography>}
 
-        <button
+        <Button
           type="submit"
+          variant="contained"
           disabled={saving}
-          style={{
-            padding: '0.625rem 1.5rem',
-            background: '#2563eb',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '0.375rem',
-            cursor: saving ? 'not-allowed' : 'pointer',
-            fontSize: '1rem',
-          }}
+          sx={{ padding: '0.625rem 1.5rem', fontSize: '1rem' }}
         >
           {saving ? 'Saving…' : pico ? 'Update PICO/C' : 'Save PICO/C'}
-        </button>
+        </Button>
 
         {pico && (
-          <span style={{ marginLeft: '0.75rem', color: '#16a34a', fontSize: '0.875rem' }}>
+          <Typography component="span" sx={{ marginLeft: '0.75rem', color: '#16a34a', fontSize: '0.875rem' }}>
             ✓ Saved — Phase 2 unlocked
-          </span>
+          </Typography>
         )}
       </form>
-    </div>
+    </Box>
   );
 }

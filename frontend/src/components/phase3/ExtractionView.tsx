@@ -8,6 +8,10 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, ApiError } from '../../services/api';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
+import Paper from '@mui/material/Paper';
 
 interface Extraction {
   id: number;
@@ -102,24 +106,25 @@ export default function ExtractionView({ studyId, extractionId, onConflict }: Ex
     reset();
   };
 
-  if (isLoading) return <p style={{ color: '#6b7280', fontSize: '0.875rem' }}>Loading extraction…</p>;
-  if (error || !extraction) return <p style={{ color: '#ef4444', fontSize: '0.875rem' }}>Failed to load extraction.</p>;
+  if (isLoading) return <Typography sx={{ color: '#6b7280', fontSize: '0.875rem' }}>Loading extraction…</Typography>;
+  if (error || !extraction) return <Typography sx={{ color: '#ef4444', fontSize: '0.875rem' }}>Failed to load extraction.</Typography>;
 
   const statusColor = STATUS_COLORS[extraction.extraction_status] ?? '#6b7280';
 
   return (
-    <div style={{ fontFamily: 'inherit' }}>
+    <Box sx={{ fontFamily: 'inherit' }}>
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-        <h3 style={{ margin: 0, fontSize: '1rem', color: '#111827' }}>Data Extraction</h3>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+        <Typography variant="subtitle1" sx={{ margin: 0, fontSize: '1rem', color: '#111827' }}>Data Extraction</Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           {extraction.conflict_flag && (
-            <span style={{ padding: '0.125rem 0.5rem', background: '#fef2f2', color: '#dc2626', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 600 }}>
+            <Typography component="span" sx={{ padding: '0.125rem 0.5rem', background: '#fef2f2', color: '#dc2626', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 600 }}>
               Conflict
-            </span>
+            </Typography>
           )}
-          <span
-            style={{
+          <Typography
+            component="span"
+            sx={{
               padding: '0.125rem 0.5rem',
               background: `${statusColor}18`,
               color: statusColor,
@@ -130,12 +135,12 @@ export default function ExtractionView({ studyId, extractionId, onConflict }: Ex
             }}
           >
             {extraction.extraction_status.replace('_', ' ')}
-          </span>
-        </div>
-      </div>
+          </Typography>
+        </Box>
+      </Box>
 
       <form onSubmit={handleSave}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           {/* Research Type */}
           <Field
             label="Research Type"
@@ -144,7 +149,7 @@ export default function ExtractionView({ studyId, extractionId, onConflict }: Ex
             onEdit={setEditingField}
             onCancel={handleCancel}
             onSave={handleSave}
-            display={<span style={{ textTransform: 'capitalize' }}>{extraction.research_type.replace('_', ' ')}</span>}
+            display={<Typography component="span" sx={{ textTransform: 'capitalize' }}>{extraction.research_type.replace('_', ' ')}</Typography>}
             input={
               <select
                 {...register('research_type')}
@@ -166,7 +171,7 @@ export default function ExtractionView({ studyId, extractionId, onConflict }: Ex
             onEdit={setEditingField}
             onCancel={handleCancel}
             onSave={handleSave}
-            display={<span>{extraction.venue_type || '—'}</span>}
+            display={<Typography component="span">{extraction.venue_type || '—'}</Typography>}
             input={
               <input
                 {...register('venue_type')}
@@ -184,7 +189,7 @@ export default function ExtractionView({ studyId, extractionId, onConflict }: Ex
             onEdit={setEditingField}
             onCancel={handleCancel}
             onSave={handleSave}
-            display={<span>{extraction.venue_name ?? '—'}</span>}
+            display={<Typography component="span">{extraction.venue_name ?? '—'}</Typography>}
             input={
               <input
                 {...register('venue_name')}
@@ -203,9 +208,9 @@ export default function ExtractionView({ studyId, extractionId, onConflict }: Ex
             onCancel={handleCancel}
             onSave={handleSave}
             display={
-              <p style={{ margin: 0, fontSize: '0.875rem', color: '#374151', lineHeight: 1.6 }}>
+              <Typography sx={{ margin: 0, fontSize: '0.875rem', color: '#374151', lineHeight: 1.6 }}>
                 {extraction.summary ?? '—'}
-              </p>
+              </Typography>
             }
             input={
               <textarea
@@ -226,11 +231,11 @@ export default function ExtractionView({ studyId, extractionId, onConflict }: Ex
             onCancel={handleCancel}
             onSave={handleSave}
             display={
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem' }}>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem' }}>
                 {extraction.keywords?.map((kw) => (
-                  <span key={kw} style={tagStyle}>{kw}</span>
-                )) ?? <span style={{ color: '#9ca3af' }}>—</span>}
-              </div>
+                  <Typography component="span" key={kw} sx={{ padding: '0.125rem 0.5rem', background: '#eff6ff', color: '#1d4ed8', borderRadius: '9999px', fontSize: '0.75rem' }}>{kw}</Typography>
+                )) ?? <Typography component="span" sx={{ color: '#9ca3af' }}>—</Typography>}
+              </Box>
             }
             input={
               <input
@@ -245,54 +250,54 @@ export default function ExtractionView({ studyId, extractionId, onConflict }: Ex
           />
 
           {/* Open Codings — read-only list */}
-          <div style={fieldContainerStyle}>
-            <label style={labelStyle}>Open Codings</label>
-            <div style={{ marginTop: '0.375rem' }}>
+          <Paper variant="outlined" sx={{ padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '0.5rem', background: '#fff' }}>
+            <Typography component="label" sx={{ fontSize: '0.75rem', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Open Codings</Typography>
+            <Box sx={{ marginTop: '0.375rem' }}>
               {extraction.open_codings?.length ? (
                 extraction.open_codings.map((oc, i) => (
-                  <div key={i} style={{ marginBottom: '0.625rem', padding: '0.625rem', background: '#f8fafc', borderRadius: '0.375rem' }}>
-                    <div style={{ fontWeight: 600, fontSize: '0.8125rem', color: '#1e293b' }}>{oc.code}</div>
-                    <div style={{ fontSize: '0.8125rem', color: '#475569', marginTop: '0.25rem' }}>{oc.definition}</div>
+                  <Box key={i} sx={{ marginBottom: '0.625rem', padding: '0.625rem', background: '#f8fafc', borderRadius: '0.375rem' }}>
+                    <Typography sx={{ fontWeight: 600, fontSize: '0.8125rem', color: '#1e293b' }}>{oc.code}</Typography>
+                    <Typography sx={{ fontSize: '0.8125rem', color: '#475569', marginTop: '0.25rem' }}>{oc.definition}</Typography>
                     {oc.evidence_quote && (
                       <blockquote style={{ margin: '0.375rem 0 0', padding: '0.375rem 0.625rem', borderLeft: '3px solid #cbd5e1', color: '#64748b', fontSize: '0.8125rem', fontStyle: 'italic' }}>
                         {oc.evidence_quote}
                       </blockquote>
                     )}
-                  </div>
+                  </Box>
                 ))
               ) : (
-                <span style={{ color: '#9ca3af', fontSize: '0.875rem' }}>No open codings yet.</span>
+                <Typography component="span" sx={{ color: '#9ca3af', fontSize: '0.875rem' }}>No open codings yet.</Typography>
               )}
-            </div>
-          </div>
+            </Box>
+          </Paper>
 
           {/* Question Data — read-only table */}
           {extraction.question_data && Object.keys(extraction.question_data).length > 0 && (
-            <div style={fieldContainerStyle}>
-              <label style={labelStyle}>Research Question Answers</label>
-              <div style={{ marginTop: '0.375rem' }}>
+            <Paper variant="outlined" sx={{ padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '0.5rem', background: '#fff' }}>
+              <Typography component="label" sx={{ fontSize: '0.75rem', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Research Question Answers</Typography>
+              <Box sx={{ marginTop: '0.375rem' }}>
                 {Object.entries(extraction.question_data).map(([qid, answer]) => (
-                  <div key={qid} style={{ display: 'grid', gridTemplateColumns: '8rem 1fr', gap: '0.5rem', marginBottom: '0.5rem', fontSize: '0.875rem' }}>
-                    <span style={{ fontWeight: 600, color: '#374151' }}>{qid}</span>
-                    <span style={{ color: '#4b5563' }}>{answer != null ? String(answer) : '—'}</span>
-                  </div>
+                  <Box key={qid} sx={{ display: 'grid', gridTemplateColumns: '8rem 1fr', gap: '0.5rem', marginBottom: '0.5rem', fontSize: '0.875rem' }}>
+                    <Typography component="span" sx={{ fontWeight: 600, color: '#374151', fontSize: '0.875rem' }}>{qid}</Typography>
+                    <Typography component="span" sx={{ color: '#4b5563', fontSize: '0.875rem' }}>{answer != null ? String(answer) : '—'}</Typography>
+                  </Box>
                 ))}
-              </div>
-            </div>
+              </Box>
+            </Paper>
           )}
-        </div>
+        </Box>
 
         {mutation.isError && !(mutation.error instanceof ApiError && (mutation.error as ApiError).status === 409) && (
-          <p style={{ color: '#ef4444', fontSize: '0.8125rem', marginTop: '0.5rem' }}>Save failed. Please try again.</p>
+          <Typography sx={{ color: '#ef4444', fontSize: '0.8125rem', marginTop: '0.5rem' }}>Save failed. Please try again.</Typography>
         )}
       </form>
 
       {extraction.extracted_by_agent && (
-        <p style={{ marginTop: '1rem', fontSize: '0.75rem', color: '#9ca3af' }}>
+        <Typography sx={{ marginTop: '1rem', fontSize: '0.75rem', color: '#9ca3af' }}>
           Extracted by: {extraction.extracted_by_agent} · version {extraction.version_id}
-        </p>
+        </Typography>
       )}
-    </div>
+    </Box>
   );
 }
 
@@ -314,48 +319,55 @@ interface FieldProps {
 function Field({ label, fieldKey, editingField, onEdit, onCancel, onSave, display, input }: FieldProps) {
   const isEditing = editingField === fieldKey;
   return (
-    <div style={fieldContainerStyle}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
-        <label style={labelStyle}>{label}</label>
+    <Paper variant="outlined" sx={{ padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '0.5rem', background: '#fff' }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+        <Typography component="label" sx={{ fontSize: '0.75rem', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</Typography>
         {!isEditing && (
-          <button type="button" onClick={() => onEdit(fieldKey)} style={editBtnStyle}>
+          <Button
+            type="button"
+            variant="outlined"
+            size="small"
+            onClick={() => onEdit(fieldKey)}
+            sx={{ padding: '0.125rem 0.5rem', fontSize: '0.75rem', color: '#374151', borderColor: '#d1d5db' }}
+          >
             Edit
-          </button>
+          </Button>
         )}
-      </div>
+      </Box>
       {isEditing ? (
-        <div>
+        <Box>
           {input}
-          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
-            <button type="button" onClick={onSave} style={saveBtnStyle}>Save</button>
-            <button type="button" onClick={onCancel} style={cancelBtnStyle}>Cancel</button>
-          </div>
-        </div>
+          <Box sx={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+            <Button
+              type="button"
+              variant="contained"
+              size="small"
+              onClick={onSave}
+              sx={{ padding: '0.25rem 0.75rem', fontSize: '0.8125rem' }}
+            >
+              Save
+            </Button>
+            <Button
+              type="button"
+              variant="outlined"
+              size="small"
+              onClick={onCancel}
+              sx={{ padding: '0.25rem 0.75rem', color: '#374151', borderColor: '#d1d5db', fontSize: '0.8125rem' }}
+            >
+              Cancel
+            </Button>
+          </Box>
+        </Box>
       ) : (
-        <div style={{ fontSize: '0.875rem', color: '#374151' }}>{display}</div>
+        <Box sx={{ fontSize: '0.875rem', color: '#374151' }}>{display}</Box>
       )}
-    </div>
+    </Paper>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Styles
+// Styles (for native elements that remain)
 // ---------------------------------------------------------------------------
-
-const fieldContainerStyle: React.CSSProperties = {
-  padding: '0.75rem',
-  border: '1px solid #e2e8f0',
-  borderRadius: '0.5rem',
-  background: '#fff',
-};
-
-const labelStyle: React.CSSProperties = {
-  fontSize: '0.75rem',
-  fontWeight: 600,
-  color: '#6b7280',
-  textTransform: 'uppercase',
-  letterSpacing: '0.05em',
-};
 
 const inputStyle: React.CSSProperties = {
   width: '100%',
@@ -370,42 +382,4 @@ const selectStyle: React.CSSProperties = {
   ...inputStyle,
   background: '#fff',
   cursor: 'pointer',
-};
-
-const tagStyle: React.CSSProperties = {
-  padding: '0.125rem 0.5rem',
-  background: '#eff6ff',
-  color: '#1d4ed8',
-  borderRadius: '9999px',
-  fontSize: '0.75rem',
-};
-
-const editBtnStyle: React.CSSProperties = {
-  padding: '0.125rem 0.5rem',
-  background: 'transparent',
-  border: '1px solid #d1d5db',
-  borderRadius: '0.25rem',
-  cursor: 'pointer',
-  fontSize: '0.75rem',
-  color: '#374151',
-};
-
-const saveBtnStyle: React.CSSProperties = {
-  padding: '0.25rem 0.75rem',
-  background: '#2563eb',
-  color: '#fff',
-  border: 'none',
-  borderRadius: '0.375rem',
-  cursor: 'pointer',
-  fontSize: '0.8125rem',
-};
-
-const cancelBtnStyle: React.CSSProperties = {
-  padding: '0.25rem 0.75rem',
-  background: 'transparent',
-  color: '#374151',
-  border: '1px solid #d1d5db',
-  borderRadius: '0.375rem',
-  cursor: 'pointer',
-  fontSize: '0.8125rem',
 };

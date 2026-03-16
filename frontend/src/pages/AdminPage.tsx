@@ -11,6 +11,11 @@ import { useQuery } from '@tanstack/react-query';
 import { api, ApiError } from '../services/api';
 import ServiceHealthPanel from '../components/admin/ServiceHealthPanel';
 import JobRetryPanel from '../components/admin/JobRetryPanel';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
+import Container from '@mui/material/Container';
+import Divider from '@mui/material/Divider';
 
 /** Probes admin access by attempting to fetch the health endpoint. */
 function useAdminAccess() {
@@ -28,48 +33,41 @@ export default function AdminPage() {
 
   if (isLoading) {
     return (
-      <div style={{ padding: '2rem', color: '#64748b' }}>
+      <Box sx={{ padding: '2rem', color: '#64748b' }}>
         Checking access…
-      </div>
+      </Box>
     );
   }
 
   if (error instanceof ApiError && error.status === 403) {
     return (
-      <div style={{ padding: '2rem' }}>
-        <h2 style={{ color: '#dc2626', marginBottom: '0.5rem' }}>403 Forbidden</h2>
-        <p style={{ color: '#4b5563' }}>
+      <Box sx={{ padding: '2rem' }}>
+        <Typography variant="h5" sx={{ color: '#dc2626', marginBottom: '0.5rem' }}>403 Forbidden</Typography>
+        <Typography sx={{ color: '#4b5563' }}>
           You do not have admin access. Only group administrators may view this page.
-        </p>
-        <button
+        </Typography>
+        <Button
+          variant="contained"
           onClick={() => navigate('/groups')}
-          style={{
-            marginTop: '1rem',
-            padding: '0.5rem 1rem',
-            background: '#2563eb',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '0.375rem',
-            cursor: 'pointer',
-          }}
+          sx={{ marginTop: '1rem', padding: '0.5rem 1rem' }}
         >
           Back to Groups
-        </button>
-      </div>
+        </Button>
+      </Box>
     );
   }
 
   return (
-    <div style={{ maxWidth: '900px', margin: '0 auto', padding: '1.5rem' }}>
-      <h2 style={{ marginTop: 0, marginBottom: '1.5rem', fontSize: '1.375rem', color: '#111827' }}>
+    <Container maxWidth="md" sx={{ padding: '1.5rem' }}>
+      <Typography variant="h5" sx={{ marginTop: 0, marginBottom: '1.5rem', fontSize: '1.375rem', color: '#111827' }}>
         Admin Dashboard
-      </h2>
+      </Typography>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
         <ServiceHealthPanel />
-        <hr style={{ border: 'none', borderTop: '1px solid #e2e8f0' }} />
+        <Divider />
         <JobRetryPanel />
-      </div>
-    </div>
+      </Box>
+    </Container>
   );
 }

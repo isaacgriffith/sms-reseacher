@@ -5,6 +5,9 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../services/api';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
 
 interface Paper {
   id: number;
@@ -86,8 +89,8 @@ export default function PaperCard({
   const authorList = paper.authors?.map((a) => a.name).join(', ') ?? '';
 
   return (
-    <div
-      style={{
+    <Box
+      sx={{
         border: `1px solid ${conflictFlag ? '#fbbf24' : '#e2e8f0'}`,
         borderRadius: '0.5rem',
         background: '#fff',
@@ -95,21 +98,22 @@ export default function PaperCard({
       }}
     >
       {/* Header */}
-      <div
-        style={{
+      <Box
+        sx={{
           padding: '0.875rem 1rem',
           background: STATUS_BG[currentStatus] ?? '#f8fafc',
           borderBottom: '1px solid #e2e8f0',
         }}
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.75rem' }}>
-          <h4 style={{ margin: 0, fontSize: '0.9375rem', color: '#111827', flex: 1 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.75rem' }}>
+          <Typography sx={{ margin: 0, fontSize: '0.9375rem', color: '#111827', flex: 1, fontWeight: 600 }}>
             {paper.title}
-          </h4>
-          <div style={{ display: 'flex', gap: '0.5rem', flexShrink: 0, alignItems: 'center' }}>
+          </Typography>
+          <Box sx={{ display: 'flex', gap: '0.5rem', flexShrink: 0, alignItems: 'center' }}>
             {conflictFlag && (
-              <span
-                style={{
+              <Typography
+                component="span"
+                sx={{
                   padding: '0.125rem 0.5rem',
                   background: '#fef3c7',
                   border: '1px solid #fbbf24',
@@ -120,10 +124,11 @@ export default function PaperCard({
                 }}
               >
                 ⚠ CONFLICT
-              </span>
+              </Typography>
             )}
-            <span
-              style={{
+            <Typography
+              component="span"
+              sx={{
                 padding: '0.125rem 0.5rem',
                 borderRadius: '9999px',
                 fontSize: '0.75rem',
@@ -134,16 +139,17 @@ export default function PaperCard({
               }}
             >
               {currentStatus}
-            </span>
-          </div>
-        </div>
-        <div style={{ display: 'flex', gap: '1rem', fontSize: '0.75rem', color: '#6b7280', marginTop: '0.375rem', flexWrap: 'wrap' }}>
-          {paper.year && <span>{paper.year}</span>}
-          {paper.venue && <span>{paper.venue}</span>}
-          {paper.doi && <span>DOI: {paper.doi}</span>}
-          {authorList && <span>{authorList}</span>}
-          <span
-            style={{
+            </Typography>
+          </Box>
+        </Box>
+        <Box sx={{ display: 'flex', gap: '1rem', fontSize: '0.75rem', color: '#6b7280', marginTop: '0.375rem', flexWrap: 'wrap' }}>
+          {paper.year && <Typography component="span" sx={{ fontSize: '0.75rem', color: '#6b7280' }}>{paper.year}</Typography>}
+          {paper.venue && <Typography component="span" sx={{ fontSize: '0.75rem', color: '#6b7280' }}>{paper.venue}</Typography>}
+          {paper.doi && <Typography component="span" sx={{ fontSize: '0.75rem', color: '#6b7280' }}>DOI: {paper.doi}</Typography>}
+          {authorList && <Typography component="span" sx={{ fontSize: '0.75rem', color: '#6b7280' }}>{authorList}</Typography>}
+          <Typography
+            component="span"
+            sx={{
               padding: '0.0625rem 0.375rem',
               background: '#f1f5f9',
               borderRadius: '0.25rem',
@@ -151,45 +157,53 @@ export default function PaperCard({
             }}
           >
             {phaseTag}
-          </span>
-        </div>
-      </div>
+          </Typography>
+        </Box>
+      </Box>
 
       {/* Abstract */}
       {paper.abstract && (
-        <div style={{ padding: '0.75rem 1rem', borderBottom: '1px solid #f1f5f9' }}>
-          <p style={{ margin: 0, fontSize: '0.8125rem', color: '#374151', lineHeight: 1.6 }}>
+        <Box sx={{ padding: '0.75rem 1rem', borderBottom: '1px solid #f1f5f9' }}>
+          <Typography sx={{ margin: 0, fontSize: '0.8125rem', color: '#374151', lineHeight: 1.6 }}>
             {paper.abstract}
-          </p>
-        </div>
+          </Typography>
+        </Box>
       )}
 
       {/* Decision history timeline */}
       {decisions.length > 0 && (
-        <div style={{ padding: '0.75rem 1rem', borderBottom: conflictFlag ? '1px solid #fbbf24' : undefined }}>
-          <h5 style={{ margin: '0 0 0.625rem', fontSize: '0.8125rem', color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+        <Box sx={{ padding: '0.75rem 1rem', borderBottom: conflictFlag ? '1px solid #fbbf24' : undefined }}>
+          <Typography
+            sx={{
+              margin: '0 0 0.625rem',
+              fontSize: '0.8125rem',
+              color: '#6b7280',
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+              fontWeight: 600,
+            }}
+          >
             Audit Trail
-          </h5>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          </Typography>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             {decisions.map((d) => (
               <DecisionEntry key={d.id} decision={d} />
             ))}
-          </div>
-        </div>
+          </Box>
+        </Box>
       )}
 
       {/* Conflict resolution panel */}
       {conflictFlag && decisions.length >= 2 && (
         <ConflictResolutionPanel
           decisions={decisions}
-          studyId={studyId}
           onResolve={(reviewerId, decision) =>
             resolveConflict.mutate({ reviewer_id: reviewerId, decision, reasons: [] })
           }
           isResolving={resolveConflict.isPending}
         />
       )}
-    </div>
+    </Box>
   );
 }
 
@@ -207,65 +221,66 @@ function DecisionEntry({ decision }: { decision: Decision }) {
     : null;
 
   return (
-    <div style={{ display: 'flex', gap: '0.625rem', alignItems: 'flex-start' }}>
-      <span
-        style={{
+    <Box sx={{ display: 'flex', gap: '0.625rem', alignItems: 'flex-start' }}>
+      <Box
+        component="span"
+        sx={{
           width: '0.5rem',
           height: '0.5rem',
           borderRadius: '50%',
           background: color,
           flexShrink: 0,
           marginTop: '0.3125rem',
+          display: 'inline-block',
         }}
       />
-      <div style={{ flex: 1 }}>
-        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
-          <span
-            style={{ fontSize: '0.8125rem', fontWeight: 600, color, textTransform: 'capitalize' }}
+      <Box sx={{ flex: 1 }}>
+        <Box sx={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+          <Typography
+            component="span"
+            sx={{ fontSize: '0.8125rem', fontWeight: 600, color, textTransform: 'capitalize' }}
           >
             {decision.decision}
-          </span>
+          </Typography>
           {decision.is_override && (
-            <span style={{ fontSize: '0.6875rem', color: '#b45309', fontStyle: 'italic', background: '#fef3c7', padding: '0.0625rem 0.3rem', borderRadius: '0.25rem' }}>
+            <Typography component="span" sx={{ fontSize: '0.6875rem', color: '#b45309', fontStyle: 'italic', background: '#fef3c7', padding: '0.0625rem 0.3rem', borderRadius: '0.25rem' }}>
               override
-            </span>
+            </Typography>
           )}
           {decision.overrides_decision_id != null && (
-            <span style={{ fontSize: '0.6875rem', color: '#6b7280' }}>
+            <Typography component="span" sx={{ fontSize: '0.6875rem', color: '#6b7280' }}>
               ↳ overrides #{decision.overrides_decision_id}
-            </span>
+            </Typography>
           )}
-          <span style={{ fontSize: '0.75rem', color: '#9ca3af' }}>
+          <Typography component="span" sx={{ fontSize: '0.75rem', color: '#9ca3af' }}>
             Reviewer #{decision.reviewer_id}
-          </span>
+          </Typography>
           {timestamp && (
-            <span style={{ fontSize: '0.6875rem', color: '#9ca3af', marginLeft: 'auto' }}>
+            <Typography component="span" sx={{ fontSize: '0.6875rem', color: '#9ca3af', marginLeft: 'auto' }}>
               {timestamp}
-            </span>
+            </Typography>
           )}
-        </div>
+        </Box>
         {decision.reasons && decision.reasons.length > 0 && (
-          <ul style={{ margin: '0.25rem 0 0', paddingLeft: '1rem' }}>
+          <Box component="ul" sx={{ margin: '0.25rem 0 0', paddingLeft: '1rem' }}>
             {decision.reasons.map((r, i) => (
-              <li key={i} style={{ fontSize: '0.75rem', color: '#4b5563' }}>
+              <Box component="li" key={i} sx={{ fontSize: '0.75rem', color: '#4b5563' }}>
                 {r.text}
-              </li>
+              </Box>
             ))}
-          </ul>
+          </Box>
         )}
-      </div>
-    </div>
+      </Box>
+    </Box>
   );
 }
 
 function ConflictResolutionPanel({
   decisions,
-  studyId,
   onResolve,
   isResolving,
 }: {
   decisions: Decision[];
-  studyId: number;
   onResolve: (reviewerId: number, decision: string) => void;
   isResolving: boolean;
 }) {
@@ -273,9 +288,9 @@ function ConflictResolutionPanel({
   const lastTwo = decisions.slice(-2);
 
   return (
-    <div style={{ padding: '0.875rem 1rem', background: '#fffbeb' }}>
-      <h5
-        style={{
+    <Box sx={{ padding: '0.875rem 1rem', background: '#fffbeb' }}>
+      <Typography
+        sx={{
           margin: '0 0 0.75rem',
           fontSize: '0.8125rem',
           color: '#92400e',
@@ -283,50 +298,49 @@ function ConflictResolutionPanel({
         }}
       >
         Conflict Resolution Required
-      </h5>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '0.875rem' }}>
+      </Typography>
+      <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '0.875rem' }}>
         {lastTwo.map((d) => (
-          <div
+          <Box
             key={d.id}
-            style={{
+            sx={{
               padding: '0.625rem',
               border: `2px solid ${DECISION_COLORS[d.decision] ?? '#6b7280'}`,
               borderRadius: '0.375rem',
               background: '#fff',
             }}
           >
-            <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: DECISION_COLORS[d.decision], textTransform: 'capitalize', marginBottom: '0.25rem' }}>
+            <Typography sx={{ fontSize: '0.8125rem', fontWeight: 600, color: DECISION_COLORS[d.decision], textTransform: 'capitalize', marginBottom: '0.25rem' }}>
               {d.decision}
-            </div>
-            <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>
+            </Typography>
+            <Typography sx={{ fontSize: '0.75rem', color: '#6b7280' }}>
               Reviewer #{d.reviewer_id}
-            </div>
-          </div>
+            </Typography>
+          </Box>
         ))}
-      </div>
-      <div style={{ display: 'flex', gap: '0.5rem' }}>
+      </Box>
+      <Box sx={{ display: 'flex', gap: '0.5rem' }}>
         {(['accepted', 'rejected'] as const).map((decision) => (
-          <button
+          <Button
             key={decision}
             onClick={() => onResolve(lastTwo[0]?.reviewer_id ?? 0, decision)}
             disabled={isResolving}
-            style={{
+            variant="contained"
+            sx={{
               padding: '0.375rem 0.875rem',
               background: DECISION_COLORS[decision],
               color: '#fff',
-              border: 'none',
-              borderRadius: '0.375rem',
-              cursor: isResolving ? 'not-allowed' : 'pointer',
               fontSize: '0.8125rem',
               fontWeight: 600,
-              opacity: isResolving ? 0.6 : 1,
               textTransform: 'capitalize',
+              opacity: isResolving ? 0.6 : 1,
+              '&:hover': { background: DECISION_COLORS[decision] },
             }}
           >
             Resolve as {decision}
-          </button>
+          </Button>
         ))}
-      </div>
-    </div>
+      </Box>
+    </Box>
   );
 }

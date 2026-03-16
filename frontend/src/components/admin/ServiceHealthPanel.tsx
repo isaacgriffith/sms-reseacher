@@ -5,6 +5,9 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../../services/api';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import Paper from '@mui/material/Paper';
 
 interface ServiceHealth {
   name: string;
@@ -34,8 +37,9 @@ interface StatusBadgeProps {
 function StatusBadge({ status }: StatusBadgeProps) {
   const color = STATUS_COLOR[status] ?? '#64748b';
   return (
-    <span
-      style={{
+    <Typography
+      component="span"
+      sx={{
         display: 'inline-block',
         padding: '0.125rem 0.5rem',
         borderRadius: '9999px',
@@ -47,7 +51,7 @@ function StatusBadge({ status }: StatusBadgeProps) {
       }}
     >
       {status}
-    </span>
+    </Typography>
   );
 }
 
@@ -58,8 +62,9 @@ interface ServiceCardProps {
 /** Single service health card. */
 function ServiceCard({ service }: ServiceCardProps) {
   return (
-    <div
-      style={{
+    <Paper
+      variant="outlined"
+      sx={{
         padding: '0.875rem 1rem',
         border: `1px solid ${STATUS_COLOR[service.status] ?? '#e2e8f0'}40`,
         borderLeft: `4px solid ${STATUS_COLOR[service.status] ?? '#94a3b8'}`,
@@ -67,23 +72,23 @@ function ServiceCard({ service }: ServiceCardProps) {
         background: '#fff',
       }}
     >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{ fontWeight: 600, fontSize: '0.9375rem', color: '#111827' }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Typography component="span" sx={{ fontWeight: 600, fontSize: '0.9375rem', color: '#111827' }}>
           {service.name}
-        </span>
+        </Typography>
         <StatusBadge status={service.status} />
-      </div>
+      </Box>
       {service.latency_ms != null && (
-        <p style={{ margin: '0.25rem 0 0', fontSize: '0.8125rem', color: '#6b7280' }}>
+        <Typography sx={{ margin: '0.25rem 0 0', fontSize: '0.8125rem', color: '#6b7280' }}>
           Latency: {service.latency_ms} ms
-        </p>
+        </Typography>
       )}
       {service.detail && (
-        <p style={{ margin: '0.25rem 0 0', fontSize: '0.8125rem', color: '#6b7280' }}>
+        <Typography sx={{ margin: '0.25rem 0 0', fontSize: '0.8125rem', color: '#6b7280' }}>
           {service.detail}
-        </p>
+        </Typography>
       )}
-    </div>
+    </Paper>
   );
 }
 
@@ -96,14 +101,14 @@ export default function ServiceHealthPanel() {
   });
 
   if (isLoading) {
-    return <p style={{ color: '#64748b' }}>Probing services…</p>;
+    return <Typography sx={{ color: '#64748b' }}>Probing services…</Typography>;
   }
 
   if (error) {
     return (
-      <p style={{ color: '#dc2626' }}>
+      <Typography sx={{ color: '#dc2626' }}>
         Failed to load health data. Check that you have admin access.
-      </p>
+      </Typography>
     );
   }
 
@@ -112,19 +117,19 @@ export default function ServiceHealthPanel() {
     : '—';
 
   return (
-    <section>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '0.75rem' }}>
-        <h3 style={{ margin: 0, fontSize: '1.0625rem' }}>Service Health</h3>
-        <span style={{ fontSize: '0.8125rem', color: '#64748b' }}>
+    <Box component="section">
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '0.75rem' }}>
+        <Typography variant="subtitle1" sx={{ margin: 0, fontSize: '1.0625rem' }}>Service Health</Typography>
+        <Typography component="span" sx={{ fontSize: '0.8125rem', color: '#64748b' }}>
           Last checked: {lastChecked}
           {data && <> · Overall: <StatusBadge status={data.status} /></>}
-        </span>
-      </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+        </Typography>
+      </Box>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
         {data?.services.map((svc) => (
           <ServiceCard key={svc.name} service={svc} />
         ))}
-      </div>
-    </section>
+      </Box>
+    </Box>
   );
 }

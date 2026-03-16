@@ -4,6 +4,30 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased] — feature/004-frontend-improvements
+
+### Added
+- **Password change**: `PUT /me/password` — verifies current password, enforces complexity
+  (min 12 chars, uppercase, digit, special character), invalidates all prior sessions via
+  `User.token_version` increment
+- **Two-factor authentication (TOTP)**: full lifecycle — QR code setup, confirmation,
+  disabling, backup codes (10 per batch, bcrypt-hashed, single-use), brute-force lockout
+  after 5 failures; partial JWT for 2FA second step
+- **Theme preference**: Light / Dark / System per-user setting stored in DB; MUI
+  ThemeProvider with `matchMedia` listener for system mode
+- **Full MUI v5 migration**: all frontend components migrated to MUI `sx` prop and component library
+- **Authenticated API docs**: `GET /api/v1/openapi.json` requires valid JWT; Swagger UI
+  at `/api-docs`; default `/docs` and `/redoc` endpoints disabled
+- `SecurityAuditEvent` and `BackupCode` DB models
+- E2e Playwright specs: `preferences-password`, `two-factor-auth`, `theme`, `api-docs`
+
+### Changed
+- `GET /api/v1/auth/me` response now includes `theme_preference` and `totp_enabled`
+- `POST /api/v1/auth/login` returns TOTP challenge when 2FA is enabled
+- `get_current_user` validates `token_version` via DB lookup to detect invalidated sessions
+
+---
+
 ## [Unreleased] — feature/003-project-setup-improvements
 
 ### Added

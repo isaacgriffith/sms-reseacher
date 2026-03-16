@@ -20,6 +20,8 @@ import db.models.search  # noqa: F401
 import db.models.search_exec  # noqa: F401
 import db.models.candidate  # noqa: F401
 import db.models.jobs  # noqa: F401
+import db.models.backup_codes  # noqa: F401  — feature 004
+import db.models.security_audit  # noqa: F401  — feature 004
 
 # Alembic Config object
 config = context.config

@@ -5,6 +5,10 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../services/api';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
+import TextField from '@mui/material/TextField';
 
 interface Criterion {
   id: number;
@@ -44,8 +48,8 @@ function CriterionList({
   };
 
   return (
-    <div style={{ marginBottom: '1.5rem' }}>
-      <h4 style={{ margin: '0 0 0.75rem', fontSize: '0.9375rem', color: '#374151' }}>{title}</h4>
+    <Box sx={{ marginBottom: '1.5rem' }}>
+      <Typography variant="subtitle2" sx={{ margin: '0 0 0.75rem', fontSize: '0.9375rem', color: '#374151' }}>{title}</Typography>
 
       <ol style={{ margin: '0 0 0.75rem', paddingLeft: '1.5rem' }}>
         {items.map((item, idx) => (
@@ -58,10 +62,10 @@ function CriterionList({
               gap: '0.5rem',
             }}
           >
-            <span style={{ flex: 1, fontSize: '0.875rem', color: '#374151', paddingTop: '2px' }}>
+            <Typography component="span" sx={{ flex: 1, fontSize: '0.875rem', color: '#374151', paddingTop: '2px' }}>
               {item.description}
-            </span>
-            <div style={{ display: 'flex', gap: '0.25rem', flexShrink: 0 }}>
+            </Typography>
+            <Box sx={{ display: 'flex', gap: '0.25rem', flexShrink: 0 }}>
               <button
                 onClick={() => onMoveUp(idx)}
                 disabled={idx === 0}
@@ -92,7 +96,7 @@ function CriterionList({
               >
                 ✕
               </button>
-            </div>
+            </Box>
           </li>
         ))}
         {items.length === 0 && (
@@ -102,38 +106,29 @@ function CriterionList({
         )}
       </ol>
 
-      <div style={{ display: 'flex', gap: '0.5rem' }}>
-        <input
+      <Box sx={{ display: 'flex', gap: '0.5rem' }}>
+        <TextField
           value={newText}
           onChange={(e) => setNewText(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
           placeholder="Add criterion…"
-          style={{
-            flex: 1,
-            padding: '0.375rem 0.625rem',
-            border: '1px solid #d1d5db',
-            borderRadius: '0.375rem',
-            fontSize: '0.875rem',
-          }}
+          size="small"
+          sx={{ flex: 1 }}
         />
-        <button
+        <Button
+          variant="contained"
           onClick={handleAdd}
           disabled={isAdding || !newText.trim()}
-          style={{
-            padding: '0.375rem 0.75rem',
-            background: '#2563eb',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '0.375rem',
-            cursor: isAdding || !newText.trim() ? 'not-allowed' : 'pointer',
+          size="small"
+          sx={{
             fontSize: '0.875rem',
             opacity: isAdding || !newText.trim() ? 0.6 : 1,
           }}
         >
           Add
-        </button>
-      </div>
-    </div>
+        </Button>
+      </Box>
+    </Box>
   );
 }
 
@@ -220,10 +215,10 @@ export default function CriteriaForm({ studyId }: CriteriaFormProps) {
   };
 
   return (
-    <div>
-      <h3 style={{ margin: '0 0 1rem', fontSize: '1rem', color: '#111827' }}>
+    <Box>
+      <Typography variant="subtitle1" sx={{ margin: '0 0 1rem', fontSize: '1rem', color: '#111827' }}>
         Inclusion / Exclusion Criteria
-      </h3>
+      </Typography>
 
       <CriterionList
         title="Inclusion Criteria"
@@ -244,6 +239,6 @@ export default function CriteriaForm({ studyId }: CriteriaFormProps) {
         onMoveDown={(idx) => moveExc(idx, 1)}
         isAdding={addExclusion.isPending}
       />
-    </div>
+    </Box>
   );
 }

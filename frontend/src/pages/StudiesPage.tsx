@@ -5,8 +5,11 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { api, ApiError } from '../services/api';
+import { api } from '../services/api';
 import NewStudyWizard from '../components/studies/NewStudyWizard';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
 
 interface StudySummary {
   id: number;
@@ -56,34 +59,28 @@ export default function StudiesPage() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['studies', groupId] }),
   });
 
-  if (isLoading) return <p>Loading studies…</p>;
-  if (error) return <p style={{ color: 'red' }}>Failed to load studies.</p>;
+  if (isLoading) return <Typography>Loading studies…</Typography>;
+  if (error) return <Typography sx={{ color: 'red' }}>Failed to load studies.</Typography>;
 
   return (
-    <div>
-      <div
-        style={{
+    <Box>
+      <Box
+        sx={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           marginBottom: '1.5rem',
         }}
       >
-        <h2 style={{ margin: 0 }}>Studies</h2>
-        <button
+        <Typography variant="h5" sx={{ margin: 0 }}>Studies</Typography>
+        <Button
+          variant="contained"
           onClick={() => setShowWizard(true)}
-          style={{
-            padding: '0.5rem 1rem',
-            background: '#2563eb',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '0.375rem',
-            cursor: 'pointer',
-          }}
+          sx={{ padding: '0.5rem 1rem' }}
         >
           New Study
-        </button>
-      </div>
+        </Button>
+      </Box>
 
       {showWizard && groupId && (
         <NewStudyWizard
@@ -98,13 +95,13 @@ export default function StudiesPage() {
       )}
 
       {(!studies || studies.length === 0) ? (
-        <p style={{ color: '#475569' }}>No studies yet. Create one to get started.</p>
+        <Typography sx={{ color: '#475569' }}>No studies yet. Create one to get started.</Typography>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
           {studies.map((s) => (
-            <div
+            <Box
               key={s.id}
-              style={{
+              sx={{
                 padding: '1rem 1.25rem',
                 border: '1px solid #e2e8f0',
                 borderRadius: '0.5rem',
@@ -116,22 +113,23 @@ export default function StudiesPage() {
               }}
               onClick={() => navigate(`/studies/${s.id}`)}
             >
-              <div>
-                <h3 style={{ margin: '0 0 0.25rem', fontSize: '1rem' }}>{s.name}</h3>
+              <Box>
+                <Typography variant="subtitle1" sx={{ margin: '0 0 0.25rem', fontSize: '1rem' }}>{s.name}</Typography>
                 {s.topic && (
-                  <p style={{ margin: '0 0 0.25rem', color: '#64748b', fontSize: '0.875rem' }}>
+                  <Typography sx={{ margin: '0 0 0.25rem', color: '#64748b', fontSize: '0.875rem' }}>
                     {s.topic}
-                  </p>
+                  </Typography>
                 )}
-                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.8125rem', color: '#64748b' }}>{s.study_type}</span>
-                  <span style={{ color: '#cbd5e1' }}>·</span>
-                  <span style={{ fontSize: '0.8125rem', color: '#64748b' }}>
+                <Box sx={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                  <Typography component="span" sx={{ fontSize: '0.8125rem', color: '#64748b' }}>{s.study_type}</Typography>
+                  <Typography component="span" sx={{ color: '#cbd5e1' }}>·</Typography>
+                  <Typography component="span" sx={{ fontSize: '0.8125rem', color: '#64748b' }}>
                     Phase {s.current_phase}: {PHASE_LABELS[s.current_phase] ?? ''}
-                  </span>
-                  <span style={{ color: '#cbd5e1' }}>·</span>
-                  <span
-                    style={{
+                  </Typography>
+                  <Typography component="span" sx={{ color: '#cbd5e1' }}>·</Typography>
+                  <Typography
+                    component="span"
+                    sx={{
                       fontSize: '0.75rem',
                       fontWeight: 600,
                       color: STATUS_COLOR[s.status] ?? '#64748b',
@@ -139,53 +137,51 @@ export default function StudiesPage() {
                     }}
                   >
                     {s.status}
-                  </span>
-                </div>
-              </div>
+                  </Typography>
+                </Box>
+              </Box>
 
-              <div
-                style={{ display: 'flex', gap: '0.5rem' }}
+              <Box
+                sx={{ display: 'flex', gap: '0.5rem' }}
                 onClick={(e) => e.stopPropagation()}
               >
                 {s.status !== 'archived' && (
-                  <button
+                  <Button
+                    variant="outlined"
+                    size="small"
                     onClick={() => archiveMutation.mutate(s.id)}
-                    style={{
+                    sx={{
                       padding: '0.25rem 0.75rem',
-                      background: 'transparent',
-                      border: '1px solid #cbd5e1',
-                      borderRadius: '0.375rem',
-                      cursor: 'pointer',
                       fontSize: '0.8125rem',
                       color: '#64748b',
+                      borderColor: '#cbd5e1',
                     }}
                   >
                     Archive
-                  </button>
+                  </Button>
                 )}
-                <button
+                <Button
+                  variant="outlined"
+                  size="small"
                   onClick={() => {
                     if (confirm(`Delete "${s.name}"? This cannot be undone.`)) {
                       deleteMutation.mutate(s.id);
                     }
                   }}
-                  style={{
+                  sx={{
                     padding: '0.25rem 0.75rem',
-                    background: 'transparent',
-                    border: '1px solid #fca5a5',
-                    borderRadius: '0.375rem',
-                    cursor: 'pointer',
                     fontSize: '0.8125rem',
                     color: '#dc2626',
+                    borderColor: '#fca5a5',
                   }}
                 >
                   Delete
-                </button>
-              </div>
-            </div>
+                </Button>
+              </Box>
+            </Box>
           ))}
-        </div>
+        </Box>
       )}
-    </div>
+    </Box>
   );
 }

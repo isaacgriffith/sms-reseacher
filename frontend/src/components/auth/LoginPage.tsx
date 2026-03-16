@@ -1,63 +1,105 @@
 /**
  * Login page: left-1/3 login form, right-2/3 product infographic.
- * Redirects to /groups on success.
+ * Redirects to /groups on success. Handles optional TOTP second step.
  */
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
-import { api, ApiError } from '../../services/api';
+import { ApiError } from '../../services/api';
+import { loginUser } from '../../services/api';
 import { setSession } from '../../services/auth';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import TextField from '@mui/material/TextField';
+import Button from '@mui/material/Button';
+import Alert from '@mui/material/Alert';
 
 interface LoginForm {
   email: string;
   password: string;
 }
 
-interface LoginResponse {
-  access_token: string;
-  token_type: string;
-  user_id: number;
-  display_name: string;
-}
-
 export default function LoginPage() {
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
+
+  // TOTP second-step state
+  const [partialToken, setPartialToken] = useState<string | null>(null);
+  const [totpCode, setTotpCode] = useState('');
+  const [totpPending, setTotpPending] = useState(false);
+
   const {
     register,
     handleSubmit,
+    getValues,
     formState: { isSubmitting, errors },
   } = useForm<LoginForm>();
 
+  // Step 1: credentials
   const onSubmit = async (data: LoginForm) => {
     setError(null);
     try {
-      const resp = await api.post<LoginResponse>(
-        '/api/v1/auth/login',
-        { email: data.email, password: data.password },
-        false,
-      );
-      setSession(resp.access_token, {
-        id: resp.user_id,
+      const result = await loginUser(data.email, data.password);
+      if (result.type === 'totp_required') {
+        setPartialToken(result.partial_token);
+        return;
+      }
+      setSession(result.access_token, {
+        id: result.user_id,
         email: data.email,
-        displayName: resp.display_name,
+        displayName: result.display_name,
       });
       navigate('/groups', { replace: true });
     } catch (err) {
-      if (err instanceof ApiError) {
-        setError(err.detail);
-      } else {
-        setError('An unexpected error occurred');
+      setError(err instanceof ApiError ? err.detail : 'An unexpected error occurred');
+    }
+  };
+
+  // Step 2: TOTP code
+  const onTotpSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setTotpPending(true);
+    try {
+      const response = await fetch('/api/v1/auth/login/totp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ partial_token: partialToken, totp_code: totpCode }),
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        const detail = (data as { detail?: string }).detail ?? response.statusText;
+        if (response.status === 429) {
+          setError(`Account temporarily locked. ${detail}`);
+        } else {
+          setError(detail);
+        }
+        return;
       }
+      const data = await response.json() as {
+        access_token: string;
+        user_id: number;
+        display_name: string;
+      };
+      setSession(data.access_token, {
+        id: data.user_id,
+        email: getValues('email'),
+        displayName: data.display_name,
+      });
+      navigate('/groups', { replace: true });
+    } catch {
+      setError('An unexpected error occurred');
+    } finally {
+      setTotpPending(false);
     }
   };
 
   return (
-    <div style={{ display: 'flex', height: '100vh' }}>
+    <Box sx={{ display: 'flex', height: '100vh' }}>
       {/* Left panel — login form */}
-      <div
-        style={{
+      <Box
+        sx={{
           width: '33%',
           display: 'flex',
           flexDirection: 'column',
@@ -67,66 +109,100 @@ export default function LoginPage() {
           background: '#ffffff',
         }}
       >
-        <h1 style={{ marginBottom: '0.5rem' }}>SMS Researcher</h1>
-        <p style={{ color: '#666', marginBottom: '2rem' }}>Sign in to your account</p>
+        <Typography variant="h4" sx={{ marginBottom: '0.5rem' }}>SMS Researcher</Typography>
+        <Typography sx={{ color: '#666', marginBottom: '2rem' }}>
+          {partialToken ? 'Enter your authentication code' : 'Sign in to your account'}
+        </Typography>
 
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <div style={{ marginBottom: '1rem' }}>
-            <label htmlFor="email" style={{ display: 'block', marginBottom: '0.25rem' }}>
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              style={{ width: '100%', padding: '0.5rem', boxSizing: 'border-box' }}
-              {...register('email', { required: 'Email is required' })}
-            />
-            {errors.email && (
-              <span style={{ color: 'red', fontSize: '0.875rem' }}>{errors.email.message}</span>
+        {!partialToken ? (
+          <Box component="form" onSubmit={handleSubmit(onSubmit)}>
+            <Box sx={{ marginBottom: '1rem' }}>
+              <TextField
+                id="email"
+                type="email"
+                label="Email"
+                fullWidth
+                size="small"
+                error={!!errors.email}
+                helperText={errors.email?.message}
+                {...register('email', { required: 'Email is required' })}
+              />
+            </Box>
+
+            <Box sx={{ marginBottom: '1.5rem' }}>
+              <TextField
+                id="password"
+                type="password"
+                label="Password"
+                fullWidth
+                size="small"
+                error={!!errors.password}
+                helperText={errors.password?.message}
+                {...register('password', { required: 'Password is required' })}
+              />
+            </Box>
+
+            {error && (
+              <Alert severity="error" sx={{ marginBottom: '1rem' }}>{error}</Alert>
             )}
-          </div>
 
-          <div style={{ marginBottom: '1.5rem' }}>
-            <label htmlFor="password" style={{ display: 'block', marginBottom: '0.25rem' }}>
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              style={{ width: '100%', padding: '0.5rem', boxSizing: 'border-box' }}
-              {...register('password', { required: 'Password is required' })}
+            <Button
+              type="submit"
+              variant="contained"
+              disabled={isSubmitting}
+              fullWidth
+              sx={{ padding: '0.75rem', fontSize: '1rem' }}
+            >
+              {isSubmitting ? 'Signing in…' : 'Sign in'}
+            </Button>
+          </Box>
+        ) : (
+          <Box component="form" onSubmit={(e) => void onTotpSubmit(e)}>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              Open your authenticator app and enter the 6-digit code for SMS Researcher.
+              You can also enter a 10-character backup code.
+            </Typography>
+
+            <TextField
+              label="Authentication code"
+              value={totpCode}
+              onChange={(e) => setTotpCode(e.target.value)}
+              fullWidth
+              size="small"
+              inputProps={{ maxLength: 10, autoComplete: 'one-time-code' }}
+              autoFocus
+              sx={{ mb: 1.5 }}
             />
-            {errors.password && (
-              <span style={{ color: 'red', fontSize: '0.875rem' }}>{errors.password.message}</span>
+
+            {error && (
+              <Alert severity="error" sx={{ marginBottom: '1rem' }}>{error}</Alert>
             )}
-          </div>
 
-          {error && (
-            <p style={{ color: 'red', marginBottom: '1rem', fontSize: '0.875rem' }}>{error}</p>
-          )}
+            <Button
+              type="submit"
+              variant="contained"
+              disabled={totpPending || totpCode.length < 6}
+              fullWidth
+              sx={{ padding: '0.75rem', fontSize: '1rem' }}
+            >
+              {totpPending ? 'Verifying…' : 'Verify'}
+            </Button>
 
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            style={{
-              width: '100%',
-              padding: '0.75rem',
-              background: '#2563eb',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '0.375rem',
-              cursor: isSubmitting ? 'not-allowed' : 'pointer',
-              fontSize: '1rem',
-            }}
-          >
-            {isSubmitting ? 'Signing in…' : 'Sign in'}
-          </button>
-        </form>
-      </div>
+            <Button
+              variant="text"
+              size="small"
+              onClick={() => { setPartialToken(null); setError(null); setTotpCode(''); }}
+              sx={{ mt: 1 }}
+            >
+              Back to sign in
+            </Button>
+          </Box>
+        )}
+      </Box>
 
       {/* Right panel — product infographic */}
-      <div
-        style={{
+      <Box
+        sx={{
           width: '67%',
           background: 'linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%)',
           display: 'flex',
@@ -138,11 +214,11 @@ export default function LoginPage() {
           boxSizing: 'border-box',
         }}
       >
-        <h2 style={{ fontSize: '2rem', marginBottom: '1rem' }}>Systematic Mapping Studies</h2>
-        <p style={{ fontSize: '1.125rem', textAlign: 'center', maxWidth: '480px', lineHeight: 1.6 }}>
+        <Typography variant="h4" sx={{ fontSize: '2rem', marginBottom: '1rem' }}>Systematic Mapping Studies</Typography>
+        <Typography sx={{ fontSize: '1.125rem', textAlign: 'center', maxWidth: '480px', lineHeight: 1.6 }}>
           AI-augmented research automation — guide your team through study scoping, database
           search, paper screening, data extraction, and publication-ready visualisations.
-        </p>
+        </Typography>
         <ul
           style={{
             marginTop: '2rem',
@@ -158,7 +234,7 @@ export default function LoginPage() {
           <li>✓ Structured data extraction with audit trail</li>
           <li>✓ SVG charts &amp; interactive domain model</li>
         </ul>
-      </div>
-    </div>
+      </Box>
+    </Box>
   );
 }

@@ -6,6 +6,9 @@
  */
 
 import { useJobProgress } from '../../services/jobs';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import Paper from '@mui/material/Paper';
 
 interface JobProgressPanelProps {
   jobId: string | null;
@@ -33,27 +36,29 @@ export default function JobProgressPanel({ jobId, onComplete }: JobProgressPanel
   const barColor = isFailed ? '#ef4444' : isComplete ? '#22c55e' : '#2563eb';
 
   return (
-    <div
-      style={{
+    <Paper
+      variant="outlined"
+      sx={{
         border: '1px solid #e2e8f0',
         borderRadius: '0.5rem',
         padding: '1rem',
         background: '#f8fafc',
       }}
     >
-      <div
-        style={{
+      <Box
+        sx={{
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
           marginBottom: '0.75rem',
         }}
       >
-        <h4 style={{ margin: 0, fontSize: '0.9375rem', color: '#111827' }}>
+        <Typography variant="subtitle2" sx={{ margin: 0, fontSize: '0.9375rem', color: '#111827' }}>
           {isComplete ? 'Search Complete' : isFailed ? 'Search Failed' : 'Search Running'}
-        </h4>
-        <span
-          style={{
+        </Typography>
+        <Typography
+          component="span"
+          sx={{
             fontSize: '0.75rem',
             fontWeight: 600,
             color: barColor,
@@ -61,12 +66,12 @@ export default function JobProgressPanel({ jobId, onComplete }: JobProgressPanel
           }}
         >
           {status}
-        </span>
-      </div>
+        </Typography>
+      </Box>
 
       {/* Progress bar */}
-      <div
-        style={{
+      <Box
+        sx={{
           background: '#e2e8f0',
           borderRadius: '9999px',
           height: '0.5rem',
@@ -74,47 +79,47 @@ export default function JobProgressPanel({ jobId, onComplete }: JobProgressPanel
           marginBottom: '0.75rem',
         }}
       >
-        <div
-          style={{
+        <Box
+          sx={{
             background: barColor,
             height: '100%',
             width: `${progressPct}%`,
             transition: 'width 0.3s ease',
           }}
         />
-      </div>
+      </Box>
 
       {/* Details */}
       {isRunning && (
-        <div style={{ fontSize: '0.8125rem', color: '#4b5563', display: 'flex', gap: '1rem' }}>
-          {phase && <span>Phase: <strong>{phase}</strong></span>}
-          {currentDb && <span>Database: <strong>{currentDb}</strong></span>}
-          {papersFound > 0 && <span>Papers found: <strong>{papersFound}</strong></span>}
-        </div>
+        <Box sx={{ fontSize: '0.8125rem', color: '#4b5563', display: 'flex', gap: '1rem' }}>
+          {phase && <Typography component="span" sx={{ fontSize: '0.8125rem', color: '#4b5563' }}>Phase: <strong>{phase}</strong></Typography>}
+          {currentDb && <Typography component="span" sx={{ fontSize: '0.8125rem', color: '#4b5563' }}>Database: <strong>{currentDb}</strong></Typography>}
+          {papersFound > 0 && <Typography component="span" sx={{ fontSize: '0.8125rem', color: '#4b5563' }}>Papers found: <strong>{papersFound}</strong></Typography>}
+        </Box>
       )}
 
       {isComplete && detail && (
-        <div style={{ fontSize: '0.8125rem', color: '#374151', display: 'flex', gap: '1.5rem' }}>
+        <Box sx={{ fontSize: '0.8125rem', color: '#374151', display: 'flex', gap: '1.5rem' }}>
           {typeof (detail as Record<string, number>).total_identified === 'number' && (
-            <span>Identified: <strong>{(detail as Record<string, number>).total_identified}</strong></span>
+            <Typography component="span" sx={{ fontSize: '0.8125rem' }}>Identified: <strong>{(detail as Record<string, number>).total_identified}</strong></Typography>
           )}
           {typeof (detail as Record<string, number>).accepted === 'number' && (
-            <span style={{ color: '#16a34a' }}>Accepted: <strong>{(detail as Record<string, number>).accepted}</strong></span>
+            <Typography component="span" sx={{ fontSize: '0.8125rem', color: '#16a34a' }}>Accepted: <strong>{(detail as Record<string, number>).accepted}</strong></Typography>
           )}
           {typeof (detail as Record<string, number>).rejected === 'number' && (
-            <span style={{ color: '#dc2626' }}>Rejected: <strong>{(detail as Record<string, number>).rejected}</strong></span>
+            <Typography component="span" sx={{ fontSize: '0.8125rem', color: '#dc2626' }}>Rejected: <strong>{(detail as Record<string, number>).rejected}</strong></Typography>
           )}
           {typeof (detail as Record<string, number>).duplicates === 'number' && (
-            <span style={{ color: '#d97706' }}>Duplicates: <strong>{(detail as Record<string, number>).duplicates}</strong></span>
+            <Typography component="span" sx={{ fontSize: '0.8125rem', color: '#d97706' }}>Duplicates: <strong>{(detail as Record<string, number>).duplicates}</strong></Typography>
           )}
-        </div>
+        </Box>
       )}
 
       {isFailed && (
-        <p style={{ margin: 0, fontSize: '0.8125rem', color: '#ef4444' }}>
+        <Typography sx={{ margin: 0, fontSize: '0.8125rem', color: '#ef4444' }}>
           {error ?? 'An error occurred'}
-        </p>
+        </Typography>
       )}
-    </div>
+    </Paper>
   );
 }

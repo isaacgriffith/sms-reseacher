@@ -2,8 +2,10 @@
 
 Provides:
 - ``hash_password`` / ``verify_password`` — bcrypt helpers
-- ``create_access_token`` — sign a JWT
-- ``get_current_user`` — FastAPI dependency that validates a Bearer JWT
+- ``create_access_token`` — sign a JWT (includes ``iat`` and ``ver`` claims)
+- ``create_partial_token`` — short-lived token for the 2FA login step
+- ``get_current_user`` — FastAPI dependency that validates a Bearer JWT and
+  enforces ``token_version`` to support session invalidation on password change
 - ``require_study_member`` — shared guard that raises HTTP 403 for non-members
 """
 
@@ -13,8 +15,11 @@ import bcrypt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.core.config import get_logger, get_settings
+from backend.core.database import get_db
 
 logger = get_logger(__name__)
 
@@ -56,21 +61,65 @@ def verify_password(plain: str, hashed: str) -> bool:
 # ---------------------------------------------------------------------------
 
 
-def create_access_token(user_id: int, *, extra_claims: dict | None = None) -> str:
+def create_access_token(
+    user_id: int,
+    token_version: int = 0,
+    *,
+    extra_claims: dict | None = None,
+) -> str:
     """Create and sign a JWT access token for *user_id*.
+
+    The token includes ``iat`` (issued-at) and ``ver`` (token version) claims
+    in addition to the standard ``sub`` and ``exp`` claims.  On password change
+    the caller must pass the updated ``token_version`` so that prior tokens
+    with a stale ``ver`` are rejected by :func:`get_current_user`.
 
     Args:
         user_id: The primary key of the authenticated user.
+        token_version: The current ``User.token_version`` value; embedded as
+            the ``ver`` claim.  Defaults to ``0`` for backward compatibility.
         extra_claims: Optional additional claims to embed in the token.
 
     Returns:
         A signed JWT string.
     """
     settings = get_settings()
-    expire = datetime.now(UTC) + timedelta(minutes=settings.access_token_expire_minutes)
-    payload: dict = {"sub": str(user_id), "exp": expire}
+    now = datetime.now(UTC)
+    expire = now + timedelta(minutes=settings.access_token_expire_minutes)
+    payload: dict = {
+        "sub": str(user_id),
+        "exp": expire,
+        "iat": now,
+        "ver": token_version,
+    }
     if extra_claims:
         payload.update(extra_claims)
+    return jwt.encode(payload, settings.secret_key, algorithm=settings.algorithm)
+
+
+def create_partial_token(user_id: int) -> str:
+    """Create a short-lived partial JWT for the 2FA login step.
+
+    The token carries ``stage: "totp_required"`` and expires in 5 minutes.
+    :func:`get_current_user` rejects partial tokens so they cannot be used to
+    access protected resources — only the ``/auth/login/totp`` endpoint accepts
+    them.
+
+    Args:
+        user_id: The primary key of the user who passed password authentication.
+
+    Returns:
+        A signed short-lived JWT string.
+    """
+    settings = get_settings()
+    now = datetime.now(UTC)
+    expire = now + timedelta(minutes=5)
+    payload: dict = {
+        "sub": str(user_id),
+        "exp": expire,
+        "iat": now,
+        "stage": "totp_required",
+    }
     return jwt.encode(payload, settings.secret_key, algorithm=settings.algorithm)
 
 
@@ -99,20 +148,26 @@ class CurrentUser:
 
 async def get_current_user(
     token: str | None = Depends(oauth2_scheme),
+    db: AsyncSession = Depends(get_db),
 ) -> CurrentUser:
     """FastAPI dependency: validate a Bearer JWT and return the current user.
 
-    Raises ``HTTP 401`` if the token is missing, expired, or invalid.
+    Raises ``HTTP 401`` if the token is missing, expired, invalid, carries a
+    ``stage`` claim (partial token), or has a stale ``ver`` (token_version
+    mismatch caused by a password change that invalidated prior sessions).
 
     Args:
         token: Raw bearer token from the ``Authorization`` header, or ``None``.
+        db: Injected async database session used for token_version check.
 
     Returns:
         A :class:`CurrentUser` with ``is_authenticated=True``.
 
     Raises:
-        HTTPException: 401 if the token is absent or invalid.
+        HTTPException: 401 if the token is absent, invalid, partial, or stale.
     """
+    from db.models.users import User  # local import avoids circular dependency at module load
+
     credentials_exc = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -131,6 +186,29 @@ async def get_current_user(
     except (JWTError, ValueError):
         logger.warning("auth_token_invalid")
         raise credentials_exc
+
+    # Reject partial tokens — only valid for the /auth/login/totp step.
+    if payload.get("stage") == "totp_required":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication incomplete",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    # Verify token_version to detect password-change session invalidation.
+    result = await db.execute(select(User).where(User.id == user_id))
+    user = result.scalar_one_or_none()
+    if user is None:
+        raise credentials_exc
+
+    token_ver: int = payload.get("ver", 0)
+    if token_ver != user.token_version:
+        logger.warning("auth_token_version_mismatch", user_id=user_id)
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Session expired. Please log in again.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
     return CurrentUser(user_id=user_id)
 
@@ -159,8 +237,6 @@ async def require_study_member(
     Raises:
         HTTPException: 403 if the user is not a study member.
     """
-    from sqlalchemy import select
-
     from db.models.study import StudyMember
 
     result = await db.execute(

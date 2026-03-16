@@ -7,6 +7,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 This is a research project by Isaac Griffith, PhD, licensed under the MIT License. A six-subproject UV workspace mono-repo for systematic mapping study (SMS) research automation.
 
 ## Active Technologies
+- Python 3.14 (backend, db); TypeScript 5.4 / Node 20 LTS (frontend) + FastAPI + Pydantic v2, SQLAlchemy 2.0+ async, Alembic, React 18, MUI v5, react-hook-form + Zod, TanStack Query v5, pyotp, qrcode[pil], cryptography (Fernet), swagger-ui-react (004-frontend-improvements)
+- PostgreSQL 16 (production/Docker Compose); SQLite + aiosqlite (unit/integration tests) (004-frontend-improvements)
 
 ### Runtime & Language
 - Python 3.14 (backend, agents, db, agent-eval, researcher-mcp); TypeScript 5.4 / Node 20 LTS (frontend)
@@ -24,6 +26,12 @@ This is a research project by Isaac Griffith, PhD, licensed under the MIT Licens
 - **State / data fetching**: TanStack Query (React Query) with `refetchInterval` polling
 - **Forms**: React Hook Form with `useWatch` (not `watch()`)
 
+### User-Facing Features (004-frontend-improvements)
+- **Authentication**: Password change with `token_version` session invalidation; partial JWT for 2FA second step
+- **2FA / TOTP**: `pyotp` (secret generation, code verification); `qrcode[pil]` (QR base64 PNG); `cryptography` Fernet for TOTP secret encryption at rest; `bcrypt` for backup code hashing
+- **Frontend UI**: MUI v5 (`@mui/material` + `@emotion/react`) — full migration of all components; `ThemeProvider` with Light/Dark/System palette modes
+- **API Documentation**: `swagger-ui-react` — authenticated Swagger UI at `/api-docs`; backend `GET /api/v1/openapi.json` requires full JWT
+
 ### Quality Toolchain (003-project-setup-improvements)
 - **Python mutation testing**: `cosmic-ray` (replaces `mutmut`) — run per package via `cosmic-ray.toml`
 - **TypeScript mutation testing**: Stryker (`@stryker-mutator/vitest-runner`) — `npx stryker run` in `frontend/`
@@ -37,6 +45,7 @@ This is a research project by Isaac Griffith, PhD, licensed under the MIT Licens
 - 001-repo-setup: Added Python 3.12 (backend, agents, db); TypeScript 5.4 / Node 20 LTS (frontend)
 - 002-sms-workflow: Finalised library choices — ARQ, matplotlib, networkx, plotly/kaleido, rapidfuzz, D3.js
 - 003-project-setup-improvements: cosmic-ray, Playwright, vitest coverage-v8, skip enforcement, mutation workflow_dispatch
+- 004-frontend-improvements: password change + session invalidation, TOTP 2FA with QR/backup codes, theme preference (Light/Dark/System), full MUI v5 migration, authenticated API docs page
 
 ---
 

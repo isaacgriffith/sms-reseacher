@@ -5,6 +5,10 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { api } from '../../services/api';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
+import Paper from '@mui/material/Paper';
 
 interface ExportJob {
   job_id: string;
@@ -93,72 +97,97 @@ export default function ExportPanel({ studyId }: ExportPanelProps) {
   };
 
   return (
-    <div style={panelStyle}>
-      <h3 style={headingStyle}>Export Study</h3>
+    <Paper variant="outlined" sx={{ border: '1px solid #e2e8f0', borderRadius: '0.5rem', padding: '1.25rem', background: '#fff' }}>
+      <Typography variant="subtitle1" sx={{ margin: '0 0 1rem', fontSize: '1rem', fontWeight: 600, color: '#111827' }}>Export Study</Typography>
 
       {/* Format selector */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1rem' }}>
-        {FORMAT_OPTIONS.map((opt) => (
-          <label key={opt.value} style={radioLabelStyle(selectedFormat === opt.value)}>
-            <input
-              type="radio"
-              name="export_format"
-              value={opt.value}
-              checked={selectedFormat === opt.value}
-              onChange={() => setSelectedFormat(opt.value)}
-              style={{ marginRight: '0.625rem' }}
-              disabled={!!job && jobStatus?.status !== 'completed' && jobStatus?.status !== 'failed'}
-            />
-            <div>
-              <div style={{ fontWeight: 600, fontSize: '0.875rem', color: '#111827' }}>{opt.label}</div>
-              <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>{opt.description}</div>
-            </div>
-          </label>
-        ))}
-      </div>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1rem' }}>
+        {FORMAT_OPTIONS.map((opt) => {
+          const selected = selectedFormat === opt.value;
+          return (
+            <label key={opt.value} style={{
+              display: 'flex',
+              alignItems: 'flex-start',
+              padding: '0.625rem 0.875rem',
+              border: `1px solid ${selected ? '#3b82f6' : '#e2e8f0'}`,
+              borderRadius: '0.375rem',
+              cursor: 'pointer',
+              background: selected ? '#eff6ff' : '#fff',
+            }}>
+              <input
+                type="radio"
+                name="export_format"
+                value={opt.value}
+                checked={selected}
+                onChange={() => setSelectedFormat(opt.value)}
+                style={{ marginRight: '0.625rem' }}
+                disabled={!!job && jobStatus?.status !== 'completed' && jobStatus?.status !== 'failed'}
+              />
+              <Box>
+                <Typography sx={{ fontWeight: 600, fontSize: '0.875rem', color: '#111827' }}>{opt.label}</Typography>
+                <Typography sx={{ fontSize: '0.75rem', color: '#6b7280' }}>{opt.description}</Typography>
+              </Box>
+            </label>
+          );
+        })}
+      </Box>
 
       {/* Action buttons */}
       {!job || jobStatus?.status === 'failed' ? (
-        <button
+        <Button
+          variant="contained"
           onClick={handleExport}
           disabled={isSubmitting}
-          style={isSubmitting ? disabledBtnStyle : primaryBtnStyle}
+          sx={{
+            padding: '0.5rem 1.25rem',
+            background: isSubmitting ? '#93c5fd' : '#2563eb',
+            fontSize: '0.875rem',
+            fontWeight: 600,
+          }}
         >
           {isSubmitting ? 'Starting…' : 'Export'}
-        </button>
+        </Button>
       ) : jobStatus?.status === 'completed' ? (
-        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-          <button onClick={handleDownload} style={downloadBtnStyle}>
+        <Box sx={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+          <Button
+            variant="contained"
+            onClick={handleDownload}
+            sx={{ padding: '0.5rem 1.25rem', background: '#16a34a', '&:hover': { background: '#15803d' }, fontSize: '0.875rem', fontWeight: 600 }}
+          >
             ↓ Download
-          </button>
-          <button onClick={handleReset} style={secondaryBtnStyle}>
+          </Button>
+          <Button
+            variant="outlined"
+            onClick={handleReset}
+            sx={{ padding: '0.5rem 1rem', color: '#374151', borderColor: '#d1d5db', fontSize: '0.875rem' }}
+          >
             New Export
-          </button>
+          </Button>
           {jobStatus.progress_detail?.size_bytes != null && (
-            <span style={{ fontSize: '0.75rem', color: '#6b7280' }}>
+            <Typography component="span" sx={{ fontSize: '0.75rem', color: '#6b7280' }}>
               {formatBytes(jobStatus.progress_detail.size_bytes)}
-            </span>
+            </Typography>
           )}
-        </div>
+        </Box>
       ) : (
         <ProgressBar pct={jobStatus?.progress_pct ?? 0} />
       )}
 
       {/* Status messages */}
       {error && (
-        <p style={{ marginTop: '0.75rem', color: '#dc2626', fontSize: '0.8125rem' }}>{error}</p>
+        <Typography sx={{ marginTop: '0.75rem', color: '#dc2626', fontSize: '0.8125rem' }}>{error}</Typography>
       )}
       {jobStatus?.status === 'failed' && (
-        <p style={{ marginTop: '0.75rem', color: '#dc2626', fontSize: '0.8125rem' }}>
+        <Typography sx={{ marginTop: '0.75rem', color: '#dc2626', fontSize: '0.8125rem' }}>
           Export failed: {jobStatus.error_message ?? 'Unknown error'}
-        </p>
+        </Typography>
       )}
       {jobStatus?.status === 'completed' && (
-        <p style={{ marginTop: '0.5rem', color: '#16a34a', fontSize: '0.8125rem' }}>
+        <Typography sx={{ marginTop: '0.5rem', color: '#16a34a', fontSize: '0.8125rem' }}>
           Export ready — click Download to save.
-        </p>
+        </Typography>
       )}
-    </div>
+    </Paper>
   );
 }
 
@@ -168,14 +197,14 @@ export default function ExportPanel({ studyId }: ExportPanelProps) {
 
 function ProgressBar({ pct }: { pct: number }) {
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
-        <span style={{ fontSize: '0.75rem', color: '#6b7280' }}>Exporting…</span>
-        <span style={{ fontSize: '0.75rem', color: '#6b7280' }}>{pct}%</span>
-      </div>
-      <div style={{ height: '6px', background: '#e2e8f0', borderRadius: '9999px', overflow: 'hidden' }}>
-        <div
-          style={{
+    <Box>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+        <Typography component="span" sx={{ fontSize: '0.75rem', color: '#6b7280' }}>Exporting…</Typography>
+        <Typography component="span" sx={{ fontSize: '0.75rem', color: '#6b7280' }}>{pct}%</Typography>
+      </Box>
+      <Box sx={{ height: '6px', background: '#e2e8f0', borderRadius: '9999px', overflow: 'hidden' }}>
+        <Box
+          sx={{
             height: '100%',
             width: `${pct}%`,
             background: '#2563eb',
@@ -183,8 +212,8 @@ function ProgressBar({ pct }: { pct: number }) {
             transition: 'width 0.3s ease',
           }}
         />
-      </div>
-    </div>
+      </Box>
+    </Box>
   );
 }
 
@@ -197,69 +226,3 @@ function formatBytes(bytes: number): string {
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
-
-// ---------------------------------------------------------------------------
-// Styles
-// ---------------------------------------------------------------------------
-
-const panelStyle: React.CSSProperties = {
-  border: '1px solid #e2e8f0',
-  borderRadius: '0.5rem',
-  padding: '1.25rem',
-  background: '#fff',
-};
-
-const headingStyle: React.CSSProperties = {
-  margin: '0 0 1rem',
-  fontSize: '1rem',
-  fontWeight: 600,
-  color: '#111827',
-};
-
-const radioLabelStyle = (selected: boolean): React.CSSProperties => ({
-  display: 'flex',
-  alignItems: 'flex-start',
-  padding: '0.625rem 0.875rem',
-  border: `1px solid ${selected ? '#3b82f6' : '#e2e8f0'}`,
-  borderRadius: '0.375rem',
-  cursor: 'pointer',
-  background: selected ? '#eff6ff' : '#fff',
-});
-
-const primaryBtnStyle: React.CSSProperties = {
-  padding: '0.5rem 1.25rem',
-  background: '#2563eb',
-  color: '#fff',
-  border: 'none',
-  borderRadius: '0.375rem',
-  cursor: 'pointer',
-  fontSize: '0.875rem',
-  fontWeight: 600,
-};
-
-const disabledBtnStyle: React.CSSProperties = {
-  ...primaryBtnStyle,
-  background: '#93c5fd',
-  cursor: 'not-allowed',
-};
-
-const downloadBtnStyle: React.CSSProperties = {
-  padding: '0.5rem 1.25rem',
-  background: '#16a34a',
-  color: '#fff',
-  border: 'none',
-  borderRadius: '0.375rem',
-  cursor: 'pointer',
-  fontSize: '0.875rem',
-  fontWeight: 600,
-};
-
-const secondaryBtnStyle: React.CSSProperties = {
-  padding: '0.5rem 1rem',
-  background: 'transparent',
-  color: '#374151',
-  border: '1px solid #d1d5db',
-  borderRadius: '0.375rem',
-  cursor: 'pointer',
-  fontSize: '0.875rem',
-};

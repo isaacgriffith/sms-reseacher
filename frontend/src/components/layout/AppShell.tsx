@@ -4,14 +4,15 @@
 
 import { Outlet } from 'react-router-dom';
 import SideNav from './SideNav';
+import Box from '@mui/material/Box';
 
 export default function AppShell() {
   return (
-    <div style={{ display: 'flex', minHeight: '100vh' }}>
+    <Box sx={{ display: 'flex', minHeight: '100vh' }}>
       <SideNav />
-      <main style={{ flex: 1, padding: '2rem', boxSizing: 'border-box', overflowY: 'auto' }}>
+      <Box component="main" sx={{ flex: 1, padding: '2rem', boxSizing: 'border-box', overflowY: 'auto' }}>
         <Outlet />
-      </main>
-    </div>
+      </Box>
+    </Box>
   );
 }

@@ -5,6 +5,10 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api, ApiError } from '../../services/api';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
+import TextField from '@mui/material/TextField';
 
 interface Iteration {
   id: number;
@@ -68,25 +72,25 @@ export default function TestRetest({ studyId }: TestRetestProps) {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['search-strings', studyId] }),
   });
 
-  if (isLoading) return <p style={{ color: '#64748b', fontSize: '0.875rem' }}>Loading…</p>;
+  if (isLoading) return <Typography sx={{ color: '#64748b', fontSize: '0.875rem' }}>Loading…</Typography>;
 
   if (strings.length === 0) {
     return (
-      <div style={{ color: '#64748b', fontSize: '0.875rem' }}>
+      <Box sx={{ color: '#64748b', fontSize: '0.875rem' }}>
         No search strings yet. Create one in the Search String Editor above.
-      </div>
+      </Box>
     );
   }
 
   return (
-    <div>
-      <h3 style={{ margin: '0 0 1rem', fontSize: '1rem', color: '#111827' }}>Test &amp; Evaluate</h3>
+    <Box>
+      <Typography variant="subtitle1" sx={{ margin: '0 0 1rem', fontSize: '1rem', color: '#111827' }}>Test &amp; Evaluate</Typography>
 
       {/* String selector */}
-      <div style={{ marginBottom: '1rem' }}>
-        <label style={{ fontSize: '0.875rem', color: '#374151', marginRight: '0.5rem' }}>
+      <Box sx={{ marginBottom: '1rem' }}>
+        <Typography component="label" sx={{ fontSize: '0.875rem', color: '#374151', marginRight: '0.5rem' }}>
           Search string:
-        </label>
+        </Typography>
         <select
           value={activeOrFirst?.id ?? ''}
           onChange={(e) => setSelectedStringId(Number(e.target.value))}
@@ -103,63 +107,54 @@ export default function TestRetest({ studyId }: TestRetestProps) {
             </option>
           ))}
         </select>
-      </div>
+      </Box>
 
       {/* Databases input */}
-      <div style={{ marginBottom: '1rem' }}>
-        <label style={{ fontSize: '0.875rem', color: '#374151', display: 'block', marginBottom: '0.25rem' }}>
+      <Box sx={{ marginBottom: '1rem' }}>
+        <Typography component="label" sx={{ fontSize: '0.875rem', color: '#374151', display: 'block', marginBottom: '0.25rem' }}>
           Databases (comma-separated, e.g. acm,ieee,scopus):
-        </label>
-        <input
+        </Typography>
+        <TextField
           value={databases}
           onChange={(e) => setDatabases(e.target.value)}
           placeholder="acm,ieee,scopus"
-          style={{
-            width: '100%',
-            padding: '0.375rem 0.625rem',
-            border: '1px solid #d1d5db',
-            borderRadius: '0.375rem',
-            fontSize: '0.875rem',
-            boxSizing: 'border-box',
-          }}
+          size="small"
+          fullWidth
         />
-      </div>
+      </Box>
 
       {/* Run test button */}
-      <button
+      <Button
+        variant="contained"
         onClick={() => activeOrFirst && runTest.mutate(activeOrFirst.id)}
         disabled={runTest.isPending || !activeOrFirst}
-        style={{
-          padding: '0.5rem 1rem',
+        sx={{
           background: '#0891b2',
-          color: '#fff',
-          border: 'none',
-          borderRadius: '0.375rem',
-          cursor: runTest.isPending || !activeOrFirst ? 'not-allowed' : 'pointer',
+          '&:hover': { background: '#0e7490' },
           fontSize: '0.875rem',
           marginBottom: '1rem',
           opacity: runTest.isPending || !activeOrFirst ? 0.6 : 1,
         }}
       >
         {runTest.isPending ? 'Queuing…' : '▶ Run Test Search'}
-      </button>
+      </Button>
 
       {runTest.isSuccess && (
-        <p style={{ fontSize: '0.875rem', color: '#16a34a', marginBottom: '0.75rem' }}>
+        <Typography sx={{ fontSize: '0.875rem', color: '#16a34a', marginBottom: '0.75rem' }}>
           Test search queued. Refresh to see new iteration results.
-        </p>
+        </Typography>
       )}
 
       {testError && (
-        <p style={{ color: '#ef4444', fontSize: '0.875rem', margin: '0 0 0.75rem' }}>{testError}</p>
+        <Typography sx={{ color: '#ef4444', fontSize: '0.875rem', margin: '0 0 0.75rem' }}>{testError}</Typography>
       )}
 
       {/* Iterations table */}
       {activeOrFirst && activeOrFirst.iterations.length > 0 && (
-        <div>
-          <h4 style={{ margin: '0 0 0.5rem', fontSize: '0.875rem', color: '#374151' }}>
+        <Box>
+          <Typography variant="subtitle2" sx={{ margin: '0 0 0.5rem', fontSize: '0.875rem', color: '#374151' }}>
             Iterations for v{activeOrFirst.version}
-          </h4>
+          </Typography>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
             <thead>
               <tr style={{ background: '#f1f5f9' }}>
@@ -177,32 +172,35 @@ export default function TestRetest({ studyId }: TestRetestProps) {
                   <td style={tdStyle}>{it.iteration_number}</td>
                   <td style={tdStyle}>{it.result_set_count.toLocaleString()}</td>
                   <td style={tdStyle}>
-                    <span
-                      style={{
+                    <Typography
+                      component="span"
+                      sx={{
                         color: it.test_set_recall >= 0.8 ? '#16a34a' : it.test_set_recall >= 0.5 ? '#d97706' : '#dc2626',
                         fontWeight: 600,
                       }}
                     >
                       {(it.test_set_recall * 100).toFixed(1)}%
-                    </span>
+                    </Typography>
                   </td>
                   <td style={{ ...tdStyle, maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {it.ai_adequacy_judgment ?? '—'}
                   </td>
                   <td style={tdStyle}>
                     {it.human_approved === true && (
-                      <span style={{ color: '#16a34a', fontWeight: 600 }}>Approved</span>
+                      <Typography component="span" sx={{ color: '#16a34a', fontWeight: 600 }}>Approved</Typography>
                     )}
                     {it.human_approved === false && (
-                      <span style={{ color: '#dc2626', fontWeight: 600 }}>Rejected</span>
+                      <Typography component="span" sx={{ color: '#dc2626', fontWeight: 600 }}>Rejected</Typography>
                     )}
                     {it.human_approved === null && (
-                      <span style={{ color: '#64748b' }}>Pending</span>
+                      <Typography component="span" sx={{ color: '#64748b' }}>Pending</Typography>
                     )}
                   </td>
                   <td style={tdStyle}>
                     {it.human_approved !== true && (
-                      <button
+                      <Button
+                        size="small"
+                        variant="outlined"
                         onClick={() =>
                           approveIteration.mutate({
                             ssId: activeOrFirst.id,
@@ -210,13 +208,15 @@ export default function TestRetest({ studyId }: TestRetestProps) {
                             approved: true,
                           })
                         }
-                        style={actionBtnStyle('#16a34a')}
+                        sx={{ color: '#16a34a', borderColor: '#16a34a', fontSize: '0.75rem', padding: '0.25rem 0.5rem' }}
                       >
                         Approve
-                      </button>
+                      </Button>
                     )}
                     {it.human_approved !== false && (
-                      <button
+                      <Button
+                        size="small"
+                        variant="outlined"
                         onClick={() =>
                           approveIteration.mutate({
                             ssId: activeOrFirst.id,
@@ -224,25 +224,25 @@ export default function TestRetest({ studyId }: TestRetestProps) {
                             approved: false,
                           })
                         }
-                        style={{ ...actionBtnStyle('#dc2626'), marginLeft: '0.25rem' }}
+                        sx={{ color: '#dc2626', borderColor: '#dc2626', fontSize: '0.75rem', padding: '0.25rem 0.5rem', marginLeft: '0.25rem' }}
                       >
                         Reject
-                      </button>
+                      </Button>
                     )}
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-        </div>
+        </Box>
       )}
 
       {activeOrFirst && activeOrFirst.iterations.length === 0 && (
-        <p style={{ color: '#64748b', fontSize: '0.875rem' }}>
+        <Typography sx={{ color: '#64748b', fontSize: '0.875rem' }}>
           No test iterations yet. Run a test search to evaluate recall.
-        </p>
+        </Typography>
       )}
-    </div>
+    </Box>
   );
 }
 
@@ -259,15 +259,3 @@ const tdStyle: React.CSSProperties = {
   padding: '0.5rem 0.75rem',
   color: '#374151',
 };
-
-function actionBtnStyle(color: string): React.CSSProperties {
-  return {
-    padding: '0.25rem 0.5rem',
-    background: 'transparent',
-    border: `1px solid ${color}`,
-    borderRadius: '0.25rem',
-    color,
-    cursor: 'pointer',
-    fontSize: '0.75rem',
-  };
-}
