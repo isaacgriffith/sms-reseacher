@@ -63,3 +63,6 @@ frontend/reports/
 # ── Mutmut ───────────────────────────────────────────────────────────────────────
 .mutmut-cache/
 
+.hypothesis/
+frontend/test-results/
+frontend/coverage/
