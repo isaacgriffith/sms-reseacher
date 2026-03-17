@@ -66,6 +66,22 @@ All client-side variables **must** use the `VITE_` prefix and be accessed via `i
 |----------|---------|-------------|
 | `VITE_API_BASE_URL` | `http://localhost:8000` | Backend REST API base URL |
 
+## Admin Tabs
+
+The `AdminPage` component (`src/pages/AdminPage.tsx`) exposes three MUI tabs:
+
+| Tab | Components | Query hooks |
+|-----|-----------|-------------|
+| **Providers** | `ProviderList`, `ProviderForm` | `useProviders`, `useCreateProvider`, `useUpdateProvider`, `useDeleteProvider`, `useRefreshModels` |
+| **Models** | `ModelList` | `useProviderModels`, `useToggleModel` |
+| **Agents** | `AgentList`, `AgentWizard`, `AgentForm` | `useAgents`, `useCreateAgent`, `useUpdateAgent`, `useDeleteAgent`, `useGenerateSystemMessage`, `useUndoSystemMessage`, `useGeneratePersonaSvg`, `useAgentTaskTypes` |
+
+`AgentWizard` is a 5-step MUI `Stepper` (task type → model → role/persona → SVG → system
+message review) with state managed via `useReducer`. `SystemMessageEditor` is a
+`React.memo` component that highlights `{{ variable }}` template placeholders.
+
+All API responses are parsed through Zod schemas before being returned from hooks.
+
 ## Project Structure
 
 ```
@@ -80,9 +96,18 @@ frontend/
 │   ├── main.tsx              # Application entry point
 │   ├── App.tsx               # Root component and router setup
 │   ├── components/           # Reusable UI components
+│   │   └── admin/
+│   │       ├── providers/    # ProviderList, ProviderForm
+│   │       ├── models/       # ModelList
+│   │       └── agents/       # AgentList, AgentWizard, AgentForm, SystemMessageEditor
 │   ├── pages/                # Page-level route components
 │   ├── hooks/                # Shared custom hooks (use* pattern)
 │   ├── services/             # API client and TanStack Query hooks
+│   │   ├── providersApi.ts   # Provider + model TanStack Query hooks
+│   │   └── agentsApi.ts      # Agent TanStack Query hooks
+│   ├── types/
+│   │   ├── provider.ts       # Zod schemas + inferred types for Provider/AvailableModel
+│   │   └── agent.ts          # Zod schemas + inferred types for Agent
 │   └── App.test.tsx          # Root component tests
 └── tests/                    # Additional test suites
 ```

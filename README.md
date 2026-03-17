@@ -7,7 +7,7 @@ A six-sub-project UV workspace mono-repo for systematic mapping study (SMS) rese
 | Sub-project | Language | Purpose |
 |-------------|----------|---------|
 | [`backend/`](backend/README.md) | Python 3.14 / FastAPI | REST API gateway; orchestrates agents |
-| [`agents/`](agents/README.md) | Python 3.14 | LLM-powered research agents (screener, extractor, synthesiser) |
+| [`agents/`](agents/README.md) | Python 3.14 | LLM-powered research agents (screener, extractor, synthesiser, agent-generator) |
 | [`db/`](db/README.md) | Python 3.14 / SQLAlchemy | Shared database models + Alembic migrations |
 | [`agent-eval/`](agent-eval/README.md) | Python 3.14 / Typer | CLI for evaluating agent quality with LLM-as-a-Judge |
 | [`researcher-mcp/`](researcher-mcp/README.md) | Python 3.14 / FastMCP | MCP server for paper search and PDF fetching |
@@ -56,12 +56,32 @@ See [quickstart.md](specs/001-repo-setup/quickstart.md#docker-local-deployment) 
 
 > MUI v5 migration complete — all components use `@mui/material`.
 
+## Admin Panel
+
+The admin panel (`/admin`) provides management tabs for:
+
+| Tab | Description |
+|-----|-------------|
+| **Providers** | Add/edit/delete LLM provider credentials (Anthropic, OpenAI, Ollama) |
+| **Models** | View and enable/disable individual models fetched from each provider |
+| **Agents** | Create, edit, and manage AI agent definitions via a multi-step wizard |
+
+### Supported LLM Provider Types
+
+| Type | Auth | Model source |
+|------|------|-------------|
+| `anthropic` | API key | `GET https://api.anthropic.com/v1/models` |
+| `openai` | API key | `GET https://api.openai.com/v1/models` |
+| `ollama` | Base URL only | `GET {base_url}/api/tags` |
+
+Agent system messages are Jinja2 templates rendered at invocation time with `{{ domain }}` and `{{ study_type }}` variables injected from the active study context.
+
 ## Tech Stack
 
 - **Python**: UV workspace, Ruff (lint + format), MyPy strict, pytest + pytest-asyncio, cosmic-ray (mutation)
 - **TypeScript**: Vite 5, Vitest (coverage), ESLint 9, Prettier 3, Stryker (mutation)
 - **Database**: SQLAlchemy 2.x async + Alembic; PostgreSQL 16 (prod) / SQLite (dev/test)
-- **LLM**: LiteLLM abstraction — Anthropic Claude or local Ollama
+- **LLM**: LiteLLM abstraction — Anthropic Claude, OpenAI, or local Ollama; per-agent `ProviderConfig` override
 - **MCP**: FastMCP (server) + `mcp` SDK (client)
 - **Security**: TOTP 2FA (`pyotp`), encrypted secrets (Fernet), bcrypt backup codes, JWT `token_version` session invalidation
 - **UI**: MUI v5 (`@mui/material`), TanStack Query v5, React Hook Form + Zod, `swagger-ui-react`

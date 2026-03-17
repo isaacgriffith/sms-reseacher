@@ -10,6 +10,7 @@ from pydantic import BaseModel, field_validator
 
 from agents.core.llm_client import LLMClient
 from agents.core.prompt_loader import PromptLoader
+from agents.core.provider_config import ProviderConfig
 
 _RUBRIC_NAMES = frozenset(
     {
@@ -154,19 +155,35 @@ class QualityJudgeAgent:
     Produces a :class:`QualityJudgeResult` with per-rubric scores (0–11 total),
     justification text, and prioritised improvement recommendations.
 
+    When ``provider_config`` is supplied, all LLM calls are routed through
+    the database-backed model configuration rather than environment variables.
+
     Args:
         llm_client: Optional :class:`LLMClient` override for testing.
+        provider_config: Optional :class:`ProviderConfig` for database-backed
+            model routing.  When ``None``, falls back to environment settings.
     """
 
-    def __init__(self, llm_client: LLMClient | None = None) -> None:
+    def __init__(
+        self,
+        llm_client: LLMClient | None = None,
+        provider_config: ProviderConfig | None = None,
+        system_message_override: str | None = None,
+    ) -> None:
         """Initialise the quality judge agent.
 
         Args:
             llm_client: LLM client to use; defaults to a new
                 :class:`LLMClient` with environment-based settings.
+            provider_config: Optional database-resolved provider configuration.
+                Passed through to each :meth:`LLMClient.complete` call.
+            system_message_override: Optional rendered system message to use
+                instead of the default prompt-file system message.
         """
         self._client = llm_client or LLMClient()
         self._loader = PromptLoader("quality_judge")
+        self._provider_config = provider_config
+        self._system_message_override = system_message_override
 
     async def run(
         self,
@@ -227,7 +244,18 @@ class QualityJudgeAgent:
             validity_dimensions=validity_dimensions or {},
         )
         messages = self._loader.load_messages(context)
-        raw = await self._client.complete(messages, max_tokens=2048)
+
+        # Apply system message override if provided (Feature 005 / T063)
+        if self._system_message_override is not None:
+            messages = list(messages)
+            for i, msg in enumerate(messages):
+                if msg.get("role") == "system":
+                    messages[i] = {"role": "system", "content": self._system_message_override}
+                    break
+
+        raw = await self._client.complete(
+            messages, max_tokens=2048, provider_config=self._provider_config
+        )
         data = _extract_json(raw)
 
         scores = data.get("scores", {})

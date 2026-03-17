@@ -9,6 +9,8 @@ This is a research project by Isaac Griffith, PhD, licensed under the MIT Licens
 ## Active Technologies
 - Python 3.14 (backend, db); TypeScript 5.4 / Node 20 LTS (frontend) + FastAPI + Pydantic v2, SQLAlchemy 2.0+ async, Alembic, React 18, MUI v5, react-hook-form + Zod, TanStack Query v5, pyotp, qrcode[pil], cryptography (Fernet), swagger-ui-react (004-frontend-improvements)
 - PostgreSQL 16 (production/Docker Compose); SQLite + aiosqlite (unit/integration tests) (004-frontend-improvements)
+- Python 3.14 (backend, agents, db); TypeScript 5.4 / Node 20 LTS (frontend) + FastAPI + Pydantic v2, SQLAlchemy 2.0+ async, Alembic, LiteLLM, Jinja2, cryptography (Fernet), React 18, MUI v5, TanStack Query v5, react-hook-form + Zod (005-models-and-agents)
+- PostgreSQL 16 (production); SQLite + aiosqlite (tests) (005-models-and-agents)
 
 ### Runtime & Language
 - Python 3.14 (backend, agents, db, agent-eval, researcher-mcp); TypeScript 5.4 / Node 20 LTS (frontend)
@@ -41,11 +43,18 @@ This is a research project by Isaac Griffith, PhD, licensed under the MIT Licens
 - **Skip enforcement**: Root `conftest.py` fails the run if any `@pytest.mark.skip` / `@pytest.mark.xfail` lacks `reason=`
 - **Mutation CI**: Separate `workflow_dispatch` workflows (`mutation-python.yml`, `mutation-frontend.yml`) — NOT run per PR
 
+### Admin Panel (005-models-and-agents)
+- **Providers tab**: add/edit/delete Anthropic, OpenAI, and Ollama provider records; API keys are stored Fernet-encrypted, never returned in API responses (only `has_api_key: bool`)
+- **Models tab**: view models fetched from provider APIs; toggle individual models on/off; model list is refreshed on-demand or at provider creation
+- **Agents tab**: multi-step `AgentWizard` for creating agents (task type → model → role/persona → optional SVG → system message review); `AgentForm` for editing with undo buffer support
+- **`ProviderConfig` Protocol**: `agents/core/provider_config.py` defines a `typing.Protocol` with `model_string`, `api_base`, and `api_key` attributes; all agent classes accept `provider_config: ProviderConfig | None = None` to override env-based settings per-call
+
 ## Recent Changes
 - 001-repo-setup: Added Python 3.12 (backend, agents, db); TypeScript 5.4 / Node 20 LTS (frontend)
 - 002-sms-workflow: Finalised library choices — ARQ, matplotlib, networkx, plotly/kaleido, rapidfuzz, D3.js
 - 003-project-setup-improvements: cosmic-ray, Playwright, vitest coverage-v8, skip enforcement, mutation workflow_dispatch
 - 004-frontend-improvements: password change + session invalidation, TOTP 2FA with QR/backup codes, theme preference (Light/Dark/System), full MUI v5 migration, authenticated API docs page
+- 005-models-and-agents: multi-provider LLM support (Anthropic/OpenAI/Ollama), `Provider`/`AvailableModel`/`Agent` DB tables, admin panel Providers/Models/Agents tabs, `ProviderConfig` Protocol, `AgentGeneratorAgent`, study-context Jinja2 template rendering, Reviewer migration
 
 ---
 

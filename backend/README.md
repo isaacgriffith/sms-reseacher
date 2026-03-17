@@ -52,6 +52,22 @@ uv run mypy backend/src
 | Various | `/api/v1/results/*` | Result aggregation and export |
 | Various | `/api/v1/jobs/*` | Background job status |
 
+### Admin Endpoints (`/api/v1/admin/`)
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET/POST` | `/admin/providers` | List / create LLM providers |
+| `GET/PATCH/DELETE` | `/admin/providers/{id}` | Get / update / delete a provider |
+| `POST` | `/admin/providers/{id}/refresh-models` | Fetch models from provider API and upsert |
+| `GET` | `/admin/providers/{id}/models` | List models for a provider |
+| `PATCH` | `/admin/providers/{id}/models/{model_id}` | Enable or disable a model |
+| `GET/POST` | `/admin/agents` | List / create agents |
+| `GET/PATCH/DELETE` | `/admin/agents/{id}` | Get / update / deactivate an agent |
+| `POST` | `/admin/agents/{id}/generate-system-message` | Generate system message via AgentGeneratorAgent |
+| `POST` | `/admin/agents/{id}/undo-system-message` | Restore previous system message from undo buffer |
+| `POST` | `/admin/agents/generate-persona-svg` | Generate persona SVG illustration via LLM |
+| `GET` | `/admin/agent-task-types` | List all supported AgentTaskType values |
+
 Full interactive API documentation is available at `http://localhost:8000/docs` when the server is running.
 
 ## Project Structure
@@ -69,8 +85,14 @@ backend/
 │   ├── api/v1/
 │   │   ├── router.py       # APIRouter mounted at /api/v1
 │   │   ├── health.py       # GET /api/v1/health
+│   │   ├── admin/          # Admin sub-routers (providers, models, agents)
 │   │   └── [domain].py     # studies, papers, criteria, pico, search_strings, quality, results, jobs
-│   ├── services/           # Business logic layer
+│   ├── services/
+│   │   ├── provider_service.py   # Provider CRUD + model-list fetch (Anthropic/OpenAI/Ollama)
+│   │   ├── agent_service.py      # Agent CRUD + system-message generation + study-context rendering
+│   │   └── ...                   # Other business logic services
+│   ├── utils/
+│   │   └── encryption.py         # Fernet encrypt_secret / decrypt_secret
 │   └── jobs/               # ARQ background job definitions
 └── tests/
     ├── unit/

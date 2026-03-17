@@ -30,6 +30,15 @@ uv run mypy agents/src
 | `ScreenerAgent` | Decides include/exclude for a paper abstract given inclusion/exclusion criteria |
 | `ExtractorAgent` | Extracts structured data fields from full paper text |
 | `SynthesiserAgent` | Synthesises a research answer from multiple paper summaries |
+| `AgentGeneratorAgent` | Generates a Jinja2 system message template given role and persona inputs |
+| `LibrarianAgent` | Searches and retrieves relevant literature |
+| `ExpertAgent` | Provides domain-expert analysis on research topics |
+| `QualityJudgeAgent` | Assesses methodological quality of included papers |
+| `DomainModelerAgent` | Models research domain concepts and relationships |
+| `ValidityAgent` | Assesses internal and external validity threats |
+
+All agents accept an optional `provider_config` parameter to override the default
+environment-based LLM settings on a per-call basis.
 
 ```python
 from agents.services.screener import ScreenerAgent
@@ -42,6 +51,21 @@ decision = await agent.run(
     exclusion_criteria="...",
     abstract="...",
 )
+```
+
+### Per-Agent Provider Override (`ProviderConfig` Protocol)
+
+```python
+from agents.core.provider_config import ProviderConfig
+from agents.services.screener import ScreenerAgent
+from agents.core.config import AgentSettings
+
+class MyConfig:  # satisfies ProviderConfig Protocol
+    model_string = "ollama/llama3"
+    api_base = "http://localhost:11434"
+    api_key = None
+
+agent = ScreenerAgent(AgentSettings(), provider_config=MyConfig())
 ```
 
 ## Prompt Templates
@@ -60,9 +84,13 @@ agents/src/agents/prompts/
 ├── extractor/
 │   ├── system.md
 │   └── user.md.j2      # {{ data_fields }}, {{ paper_text }}
-└── synthesiser/
-    ├── system.md
-    └── user.md.j2      # {{ papers_summary }}, {{ research_question }}
+├── synthesiser/
+│   ├── system.md
+│   └── user.md.j2      # {{ papers_summary }}, {{ research_question }}
+└── agent_generator/
+    ├── system.md        # instructs model to produce Jinja2 template with standard variables
+    └── user.md.j2       # {{ task_type }}, {{ role_name }}, {{ role_description }},
+                         # {{ persona_name }}, {{ persona_description }}, {{ model_display_name }}
 ```
 
 Use `PromptLoader` to render templates:
@@ -90,7 +118,11 @@ tools = client.to_litellm_tools()
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `LLM_PROVIDER` | `anthropic` | `anthropic` or `ollama` |
+| `LLM_PROVIDER` | `anthropic` | `anthropic`, `openai`, or `ollama` |
 | `LLM_MODEL` | `claude-sonnet-4-6` | Model ID |
+| `ANTHROPIC_API_KEY` | — | Required when `LLM_PROVIDER=anthropic` |
+| `OPENAI_API_KEY` | — | Required when `LLM_PROVIDER=openai` |
 | `OLLAMA_BASE_URL` | `http://localhost:11434` | Ollama server URL |
 | `RESEARCHER_MCP_URL` | `http://localhost:8002/sse` | MCP server SSE endpoint |
+
+When a `ProviderConfig` is passed directly to an agent, it takes precedence over these environment variables for that specific call.

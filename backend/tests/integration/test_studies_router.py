@@ -163,3 +163,157 @@ class TestArchiveDeleteStudy:
             f"/api/v1/studies/{study_id}", headers=_bearer(user.id)
         )
         assert resp.status_code == 204
+
+
+class TestListStudies:
+    """GET /groups/{group_id}/studies — list endpoint."""
+
+    @pytest.mark.asyncio
+    async def test_list_studies_returns_studies(self, client, alice, db_engine):
+        """GET /groups/{group_id}/studies returns studies for a member."""
+        user, _ = alice
+        group_id = await _create_group(db_engine, user.id)
+        # Create a study first
+        await client.post(
+            f"/api/v1/groups/{group_id}/studies",
+            json=_WIZARD_PAYLOAD,
+            headers=_bearer(user.id),
+        )
+        resp = await client.get(
+            f"/api/v1/groups/{group_id}/studies",
+            headers=_bearer(user.id),
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert isinstance(data, list)
+        assert len(data) >= 1
+        assert data[0]["name"] == "My SMS Study"
+
+    @pytest.mark.asyncio
+    async def test_list_studies_non_member_returns_404(self, client, alice, bob, db_engine):
+        """Non-member user gets 404 when listing studies for a group."""
+        alice_user, _ = alice
+        bob_user, _ = bob
+        group_id = await _create_group(db_engine, alice_user.id)
+        resp = await client.get(
+            f"/api/v1/groups/{group_id}/studies",
+            headers=_bearer(bob_user.id),
+        )
+        assert resp.status_code == 404
+
+    @pytest.mark.asyncio
+    async def test_list_studies_unauthenticated_returns_401(self, client, alice, db_engine):
+        """Unauthenticated request to list studies returns 401."""
+        user, _ = alice
+        group_id = await _create_group(db_engine, user.id)
+        resp = await client.get(f"/api/v1/groups/{group_id}/studies")
+        assert resp.status_code == 401
+
+
+class TestCreateStudyWithReviewers:
+    """POST /groups/{group_id}/studies with reviewers list."""
+
+    @pytest.mark.asyncio
+    async def test_create_study_with_human_reviewer(self, client, alice, bob, db_engine):
+        """Creating a study with a human reviewer adds a Reviewer record."""
+        alice_user, _ = alice
+        bob_user, _ = bob
+        group_id = await _create_group(db_engine, alice_user.id)
+        payload = {
+            **_WIZARD_PAYLOAD,
+            "reviewers": [
+                {"type": "human", "user_id": bob_user.id}
+            ],
+        }
+        resp = await client.post(
+            f"/api/v1/groups/{group_id}/studies",
+            json=payload,
+            headers=_bearer(alice_user.id),
+        )
+        assert resp.status_code == 201
+
+    @pytest.mark.asyncio
+    async def test_create_study_with_ai_reviewer(self, client, alice, db_engine):
+        """Creating a study with an ai_agent reviewer adds a Reviewer record."""
+        user, _ = alice
+        group_id = await _create_group(db_engine, user.id)
+        payload = {
+            **_WIZARD_PAYLOAD,
+            "reviewers": [
+                {"type": "ai_agent", "agent_name": "TestAgent"}
+            ],
+        }
+        resp = await client.post(
+            f"/api/v1/groups/{group_id}/studies",
+            json=payload,
+            headers=_bearer(user.id),
+        )
+        assert resp.status_code == 201
+
+
+class TestPatchStudy:
+    """PATCH /studies/{study_id} — partial update endpoint."""
+
+    @pytest.mark.asyncio
+    async def test_patch_study_unauthenticated_returns_401(self, client, alice, db_engine):
+        """Unauthenticated PATCH returns 401 before the route body executes."""
+        user, _ = alice
+        group_id = await _create_group(db_engine, user.id)
+        create_resp = await client.post(
+            f"/api/v1/groups/{group_id}/studies",
+            json=_WIZARD_PAYLOAD,
+            headers=_bearer(user.id),
+        )
+        study_id = create_resp.json()["id"]
+
+        resp = await client.patch(
+            f"/api/v1/studies/{study_id}",
+            json={"name": "No Auth"},
+        )
+        assert resp.status_code == 401
+
+    @pytest.mark.asyncio
+    async def test_patch_study_non_member_returns_404(self, client, alice, bob, db_engine):
+        """Non-member cannot PATCH a study; _require_study_access raises 404."""
+        alice_user, _ = alice
+        bob_user, _ = bob
+        group_id = await _create_group(db_engine, alice_user.id)
+        create_resp = await client.post(
+            f"/api/v1/groups/{group_id}/studies",
+            json=_WIZARD_PAYLOAD,
+            headers=_bearer(alice_user.id),
+        )
+        study_id = create_resp.json()["id"]
+
+        resp = await client.patch(
+            f"/api/v1/studies/{study_id}",
+            json={"name": "Hack"},
+            headers=_bearer(bob_user.id),
+        )
+        assert resp.status_code == 404
+
+
+class TestDeleteStudyEdgeCases:
+    """DELETE /studies/{study_id} — edge cases."""
+
+    @pytest.mark.asyncio
+    async def test_delete_by_non_lead_returns_403(self, client, alice, bob, db_engine):
+        """A non-lead member cannot delete a study; expects 403."""
+        alice_user, _ = alice
+        bob_user, _ = bob
+        group_id = await _create_group(db_engine, alice_user.id)
+
+        # Alice creates the study (becomes lead); bob is added as member
+        payload = {**_WIZARD_PAYLOAD, "member_ids": [bob_user.id]}
+        create_resp = await client.post(
+            f"/api/v1/groups/{group_id}/studies",
+            json=payload,
+            headers=_bearer(alice_user.id),
+        )
+        study_id = create_resp.json()["id"]
+
+        # Bob tries to delete — should get 403
+        resp = await client.delete(
+            f"/api/v1/studies/{study_id}", headers=_bearer(bob_user.id)
+        )
+        assert resp.status_code == 403

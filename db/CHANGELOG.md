@@ -4,6 +4,41 @@ All notable changes to this subproject are documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased] — feature/005-models-and-agents
+
+### Added
+- **`ProviderType` StrEnum**: `anthropic`, `openai`, `ollama`
+- **`AgentTaskType` StrEnum**: `screener`, `extractor`, `librarian`, `expert`, `quality_judge`,
+  `agent_generator`, `domain_modeler`, `synthesiser`, `validity_assessor`
+- **`Provider` model**: UUID PK; `provider_type`, `display_name`, `api_key_encrypted`
+  (LargeBinary, nullable), `base_url` (nullable), `is_enabled`, `version_id` (optimistic
+  locking), `created_at`, `updated_at`
+- **`AvailableModel` model**: UUID PK; `provider_id` FK (CASCADE delete), `model_identifier`,
+  `display_name`, `is_enabled`, `version_id`, `created_at`, `updated_at`; unique constraint
+  on `(provider_id, model_identifier)`
+- **`Agent` model**: UUID PK; `task_type`, role/persona fields, `system_message_template`,
+  `system_message_undo_buffer`, `model_id` FK (SET NULL), `provider_id` FK (SET NULL),
+  `is_active`, `version_id`, `created_at`, `updated_at`; SQLAlchemy optimistic locking via
+  `__mapper_args__ = {"version_id_col": version_id}`
+- **Migration `0012_models_and_agents`**: creates PostgreSQL enums for `ProviderType` and
+  `AgentTaskType`; creates `provider`, `available_model`, and `agent` tables; adds nullable
+  `agent_id` UUID FK to `reviewer`; seeds a default Anthropic provider (when
+  `ANTHROPIC_API_KEY` is set), bootstrap `AgentGenerator` agent, `Screener` agent, and
+  `Extractor` agent; backfills `reviewer.agent_id` for rows matching known agent names;
+  `downgrade()` reverses all steps in order
+- **Stub migration `0013_remove_reviewer_agent_name`**: `upgrade()` is a no-op comment
+  signalling cleanup debt; `downgrade()` is a no-op
+- Integration test `test_migration_0012.py`: verifies table creation, seed records, and clean
+  downgrade
+- Exports in `db/src/db/models/__init__.py`: `ProviderType`, `AgentTaskType`, `Provider`,
+  `AvailableModel`, `Agent`
+
+### Changed
+- `Reviewer` model: added nullable `agent_id` UUID FK → `agent.id` (SET NULL on delete);
+  existing `agent_name` column retained
+
+---
+
 ## [Unreleased] — feature/003-project-setup-improvements
 
 ### Changed

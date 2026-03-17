@@ -10,6 +10,13 @@ Feature 004 additions — re-exported here for single stable import path:
 - :class:`~db.models.security_audit.SecurityAuditEvent`
 - :class:`~db.models.users.ThemePreference`
 - :class:`~db.models.security_audit.SecurityEventType`
+
+Feature 005 additions — re-exported here for single stable import path:
+- :class:`~db.models.agents.ProviderType`
+- :class:`~db.models.agents.AgentTaskType`
+- :class:`~db.models.agents.Provider`
+- :class:`~db.models.agents.AvailableModel`
+- :class:`~db.models.agents.Agent`
 """
 
 # Feature 004: new models and enums (imported first so Alembic autogenerate
@@ -18,6 +25,13 @@ from db.models.backup_codes import BackupCode as BackupCode  # noqa: F401
 from db.models.security_audit import SecurityAuditEvent as SecurityAuditEvent  # noqa: F401
 from db.models.users import ThemePreference as ThemePreference  # noqa: F401
 from db.models.security_audit import SecurityEventType as SecurityEventType  # noqa: F401
+
+# Feature 005: provider/model/agent models.
+from db.models.agents import Agent as Agent  # noqa: F401
+from db.models.agents import AgentTaskType as AgentTaskType  # noqa: F401
+from db.models.agents import AvailableModel as AvailableModel  # noqa: F401
+from db.models.agents import Provider as Provider  # noqa: F401
+from db.models.agents import ProviderType as ProviderType  # noqa: F401
 
 import enum
 from datetime import datetime

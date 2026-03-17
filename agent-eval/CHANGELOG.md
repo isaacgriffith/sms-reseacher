@@ -4,6 +4,16 @@ All notable changes to this subproject are documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased] — feature/005-models-and-agents
+
+### Added
+- **`pipelines/agent_generator_eval.py`**: DeepEval evaluation pipeline for
+  `AgentGeneratorAgent`; dataset of 5 representative role/persona inputs; metrics:
+  `AnswerRelevancyMetric` (generated message must reference role name) and
+  `FaithfulnessMetric` (no hallucinated variable names); minimum threshold 0.8
+
+---
+
 ## [Unreleased] — feature/003-project-setup-improvements
 
 ### Changed

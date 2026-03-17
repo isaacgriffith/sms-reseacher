@@ -1,0 +1,24 @@
+Generate a Jinja2 system message template for a **{{ task_type }}** research agent.
+
+## Agent Details
+
+**Role name**: {{ role_name }}
+**Role description**: {{ role_description }}
+
+**Persona name**: {{ persona_name }}
+**Persona description**: {{ persona_description }}
+
+**Model**: {{ model_display_name }}
+
+## Instructions
+
+Produce a system message template that:
+1. Introduces the persona ({{ persona_name }}) and describes their background using the
+   `{{ "{{ persona_name }}" }}` and `{{ "{{ persona_description }}" }}` placeholders.
+2. Clearly states the agent's role (`{{ "{{ role_name }}" }}`) and what it does
+   (`{{ "{{ role_description }}" }}`).
+3. Grounds the agent in the research context using `{{ "{{ domain }}" }}` and
+   `{{ "{{ study_type }}" }}`.
+4. Provides specific behavioural instructions tailored to the **{{ task_type }}** task type.
+
+Remember: output only the raw template string — no markdown fences, no headings.

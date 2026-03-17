@@ -207,3 +207,116 @@ class TestExpertSeedEndpoint:
             headers=_bearer(user.id),
         )
         assert resp.status_code in (404, 403)
+
+
+class TestAddSeedPaperByPaperId:
+    """POST /seeds/papers with paper_id — existing paper reference path."""
+
+    @pytest.mark.asyncio
+    async def test_add_by_existing_paper_id(self, client, alice, db_engine):
+        """Adding a seed paper by paper_id succeeds when the paper exists."""
+        from sqlalchemy.ext.asyncio import async_sessionmaker
+
+        from db.models import Paper
+
+        user, _ = alice
+        study_id = await _setup_study(client, db_engine, user)
+
+        # Create a paper in the DB directly
+        maker = async_sessionmaker(db_engine, expire_on_commit=False)
+        async with maker() as session:
+            paper = Paper(title="Existing Paper", doi="10.9999/existing")
+            session.add(paper)
+            await session.commit()
+            paper_id = paper.id
+
+        resp = await client.post(
+            f"/api/v1/studies/{study_id}/seeds/papers",
+            json={"paper_id": paper_id},
+            headers=_bearer(user.id),
+        )
+        assert resp.status_code == 201
+        assert resp.json()["paper"]["doi"] == "10.9999/existing"
+
+    @pytest.mark.asyncio
+    async def test_add_by_nonexistent_paper_id_returns_404(self, client, alice, db_engine):
+        """Adding a seed paper with a non-existent paper_id returns 404."""
+        user, _ = alice
+        study_id = await _setup_study(client, db_engine, user)
+
+        resp = await client.post(
+            f"/api/v1/studies/{study_id}/seeds/papers",
+            json={"paper_id": 999999},
+            headers=_bearer(user.id),
+        )
+        assert resp.status_code == 404
+
+    @pytest.mark.asyncio
+    async def test_add_by_doi_finds_existing_paper(self, client, alice, db_engine):
+        """Adding by doi returns existing paper when doi already in DB."""
+        from sqlalchemy.ext.asyncio import async_sessionmaker
+
+        from db.models import Paper
+
+        user, _ = alice
+        study_id = await _setup_study(client, db_engine, user)
+
+        # Pre-create a paper with that DOI
+        maker = async_sessionmaker(db_engine, expire_on_commit=False)
+        async with maker() as session:
+            paper = Paper(title="Pre-existing Paper", doi="10.9999/reused")
+            session.add(paper)
+            await session.commit()
+
+        resp = await client.post(
+            f"/api/v1/studies/{study_id}/seeds/papers",
+            json={"doi": "10.9999/reused"},
+            headers=_bearer(user.id),
+        )
+        assert resp.status_code == 201
+        assert resp.json()["paper"]["title"] == "Pre-existing Paper"
+
+
+class TestTriggerLibrarian:
+    """POST /studies/{study_id}/seeds/librarian — librarian agent trigger."""
+
+    @pytest.mark.asyncio
+    async def test_librarian_agent_error_returns_503(self, client, alice, db_engine):
+        """When the librarian agent raises, the endpoint returns 503."""
+        from unittest.mock import patch
+
+        user, _ = alice
+        study_id = await _setup_study(client, db_engine, user)
+
+        with patch(
+            "agents.services.librarian.LibrarianAgent",
+            side_effect=Exception("LLM unavailable"),
+        ):
+            resp = await client.post(
+                f"/api/v1/studies/{study_id}/seeds/librarian",
+                headers=_bearer(user.id),
+            )
+        assert resp.status_code == 503
+
+    @pytest.mark.asyncio
+    async def test_librarian_returns_suggestions(self, client, alice, db_engine):
+        """When the librarian agent succeeds, suggestions are returned."""
+        from unittest.mock import AsyncMock, MagicMock, patch
+
+        user, _ = alice
+        study_id = await _setup_study(client, db_engine, user)
+
+        mock_result = MagicMock()
+        mock_result.papers = []
+        mock_result.authors = []
+        mock_agent = MagicMock()
+        mock_agent.run = AsyncMock(return_value=mock_result)
+
+        with patch("agents.services.librarian.LibrarianAgent", return_value=mock_agent):
+            resp = await client.post(
+                f"/api/v1/studies/{study_id}/seeds/librarian",
+                headers=_bearer(user.id),
+            )
+        assert resp.status_code == 202
+        body = resp.json()
+        assert "suggestions" in body

@@ -415,9 +415,8 @@ async def run_full_search(ctx: dict, study_id: int, search_execution_id: int) ->
         databases = search_exec.databases_queried or ["acm", "ieee", "scopus"]
         phase_tag = search_exec.phase_tag
 
-        from agents.services.screener import ScreenerAgent
-
-        screener = ScreenerAgent()
+        # T061: resolve agent context for the AI reviewer
+        screener = await _build_screener_with_context(db, ai_reviewer, study_id)
         total_identified = accepted_count = rejected_count = duplicate_count = 0
 
         for db_name in databases:
@@ -617,6 +616,66 @@ def _snowball_threshold_reached(new_non_duplicate_count: int, snowball_threshold
     return new_non_duplicate_count < snowball_threshold
 
 
+async def _build_screener_with_context(db: Any, ai_reviewer: Any, study_id: int) -> Any:
+    """Build a ScreenerAgent with study-context rendering if an Agent record is linked.
+
+    Resolves the Agent record from the reviewer's ``agent_id``, loads the
+    Provider, renders the system message with the study context, and builds
+    a :class:`ScreenerAgent` with ``provider_config`` and
+    ``system_message_override`` set.  Falls back to a plain
+    :class:`ScreenerAgent` when no Agent is linked.
+
+    Args:
+        db: Active async database session.
+        ai_reviewer: The :class:`Reviewer` ORM record for the AI screener.
+        study_id: The study being searched (used to load study context).
+
+    Returns:
+        A configured :class:`ScreenerAgent` instance.
+
+    """
+    from sqlalchemy import select
+
+    from agents.services.screener import ScreenerAgent
+    from backend.services.agent_service import (  # noqa: PLC0415
+        _build_provider_config,
+        build_study_context,
+        render_system_message,
+    )
+    from db.models import Agent, AvailableModel, Provider, Study
+
+    if not ai_reviewer.agent_id:
+        return ScreenerAgent()
+
+    agent_result = await db.execute(select(Agent).where(Agent.id == ai_reviewer.agent_id))
+    agent = agent_result.scalar_one_or_none()
+    if agent is None or not agent.is_active:
+        return ScreenerAgent()
+
+    provider_result = await db.execute(select(Provider).where(Provider.id == agent.provider_id))
+    provider = provider_result.scalar_one_or_none()
+    model_result = await db.execute(
+        select(AvailableModel).where(AvailableModel.id == agent.model_id)
+    )
+    model = model_result.scalar_one_or_none()
+    provider_config = _build_provider_config(provider, model)
+
+    study_result = await db.execute(select(Study).where(Study.id == study_id))
+    study = study_result.scalar_one_or_none()
+    if study is not None:
+        ctx = build_study_context(study)
+        rendered = render_system_message(
+            agent.system_message_template, agent, ctx.domain, ctx.study_type
+        )
+    else:
+        rendered = None
+
+    return ScreenerAgent(
+        provider_config=provider_config,
+        system_message_override=rendered,
+    )
+
+
 # ---------------------------------------------------------------------------
 # run_snowball (TREF3: orchestrates helpers)
 # ---------------------------------------------------------------------------
@@ -670,7 +729,7 @@ async def run_snowball(
 
         from agents.services.screener import ScreenerAgent
 
-        screener = ScreenerAgent()
+        screener = await _build_screener_with_context(db, ai_reviewer, study_id)
         total_new = total_accepted = total_rejected = total_duplicates = 0
 
         for doi in paper_dois:

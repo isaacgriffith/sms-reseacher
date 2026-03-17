@@ -4,6 +4,37 @@ All notable changes to this subproject are documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased] — feature/005-models-and-agents
+
+### Added
+- **`ProviderService`** (`services/provider_service.py`): CRUD for `Provider` records; Fernet
+  encryption of API keys on create/update; `fetch_models_anthropic`, `fetch_models_openai`,
+  `fetch_models_ollama` fetchers; `refresh_models` upserts `AvailableModel` rows preserving
+  enable/disable state; raises `ProviderHasDependentsError` (HTTP 409) on blocked delete;
+  raises `ProviderFetchError` (HTTP 502) on unreachable provider
+- **`AgentService`** (`services/agent_service.py`): CRUD for `Agent` records with Jinja2
+  template validation (strict `StrictUndefined` + known-variable allowlist);
+  `generate_system_message` delegates to `AgentGeneratorAgent` and manages the undo buffer;
+  `generate_persona_svg` with SVG validity check; `restore_system_message` swap;
+  `render_system_message(template, agent, domain, study_type)` for study-context injection;
+  `build_study_context(study)` maps enum values to human-readable labels
+- **`backend/utils/encryption.py`**: `encrypt_secret(plaintext, secret_key) -> bytes` and
+  `decrypt_secret(ciphertext, secret_key) -> str` via Fernet with PBKDF2HMAC key derivation
+- **Admin API routers** (`api/v1/admin/`):
+  - `providers.py`: `GET/POST /providers`, `GET/PATCH/DELETE /providers/{id}`,
+    `POST /providers/{id}/refresh-models`
+  - `models_router.py`: `GET /providers/{id}/models`, `PATCH /providers/{id}/models/{model_id}`
+  - `agents.py`: `GET/POST /agents`, `GET/PATCH/DELETE /agents/{id}`,
+    `POST /agents/{id}/generate-system-message`, `POST /agents/{id}/undo-system-message`,
+    `POST /agents/generate-persona-svg`, `GET /agent-task-types`
+- All agent invocation paths (screener, extractor, and others) updated to resolve `Reviewer.agent_id`,
+  call `render_system_message` with study context, build `ProviderConfig` from Agent's provider
+  record, and pass both as overrides to the agent class
+- Unit tests: `test_provider_service.py`, `test_agent_service.py`, `test_encryption.py`
+- Integration tests: `test_providers.py`, `test_agents.py`
+
+---
+
 ## [Unreleased] — feature/004-frontend-improvements
 
 ### Added

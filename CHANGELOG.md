@@ -4,6 +4,65 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased] — feature/005-models-and-agents
+
+### Added
+- **`Provider` DB table**: stores Anthropic, OpenAI, and Ollama provider records; API key
+  encrypted at rest via Fernet (PBKDF2HMAC key derivation from `SECRET_KEY`); `has_api_key`
+  flag returned in API responses instead of the key itself
+- **`AvailableModel` DB table**: models fetched from each provider's API; unique constraint on
+  `(provider_id, model_identifier)`; individual models can be enabled or disabled
+- **`Agent` DB table**: agent definitions with `task_type` (screener/extractor/librarian/
+  expert/quality_judge/agent_generator/domain_modeler/synthesiser/validity_assessor),
+  role/persona fields, Jinja2 `system_message_template`, `system_message_undo_buffer`, FK
+  to provider and model; optimistic locking via `version_id`
+- **`reviewer.agent_id`**: nullable UUID FK from `Reviewer` → `Agent` (SET NULL on delete);
+  migration `0012_models_and_agents` seeds a default Anthropic provider, `AgentGenerator`,
+  `Screener`, and `Extractor` agent records and backfills existing Reviewer rows
+- **Stub migration `0013_remove_reviewer_agent_name`**: signals cleanup debt for the legacy
+  `reviewer.agent_name` column without executing the removal prematurely
+- **`ProviderService`**: CRUD for providers; `fetch_models_anthropic/openai/ollama` fetchers;
+  `refresh_models` upserts model rows without losing enable/disable state; raises
+  `ProviderHasDependentsError` (HTTP 409) when deletion is blocked
+- **`AgentService`**: CRUD, Jinja2 template validation (strict allowlist), `generate_system_message`
+  via `AgentGeneratorAgent`, `generate_persona_svg`, undo buffer swap, study-context rendering
+  `render_system_message(template, agent, domain, study_type)`
+- **`backend/utils/encryption.py`**: `encrypt_secret` / `decrypt_secret` using Fernet
+- **Admin API endpoints** under `/api/v1/admin/`:
+  - `GET/POST /providers`, `GET/PATCH/DELETE /providers/{id}`,
+    `POST /providers/{id}/refresh-models`, `GET /providers/{id}/models`,
+    `PATCH /providers/{id}/models/{model_id}`
+  - `GET/POST /agents`, `GET/PATCH/DELETE /agents/{id}`,
+    `POST /agents/{id}/generate-system-message`, `POST /agents/{id}/undo-system-message`,
+    `POST /agents/generate-persona-svg`, `GET /agent-task-types`
+- **`ProviderConfig` Protocol** (`agents/core/provider_config.py`): runtime-checkable
+  `typing.Protocol` with `model_string`, `api_base`, `api_key` attributes; all agent classes
+  accept `provider_config: ProviderConfig | None = None` to override env-based settings
+- **`LLMClient` update**: optional `provider_config` parameter overrides model, api_base, and
+  api_key per-call; env-based behavior unchanged when omitted
+- **`AgentGeneratorAgent`** (`agents/agent_generator.py`): generates Jinja2 system message
+  templates given role and persona inputs; prompt templates in
+  `agents/prompts/agent_generator/`
+- **All existing agent classes updated**: `ScreenerAgent`, `ExtractorAgent`, `LibrarianAgent`,
+  `ExpertAgent`, `QualityJudgeAgent`, `DomainModelerAgent`, `SynthesiserAgent`, `ValidityAgent`
+  all accept optional `provider_config` and route it through `LLMClient`
+- **Study-context rendering**: all agent invocation paths in backend services/jobs call
+  `render_system_message` with study `domain` and `study_type` before dispatching to agents
+- **Frontend admin components**: `ProviderList`, `ProviderForm`, `ModelList`, `AgentList`,
+  `AgentWizard` (5-step MUI Stepper, `useReducer` state), `AgentForm`, `SystemMessageEditor`
+- **Frontend types**: Zod schemas + inferred interfaces in `types/provider.ts` and `types/agent.ts`
+- **TanStack Query hooks**: `providersApi.ts` and `agentsApi.ts` with full Zod parse on all responses
+- **Admin panel tabs**: Providers, Models, and Agents tabs added to `AdminPage.tsx`
+- **`AgentGeneratorAgent` eval pipeline** (`agent-eval/pipelines/agent_generator_eval.py`):
+  DeepEval `AnswerRelevancyMetric` + `FaithfulnessMetric`; threshold 0.8
+- **Metamorphic tests** for `AgentGeneratorAgent`: `hypothesis`-based property tests verifying
+  all required Jinja2 variable placeholders survive role-description paraphrasing
+- **Playwright e2e tests**: `test_provider_management.spec.ts`, `test_agent_wizard.spec.ts`
+- Unit + integration tests for all new services, endpoints, and utilities; ≥85% coverage
+  across all packages
+
+---
+
 ## [Unreleased] — feature/004-frontend-improvements
 
 ### Added

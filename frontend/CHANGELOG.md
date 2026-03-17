@@ -4,6 +4,47 @@ All notable changes to this subproject are documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased] — feature/005-models-and-agents
+
+### Added
+- **`src/types/provider.ts`**: Zod schemas and inferred TypeScript interfaces for `Provider`,
+  `ProviderCreate`, `ProviderUpdate`, `AvailableModel`, `ModelRefreshResult`; provider type
+  as string literal union `'anthropic' | 'openai' | 'ollama'` (no TS enum)
+- **`src/types/agent.ts`**: Zod schemas and inferred interfaces for `Agent`, `AgentCreate`,
+  `AgentSummary`, `SystemMessageGenerateResult`, `PersonaSvgGenerateResult`; `task_type` as
+  string literal union matching `AgentTaskType` values
+- **`src/services/providersApi.ts`**: TanStack Query hooks — `useProviders`, `useProvider`,
+  `useCreateProvider`, `useUpdateProvider`, `useDeleteProvider`, `useRefreshModels`,
+  `useProviderModels`, `useToggleModel`; all responses parsed through Zod schemas
+- **`src/services/agentsApi.ts`**: TanStack Query hooks — `useAgents`, `useAgent`,
+  `useCreateAgent`, `useUpdateAgent`, `useDeleteAgent`, `useGenerateSystemMessage`,
+  `useUndoSystemMessage`, `useGeneratePersonaSvg`, `useAgentTaskTypes`; Zod parse on all
+- **`ProviderList.tsx`** (`components/admin/providers/`): MUI Table listing provider type,
+  display name, enabled status, `has_api_key` badge, and action buttons (edit, delete,
+  refresh-models)
+- **`ProviderForm.tsx`** (`components/admin/providers/`): react-hook-form + Zod; `useWatch`
+  on `provider_type` to conditionally show `api_key` (Anthropic/OpenAI) or `base_url`
+  (Ollama) field
+- **`ModelList.tsx`** (`components/admin/models/`): MUI Table with per-row enable/disable
+  toggle; scoped to a `providerId` prop
+- **`AgentList.tsx`** (`components/admin/agents/`): MUI Table with role_name, persona_name,
+  task_type, model display name, is_active badge, and edit action
+- **`SystemMessageEditor.tsx`** (`components/admin/agents/`): `React.memo` multiline
+  TextField with `{{ variable }}` syntax highlighting; exposes `value`, `onChange`,
+  `onUndo`, `canUndo` props
+- **`AgentWizard.tsx`** (`components/admin/agents/`): 5-step MUI Stepper (task type → model
+  → role/persona → SVG → system message review); `useReducer` wizard state; "Generate
+  System Message" and "Generate SVG" mutation buttons; submits via `useCreateAgent`
+- **`AgentForm.tsx`** (`components/admin/agents/`): react-hook-form + Zod edit form;
+  embeds `SystemMessageEditor`; "Generate/Update System Message" and "Undo" buttons;
+  `useWatch` on `model_id` to warn on disabled model
+- **AdminPage tabs**: "Providers", "Models", and "Agents" MUI Tabs added to
+  `src/pages/AdminPage.tsx`
+- Playwright e2e tests: `frontend/e2e/admin/test_provider_management.spec.ts`,
+  `frontend/e2e/admin/test_agent_wizard.spec.ts`
+
+---
+
 ## [Unreleased] — feature/004-frontend-improvements
 
 ### Added

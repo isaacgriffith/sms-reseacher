@@ -40,6 +40,60 @@ Links a `Study` to a `Paper` with an inclusion decision.
 | `paper_id` | Integer FK → paper.id | Composite PK, CASCADE delete |
 | `inclusion_status` | Enum | `pending`, `included`, `excluded` |
 
+### Provider (added in migration 0012)
+
+Stores LLM provider credentials.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `id` | UUID PK | |
+| `provider_type` | Enum | `anthropic`, `openai`, `ollama` |
+| `display_name` | String | Required |
+| `api_key_encrypted` | LargeBinary | Nullable; Fernet-encrypted |
+| `base_url` | String | Nullable; used for Ollama |
+| `is_enabled` | Boolean | Default `true` |
+| `version_id` | Integer | Optimistic locking |
+| `created_at` / `updated_at` | DateTime(tz) | Auto-managed |
+
+### AvailableModel (added in migration 0012)
+
+Individual models fetched from a provider's API.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `id` | UUID PK | |
+| `provider_id` | UUID FK → provider.id | CASCADE delete |
+| `model_identifier` | String | API model ID (e.g. `claude-sonnet-4-6`) |
+| `display_name` | String | Human-readable label |
+| `is_enabled` | Boolean | Default `true` |
+| `version_id` | Integer | Optimistic locking |
+| `created_at` / `updated_at` | DateTime(tz) | Auto-managed |
+
+Unique constraint: `(provider_id, model_identifier)`.
+
+### Agent (added in migration 0012)
+
+Defines an LLM agent with role, persona, and a Jinja2 system message template.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `id` | UUID PK | |
+| `task_type` | Enum | `AgentTaskType` values |
+| `role_name` / `role_description` | String / Text | Role identity |
+| `persona_name` / `persona_description` | String / Text | Persona identity |
+| `persona_svg` | Text | Nullable; SVG illustration |
+| `system_message_template` | Text | Jinja2 template |
+| `system_message_undo_buffer` | Text | Nullable; previous template |
+| `model_id` | UUID FK → available_model.id | Nullable, SET NULL on delete |
+| `provider_id` | UUID FK → provider.id | Nullable, SET NULL on delete |
+| `is_active` | Boolean | Default `true` |
+| `version_id` | Integer | Optimistic locking |
+| `created_at` / `updated_at` | DateTime(tz) | Auto-managed |
+
+### Reviewer (updated in migration 0012)
+
+`agent_id` UUID FK column added (nullable, SET NULL on delete → `agent` table).
+
 ## Development
 
 ```bash
@@ -71,7 +125,13 @@ uv run alembic revision --autogenerate -m "describe_change"
 uv run alembic downgrade -1
 ```
 
-Migrations live in `db/alembic/versions/`. The first migration (`0001_initial_schema.py`) creates all three tables.
+Migrations live in `db/alembic/versions/`.
+
+| Migration | Description |
+|-----------|-------------|
+| `0001_initial_schema.py` | Creates `study`, `paper`, `study_paper` tables |
+| `0012_models_and_agents.py` | Creates `provider`, `available_model`, `agent` tables; adds `reviewer.agent_id` FK; seeds default provider and agent records |
+| `0013_remove_reviewer_agent_name.py` | Stub — signals cleanup debt for `reviewer.agent_name` column (no-op until backfill is complete) |
 
 ## Importing from backend
 

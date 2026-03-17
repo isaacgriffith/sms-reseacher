@@ -159,10 +159,16 @@ async def test_run_snowball_stopped_early_when_below_threshold():
     )
 
     session_maker = _make_session_cm(db)
+    from agents.services.screener import ScreenerAgent
+
+    stub_screener = MagicMock(spec=ScreenerAgent)
+    stub_screener.run = AsyncMock(return_value={"decision": "exclude", "reason": "stub"})
+
     with (
         patch("backend.core.database._session_maker", session_maker),
         patch("backend.core.config.get_settings") as mock_settings,
         patch("httpx.AsyncClient") as mock_client,
+        patch("backend.jobs.search_job._build_screener_with_context", new=AsyncMock(return_value=stub_screener)),
     ):
         settings = MagicMock()
         settings.researcher_mcp_url = "http://localhost:8002/sse"

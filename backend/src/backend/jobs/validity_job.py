@@ -202,7 +202,7 @@ async def _run_and_persist_validity(
     from agents.services.validity import ValidityAgent
     from db.models import Study
 
-    agent = ValidityAgent()
+    agent = await _build_validity_agent_with_context(db, study_id)
     result = await agent.run(**snapshot)
 
     study_result = await db.execute(select(Study).where(Study.id < study_id))
@@ -213,6 +213,60 @@ async def _run_and_persist_validity(
     study.validity = result.model_dump()
     await db.commit()
     logger.info("_run_and_persist_validity: saved", study_id=study_id)
+
+
+async def _build_validity_agent_with_context(db: AsyncSession, study_id: int) -> Any:
+    """Build a ValidityAgent with study-context rendering if an Agent record is configured.
+
+    Args:
+        db: Active async database session.
+        study_id: The study being processed (used to load study context).
+
+    Returns:
+        A configured :class:`ValidityAgent` instance.
+
+    """
+    from sqlalchemy import select
+
+    from agents.services.validity import ValidityAgent
+    from backend.services.agent_service import (  # noqa: PLC0415
+        _build_provider_config,
+        build_study_context,
+        render_system_message,
+    )
+    from db.models import Agent, AgentTaskType, AvailableModel, Provider, Study
+
+    agent_result = await db.execute(
+        select(Agent).where(
+            Agent.task_type == AgentTaskType.VALIDITY_ASSESSOR,
+            Agent.is_active.is_(True),
+        ).limit(1)
+    )
+    agent = agent_result.scalar_one_or_none()
+    if agent is None:
+        return ValidityAgent()
+
+    provider_result = await db.execute(select(Provider).where(Provider.id == agent.provider_id))
+    provider = provider_result.scalar_one_or_none()
+    model_result = await db.execute(
+        select(AvailableModel).where(AvailableModel.id == agent.model_id)
+    )
+    model = model_result.scalar_one_or_none()
+    provider_config = _build_provider_config(provider, model)
+
+    study_result = await db.execute(select(Study).where(Study.id == study_id))
+    study = study_result.scalar_one_or_none()
+    rendered: str | None = None
+    if study is not None:
+        ctx = build_study_context(study)
+        rendered = render_system_message(
+            agent.system_message_template, agent, ctx.domain, ctx.study_type
+        )
+
+    return ValidityAgent(
+        provider_config=provider_config,
+        system_message_override=rendered,
+    )
 
 
 async def _mark_job_done(

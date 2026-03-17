@@ -1,9 +1,11 @@
 """ORM models: StudyMember, Reviewer — extensions to the Study table."""
 
 import enum
+import uuid
 from datetime import datetime
 
 from sqlalchemy import DateTime, Enum, ForeignKey, Integer, SmallInteger, String, UniqueConstraint, func
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.types import JSON
 
@@ -66,6 +68,15 @@ class Reviewer(Base):
     )
     agent_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
     agent_config: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    # Feature 005: reference to the new Agent abstraction.
+    # Nullable during the transition period while agent_name is still populated.
+    # Will be made non-nullable (for ai_agent rows) once all rows are migrated.
+    agent_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("agent.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )

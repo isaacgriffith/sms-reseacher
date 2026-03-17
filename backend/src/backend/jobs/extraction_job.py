@@ -189,7 +189,7 @@ async def _extract_single_paper(db: AsyncSession, cp: Any) -> Any:
 
     research_questions = await _load_research_questions(db, cp.study_id)
 
-    agent = ExtractorAgent()
+    agent = await _build_extractor_with_context(db, cp.study_id)
     extraction_result = await agent.run(
         paper_text=paper_text,
         title=paper.title,
@@ -221,6 +221,68 @@ async def _extract_single_paper(db: AsyncSession, cp: Any) -> Any:
     await db.commit()
     await db.refresh(record)
     return record
+
+
+async def _build_extractor_with_context(db: AsyncSession, study_id: int) -> Any:
+    """Build an ExtractorAgent with study-context rendering if an Agent record is configured.
+
+    Looks up an active ``extractor`` Agent record from the database, loads its
+    Provider, renders the system message with the study context, and returns
+    an :class:`ExtractorAgent` with ``provider_config`` and
+    ``system_message_override`` set.  Falls back to a plain
+    :class:`ExtractorAgent` when no active agent is found.
+
+    Args:
+        db: Active async database session.
+        study_id: The study being extracted (used to load study context).
+
+    Returns:
+        A configured :class:`ExtractorAgent` instance.
+
+    """
+    from sqlalchemy import select
+
+    from agents.services.extractor import ExtractorAgent
+    from backend.services.agent_service import (  # noqa: PLC0415
+        _build_provider_config,
+        build_study_context,
+        render_system_message,
+    )
+    from db.models import Agent, AgentTaskType, AvailableModel, Provider, Study
+
+    # Find active extractor agent
+    agent_result = await db.execute(
+        select(Agent).where(
+            Agent.task_type == AgentTaskType.EXTRACTOR,
+            Agent.is_active.is_(True),
+        ).limit(1)
+    )
+    agent = agent_result.scalar_one_or_none()
+    if agent is None:
+        return ExtractorAgent()
+
+    provider_result = await db.execute(select(Provider).where(Provider.id == agent.provider_id))
+    provider = provider_result.scalar_one_or_none()
+    model_result = await db.execute(
+        select(AvailableModel).where(AvailableModel.id == agent.model_id)
+    )
+    model = model_result.scalar_one_or_none()
+    provider_config = _build_provider_config(provider, model)
+
+    study_result = await db.execute(select(Study).where(Study.id == study_id))
+    study = study_result.scalar_one_or_none()
+    if study is not None:
+        ctx = build_study_context(study)
+        rendered = render_system_message(
+            agent.system_message_template, agent, ctx.domain, ctx.study_type
+        )
+    else:
+        rendered = None
+
+    return ExtractorAgent(
+        provider_config=provider_config,
+        system_message_override=rendered,
+    )
 
 
 async def _load_research_questions(db: AsyncSession, study_id: int) -> list[dict[str, str]]:

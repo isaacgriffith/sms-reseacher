@@ -90,3 +90,126 @@ class TestComplete:
 
         call_kwargs = mock_call.call_args.kwargs
         assert call_kwargs.get("api_base") == "http://localhost:11434"
+
+
+# ---------------------------------------------------------------------------
+# T067: ProviderConfig Protocol + LLMClient overload tests
+# ---------------------------------------------------------------------------
+
+
+from dataclasses import dataclass  # noqa: E402
+from agents.core.provider_config import ProviderConfig  # noqa: E402
+
+
+@dataclass
+class _StubConfig:
+    """Concrete dataclass satisfying the ProviderConfig Protocol for testing."""
+
+    model_string: str = "anthropic/claude-sonnet-4-6"
+    api_base: str | None = None
+    api_key: str | None = "sk-stub-key"
+
+
+class TestProviderConfigProtocol:
+    """Verify ProviderConfig Protocol compliance and LLMClient overload."""
+
+    def test_stub_config_satisfies_protocol(self) -> None:
+        """_StubConfig satisfies the ProviderConfig Protocol at runtime."""
+        cfg = _StubConfig()
+        assert isinstance(cfg, ProviderConfig)
+
+    def test_model_string_attribute(self) -> None:
+        """ProviderConfig instance exposes model_string attribute."""
+        cfg = _StubConfig(model_string="openai/gpt-4")
+        assert cfg.model_string == "openai/gpt-4"
+
+    def test_api_base_can_be_none(self) -> None:
+        """ProviderConfig api_base can be None (cloud providers)."""
+        cfg = _StubConfig(api_base=None)
+        assert cfg.api_base is None
+
+    def test_api_key_can_be_none(self) -> None:
+        """ProviderConfig api_key can be None (Ollama / env-key providers)."""
+        cfg = _StubConfig(api_key=None)
+        assert cfg.api_key is None
+
+
+class TestLLMClientWithProviderConfig:
+    """LLMClient.complete() uses provider_config when provided."""
+
+    async def test_uses_provider_config_model_string(self) -> None:
+        """complete() uses provider_config.model_string when config is not None."""
+        mock_response = MagicMock()
+        mock_response.choices = [MagicMock()]
+        mock_response.choices[0].message.content = "answer"
+
+        cfg = _StubConfig(model_string="anthropic/claude-opus-4-5", api_key="sk-test")
+
+        with patch("agents.core.llm_client.litellm.acompletion", new=AsyncMock(return_value=mock_response)) as mock_call:
+            client = LLMClient(settings=make_settings("anthropic", "claude-haiku"))
+            await client.complete([{"role": "user", "content": "hi"}], provider_config=cfg)
+
+        call_kwargs = mock_call.call_args.kwargs
+        assert call_kwargs["model"] == "anthropic/claude-opus-4-5"
+
+    async def test_uses_provider_config_api_key(self) -> None:
+        """complete() injects api_key from provider_config when not None."""
+        mock_response = MagicMock()
+        mock_response.choices = [MagicMock()]
+        mock_response.choices[0].message.content = "ok"
+
+        cfg = _StubConfig(model_string="openai/gpt-4", api_key="sk-from-db")
+
+        with patch("agents.core.llm_client.litellm.acompletion", new=AsyncMock(return_value=mock_response)) as mock_call:
+            client = LLMClient(settings=make_settings())
+            await client.complete([{"role": "user", "content": "x"}], provider_config=cfg)
+
+        call_kwargs = mock_call.call_args.kwargs
+        assert call_kwargs.get("api_key") == "sk-from-db"
+
+    async def test_uses_provider_config_api_base(self) -> None:
+        """complete() injects api_base from provider_config when not None."""
+        mock_response = MagicMock()
+        mock_response.choices = [MagicMock()]
+        mock_response.choices[0].message.content = "ok"
+
+        cfg = _StubConfig(
+            model_string="ollama/llama3",
+            api_base="http://custom-ollama:11434",
+            api_key=None,
+        )
+
+        with patch("agents.core.llm_client.litellm.acompletion", new=AsyncMock(return_value=mock_response)) as mock_call:
+            client = LLMClient(settings=make_settings())
+            await client.complete([{"role": "user", "content": "x"}], provider_config=cfg)
+
+        call_kwargs = mock_call.call_args.kwargs
+        assert call_kwargs.get("api_base") == "http://custom-ollama:11434"
+
+    async def test_falls_back_to_agent_settings_when_config_none(self) -> None:
+        """complete() uses AgentSettings model string when provider_config is None."""
+        mock_response = MagicMock()
+        mock_response.choices = [MagicMock()]
+        mock_response.choices[0].message.content = "ok"
+
+        with patch("agents.core.llm_client.litellm.acompletion", new=AsyncMock(return_value=mock_response)) as mock_call:
+            client = LLMClient(settings=make_settings("anthropic", "claude-haiku-test"))
+            await client.complete([{"role": "user", "content": "x"}], provider_config=None)
+
+        call_kwargs = mock_call.call_args.kwargs
+        assert call_kwargs["model"] == "anthropic/claude-haiku-test"
+
+    async def test_no_api_key_in_kwargs_when_config_key_is_none(self) -> None:
+        """complete() does not inject api_key when provider_config.api_key is None."""
+        mock_response = MagicMock()
+        mock_response.choices = [MagicMock()]
+        mock_response.choices[0].message.content = "ok"
+
+        cfg = _StubConfig(model_string="ollama/llama3", api_key=None, api_base=None)
+
+        with patch("agents.core.llm_client.litellm.acompletion", new=AsyncMock(return_value=mock_response)) as mock_call:
+            client = LLMClient(settings=make_settings())
+            await client.complete([{"role": "user", "content": "x"}], provider_config=cfg)
+
+        call_kwargs = mock_call.call_args.kwargs
+        assert "api_key" not in call_kwargs
