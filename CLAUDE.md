@@ -11,6 +11,7 @@ This is a research project by Isaac Griffith, PhD, licensed under the MIT Licens
 - PostgreSQL 16 (production/Docker Compose); SQLite + aiosqlite (unit/integration tests) (004-frontend-improvements)
 - Python 3.14 (backend, agents, db); TypeScript 5.4 / Node 20 LTS (frontend) + FastAPI + Pydantic v2, SQLAlchemy 2.0+ async, Alembic, LiteLLM, Jinja2, cryptography (Fernet), React 18, MUI v5, TanStack Query v5, react-hook-form + Zod (005-models-and-agents)
 - PostgreSQL 16 (production); SQLite + aiosqlite (tests) (005-models-and-agents)
+- Python 3.14 (researcher-mcp, backend, db); TypeScript 5.4 / Node 20 LTS (frontend) (006-database-search-and-retrieval)
 
 ### Runtime & Language
 - Python 3.14 (backend, agents, db, agent-eval, researcher-mcp); TypeScript 5.4 / Node 20 LTS (frontend)

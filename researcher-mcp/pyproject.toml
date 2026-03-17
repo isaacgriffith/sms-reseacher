@@ -10,6 +10,14 @@ dependencies = [
     "pydantic>=2",
     "pydantic-settings>=2",
     "beautifulsoup4>=4.12",
+    # Feature 006: academic database integrations
+    "pybliometrics>=4.4.0",
+    "semanticscholar>=0.11.0",
+    "scholarly>=1.7.11",
+    "unpywall>=0.2.3",
+    "springernature-api-client>=0.0.9",
+    "markitdown[all]>=0.1.5",
+    "scidownl>=1.0.2",
 ]
 
 [project.scripts]

@@ -17,6 +17,14 @@ Feature 005 additions — re-exported here for single stable import path:
 - :class:`~db.models.agents.Provider`
 - :class:`~db.models.agents.AvailableModel`
 - :class:`~db.models.agents.Agent`
+
+Feature 006 additions — re-exported here for single stable import path:
+- :class:`~db.models.search_integrations.DatabaseIndex`
+- :class:`~db.models.search_integrations.IntegrationType`
+- :class:`~db.models.search_integrations.TestStatus`
+- :class:`~db.models.search_integrations.FullTextSource`
+- :class:`~db.models.search_integrations.StudyDatabaseSelection`
+- :class:`~db.models.search_integrations.SearchIntegrationCredential`
 """
 
 # Feature 004: new models and enums (imported first so Alembic autogenerate
@@ -32,6 +40,18 @@ from db.models.agents import AgentTaskType as AgentTaskType  # noqa: F401
 from db.models.agents import AvailableModel as AvailableModel  # noqa: F401
 from db.models.agents import Provider as Provider  # noqa: F401
 from db.models.agents import ProviderType as ProviderType  # noqa: F401
+
+# Feature 006: database search integrations and full-text retrieval models.
+from db.models.search_integrations import DatabaseIndex as DatabaseIndex  # noqa: F401
+from db.models.search_integrations import FullTextSource as FullTextSource  # noqa: F401
+from db.models.search_integrations import IntegrationType as IntegrationType  # noqa: F401
+from db.models.search_integrations import (  # noqa: F401
+    SearchIntegrationCredential as SearchIntegrationCredential,
+)
+from db.models.search_integrations import (  # noqa: F401
+    StudyDatabaseSelection as StudyDatabaseSelection,
+)
+from db.models.search_integrations import TestStatus as TestStatus  # noqa: F401
 
 import enum
 from datetime import datetime
@@ -177,6 +197,16 @@ class Paper(Base):
     source_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     full_text_available: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=False, server_default="0"
+    )
+    # Feature 006: full-text retrieval and Markdown conversion
+    full_text_markdown: Mapped[str | None] = mapped_column(Text, nullable=True)
+    full_text_source: Mapped[str | None] = mapped_column(
+        String(20),
+        nullable=True,
+        comment="FullTextSource enum value: unpaywall|direct|scihub|unavailable|pending",
+    )
+    full_text_converted_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
     )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
