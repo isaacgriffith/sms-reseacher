@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased] — feature/005-models-and-agents
+## [0.5.0] — 2026-03-17 — feature/005-models-and-agents
 
 ### Added
 - **`Provider` DB table**: stores Anthropic, OpenAI, and Ollama provider records; API key
@@ -63,7 +63,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
-## [Unreleased] — feature/004-frontend-improvements
+## [0.4.0] — 2026-03-16 — feature/004-frontend-improvements
 
 ### Added
 - **Password change**: `PUT /me/password` — verifies current password, enforces complexity
@@ -87,7 +87,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
-## [Unreleased] — feature/003-project-setup-improvements
+## [0.3.0] — 2026-03-16 — feature/003-project-setup-improvements
 
 ### Added
 - `cosmic-ray` configured as the standard Python mutation testing tool (replaces `mutmut`)
