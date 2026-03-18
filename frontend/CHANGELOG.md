@@ -4,7 +4,7 @@ All notable changes to this subproject are documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased] — feature/006-database-search-and-retrieval
+## [0.6.0] — 2026-03-18 — feature/006-database-search-and-retrieval
 
 ### Added
 - **`SearchIntegrationsTable` component** (`src/components/admin/SearchIntegrationsTable/`):
@@ -22,7 +22,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
-## [Unreleased] — feature/005-models-and-agents
+## [0.5.0] — 2026-03-17 — feature/005-models-and-agents
 
 ### Added
 - **`src/types/provider.ts`**: Zod schemas and inferred TypeScript interfaces for `Provider`,
@@ -63,7 +63,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
-## [Unreleased] — feature/004-frontend-improvements
+## [0.4.0] — 2026-03-16 — feature/004-frontend-improvements
 
 ### Added
 - **Preferences page** (`/preferences`): tabbed UI for Password, Theme, and 2FA settings
@@ -92,7 +92,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
-## [Unreleased] — feature/003-project-setup-improvements
+## [0.3.0] — 2026-03-16 — feature/003-project-setup-improvements
 
 ### Added
 - Playwright (TypeScript) added as the e2e testing tool for full-stack browser and API tests

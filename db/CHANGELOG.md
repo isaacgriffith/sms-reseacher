@@ -4,7 +4,7 @@ All notable changes to this subproject are documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased] — feature/006-database-search-and-retrieval
+## [0.6.0] — 2026-03-18 — feature/006-database-search-and-retrieval
 
 ### Added
 - **`DatabaseIndex` StrEnum**: `ieee_xplore`, `acm_dl`, `scopus`, `web_of_science`, `inspec`,
@@ -25,7 +25,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
-## [Unreleased] — feature/005-models-and-agents
+## [0.5.0] — 2026-03-17 — feature/005-models-and-agents
 
 ### Added
 - **`ProviderType` StrEnum**: `anthropic`, `openai`, `ollama`
@@ -60,7 +60,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
-## [Unreleased] — feature/003-project-setup-improvements
+## [0.3.0] — 2026-03-16 — feature/003-project-setup-improvements
 
 ### Changed
 - Coverage command documented in `CLAUDE.md`: `uv run pytest db/tests/ --cov=db`

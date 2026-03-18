@@ -4,7 +4,7 @@ All notable changes to this subproject are documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased] — feature/006-database-search-and-retrieval
+## [0.6.0] — 2026-03-18 — feature/006-database-search-and-retrieval
 
 ### Added
 - **Multi-database fan-out search**: `search_papers` MCP tool queries up to 9 academic databases
@@ -36,7 +36,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
-## [Unreleased] — feature/003-project-setup-improvements
+## [0.3.0] — 2026-03-16 — feature/003-project-setup-improvements
 
 ### Changed
 - Coverage command documented in `CLAUDE.md`:

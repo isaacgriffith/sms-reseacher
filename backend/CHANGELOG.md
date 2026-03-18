@@ -4,7 +4,7 @@ All notable changes to this subproject are documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased] — feature/006-database-search-and-retrieval
+## [0.6.0] — 2026-03-18 — feature/006-database-search-and-retrieval
 
 ### Added
 - **`CredentialService`** (`services/credential_service.py`): `upsert_credential` (Fernet-encrypted
@@ -28,7 +28,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
-## [Unreleased] — feature/005-models-and-agents
+## [0.5.0] — 2026-03-17 — feature/005-models-and-agents
 
 ### Added
 - **`ProviderService`** (`services/provider_service.py`): CRUD for `Provider` records; Fernet
@@ -59,7 +59,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
-## [Unreleased] — feature/004-frontend-improvements
+## [0.4.0] — 2026-03-16 — feature/004-frontend-improvements
 
 ### Added
 - `PUT /me/password` — password change with complexity validation and `token_version` session
@@ -85,7 +85,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
-## [Unreleased] — feature/003-project-setup-improvements
+## [0.3.0] — 2026-03-16 — feature/003-project-setup-improvements
 
 ### Changed
 - Coverage command documented in `CLAUDE.md`: `uv run pytest backend/tests/ --cov=backend`
