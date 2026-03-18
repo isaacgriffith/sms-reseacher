@@ -66,3 +66,4 @@ frontend/reports/
 .hypothesis/
 frontend/test-results/
 frontend/coverage/
+frontend/playwright-report/
