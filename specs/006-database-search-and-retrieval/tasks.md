@@ -50,34 +50,34 @@
 
 ### Tests for User Story 1 ⚠️ Write FIRST — verify they FAIL before implementation
 
-- [ ] T011 [P] [US1] Write unit tests for `dedup.py` covering DOI-keyed dedup and title/author fallback in `researcher-mcp/tests/unit/core/test_dedup.py`
-- [ ] T012 [P] [US1] Write unit tests for `SourceRegistry` (register, get, get_enabled) in `researcher-mcp/tests/unit/core/test_registry.py`
-- [ ] T013 [P] [US1] Write unit tests for upgraded `search_papers` fan-out (mocked sources, partial failure, dedup) in `researcher-mcp/tests/unit/tools/test_search.py`
-- [ ] T014 [P] [US1] Write integration tests for `GET /api/v1/studies/{study_id}/database-selection` and `PUT` with valid/invalid payloads in `backend/tests/integration/test_database_selection.py`
-- [ ] T015 [P] [US1] Write frontend component tests for `DatabaseSelectionPanel` (toggles, warning badge for missing credential, SciHub acknowledgment) in `frontend/src/components/studies/DatabaseSelectionPanel/DatabaseSelectionPanel.test.tsx`
+- [x] T011 [P] [US1] Write unit tests for `dedup.py` covering DOI-keyed dedup and title/author fallback in `researcher-mcp/tests/unit/core/test_dedup.py`
+- [x] T012 [P] [US1] Write unit tests for `SourceRegistry` (register, get, get_enabled) in `researcher-mcp/tests/unit/core/test_registry.py`
+- [x] T013 [P] [US1] Write unit tests for upgraded `search_papers` fan-out (mocked sources, partial failure, dedup) in `researcher-mcp/tests/unit/tools/test_search.py`
+- [x] T014 [P] [US1] Write integration tests for `GET /api/v1/studies/{study_id}/database-selection` and `PUT` with valid/invalid payloads in `backend/tests/integration/test_database_selection.py`
+- [x] T015 [P] [US1] Write frontend component tests for `DatabaseSelectionPanel` (toggles, warning badge for missing credential, SciHub acknowledgment) in `frontend/src/components/studies/DatabaseSelectionPanel/DatabaseSelectionPanel.test.tsx`
 
 ### Implementation for User Story 1
 
-- [ ] T016 [P] [US1] Create `researcher-mcp/src/researcher_mcp/sources/ieee.py` — `IEEESource` implementing `DatabaseSource` Protocol via `httpx` REST calls to `https://ieeexploreapi.ieee.org/api/v1/search/articles`; normalises results to `PaperRecord`; wraps sync call in `asyncio.to_thread`
-- [ ] T017 [P] [US1] Create `researcher-mcp/src/researcher_mcp/sources/acm.py` — `ACMSource` implementing `DatabaseSource` Protocol via `httpx` + `BeautifulSoup` scraping; conservative rate limit (10 RPM via `TokenBucket`); returns `truncated=True` flag on rate-limit; abstract-only records when institutional access unavailable
-- [ ] T018 [P] [US1] Create `researcher-mcp/src/researcher_mcp/sources/google_scholar.py` — `GoogleScholarSource` implementing `DatabaseSource` Protocol via `scholarly` library; wraps all calls in `asyncio.to_thread`; configures proxy from `scholarly_proxy_url` setting if present
-- [ ] T019 [P] [US1] Create `researcher-mcp/src/researcher_mcp/sources/inspec.py` — `InspecSource` implementing `DatabaseSource` Protocol via `httpx` REST calls to Elsevier Engineering Village API; returns structured `AccessDenied` error when institutional access unavailable
-- [ ] T020 [P] [US1] Create `researcher-mcp/src/researcher_mcp/sources/scopus.py` — `ScopusSource` implementing `DatabaseSource` Protocol via `pybliometrics.ScopusSearch` and `AbstractRetrieval`; writes `pybliometrics.cfg` from settings at init; wraps calls in `asyncio.to_thread`
-- [ ] T021 [P] [US1] Create `researcher-mcp/src/researcher_mcp/sources/wos.py` — `WoSSource` implementing `DatabaseSource` Protocol via `httpx` REST calls to `https://api.clarivate.com/apis/wos-starter/v1`; normalises WoS record schema to `PaperRecord`
-- [ ] T022 [P] [US1] Create `researcher-mcp/src/researcher_mcp/sources/science_direct.py` — `ScienceDirectSource` implementing `DatabaseSource` Protocol via `pybliometrics.ScienceDirectSearch` and `ArticleRetrieval`; shares Elsevier credentials with `ScopusSource`; wraps calls in `asyncio.to_thread`
-- [ ] T023 [P] [US1] Create `researcher-mcp/src/researcher_mcp/sources/springer.py` — `SpringerSource` implementing `DatabaseSource` Protocol via `springernature_api_client.MetaAPI`; wraps calls in `asyncio.to_thread`
-- [ ] T024 [US1] Register all new source classes (T016–T023) plus existing `SemanticScholarSource` in `SourceRegistry` default instance in `researcher-mcp/src/researcher_mcp/core/registry.py`
-- [ ] T025 [US1] Upgrade `search_papers` in `researcher-mcp/src/researcher_mcp/tools/search.py` to fan-out via `asyncio.gather` across all `SourceRegistry`-enabled sources, collect `SourceFailure` records for failed sources, and deduplicate via `dedup.py`
-- [ ] T026 [P] [US1] Add `search_ieee` and `get_ieee_paper` `@mcp.tool` functions to `researcher-mcp/src/researcher_mcp/tools/search.py`
-- [ ] T027 [P] [US1] Add `search_acm`, `search_google_scholar`, `search_inspec` `@mcp.tool` functions to `researcher-mcp/src/researcher_mcp/tools/search.py`
-- [ ] T028 [P] [US1] Add `search_scopus`, `get_scopus_paper`, `search_wos`, `search_sciencedirect`, `search_springer` `@mcp.tool` functions to `researcher-mcp/src/researcher_mcp/tools/search.py`
-- [ ] T029 [P] [US1] Add `search_semantic_scholar` and `get_paper_semantic_scholar` `@mcp.tool` functions to `researcher-mcp/src/researcher_mcp/tools/search.py` (delegates to upgraded `SemanticScholarSource`)
-- [ ] T030 [P] [US1] Create `backend/src/backend/services/database_selection.py` — `StudyDatabaseSelectionService` with `get_selection(study_id)`, `save_selection(study_id, selections)`, `compute_index_status(integration_type)` (checks DB credential + env var fallback); enforces SciHub dual-gate
-- [ ] T031 [P] [US1] Create `backend/src/backend/api/v1/studies/database_selection.py` — `GET /studies/{study_id}/database-selection` and `PUT /studies/{study_id}/database-selection` endpoints with Pydantic v2 request/response schemas per contracts/backend-api.md
-- [ ] T032 [US1] Register database-selection router in `backend/src/backend/api/v1/router.py`
-- [ ] T033 [P] [US1] Create `frontend/src/components/studies/DatabaseSelectionPanel/index.tsx` — functional component with named `DatabaseSelectionPanelProps` interface; shows grouped index toggles (Primary / General / Supplementary), status badges, missing-credential warnings, SciHub acknowledgment dialog; uses `useReducer` for toggle state; ≤100 JSX lines
-- [ ] T034 [P] [US1] Create `frontend/src/hooks/useStudyDatabaseSelection.ts` — TanStack Query hook wrapping `GET`/`PUT` database selection API endpoints
-- [ ] T035 [US1] Integrate `DatabaseSelectionPanel` into study settings view in `frontend/src/pages/studies/StudySettingsPage.tsx` (or equivalent study settings location)
+- [x] T016 [P] [US1] Create `researcher-mcp/src/researcher_mcp/sources/ieee.py` — `IEEESource` implementing `DatabaseSource` Protocol via `httpx` REST calls to `https://ieeexploreapi.ieee.org/api/v1/search/articles`; normalises results to `PaperRecord`; wraps sync call in `asyncio.to_thread`
+- [x] T017 [P] [US1] Create `researcher-mcp/src/researcher_mcp/sources/acm.py` — `ACMSource` implementing `DatabaseSource` Protocol via `httpx` + `BeautifulSoup` scraping; conservative rate limit (10 RPM via `TokenBucket`); returns `truncated=True` flag on rate-limit; abstract-only records when institutional access unavailable
+- [x] T018 [P] [US1] Create `researcher-mcp/src/researcher_mcp/sources/google_scholar.py` — `GoogleScholarSource` implementing `DatabaseSource` Protocol via `scholarly` library; wraps all calls in `asyncio.to_thread`; configures proxy from `scholarly_proxy_url` setting if present
+- [x] T019 [P] [US1] Create `researcher-mcp/src/researcher_mcp/sources/inspec.py` — `InspecSource` implementing `DatabaseSource` Protocol via `httpx` REST calls to Elsevier Engineering Village API; returns structured `AccessDenied` error when institutional access unavailable
+- [x] T020 [P] [US1] Create `researcher-mcp/src/researcher_mcp/sources/scopus.py` — `ScopusSource` implementing `DatabaseSource` Protocol via `pybliometrics.ScopusSearch` and `AbstractRetrieval`; writes `pybliometrics.cfg` from settings at init; wraps calls in `asyncio.to_thread`
+- [x] T021 [P] [US1] Create `researcher-mcp/src/researcher_mcp/sources/wos.py` — `WoSSource` implementing `DatabaseSource` Protocol via `httpx` REST calls to `https://api.clarivate.com/apis/wos-starter/v1`; normalises WoS record schema to `PaperRecord`
+- [x] T022 [P] [US1] Create `researcher-mcp/src/researcher_mcp/sources/science_direct.py` — `ScienceDirectSource` implementing `DatabaseSource` Protocol via `pybliometrics.ScienceDirectSearch` and `ArticleRetrieval`; shares Elsevier credentials with `ScopusSource`; wraps calls in `asyncio.to_thread`
+- [x] T023 [P] [US1] Create `researcher-mcp/src/researcher_mcp/sources/springer.py` — `SpringerSource` implementing `DatabaseSource` Protocol via `springernature_api_client.MetaAPI`; wraps calls in `asyncio.to_thread`
+- [x] T024 [US1] Register all new source classes (T016–T023) plus existing `SemanticScholarSource` in `SourceRegistry` default instance in `researcher-mcp/src/researcher_mcp/core/registry.py`
+- [x] T025 [US1] Upgrade `search_papers` in `researcher-mcp/src/researcher_mcp/tools/search.py` to fan-out via `asyncio.gather` across all `SourceRegistry`-enabled sources, collect `SourceFailure` records for failed sources, and deduplicate via `dedup.py`
+- [x] T026 [P] [US1] Add `search_ieee` and `get_ieee_paper` `@mcp.tool` functions to `researcher-mcp/src/researcher_mcp/tools/search.py`
+- [x] T027 [P] [US1] Add `search_acm`, `search_google_scholar`, `search_inspec` `@mcp.tool` functions to `researcher-mcp/src/researcher_mcp/tools/search.py`
+- [x] T028 [P] [US1] Add `search_scopus`, `get_scopus_paper`, `search_wos`, `search_sciencedirect`, `search_springer` `@mcp.tool` functions to `researcher-mcp/src/researcher_mcp/tools/search.py`
+- [x] T029 [P] [US1] Add `search_semantic_scholar` and `get_paper_semantic_scholar` `@mcp.tool` functions to `researcher-mcp/src/researcher_mcp/tools/search.py` (delegates to upgraded `SemanticScholarSource`)
+- [x] T030 [P] [US1] Create `backend/src/backend/services/database_selection.py` — `StudyDatabaseSelectionService` with `get_selection(study_id)`, `save_selection(study_id, selections)`, `compute_index_status(integration_type)` (checks DB credential + env var fallback); enforces SciHub dual-gate
+- [x] T031 [P] [US1] Create `backend/src/backend/api/v1/studies/database_selection.py` — `GET /studies/{study_id}/database-selection` and `PUT /studies/{study_id}/database-selection` endpoints with Pydantic v2 request/response schemas per contracts/backend-api.md
+- [x] T032 [US1] Register database-selection router in `backend/src/backend/api/v1/router.py`
+- [x] T033 [P] [US1] Create `frontend/src/components/studies/DatabaseSelectionPanel/index.tsx` — functional component with named `DatabaseSelectionPanelProps` interface; shows grouped index toggles (Primary / General / Supplementary), status badges, missing-credential warnings, SciHub acknowledgment dialog; uses `useReducer` for toggle state; ≤100 JSX lines
+- [x] T034 [P] [US1] Create `frontend/src/hooks/useStudyDatabaseSelection.ts` — TanStack Query hook wrapping `GET`/`PUT` database selection API endpoints
+- [x] T035 [US1] Integrate `DatabaseSelectionPanel` into study settings view in `frontend/src/pages/studies/StudySettingsPage.tsx` (or equivalent study settings location)
 
 **Checkpoint**: User Story 1 fully functional — multi-database search with fan-out, per-study selection UI, and merged deduplicated results.
 
@@ -91,15 +91,15 @@
 
 ### Tests for User Story 2 ⚠️ Write FIRST
 
-- [ ] T036 [P] [US2] Write unit tests for upgraded `fetch_paper_pdf` tool covering Unpaywall success, Unpaywall miss → direct fallback, SciHub disabled guard, SciHub allowed path in `researcher-mcp/tests/unit/tools/test_pdf.py`
-- [ ] T037 [P] [US2] Write integration tests for `GET /api/v1/papers/{paper_id}/markdown` endpoint in `backend/tests/integration/test_paper_markdown.py`
+- [x] T036 [P] [US2] Write unit tests for upgraded `fetch_paper_pdf` tool covering Unpaywall success, Unpaywall miss → direct fallback, SciHub disabled guard, SciHub allowed path in `researcher-mcp/tests/unit/tools/test_pdf.py`
+- [x] T037 [P] [US2] Write integration tests for `GET /api/v1/papers/{paper_id}/markdown` endpoint in `backend/tests/integration/test_paper_markdown.py`
 
 ### Implementation for User Story 2
 
-- [ ] T038 [P] [US2] Upgrade `researcher-mcp/src/researcher_mcp/sources/unpaywall.py` — replace any direct HTTP logic with `unpywall.Unpywall.get_pdf_link(doi)` wrapped in `asyncio.to_thread`; return structured result with `open_access_url`
-- [ ] T039 [P] [US2] Upgrade `researcher-mcp/src/researcher_mcp/sources/scihub.py` — replace scraping implementation with `scidownl.scihub_download` wrapped in `asyncio.to_thread`; conditional import guarded by `scihub_enabled` setting; raise `MCPError("SciHubDisabled")` when guard fails
-- [ ] T040 [US2] Upgrade `researcher-mcp/src/researcher_mcp/tools/pdf.py` — rewrite `fetch_paper_pdf` waterfall as `Unpaywall → direct URL → SciHub`; decompose into named helper functions (`_try_unpaywall`, `_try_direct`, `_try_scihub`); return `PdfFetchResult` Pydantic model
-- [ ] T041 [P] [US2] Create `GET /api/v1/papers/{paper_id}/markdown` endpoint in `backend/src/backend/api/v1/papers/markdown.py` returning `PaperMarkdownResponse` (markdown, full_text_source, converted_at, available); register on papers router
+- [x] T038 [P] [US2] Upgrade `researcher-mcp/src/researcher_mcp/sources/unpaywall.py` — replace any direct HTTP logic with `unpywall.Unpywall.get_pdf_link(doi)` wrapped in `asyncio.to_thread`; return structured result with `open_access_url`
+- [x] T039 [P] [US2] Upgrade `researcher-mcp/src/researcher_mcp/sources/scihub.py` — replace scraping implementation with `scidownl.scihub_download` wrapped in `asyncio.to_thread`; conditional import guarded by `scihub_enabled` setting; raise `MCPError("SciHubDisabled")` when guard fails
+- [x] T040 [US2] Upgrade `researcher-mcp/src/researcher_mcp/tools/pdf.py` — rewrite `fetch_paper_pdf` waterfall as `Unpaywall → direct URL → SciHub`; decompose into named helper functions (`_try_unpaywall`, `_try_direct`, `_try_scihub`); return `PdfFetchResult` Pydantic model
+- [x] T041 [P] [US2] Create `GET /api/v1/papers/{paper_id}/markdown` endpoint in `backend/src/backend/api/v1/papers/markdown.py` returning `PaperMarkdownResponse` (markdown, full_text_source, converted_at, available); register on papers router
 
 **Checkpoint**: User Story 2 functional — full-text retrieval waterfall works; SciHub dual-gate enforced.
 
@@ -113,12 +113,12 @@
 
 ### Tests for User Story 3 ⚠️ Write FIRST
 
-- [ ] T042 [P] [US3] Write unit tests for upgraded `get_references` and `get_citations` (S2 primary path, CrossRef fallback path, empty result for unknown DOI) in `researcher-mcp/tests/unit/tools/test_snowball.py`
+- [x] T042 [P] [US3] Write unit tests for upgraded `get_references` and `get_citations` (S2 primary path, CrossRef fallback path, empty result for unknown DOI) in `researcher-mcp/tests/unit/tools/test_snowball.py`
 
 ### Implementation for User Story 3
 
-- [ ] T043 [US3] Upgrade `get_references` in `researcher-mcp/src/researcher_mcp/tools/snowball.py` — use `AsyncSemanticScholar.get_paper_references(doi)` as primary; fall back to existing `CrossRefSource` if Semantic Scholar returns empty; map to `ReferenceRecord` with `intent` field
-- [ ] T044 [US3] Upgrade `get_citations` in `researcher-mcp/src/researcher_mcp/tools/snowball.py` — use `AsyncSemanticScholar.get_paper_citations(doi)` as primary; fall back to CrossRef; map to `CitationRecord` with `citation_source` field
+- [x] T043 [US3] Upgrade `get_references` in `researcher-mcp/src/researcher_mcp/tools/snowball.py` — use `AsyncSemanticScholar.get_paper_references(doi)` as primary; fall back to existing `CrossRefSource` if Semantic Scholar returns empty; map to `ReferenceRecord` with `intent` field
+- [x] T044 [US3] Upgrade `get_citations` in `researcher-mcp/src/researcher_mcp/tools/snowball.py` — use `AsyncSemanticScholar.get_paper_citations(doi)` as primary; fall back to CrossRef; map to `CitationRecord` with `citation_source` field
 
 **Checkpoint**: User Story 3 functional — citation and reference lookups return structured `PaperRecord`-based data, not stubs.
 
@@ -132,14 +132,14 @@
 
 ### Tests for User Story 4 ⚠️ Write FIRST
 
-- [ ] T045 [P] [US4] Write unit tests for `convert_paper_to_markdown` (pdf_bytes_b64 path, url path, doi path, OCR path, conversion failure path) and `get_paper_markdown` (hit, miss) in `researcher-mcp/tests/unit/tools/test_convert.py`
-- [ ] T046 [P] [US4] Write integration tests for paper markdown storage via `backend/src/backend/services/paper_service.py` in `backend/tests/integration/test_paper_markdown.py` (extends T037 file or separate)
+- [x] T045 [P] [US4] Write unit tests for `convert_paper_to_markdown` (pdf_bytes_b64 path, url path, doi path, OCR path, conversion failure path) and `get_paper_markdown` (hit, miss) in `researcher-mcp/tests/unit/tools/test_convert.py`
+- [x] T046 [P] [US4] Write integration tests for paper markdown storage via `backend/src/backend/services/paper_service.py` in `backend/tests/integration/test_paper_markdown.py` (extends T037 file or separate)
 
 ### Implementation for User Story 4
 
-- [ ] T047 [P] [US4] Create `researcher-mcp/src/researcher_mcp/tools/convert.py` — `convert_paper_to_markdown` and `get_paper_markdown` `@mcp.tool` functions; `MarkItDown` instantiated with optional LLM client from settings; PDF bytes wrapped in `io.BytesIO`; all `MarkItDown.convert*` calls wrapped in `asyncio.to_thread`; output persisted to `Paper.full_text_markdown` via backend API call
-- [ ] T048 [US4] Register `convert_paper_to_markdown` and `get_paper_markdown` tools in `researcher-mcp/src/researcher_mcp/server.py`
-- [ ] T049 [P] [US4] Add `store_paper_markdown(paper_id, markdown, source)` and `get_paper_markdown(paper_id)` methods to `backend/src/backend/services/paper_service.py` (or equivalent paper service); updates `full_text_markdown`, `full_text_source`, `full_text_converted_at` columns via SQLAlchemy async session
+- [x] T047 [P] [US4] Create `researcher-mcp/src/researcher_mcp/tools/convert.py` — `convert_paper_to_markdown` and `get_paper_markdown` `@mcp.tool` functions; `MarkItDown` instantiated with optional LLM client from settings; PDF bytes wrapped in `io.BytesIO`; all `MarkItDown.convert*` calls wrapped in `asyncio.to_thread`; output persisted to `Paper.full_text_markdown` via backend API call
+- [x] T048 [US4] Register `convert_paper_to_markdown` and `get_paper_markdown` tools in `researcher-mcp/src/researcher_mcp/server.py`
+- [x] T049 [P] [US4] Add `store_paper_markdown(paper_id, markdown, source)` and `get_paper_markdown(paper_id)` methods to `backend/src/backend/services/paper_service.py` (or equivalent paper service); updates `full_text_markdown`, `full_text_source`, `full_text_converted_at` columns via SQLAlchemy async session
 
 **Checkpoint**: User Story 4 functional — converted Markdown stored and retrievable; AI agents receive `full_text_markdown` instead of raw PDF bytes.
 
@@ -153,18 +153,18 @@
 
 ### Tests for User Story 5 ⚠️ Write FIRST
 
-- [ ] T050 [P] [US5] Write unit tests for `CredentialService` (encrypt/decrypt round-trip, null key handling, env-var fallback detection) in `backend/tests/unit/services/test_credential_service.py`
-- [ ] T051 [P] [US5] Write integration tests for admin search integrations endpoints (GET list, GET single, PUT upsert, POST test, version conflict 409, SciHub guard) in `backend/tests/integration/admin/test_search_integrations.py`
-- [ ] T052 [P] [US5] Write frontend tests for `SearchIntegrationsTable` (masked key display, Test Now button, status badges, edit flow) in `frontend/src/components/admin/SearchIntegrationsTable/SearchIntegrationsTable.test.tsx`
+- [x] T050 [P] [US5] Write unit tests for `CredentialService` (encrypt/decrypt round-trip, null key handling, env-var fallback detection) in `backend/tests/unit/services/test_credential_service.py`
+- [x] T051 [P] [US5] Write integration tests for admin search integrations endpoints (GET list, GET single, PUT upsert, POST test, version conflict 409, SciHub guard) in `backend/tests/integration/admin/test_search_integrations.py`
+- [x] T052 [P] [US5] Write frontend tests for `SearchIntegrationsTable` (masked key display, Test Now button, status badges, edit flow) in `frontend/src/components/admin/SearchIntegrationsTable/SearchIntegrationsTable.test.tsx`
 
 ### Implementation for User Story 5
 
-- [ ] T053 [P] [US5] Create `backend/src/backend/services/credential_service.py` — `CredentialService` with `get_credential(integration_type)`, `upsert_credential(integration_type, api_key, auxiliary_token, config_json)`, `get_effective_key(integration_type)` (DB first, env-var fallback), `run_connectivity_test(integration_type)` methods; Fernet encryption reusing pattern from `Provider` model
-- [ ] T054 [P] [US5] Create `backend/src/backend/api/v1/admin/search_integrations.py` — `GET /admin/search-integrations`, `GET /admin/search-integrations/{type}`, `PUT /admin/search-integrations/{type}`, `POST /admin/search-integrations/{type}/test` endpoints; requires `GroupRole.ADMIN`; never exposes raw key bytes
-- [ ] T055 [US5] Register `search_integrations` router in `backend/src/backend/api/v1/admin/router.py`
-- [ ] T056 [P] [US5] Create `frontend/src/hooks/useSearchIntegrations.ts` — TanStack Query hooks for list, single, upsert mutation, and test mutation
-- [ ] T057 [P] [US5] Create `frontend/src/components/admin/SearchIntegrationsTable/index.tsx` — table with database name, status badge, access type, masked key indicator, Last Tested timestamp, Test Now button, edit modal; named `SearchIntegrationsTableProps` interface; ≤100 JSX lines per component
-- [ ] T058 [US5] Extend `frontend/src/pages/admin/AdminPage.tsx` (or equivalent admin page) with a **Search Integrations** tab that renders `SearchIntegrationsTable`
+- [x] T053 [P] [US5] Create `backend/src/backend/services/credential_service.py` — `CredentialService` with `get_credential(integration_type)`, `upsert_credential(integration_type, api_key, auxiliary_token, config_json)`, `get_effective_key(integration_type)` (DB first, env-var fallback), `run_connectivity_test(integration_type)` methods; Fernet encryption reusing pattern from `Provider` model
+- [x] T054 [P] [US5] Create `backend/src/backend/api/v1/admin/search_integrations.py` — `GET /admin/search-integrations`, `GET /admin/search-integrations/{type}`, `PUT /admin/search-integrations/{type}`, `POST /admin/search-integrations/{type}/test` endpoints; requires `GroupRole.ADMIN`; never exposes raw key bytes
+- [x] T055 [US5] Register `search_integrations` router in `backend/src/backend/api/v1/admin/router.py`
+- [x] T056 [P] [US5] Create `frontend/src/hooks/useSearchIntegrations.ts` — TanStack Query hooks for list, single, upsert mutation, and test mutation
+- [x] T057 [P] [US5] Create `frontend/src/components/admin/SearchIntegrationsTable/index.tsx` — table with database name, status badge, access type, masked key indicator, Last Tested timestamp, Test Now button, edit modal; named `SearchIntegrationsTableProps` interface; ≤100 JSX lines per component
+- [x] T058 [US5] Extend `frontend/src/pages/admin/AdminPage.tsx` (or equivalent admin page) with a **Search Integrations** tab that renders `SearchIntegrationsTable`
 
 **Checkpoint**: User Story 5 functional — admin can manage all integration credentials from the UI without touching env vars.
 
@@ -178,12 +178,12 @@
 
 ### Tests for User Story 6 ⚠️ Write FIRST
 
-- [ ] T059 [P] [US6] Write unit tests for `search_author_semantic_scholar` and `get_author_semantic_scholar` (mocked `AsyncSemanticScholar`, empty-result path) in `researcher-mcp/tests/unit/tools/test_authors.py`
+- [x] T059 [P] [US6] Write unit tests for `search_author_semantic_scholar` and `get_author_semantic_scholar` (mocked `AsyncSemanticScholar`, empty-result path) in `researcher-mcp/tests/unit/tools/test_authors.py`
 
 ### Implementation for User Story 6
 
-- [ ] T060 [P] [US6] Upgrade `researcher-mcp/src/researcher_mcp/sources/semantic_scholar.py` — add `search_author(name, institution)` and `get_author(author_id)` async methods to `SemanticScholarSource` using `AsyncSemanticScholar.search_author()` and `get_author_papers()`; map to `AuthorProfile` / `AuthorDetail` Pydantic models
-- [ ] T061 [US6] Upgrade `researcher-mcp/src/researcher_mcp/tools/authors.py` — replace existing stub implementations with `SemanticScholarSource` calls; add `search_author_semantic_scholar` and `get_author_semantic_scholar` `@mcp.tool` functions returning `AuthorProfile` / `AuthorDetail`
+- [x] T060 [P] [US6] Upgrade `researcher-mcp/src/researcher_mcp/sources/semantic_scholar.py` — add `search_author(name, institution)` and `get_author(author_id)` async methods to `SemanticScholarSource` using `AsyncSemanticScholar.search_author()` and `get_author_papers()`; map to `AuthorProfile` / `AuthorDetail` Pydantic models
+- [x] T061 [US6] Upgrade `researcher-mcp/src/researcher_mcp/tools/authors.py` — replace existing stub implementations with `SemanticScholarSource` calls; add `search_author_semantic_scholar` and `get_author_semantic_scholar` `@mcp.tool` functions returning `AuthorProfile` / `AuthorDetail`
 
 **Checkpoint**: User Story 6 functional — author search and paper list retrieval work end-to-end via Semantic Scholar.
 
@@ -193,12 +193,12 @@
 
 **Purpose**: Coverage validation, type checking, linting, and end-to-end verification.
 
-- [ ] T062 [P] Run full researcher-mcp test suite with coverage: `uv run --package sms-researcher-mcp pytest researcher-mcp/tests/ --cov=src/researcher_mcp --cov-fail-under=85 --cov-report=term-missing`; fix any gaps
-- [ ] T063 [P] Run full backend and db test suites with coverage: `uv run --package sms-backend pytest backend/tests/ --cov=src/backend --cov-fail-under=85`; `uv run --package sms-db pytest db/tests/ --cov=src/db --cov-fail-under=85`; fix any gaps
-- [ ] T064 [P] Run frontend test suite with coverage: `cd frontend && npm run test:coverage`; confirm 85% threshold enforced in `vite.config.ts`; fix any gaps
-- [ ] T065 [P] Run `mypy --strict` across all modified Python packages (`researcher-mcp/src`, `backend/src`, `db/src`); resolve all type errors
-- [ ] T066 [P] Run `ruff check` and `ruff format --check` across all modified Python source directories; resolve all violations
-- [ ] T067 [P] Run Playwright e2e tests covering: database selection in study settings, SciHub acknowledgment flow, admin Search Integrations table (add key, test connectivity) in `frontend/e2e/`
+- [x] T062 [P] Run full researcher-mcp test suite with coverage: `uv run --package sms-researcher-mcp pytest researcher-mcp/tests/ --cov=src/researcher_mcp --cov-fail-under=85 --cov-report=term-missing`; fix any gaps
+- [x] T063 [P] Run full backend and db test suites with coverage: `uv run --package sms-backend pytest backend/tests/ --cov=src/backend --cov-fail-under=85`; `uv run --package sms-db pytest db/tests/ --cov=src/db --cov-fail-under=85`; fix any gaps
+- [x] T064 [P] Run frontend test suite with coverage: `cd frontend && npm run test:coverage`; confirm 85% threshold enforced in `vite.config.ts`; fix any gaps
+- [x] T065 [P] Run `mypy --strict` across all modified Python packages (`researcher-mcp/src`, `backend/src`, `db/src`); resolve all type errors
+- [x] T066 [P] Run `ruff check` and `ruff format --check` across all modified Python source directories; resolve all violations
+- [x] T067 [P] Run Playwright e2e tests covering: database selection in study settings, SciHub acknowledgment flow, admin Search Integrations table (add key, test connectivity) in `frontend/e2e/`
 
 ---
 
@@ -208,11 +208,11 @@
 
 > **These tasks MUST be completed before the feature is marked done. Omitting them is a blocking violation of Constitution Principle X.**
 
-- [ ] TDOC1 [P] Update `CLAUDE.md` at repository root — add feature 006 entry to Active Technologies and Recent Changes sections; document new env vars and researcher-mcp library additions
-- [ ] TDOC2 [P] Update `README.md` at repository root — document new database search capabilities, full-text retrieval, and admin credential management panel
-- [ ] TDOC3 [P] Update `CHANGELOG.md` at repository root — add new entry under `[Unreleased]` describing all additions (database integrations, MCP tools, PDF retrieval, Markdown conversion, admin UI)
-- [ ] TDOC4 [P] Update `README.md` in each modified subproject: `researcher-mcp/README.md`, `backend/README.md`, `db/README.md`, `frontend/README.md`
-- [ ] TDOC5 [P] Update `CHANGELOG.md` in each modified subproject with same level of detail as root entry
+- [x] TDOC1 [P] Update `CLAUDE.md` at repository root — add feature 006 entry to Active Technologies and Recent Changes sections; document new env vars and researcher-mcp library additions
+- [x] TDOC2 [P] Update `README.md` at repository root — document new database search capabilities, full-text retrieval, and admin credential management panel
+- [x] TDOC3 [P] Update `CHANGELOG.md` at repository root — add new entry under `[Unreleased]` describing all additions (database integrations, MCP tools, PDF retrieval, Markdown conversion, admin UI)
+- [x] TDOC4 [P] Update `README.md` in each modified subproject: `researcher-mcp/README.md`, `backend/README.md`, `db/README.md`, `frontend/README.md`
+- [x] TDOC5 [P] Update `CHANGELOG.md` in each modified subproject with same level of detail as root entry
 
 ---
 

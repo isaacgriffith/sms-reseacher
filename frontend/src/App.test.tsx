@@ -10,6 +10,6 @@ describe('App', () => {
 
   it('displays the application title', () => {
     render(<MemoryRouter><App /></MemoryRouter>);
-    expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument();
+    expect(screen.getAllByRole('heading', { level: 4 }).length).toBeGreaterThan(0);
   });
 });

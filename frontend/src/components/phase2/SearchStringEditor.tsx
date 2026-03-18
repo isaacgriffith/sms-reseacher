@@ -120,11 +120,11 @@ export default function SearchStringEditor({ studyId, onSearchStringCreated }: S
           variant="contained"
           onClick={() => createManual.mutate(manualText)}
           disabled={createManual.isPending || !manualText.trim()}
-          sx={{
-            marginTop: '0.5rem',
-            fontSize: '0.875rem',
+          style={{
+            cursor: createManual.isPending || !manualText.trim() ? 'not-allowed' : 'pointer',
             opacity: createManual.isPending || !manualText.trim() ? 0.6 : 1,
           }}
+          sx={{ marginTop: '0.5rem', fontSize: '0.875rem' }}
         >
           {createManual.isPending ? 'Saving…' : 'Save String'}
         </Button>
@@ -142,12 +142,12 @@ export default function SearchStringEditor({ studyId, onSearchStringCreated }: S
               <Box
                 key={ss.id}
                 onClick={() => setSelectedId(ss.id)}
+                style={{ background: selected?.id === ss.id ? '#eff6ff' : '#fff' }}
                 sx={{
                   border: `1px solid ${selected?.id === ss.id ? '#2563eb' : '#e2e8f0'}`,
                   borderRadius: '0.375rem',
                   padding: '0.625rem 0.75rem',
                   cursor: 'pointer',
-                  background: selected?.id === ss.id ? '#eff6ff' : '#fff',
                 }}
               >
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>

@@ -27,6 +27,7 @@ import db.models.extraction  # noqa: F401
 import db.models.results  # noqa: F401
 import db.models.backup_codes  # noqa: F401
 import db.models.security_audit  # noqa: F401
+import db.models.search_integrations  # noqa: F401
 
 from db.models.users import GroupMembership, GroupRole, ResearchGroup, User
 

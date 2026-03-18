@@ -29,30 +29,6 @@ Feature 006 additions — re-exported here for single stable import path:
 
 # Feature 004: new models and enums (imported first so Alembic autogenerate
 # detects them when env.py imports this package).
-from db.models.backup_codes import BackupCode as BackupCode  # noqa: F401
-from db.models.security_audit import SecurityAuditEvent as SecurityAuditEvent  # noqa: F401
-from db.models.users import ThemePreference as ThemePreference  # noqa: F401
-from db.models.security_audit import SecurityEventType as SecurityEventType  # noqa: F401
-
-# Feature 005: provider/model/agent models.
-from db.models.agents import Agent as Agent  # noqa: F401
-from db.models.agents import AgentTaskType as AgentTaskType  # noqa: F401
-from db.models.agents import AvailableModel as AvailableModel  # noqa: F401
-from db.models.agents import Provider as Provider  # noqa: F401
-from db.models.agents import ProviderType as ProviderType  # noqa: F401
-
-# Feature 006: database search integrations and full-text retrieval models.
-from db.models.search_integrations import DatabaseIndex as DatabaseIndex  # noqa: F401
-from db.models.search_integrations import FullTextSource as FullTextSource  # noqa: F401
-from db.models.search_integrations import IntegrationType as IntegrationType  # noqa: F401
-from db.models.search_integrations import (  # noqa: F401
-    SearchIntegrationCredential as SearchIntegrationCredential,
-)
-from db.models.search_integrations import (  # noqa: F401
-    StudyDatabaseSelection as StudyDatabaseSelection,
-)
-from db.models.search_integrations import TestStatus as TestStatus  # noqa: F401
-
 import enum
 from datetime import datetime
 
@@ -72,6 +48,29 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.types import JSON
 
 from db.base import Base
+
+# Feature 005: provider/model/agent models.
+from db.models.agents import Agent as Agent  # noqa: F401
+from db.models.agents import AgentTaskType as AgentTaskType  # noqa: F401
+from db.models.agents import AvailableModel as AvailableModel  # noqa: F401
+from db.models.agents import Provider as Provider  # noqa: F401
+from db.models.agents import ProviderType as ProviderType  # noqa: F401
+from db.models.backup_codes import BackupCode as BackupCode  # noqa: F401
+
+# Feature 006: database search integrations and full-text retrieval models.
+from db.models.search_integrations import DatabaseIndex as DatabaseIndex  # noqa: F401
+from db.models.search_integrations import FullTextSource as FullTextSource  # noqa: F401
+from db.models.search_integrations import IntegrationType as IntegrationType  # noqa: F401
+from db.models.search_integrations import (  # noqa: F401
+    SearchIntegrationCredential as SearchIntegrationCredential,
+)
+from db.models.search_integrations import (  # noqa: F401
+    StudyDatabaseSelection as StudyDatabaseSelection,
+)
+from db.models.search_integrations import TestStatus as TestStatus  # noqa: F401
+from db.models.security_audit import SecurityAuditEvent as SecurityAuditEvent  # noqa: F401
+from db.models.security_audit import SecurityEventType as SecurityEventType  # noqa: F401
+from db.models.users import ThemePreference as ThemePreference  # noqa: F401
 
 
 class StudyType(str, enum.Enum):
@@ -169,7 +168,7 @@ class Study(Base):
         onupdate=func.now(),
     )
 
-    study_papers: Mapped[list["StudyPaper"]] = relationship(
+    study_papers: Mapped[list[StudyPaper]] = relationship(
         "StudyPaper", back_populates="study", cascade="all, delete-orphan"
     )
 
@@ -212,7 +211,7 @@ class Paper(Base):
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
 
-    study_papers: Mapped[list["StudyPaper"]] = relationship(
+    study_papers: Mapped[list[StudyPaper]] = relationship(
         "StudyPaper", back_populates="paper", cascade="all, delete-orphan"
     )
 
@@ -239,8 +238,8 @@ class StudyPaper(Base):
         default=InclusionStatus.PENDING,
     )
 
-    study: Mapped["Study"] = relationship("Study", back_populates="study_papers")
-    paper: Mapped["Paper"] = relationship("Paper", back_populates="study_papers")
+    study: Mapped[Study] = relationship("Study", back_populates="study_papers")
+    paper: Mapped[Paper] = relationship("Paper", back_populates="study_papers")
 
     def __repr__(self) -> str:
         """Return a debug representation."""

@@ -17,6 +17,8 @@ import uuid
 from datetime import UTC, datetime
 
 import httpx
+from db.models.jobs import BackgroundJob, JobStatus, JobType
+from db.models.users import GroupMembership, GroupRole
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel
 from sqlalchemy import func, select
@@ -25,8 +27,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.core.auth import CurrentUser, get_current_user
 from backend.core.config import get_logger, get_settings
 from backend.core.database import get_db
-from db.models.jobs import BackgroundJob, JobStatus, JobType
-from db.models.users import GroupMembership, GroupRole
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 logger = get_logger(__name__)
@@ -87,9 +87,7 @@ class RetryJobResponse(BaseModel):
 # ---------------------------------------------------------------------------
 
 
-async def _require_any_group_admin(
-    current_user: CurrentUser, db: AsyncSession
-) -> None:
+async def _require_any_group_admin(current_user: CurrentUser, db: AsyncSession) -> None:
     """Raise HTTP 403 if *current_user* is not a group admin in any group.
 
     Args:
@@ -98,12 +96,15 @@ async def _require_any_group_admin(
 
     Raises:
         HTTPException: 403 if the user holds no group admin role.
+
     """
     result = await db.execute(
-        select(GroupMembership).where(
+        select(GroupMembership)
+        .where(
             GroupMembership.user_id == current_user.user_id,
             GroupMembership.role <= GroupRole.ADMIN,
-        ).limit(1)
+        )
+        .limit(1)
     )
     if result.scalars().first() is None:
         raise HTTPException(
@@ -125,6 +126,7 @@ async def _probe_database(db: AsyncSession) -> ServiceHealth:
 
     Returns:
         :class:`ServiceHealth` for the ``database`` service.
+
     """
     start = time.monotonic()
     try:
@@ -140,6 +142,7 @@ async def _probe_redis() -> ServiceHealth:
 
     Returns:
         :class:`ServiceHealth` for the ``redis`` service.
+
     """
     start = time.monotonic()
     try:
@@ -163,17 +166,18 @@ async def _probe_arq_worker(db: AsyncSession) -> ServiceHealth:
 
     Returns:
         :class:`ServiceHealth` for the ``arq_worker`` service.
+
     """
     try:
         active_result = await db.execute(
-            select(func.count()).select_from(BackgroundJob).where(
-                BackgroundJob.status == JobStatus.RUNNING
-            )
+            select(func.count())
+            .select_from(BackgroundJob)
+            .where(BackgroundJob.status == JobStatus.RUNNING)
         )
         queued_result = await db.execute(
-            select(func.count()).select_from(BackgroundJob).where(
-                BackgroundJob.status == JobStatus.QUEUED
-            )
+            select(func.count())
+            .select_from(BackgroundJob)
+            .where(BackgroundJob.status == JobStatus.QUEUED)
         )
         active = active_result.scalar_one()
         queued = queued_result.scalar_one()
@@ -191,6 +195,7 @@ async def _probe_researcher_mcp() -> ServiceHealth:
 
     Returns:
         :class:`ServiceHealth` for the ``researcher_mcp`` service.
+
     """
     start = time.monotonic()
     try:
@@ -219,6 +224,7 @@ def _overall_status(services: list[ServiceHealth]) -> str:
 
     Returns:
         ``"healthy"``, ``"degraded"``, or ``"unhealthy"``.
+
     """
     statuses = {s.status for s in services}
     if "unhealthy" in statuses:
@@ -256,6 +262,7 @@ async def get_health(
 
     Raises:
         HTTPException: 403 if the caller does not hold a group admin role.
+
     """
     await _require_any_group_admin(current_user, db)
 
@@ -303,6 +310,7 @@ async def list_admin_jobs(
     Raises:
         HTTPException: 403 if the caller does not hold a group admin role.
         HTTPException: 422 if *job_status* is not a valid :class:`JobStatus` value.
+
     """
     await _require_any_group_admin(current_user, db)
 
@@ -312,11 +320,11 @@ async def list_admin_jobs(
     if job_status is not None:
         try:
             status_enum = JobStatus(job_status)
-        except ValueError:
+        except ValueError as exc:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail=f"Invalid status value: {job_status!r}",
-            )
+            ) from exc
         query = query.where(BackgroundJob.status == status_enum)
         count_query = count_query.where(BackgroundJob.status == status_enum)
 
@@ -372,12 +380,11 @@ async def retry_job(
         HTTPException: 403 if the caller does not hold a group admin role.
         HTTPException: 404 if the job is not found.
         HTTPException: 409 if the job is not in ``failed`` status.
+
     """
     await _require_any_group_admin(current_user, db)
 
-    result = await db.execute(
-        select(BackgroundJob).where(BackgroundJob.id == job_id)
-    )
+    result = await db.execute(select(BackgroundJob).where(BackgroundJob.id == job_id))
     job = result.scalar_one_or_none()
     if job is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job not found")
@@ -426,6 +433,7 @@ def _arq_function_for_type(job_type: JobType) -> str:
 
     Returns:
         The registered ARQ task function name as a string.
+
     """
     _map = {
         JobType.FULL_SEARCH: "run_full_search",
@@ -445,10 +453,14 @@ def _arq_function_for_type(job_type: JobType) -> str:
 # These are registered here so the main v1 router.py needs no changes.
 # ---------------------------------------------------------------------------
 
-from backend.api.v1.admin.providers import router as providers_router  # noqa: E402
-from backend.api.v1.admin.models_router import router as models_router  # noqa: E402
 from backend.api.v1.admin.agents import router as agents_router  # noqa: E402
+from backend.api.v1.admin.models_router import router as models_router  # noqa: E402
+from backend.api.v1.admin.providers import router as providers_router  # noqa: E402
+from backend.api.v1.admin.search_integrations import (  # noqa: E402
+    router as search_integrations_router,
+)
 
 router.include_router(providers_router)
 router.include_router(models_router)
 router.include_router(agents_router)
+router.include_router(search_integrations_router)

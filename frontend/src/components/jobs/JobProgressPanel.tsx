@@ -80,10 +80,10 @@ export default function JobProgressPanel({ jobId, onComplete }: JobProgressPanel
         }}
       >
         <Box
+          style={{ width: `${progressPct}%` }}
           sx={{
             background: barColor,
             height: '100%',
-            width: `${progressPct}%`,
             transition: 'width 0.3s ease',
           }}
         />

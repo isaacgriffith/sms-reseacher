@@ -4,6 +4,27 @@ All notable changes to this subproject are documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased] — feature/006-database-search-and-retrieval
+
+### Added
+- **`DatabaseIndex` StrEnum**: `ieee_xplore`, `acm_dl`, `scopus`, `web_of_science`, `inspec`,
+  `science_direct`, `springer_link`, `google_scholar`, `semantic_scholar`
+- **`IntegrationType` StrEnum**: maps to credential types for each source
+  (`IEEE_XPLORE`, `ELSEVIER`, `WOS`, `SPRINGER_NATURE`, `SEMANTIC_SCHOLAR`)
+- **`TestStatus` StrEnum**: `success`, `auth_failed`, `rate_limited`, `unreachable`, `untested`
+- **`FullTextSource` StrEnum**: `unpaywall`, `scihub`, `manual`
+- **`StudyDatabaseSelection` ORM model**: `study_id` FK (CASCADE), `selected_indices` JSON array,
+  `created_at`/`updated_at` audit timestamps; unique on `study_id`
+- **`SearchIntegrationCredential` ORM model**: `integration_type` (unique PK-like), `api_key_encrypted`
+  (LargeBinary, nullable), `base_url`, `inst_token`, `version_id` (optimistic locking),
+  `last_tested_at`, `test_status`, `test_message`, `created_at`/`updated_at`
+- **`Paper` model additions**: `full_text_markdown` (Text, nullable), `full_text_source`
+  (`FullTextSource` enum, nullable), `full_text_converted_at` (DateTime tz-aware, nullable)
+- **Alembic migration `0014_database_search_and_retrieval`**: creates both new tables; adds three
+  columns to `paper` table; full `downgrade()` path
+
+---
+
 ## [Unreleased] — feature/005-models-and-agents
 
 ### Added

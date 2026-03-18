@@ -13,6 +13,7 @@ import SearchStringEditor from '../components/phase2/SearchStringEditor';
 import TestRetest from '../components/phase2/TestRetest';
 import JobProgressPanel from '../components/jobs/JobProgressPanel';
 import PaperQueue from '../components/phase2/PaperQueue';
+import DatabaseSelectionPanel from '../components/studies/DatabaseSelectionPanel';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
@@ -156,6 +157,9 @@ export default function StudyPage() {
 
       {activePhase === 2 && study.id && (
         <Box>
+          <Box sx={{ marginBottom: '2rem' }}>
+            <DatabaseSelectionPanel studyId={study.id} />
+          </Box>
           <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginBottom: '2rem' }}>
             <CriteriaForm studyId={study.id} />
             <SearchStringEditor studyId={study.id} />

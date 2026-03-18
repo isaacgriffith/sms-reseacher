@@ -21,6 +21,7 @@ import ModelList from '../components/admin/models/ModelList';
 import AgentList from '../components/admin/agents/AgentList';
 import AgentForm from '../components/admin/agents/AgentForm';
 import AgentWizard from '../components/admin/agents/AgentWizard';
+import SearchIntegrationsTable from '../components/admin/SearchIntegrationsTable';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
@@ -313,6 +314,7 @@ export default function AdminPage() {
         <Tab label="Providers" />
         <Tab label="Models" />
         <Tab label="Agents" />
+        <Tab label="Search Integrations" />
       </Tabs>
 
       {state.selectedTab === 0 && (
@@ -333,6 +335,10 @@ export default function AdminPage() {
 
       {state.selectedTab === 3 && (
         <AgentsTab state={state} dispatch={dispatch} />
+      )}
+
+      {state.selectedTab === 4 && (
+        <SearchIntegrationsTable />
       )}
     </Container>
   );

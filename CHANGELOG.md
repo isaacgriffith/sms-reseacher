@@ -4,6 +4,64 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.6.0] — 2026-03-18 — feature/006-database-search-and-retrieval
+
+### Added
+- **Multi-database fan-out search**: `search_papers` MCP tool queries up to 9 academic databases
+  in parallel (IEEE Xplore, ACM DL, Scopus, Web of Science, Inspec, ScienceDirect,
+  SpringerNature, Google Scholar, Semantic Scholar); results merged and deduplicated by DOI
+  then by normalised title + first author last name
+- **`DatabaseSource` typing.Protocol** (`researcher-mcp/src/researcher_mcp/sources/base.py`):
+  `search()` and `get_paper()` signatures; `normalise_to_paper_record()` helper; `VenueType`
+  literal type
+- **Source adapters**: `IEEESource`, `ACMSource`, `ScopusSource`, `WoSSource`, `InspecSource`,
+  `ScienceDirectSource`, `SpringerSource`, `GoogleScholarSource`; existing `SemanticScholarSource`
+  updated; all registered in `SourceRegistry`
+- **`StudyDatabaseSelection` ORM model** (`db/src/db/models/search_integrations.py`): tracks
+  active `DatabaseIndex` values per study; `selected_indices` JSON array column; `created_at`
+  / `updated_at` audit fields
+- **`SearchIntegrationCredential` ORM model**: stores Fernet-encrypted `api_key_encrypted` per
+  `IntegrationType` with optional `base_url`, `inst_token`; `version_id` optimistic locking;
+  `last_tested_at`, `test_status` (`TestStatus` enum), `test_message` for connectivity state
+- **Alembic migration `0014_database_search_and_retrieval`**: creates both new tables; adds
+  `full_text_markdown` (Text), `full_text_source` (enum), `full_text_converted_at` (DateTime)
+  columns to `paper` table; full `downgrade()` path
+- **`CredentialService`** (`backend/src/backend/services/credential_service.py`):
+  `upsert_credential`, `get_credential`, `get_effective_key` (DB key → env var fallback),
+  `configured_via` (database / environment / not_configured), `run_connectivity_test`,
+  `_probe_ieee` (live HTTP probe with `TestStatus` result); `VersionConflictError` on stale write
+- **Admin Search Integrations endpoints** (`GET/PUT /api/v1/admin/search-integrations`):
+  list all integration types with configuration status; upsert credentials; trigger connectivity
+  test; response never includes raw key
+- **`SearchIntegrationsTable` frontend component**: MUI DataGrid listing all 9 integration types
+  with status chip (configured/environment/not_configured), last-tested timestamp, test button;
+  credential edit dialog with version-safe save
+- **Study database-selection REST** (`GET/PUT /api/v1/studies/{id}/database-selection`): read and
+  write active `DatabaseIndex` list for a study
+- **`DatabaseSelectionPanel` frontend component**: checkbox panel inside Study Settings for
+  toggling which databases are queried; `useStudyDatabaseSelection` hook
+- **Full-text PDF retrieval** (`fetch_paper_pdf` MCP tool): tries Unpaywall open-access first;
+  falls back to Sci-Hub when `SCIHUB_ENABLED=true` and `scihub_acknowledged=True` is passed;
+  `scidownl` backend; result stored as `full_text_markdown` via `MarkItDown` conversion
+- **Markdown conversion MCP tools**: `convert_pdf_to_markdown` (bytes → markdown),
+  `convert_url_to_markdown` (URL → markdown via HTTP + MarkItDown),
+  `fetch_stored_markdown` (retrieve previously stored markdown from DB)
+- **`/api/v1/papers/{id}/markdown`** endpoint (`GET`): return stored `full_text_markdown` for a
+  paper; `PaperMarkdownService` and `paper_markdown.py` API router
+- **New env vars**: `IEEE_XPLORE_API_KEY`, `ELSEVIER_API_KEY`, `ELSEVIER_INST_TOKEN`,
+  `WOS_API_KEY`, `SPRINGER_API_KEY`, `SEMANTIC_SCHOLAR_API_KEY`, `UNPAYWALL_EMAIL`,
+  `SCHOLARLY_PROXY_URL`, `SCIHUB_ENABLED`
+
+### Changed
+- `researcher-mcp/pyproject.toml`: added `pybliometrics`, `semanticscholar`, `scholarly`,
+  `unpywall`, `springernature-api-client`, `markitdown[all]`, `scidownl` dependencies
+- `search_papers` tool updated to accept `indices: list[str] | None` and fan out via
+  `SourceRegistry`; `SearchPapersResult` extended with `sources_failed` field
+- `snowball_references` and `snowball_citations` tools updated for Semantic Scholar paths
+- Admin page: added **Search Integrations** tab
+
+---
+
 ## [0.5.0] — 2026-03-17 — feature/005-models-and-agents
 
 ### Added

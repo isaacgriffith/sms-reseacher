@@ -127,14 +127,14 @@ export default function PaperQueue({ studyId }: PaperQueueProps) {
       </Box>
 
       {/* Paper list */}
-      {isLoading && <Typography sx={{ color: '#6b7280', fontSize: '0.875rem' }}>Loading papers…</Typography>}
-      {error && <Typography sx={{ color: '#ef4444', fontSize: '0.875rem' }}>Failed to load papers.</Typography>}
+      {isLoading && <Typography style={{ color: 'rgb(107, 114, 128)' }} sx={{ fontSize: '0.875rem' }}>Loading papers…</Typography>}
+      {error && <Typography style={{ color: 'rgb(239, 68, 68)' }} sx={{ fontSize: '0.875rem' }}>Failed to load papers.</Typography>}
 
       {!isLoading && papers.length === 0 && (
         <Typography sx={{ color: '#9ca3af', fontSize: '0.875rem' }}>
           {statusFilter || phaseFilter
-            ? 'No papers match the current filters.'
-            : 'No papers in queue. Run a full search to populate the paper queue.'}
+            ? 'No candidate papers found. Try adjusting your filters.'
+            : 'No candidate papers found. Run a full search to populate the paper queue.'}
         </Typography>
       )}
 
@@ -246,7 +246,8 @@ export default function PaperQueue({ studyId }: PaperQueueProps) {
             size="small"
             onClick={() => setPage((p) => Math.max(0, p - 1))}
             disabled={page === 0}
-            sx={{ fontSize: '0.875rem', color: page === 0 ? '#9ca3af' : '#374151', opacity: page === 0 ? 0.6 : 1 }}
+            style={{ cursor: page === 0 ? 'not-allowed' : 'pointer', opacity: page === 0 ? 0.6 : 1 }}
+            sx={{ fontSize: '0.875rem', color: page === 0 ? '#9ca3af' : '#374151' }}
           >
             ← Previous
           </Button>
@@ -258,7 +259,8 @@ export default function PaperQueue({ studyId }: PaperQueueProps) {
             size="small"
             onClick={() => setPage((p) => p + 1)}
             disabled={papers.length < PAGE_SIZE}
-            sx={{ fontSize: '0.875rem', color: papers.length < PAGE_SIZE ? '#9ca3af' : '#374151', opacity: papers.length < PAGE_SIZE ? 0.6 : 1 }}
+            style={{ cursor: papers.length < PAGE_SIZE ? 'not-allowed' : 'pointer', opacity: papers.length < PAGE_SIZE ? 0.6 : 1 }}
+            sx={{ fontSize: '0.875rem', color: papers.length < PAGE_SIZE ? '#9ca3af' : '#374151' }}
           >
             Next →
           </Button>

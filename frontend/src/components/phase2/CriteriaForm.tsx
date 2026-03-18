@@ -120,10 +120,11 @@ function CriterionList({
           onClick={handleAdd}
           disabled={isAdding || !newText.trim()}
           size="small"
-          sx={{
-            fontSize: '0.875rem',
+          style={{
+            cursor: isAdding || !newText.trim() ? 'not-allowed' : 'pointer',
             opacity: isAdding || !newText.trim() ? 0.6 : 1,
           }}
+          sx={{ fontSize: '0.875rem' }}
         >
           Add
         </Button>

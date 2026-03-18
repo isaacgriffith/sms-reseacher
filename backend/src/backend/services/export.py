@@ -40,6 +40,7 @@ async def build_export(study_id: int, format: str) -> bytes:
 
     Raises:
         ValueError: If the format is not recognised.
+
     """
     builders = {
         "svg_only": _build_svg_only,
@@ -62,14 +63,15 @@ async def _load_study_data(study_id: int) -> dict[str, Any]:
     Returns:
         A dict with keys ``study``, ``extractions``, ``domain_model``,
         ``charts``.  Settings-derived values are excluded.
-    """
-    from sqlalchemy import select
 
-    from backend.core.database import _session_maker  # noqa: PLC2701 — internal
+    """
     from db.models import Study
     from db.models.candidate import CandidatePaper, CandidatePaperStatus
     from db.models.extraction import DataExtraction, ExtractionStatus
     from db.models.results import ClassificationScheme, DomainModel
+    from sqlalchemy import select
+
+    from backend.core.database import _session_maker  # noqa: PLC2701 — internal
 
     async with _session_maker() as db:
         study_result = await db.execute(select(Study).where(Study.id == study_id))
@@ -77,7 +79,7 @@ async def _load_study_data(study_id: int) -> dict[str, Any]:
 
         extractions_result = await db.execute(
             select(DataExtraction)
-            .join(CandidatePaper, CandidatePaper.id is DataExtraction.candidate_paper_id)
+            .join(CandidatePaper, CandidatePaper.id == DataExtraction.candidate_paper_id)
             .where(
                 CandidatePaper.study_id == study_id,
                 CandidatePaper.current_status == CandidatePaperStatus.ACCEPTED,
@@ -171,6 +173,7 @@ def _load_charts_svg(study_id: int) -> dict[str, str]:
 
     Returns:
         Dict mapping chart_type string to SVG string.
+
     """
     raise NotImplementedError("use _async_load_charts_svg instead")
 
@@ -183,11 +186,12 @@ async def _async_load_charts_svg(study_id: int) -> dict[str, str]:
 
     Returns:
         Dict mapping chart_type string to SVG string.
+
     """
+    from db.models.results import ClassificationScheme
     from sqlalchemy import select
 
     from backend.core.database import _session_maker  # noqa: PLC2701 — internal
-    from db.models.results import ClassificationScheme
 
     async with _session_maker() as db:
         result = await db.execute(
@@ -195,11 +199,7 @@ async def _async_load_charts_svg(study_id: int) -> dict[str, str]:
         )
         charts = result.scalars().all()
 
-    return {
-        c.chart_type.value: (c.svg_content or "")
-        for c in charts
-        if c.svg_content
-    }
+    return {c.chart_type.value: (c.svg_content or "") for c in charts if c.svg_content}
 
 
 def _sanitise_payload(obj: Any) -> Any:
@@ -210,13 +210,10 @@ def _sanitise_payload(obj: Any) -> Any:
 
     Returns:
         The sanitised value with sensitive keys removed.
+
     """
     if isinstance(obj, dict):
-        return {
-            k: _sanitise_payload(v)
-            for k, v in obj.items()
-            if k not in _REDACTED_FIELDS
-        }
+        return {k: _sanitise_payload(v) for k, v in obj.items() if k not in _REDACTED_FIELDS}
     if isinstance(obj, list):
         return [_sanitise_payload(item) for item in obj]
     return obj
@@ -237,6 +234,7 @@ def _warn_and_assert_redaction(raw: Any, sanitised: Any, context: str) -> None:
 
     Raises:
         RuntimeError: If any ``_REDACTED_FIELDS`` key survives sanitisation.
+
     """
     raw_keys = _collect_keys(raw)
     stripped = raw_keys & _REDACTED_FIELDS
@@ -261,6 +259,7 @@ async def _build_json_only(study_id: int) -> bytes:
 
     Returns:
         UTF-8 encoded JSON bytes.
+
     """
     data = await _load_study_data(study_id)
     sanitised = _sanitise_payload(data)
@@ -276,6 +275,7 @@ def _collect_keys(obj: Any) -> set[str]:
 
     Returns:
         Set of all string keys encountered.
+
     """
     keys: set[str] = set()
     if isinstance(obj, dict):
@@ -296,6 +296,7 @@ async def _build_svg_only(study_id: int) -> bytes:
 
     Returns:
         ZIP bytes.
+
     """
     svgs = await _async_load_charts_svg(study_id)
     buf = io.BytesIO()
@@ -313,6 +314,7 @@ async def _build_csv_json(study_id: int) -> bytes:
 
     Returns:
         ZIP bytes.
+
     """
     data = await _load_study_data(study_id)
     sanitised = _sanitise_payload(data)
@@ -336,6 +338,7 @@ def _extractions_to_csv(extractions: list[dict[str, Any]]) -> bytes:
 
     Returns:
         UTF-8 CSV bytes.
+
     """
     if not extractions:
         return b"id,candidate_paper_id,research_type,venue_type,venue_name,extraction_status\n"
@@ -370,6 +373,7 @@ async def _build_full_archive(study_id: int) -> bytes:
 
     Returns:
         ZIP bytes.
+
     """
     data = await _load_study_data(study_id)
     sanitised = _sanitise_payload(data)

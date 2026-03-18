@@ -4,6 +4,38 @@ All notable changes to this subproject are documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased] — feature/006-database-search-and-retrieval
+
+### Added
+- **Multi-database fan-out search**: `search_papers` MCP tool queries up to 9 academic databases
+  in parallel; results merged and deduplicated by DOI then by normalised title + first-author
+  last name (`deduplicate_paper_records` in `core/dedup.py`)
+- **`DatabaseSource` typing.Protocol** (`sources/base.py`): `search()` and `get_paper()`
+  signatures; `normalise_to_paper_record()` field-mapping helper; `VenueType` literal type
+- **New source adapters**: `IEEESource` (REST API), `ACMSource` (scraper), `ScopusSource`
+  (pybliometrics), `WoSSource` (WoS Expanded REST), `InspecSource` (pybliometrics),
+  `ScienceDirectSource` (pybliometrics), `SpringerSource` (springernature-api-client),
+  `GoogleScholarSource` (scholarly)
+- **`SourceRegistry`** (`core/registry.py`): maps `DatabaseIndex` string values to
+  `DatabaseSource` instances; `get_enabled()` for filtered fan-out; `build_default_registry()`
+  factory
+- **`convert_pdf_to_markdown` MCP tool**: converts PDF bytes → Markdown via MarkItDown
+- **`convert_url_to_markdown` MCP tool**: fetches URL and converts to Markdown
+- **`fetch_stored_markdown` MCP tool**: retrieves stored `full_text_markdown` for a paper via
+  backend REST endpoint
+- **`fetch_paper_pdf` update**: tries Unpaywall open-access first; falls back to Sci-Hub when
+  `SCIHUB_ENABLED=true`; converts retrieved PDF to Markdown and stores via backend
+- **New env vars**: `IEEE_XPLORE_API_KEY`, `ELSEVIER_API_KEY`, `ELSEVIER_INST_TOKEN`,
+  `WOS_API_KEY`, `SPRINGER_API_KEY`, `SCHOLARLY_PROXY_URL` added to `ResearcherSettings`
+
+### Changed
+- `search_papers` tool extended with `indices: list[str] | None` parameter; `SearchPapersResult`
+  extended with `sources_failed: list[str]` field
+- `pyproject.toml`: added `pybliometrics`, `semanticscholar`, `scholarly`, `unpywall`,
+  `springernature-api-client`, `markitdown[all]`, `scidownl` dependencies
+
+---
+
 ## [Unreleased] — feature/003-project-setup-improvements
 
 ### Changed

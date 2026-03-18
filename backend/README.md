@@ -37,6 +37,11 @@ uv run mypy backend/src
 | `ANTHROPIC_API_KEY` | — | Required when `LLM_PROVIDER=anthropic` |
 | `OLLAMA_BASE_URL` | `http://localhost:11434` | Ollama server URL |
 | `RESEARCHER_MCP_URL` | `http://localhost:8002/sse` | MCP server URL used by agents |
+| `IEEE_XPLORE_API_KEY` | — | IEEE Xplore API key for search integrations |
+| `ELSEVIER_API_KEY` | — | Elsevier API key (Scopus, Inspec, ScienceDirect) |
+| `ELSEVIER_INST_TOKEN` | — | Elsevier institutional token (optional) |
+| `WOS_API_KEY` | — | Web of Science API key |
+| `SPRINGER_API_KEY` | — | SpringerNature API key |
 
 ## API Endpoints
 
@@ -67,6 +72,15 @@ uv run mypy backend/src
 | `POST` | `/admin/agents/{id}/undo-system-message` | Restore previous system message from undo buffer |
 | `POST` | `/admin/agents/generate-persona-svg` | Generate persona SVG illustration via LLM |
 | `GET` | `/admin/agent-task-types` | List all supported AgentTaskType values |
+| `GET/PUT` | `/admin/search-integrations` | List all integration types / upsert credential |
+| `POST` | `/admin/search-integrations/{type}/test` | Trigger connectivity test for an integration |
+
+### Study Endpoints (additions)
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET/PUT` | `/api/v1/studies/{id}/database-selection` | Read/write active database indices for a study |
+| `GET` | `/api/v1/papers/{id}/markdown` | Retrieve stored full-text Markdown for a paper |
 
 Full interactive API documentation is available at `http://localhost:8000/docs` when the server is running.
 

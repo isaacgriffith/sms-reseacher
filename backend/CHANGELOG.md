@@ -4,6 +4,30 @@ All notable changes to this subproject are documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased] — feature/006-database-search-and-retrieval
+
+### Added
+- **`CredentialService`** (`services/credential_service.py`): `upsert_credential` (Fernet-encrypted
+  key, optimistic locking via `version_id`), `get_credential`, `get_effective_key` (DB key with
+  env-var fallback), `configured_via` (database / environment / not_configured),
+  `run_connectivity_test`, `_probe_ieee` (live HTTP probe); `VersionConflictError` on stale write
+- **`DatabaseSelectionService`** (`services/database_selection.py`): read and write active
+  `DatabaseIndex` list for a study
+- **`PaperMarkdownService`** (`services/paper_markdown.py`): retrieve stored `full_text_markdown`
+  for a paper
+- **Admin Search Integrations router** (`api/v1/admin/search_integrations.py`):
+  `GET /admin/search-integrations` — list all integration types with configuration and test status;
+  `PUT /admin/search-integrations/{type}` — upsert credential (never echoes key back);
+  `POST /admin/search-integrations/{type}/test` — connectivity test with `TestStatus` result
+- **Study database-selection router** (`api/v1/studies/database_selection.py`):
+  `GET/PUT /studies/{id}/database-selection` — read and write active indices
+- **Paper Markdown router** (`api/v1/paper_markdown.py`):
+  `GET /papers/{id}/markdown` — return stored full-text Markdown
+- Unit tests: `test_credential_service.py`, `test_database_selection.py`, `test_paper_markdown.py`
+- Integration tests: `admin/test_search_integrations.py`
+
+---
+
 ## [Unreleased] — feature/005-models-and-agents
 
 ### Added

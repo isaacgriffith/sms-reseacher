@@ -11,9 +11,9 @@ This directory contains high-level feature documents (PRDs) for all planned work
 | [005](./005-tertiary-studies-workflow.md) | Tertiary Studies Workflow | Planned | 002, 003 |
 | [006](./006-project-setup-improvements.md) | Project Setup & Quality Improvements | ✅ Implemented | 001, 002 |
 | [007](./007-frontend-improvements.md) | Frontend Improvements (MUI, 2FA, Swagger) | ✅ Implemented | 001, 002 |
-| [008](./008-models-and-agents.md) | Models & Agents Management | Inprogress | 001, 002 |
+| [008](./008-models-and-agents.md) | Models & Agents Management | ✅ Implemented | 001, 002 |
 | [009](./009-research-protocol-definition.md) | Research Protocol Definition | Planned | 002, 003, 004 |
-| [010](./010-database-search-and-retrieval.md) | Database Search, Retrieval & Paper Processing | Planned | 001, 002, 008 |
+| [010](./010-database-search-and-retrieval.md) | Database Search, Retrieval & Paper Processing | Inprogress | 001, 002, 008 |
 
 ## Recommended Implementation Order
 

@@ -4,6 +4,24 @@ All notable changes to this subproject are documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased] — feature/006-database-search-and-retrieval
+
+### Added
+- **`SearchIntegrationsTable` component** (`src/components/admin/SearchIntegrationsTable/`):
+  MUI DataGrid listing all 9 academic database integration types; status chip (configured via
+  database / environment / not_configured); last-tested timestamp; "Test" button per row;
+  credential edit dialog with version-safe save (optimistic locking)
+- **`DatabaseSelectionPanel` component** (`src/components/studies/DatabaseSelectionPanel/`):
+  checkbox panel in Study Settings for toggling which database indices are queried
+- **`useSearchIntegrations` hook** (`src/hooks/useSearchIntegrations.ts`): TanStack Query hooks —
+  `useSearchIntegrations`, `useUpsertSearchIntegration`, `useTestSearchIntegration`
+- **`useStudyDatabaseSelection` hook** (`src/hooks/useStudyDatabaseSelection.ts`): TanStack Query
+  hooks — `useStudyDatabaseSelection`, `useUpdateStudyDatabaseSelection`
+- **Admin panel**: Search Integrations tab added to `AdminPage.tsx`
+- **Study page**: Database Selection panel added to Study Settings section of `StudyPage.tsx`
+
+---
+
 ## [Unreleased] — feature/005-models-and-agents
 
 ### Added

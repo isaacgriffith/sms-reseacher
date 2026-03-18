@@ -20,6 +20,7 @@ class SourceRegistry:
 
     Attributes:
         _sources: Internal mapping from index identifier to source instance.
+
     """
 
     def __init__(self) -> None:
@@ -34,6 +35,7 @@ class SourceRegistry:
                 ``"semantic_scholar"``).  Should match a :class:`DatabaseIndex`
                 enum value from ``db.models.search_integrations``.
             source: A :class:`DatabaseSource` protocol-compliant instance.
+
         """
         self._sources[index] = source
 
@@ -45,6 +47,7 @@ class SourceRegistry:
 
         Returns:
             The registered :class:`DatabaseSource`, or None.
+
         """
         return self._sources.get(index)
 
@@ -61,25 +64,23 @@ class SourceRegistry:
         Returns:
             List of ``(index_identifier, source_instance)`` tuples, ordered by
             registration order.
+
         """
         if indices is None:
             return list(self._sources.items())
-        return [
-            (idx, src)
-            for idx in indices
-            if (src := self._sources.get(idx)) is not None
-        ]
+        return [(idx, src) for idx in indices if (src := self._sources.get(idx)) is not None]
 
     def registered_indices(self) -> list[str]:
         """Return all registered index identifiers in registration order.
 
         Returns:
             List of index identifier strings.
+
         """
         return list(self._sources.keys())
 
 
-# Module-level default registry populated by server.py at startup.
+# Module-level default registry populated by build_default_registry() at startup.
 _default_registry: SourceRegistry | None = None
 
 
@@ -92,11 +93,11 @@ def get_registry() -> SourceRegistry:
 
     Returns:
         The default :class:`SourceRegistry` instance.
+
     """
     if _default_registry is None:
         raise RuntimeError(
-            "SourceRegistry has not been initialised. "
-            "Call set_registry() during server startup."
+            "SourceRegistry has not been initialised. Call set_registry() during server startup."
         )
     return _default_registry
 
@@ -107,6 +108,78 @@ def set_registry(registry: SourceRegistry) -> None:
     Args:
         registry: A configured :class:`SourceRegistry` instance to use as the
             global default.
+
     """
     global _default_registry  # noqa: PLW0603
     _default_registry = registry
+
+
+def build_default_registry() -> SourceRegistry:
+    """Create and return a :class:`SourceRegistry` pre-populated with all sources.
+
+    Sources are instantiated from :class:`~researcher_mcp.core.config.ResearcherSettings`
+    credentials.  This function should be called once during server startup and
+    the result passed to :func:`set_registry`.
+
+    Returns:
+        A fully populated :class:`SourceRegistry` with all configured source
+        adapters registered under their respective ``DatabaseIndex`` string values.
+
+    """
+    from researcher_mcp.core.config import get_settings  # noqa: PLC0415
+    from researcher_mcp.core.http_client import make_retry_client  # noqa: PLC0415
+    from researcher_mcp.sources.acm import ACMSource  # noqa: PLC0415
+    from researcher_mcp.sources.google_scholar import GoogleScholarSource  # noqa: PLC0415
+    from researcher_mcp.sources.ieee import IEEESource  # noqa: PLC0415
+    from researcher_mcp.sources.inspec import InspecSource  # noqa: PLC0415
+    from researcher_mcp.sources.science_direct import ScienceDirectSource  # noqa: PLC0415
+    from researcher_mcp.sources.scopus import ScopusSource  # noqa: PLC0415
+    from researcher_mcp.sources.semantic_scholar import SemanticScholarSource  # noqa: PLC0415
+    from researcher_mcp.sources.springer import SpringerSource  # noqa: PLC0415
+    from researcher_mcp.sources.wos import WoSSource  # noqa: PLC0415
+
+    settings = get_settings()
+    client = make_retry_client()
+
+    registry = SourceRegistry()
+    registry.register(
+        "ieee_xplore",
+        IEEESource(client, api_key=settings.ieee_xplore_api_key),
+    )
+    registry.register("acm_dl", ACMSource(client))
+    registry.register(
+        "scopus",
+        ScopusSource(api_key=settings.elsevier_api_key, inst_token=settings.elsevier_inst_token),
+    )
+    registry.register(
+        "web_of_science",
+        WoSSource(client, api_key=settings.wos_api_key),
+    )
+    registry.register(
+        "inspec",
+        InspecSource(
+            client,
+            api_key=settings.elsevier_api_key,
+            inst_token=settings.elsevier_inst_token,
+        ),
+    )
+    registry.register(
+        "science_direct",
+        ScienceDirectSource(
+            api_key=settings.elsevier_api_key,
+            inst_token=settings.elsevier_inst_token,
+        ),
+    )
+    registry.register(
+        "springer_link",
+        SpringerSource(api_key=settings.springer_api_key),
+    )
+    registry.register(
+        "google_scholar",
+        GoogleScholarSource(proxy_url=settings.scholarly_proxy_url),
+    )
+    registry.register(
+        "semantic_scholar",
+        SemanticScholarSource(client, rpm=settings.semantic_scholar_rpm),  # type: ignore[arg-type]
+    )
+    return registry

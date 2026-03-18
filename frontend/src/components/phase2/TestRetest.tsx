@@ -128,12 +128,15 @@ export default function TestRetest({ studyId }: TestRetestProps) {
         variant="contained"
         onClick={() => activeOrFirst && runTest.mutate(activeOrFirst.id)}
         disabled={runTest.isPending || !activeOrFirst}
+        style={{
+          cursor: runTest.isPending || !activeOrFirst ? 'not-allowed' : 'pointer',
+          opacity: runTest.isPending || !activeOrFirst ? 0.6 : 1,
+        }}
         sx={{
           background: '#0891b2',
           '&:hover': { background: '#0e7490' },
           fontSize: '0.875rem',
           marginBottom: '1rem',
-          opacity: runTest.isPending || !activeOrFirst ? 0.6 : 1,
         }}
       >
         {runTest.isPending ? 'Queuing…' : '▶ Run Test Search'}
@@ -174,10 +177,10 @@ export default function TestRetest({ studyId }: TestRetestProps) {
                   <td style={tdStyle}>
                     <Typography
                       component="span"
-                      sx={{
+                      style={{
                         color: it.test_set_recall >= 0.8 ? '#16a34a' : it.test_set_recall >= 0.5 ? '#d97706' : '#dc2626',
-                        fontWeight: 600,
                       }}
+                      sx={{ fontWeight: 600 }}
                     >
                       {(it.test_set_recall * 100).toFixed(1)}%
                     </Typography>

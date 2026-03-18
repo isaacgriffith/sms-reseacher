@@ -1,4 +1,4 @@
-"""Unit test: SCIHUB_ENABLED=false causes SciHub to be skipped."""
+"""Unit test: SCIHUB_ENABLED=false causes SciHub to be skipped (T036)."""
 
 from __future__ import annotations
 
@@ -15,22 +15,18 @@ class TestSciHubDisabled:
 
     async def test_scihub_raises_mcp_error_when_disabled(self) -> None:
         """SciHubSource.fetch_pdf raises MCPError('SCIHUB_DISABLED') when disabled."""
-        source = SciHubSource(MagicMock(), scihub_enabled=False)
+        source = SciHubSource(scihub_enabled=False)
         with pytest.raises(MCPError) as exc_info:
-            await source.fetch_pdf("10.1/test", "/tmp/test.pdf")
+            await source.fetch_pdf("10.1/test")
         assert exc_info.value.code == "SCIHUB_DISABLED"
 
     async def test_fetch_paper_pdf_no_scihub_request_when_disabled(self) -> None:
-        """fetch_paper_pdf returns success=False with SciHub-disabled warning."""
-        unpaywall_fail = {
-            "success": False, "output_path": None,
-            "source": None, "url": None,
-            "warnings": ["No open-access PDF found on Unpaywall"],
-        }
-        arxiv_fail = {
-            "success": False, "output_path": None,
-            "source": None, "url": None,
-            "warnings": ["No arXiv ID found for this DOI"],
+        """fetch_paper_pdf returns available=False when SCIHUB_ENABLED=false."""
+        miss = {
+            "available": False,
+            "source": "unavailable",
+            "pdf_bytes_b64": None,
+            "open_access_url": None,
         }
         mock_settings = MagicMock(
             scihub_enabled=False,
@@ -40,28 +36,11 @@ class TestSciHubDisabled:
 
         with (
             patch("researcher_mcp.tools.pdf.get_settings", return_value=mock_settings),
-            patch("researcher_mcp.tools.pdf.make_retry_client", return_value=MagicMock()),
-            patch(
-                "researcher_mcp.tools.pdf.UnpaywallSource",
-                return_value=MagicMock(fetch_pdf=AsyncMock(return_value=unpaywall_fail)),
-            ),
-            patch(
-                "researcher_mcp.tools.pdf.ArxivSource",
-                return_value=MagicMock(fetch_pdf=AsyncMock(return_value=arxiv_fail)),
-            ),
-            patch(
-                "researcher_mcp.tools.pdf.SciHubSource",
-                return_value=MagicMock(
-                    fetch_pdf=AsyncMock(
-                        side_effect=MCPError(
-                            "SCIHUB_DISABLED",
-                            "SciHub disabled; set SCIHUB_ENABLED=true to attempt SciHub",
-                        )
-                    )
-                ),
-            ),
+            patch("researcher_mcp.tools.pdf._try_unpaywall", new=AsyncMock(return_value=miss)),
+            patch("researcher_mcp.tools.pdf._try_direct", new=AsyncMock(return_value=miss)),
         ):
-            result = await fetch_paper_pdf("10.1/test", "/tmp/test.pdf")
+            result = await fetch_paper_pdf("10.1/test", allow_scihub=True)
 
-        assert result["success"] is False
-        assert any("SciHub disabled" in w for w in result["warnings"])
+        # SCIHUB_ENABLED=false means SciHub is not attempted even with allow_scihub=True
+        assert result["available"] is False
+        assert result["source"] == "unavailable"

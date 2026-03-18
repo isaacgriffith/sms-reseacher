@@ -11,7 +11,7 @@ This is a research project by Isaac Griffith, PhD, licensed under the MIT Licens
 - PostgreSQL 16 (production/Docker Compose); SQLite + aiosqlite (unit/integration tests) (004-frontend-improvements)
 - Python 3.14 (backend, agents, db); TypeScript 5.4 / Node 20 LTS (frontend) + FastAPI + Pydantic v2, SQLAlchemy 2.0+ async, Alembic, LiteLLM, Jinja2, cryptography (Fernet), React 18, MUI v5, TanStack Query v5, react-hook-form + Zod (005-models-and-agents)
 - PostgreSQL 16 (production); SQLite + aiosqlite (tests) (005-models-and-agents)
-- Python 3.14 (researcher-mcp, backend, db); TypeScript 5.4 / Node 20 LTS (frontend) (006-database-search-and-retrieval)
+- Python 3.14 (researcher-mcp, backend, db); TypeScript 5.4 / Node 20 LTS (frontend); pybliometrics, semanticscholar, scholarly, unpywall, springernature-api-client, markitdown[all], scidownl, httpx (006-database-search-and-retrieval)
 
 ### Runtime & Language
 - Python 3.14 (backend, agents, db, agent-eval, researcher-mcp); TypeScript 5.4 / Node 20 LTS (frontend)
@@ -50,12 +50,23 @@ This is a research project by Isaac Griffith, PhD, licensed under the MIT Licens
 - **Agents tab**: multi-step `AgentWizard` for creating agents (task type → model → role/persona → optional SVG → system message review); `AgentForm` for editing with undo buffer support
 - **`ProviderConfig` Protocol**: `agents/core/provider_config.py` defines a `typing.Protocol` with `model_string`, `api_base`, and `api_key` attributes; all agent classes accept `provider_config: ProviderConfig | None = None` to override env-based settings per-call
 
+### Database Search & Retrieval (006-database-search-and-retrieval)
+- **Multi-database search**: fan-out across IEEE Xplore, ACM DL, Scopus, Web of Science, Inspec, ScienceDirect, SpringerNature, Google Scholar, Semantic Scholar via `researcher-mcp` `search_papers` MCP tool; results merged and deduplicated by DOI / (normalised title + first author)
+- **Source adapters**: `DatabaseSource` typing.Protocol; adapters for all 9 databases in `researcher-mcp/src/researcher_mcp/sources/`
+- **Study database selection**: `StudyDatabaseSelection` ORM model tracks which indices are active per study; `GET/PUT /api/v1/studies/{id}/database-selection` REST endpoints; `DatabaseSelectionPanel` frontend component
+- **Admin credential management**: `SearchIntegrationCredential` model with Fernet-encrypted `api_key_encrypted`, optimistic locking (`version_id`), connectivity test status; `CredentialService` with `upsert_credential`, `run_connectivity_test`, `_probe_ieee`; `GET/PUT /api/v1/admin/search-integrations` endpoints; `SearchIntegrationsTable` frontend component
+- **Full-text PDF retrieval**: `fetch_paper_pdf` MCP tool — tries Unpaywall open-access, falls back to Sci-Hub (gated by `SCIHUB_ENABLED` env var with acknowledgment flag); `full_text_markdown`, `full_text_source`, `full_text_converted_at` columns on `Paper`; `/api/v1/papers/{id}/markdown` endpoint
+- **Markdown conversion**: `convert_pdf_to_markdown` MCP tool using `markitdown`; `convert_url_to_markdown` and `fetch_stored_markdown` tools
+- **New env vars**: `IEEE_XPLORE_API_KEY`, `ELSEVIER_API_KEY`, `ELSEVIER_INST_TOKEN`, `WOS_API_KEY`, `SPRINGER_API_KEY`, `SEMANTIC_SCHOLAR_API_KEY`, `UNPAYWALL_EMAIL`, `SCHOLARLY_PROXY_URL`, `SCIHUB_ENABLED`
+- **Alembic migration `0014_database_search_and_retrieval`**: creates `study_database_selection` and `search_integration_credential` tables; adds three columns to `paper` table
+
 ## Recent Changes
 - 001-repo-setup: Added Python 3.12 (backend, agents, db); TypeScript 5.4 / Node 20 LTS (frontend)
 - 002-sms-workflow: Finalised library choices — ARQ, matplotlib, networkx, plotly/kaleido, rapidfuzz, D3.js
 - 003-project-setup-improvements: cosmic-ray, Playwright, vitest coverage-v8, skip enforcement, mutation workflow_dispatch
 - 004-frontend-improvements: password change + session invalidation, TOTP 2FA with QR/backup codes, theme preference (Light/Dark/System), full MUI v5 migration, authenticated API docs page
 - 005-models-and-agents: multi-provider LLM support (Anthropic/OpenAI/Ollama), `Provider`/`AvailableModel`/`Agent` DB tables, admin panel Providers/Models/Agents tabs, `ProviderConfig` Protocol, `AgentGeneratorAgent`, study-context Jinja2 template rendering, Reviewer migration
+- 006-database-search-and-retrieval: multi-database fan-out search (9 sources), `StudyDatabaseSelection`/`SearchIntegrationCredential` DB tables, `CredentialService`, full-text PDF retrieval (Unpaywall/Sci-Hub), Markdown conversion (`markitdown`), admin Search Integrations panel, study database-selection UI
 
 ---
 

@@ -65,6 +65,7 @@ The admin panel (`/admin`) provides management tabs for:
 | **Providers** | Add/edit/delete LLM provider credentials (Anthropic, OpenAI, Ollama) |
 | **Models** | View and enable/disable individual models fetched from each provider |
 | **Agents** | Create, edit, and manage AI agent definitions via a multi-step wizard |
+| **Search Integrations** | Configure and test API credentials for academic database sources (IEEE Xplore, Scopus, Web of Science, etc.) |
 
 ### Supported LLM Provider Types
 
@@ -75,6 +76,34 @@ The admin panel (`/admin`) provides management tabs for:
 | `ollama` | Base URL only | `GET {base_url}/api/tags` |
 
 Agent system messages are Jinja2 templates rendered at invocation time with `{{ domain }}` and `{{ study_type }}` variables injected from the active study context.
+
+## Database Search & Full-Text Retrieval
+
+The `researcher-mcp` server provides MCP tools for multi-database academic paper search:
+
+| MCP Tool | Description |
+|----------|-------------|
+| `search_papers` | Fan-out search across up to 9 databases; merged + deduplicated results |
+| `fetch_paper_pdf` | Retrieve full-text PDF via Unpaywall (OA) or Sci-Hub (opt-in) |
+| `convert_pdf_to_markdown` | Convert PDF bytes to Markdown via MarkItDown |
+| `convert_url_to_markdown` | Fetch a URL and convert content to Markdown |
+| `fetch_stored_markdown` | Retrieve previously stored full-text Markdown for a paper |
+
+### Supported Database Sources
+
+| Source | Credential env var |
+|--------|-------------------|
+| IEEE Xplore | `IEEE_XPLORE_API_KEY` |
+| ACM Digital Library | *(no key required)* |
+| Scopus | `ELSEVIER_API_KEY`, `ELSEVIER_INST_TOKEN` |
+| Web of Science | `WOS_API_KEY` |
+| Inspec | `ELSEVIER_API_KEY`, `ELSEVIER_INST_TOKEN` |
+| ScienceDirect | `ELSEVIER_API_KEY`, `ELSEVIER_INST_TOKEN` |
+| SpringerNature | `SPRINGER_API_KEY` |
+| Google Scholar | `SCHOLARLY_PROXY_URL` (optional) |
+| Semantic Scholar | `SEMANTIC_SCHOLAR_API_KEY` (optional) |
+
+Full-text retrieval also uses `UNPAYWALL_EMAIL` and `SCIHUB_ENABLED` env vars.
 
 ## Tech Stack
 

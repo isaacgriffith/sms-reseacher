@@ -94,6 +94,42 @@ Defines an LLM agent with role, persona, and a Jinja2 system message template.
 
 `agent_id` UUID FK column added (nullable, SET NULL on delete → `agent` table).
 
+### StudyDatabaseSelection (added in migration 0014)
+
+Tracks which academic database indices are active for a study.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `id` | Integer PK | |
+| `study_id` | Integer FK → study.id | Unique, CASCADE delete |
+| `selected_indices` | JSON | List of `DatabaseIndex` string values |
+| `created_at` / `updated_at` | DateTime(tz) | Auto-managed |
+
+### SearchIntegrationCredential (added in migration 0014)
+
+Stores encrypted API credentials for external academic databases.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `id` | Integer PK | |
+| `integration_type` | Enum | `IntegrationType` value (unique) |
+| `api_key_encrypted` | LargeBinary | Nullable; Fernet-encrypted |
+| `base_url` | String | Nullable |
+| `inst_token` | String | Nullable; institutional token |
+| `version_id` | Integer | Optimistic locking |
+| `last_tested_at` | DateTime(tz) | Nullable |
+| `test_status` | Enum | `TestStatus` value |
+| `test_message` | Text | Nullable; last test result message |
+| `created_at` / `updated_at` | DateTime(tz) | Auto-managed |
+
+### Paper (additions in migration 0014)
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `full_text_markdown` | Text | Nullable; converted full-text content |
+| `full_text_source` | Enum | `FullTextSource`: `unpaywall`, `scihub`, `manual` |
+| `full_text_converted_at` | DateTime(tz) | Nullable; when conversion occurred |
+
 ## Development
 
 ```bash

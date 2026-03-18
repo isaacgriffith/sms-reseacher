@@ -75,6 +75,7 @@ The `AdminPage` component (`src/pages/AdminPage.tsx`) exposes three MUI tabs:
 | **Providers** | `ProviderList`, `ProviderForm` | `useProviders`, `useCreateProvider`, `useUpdateProvider`, `useDeleteProvider`, `useRefreshModels` |
 | **Models** | `ModelList` | `useProviderModels`, `useToggleModel` |
 | **Agents** | `AgentList`, `AgentWizard`, `AgentForm` | `useAgents`, `useCreateAgent`, `useUpdateAgent`, `useDeleteAgent`, `useGenerateSystemMessage`, `useUndoSystemMessage`, `useGeneratePersonaSvg`, `useAgentTaskTypes` |
+| **Search Integrations** | `SearchIntegrationsTable` | `useSearchIntegrations`, `useUpsertSearchIntegration`, `useTestSearchIntegration` |
 
 `AgentWizard` is a 5-step MUI `Stepper` (task type → model → role/persona → SVG → system
 message review) with state managed via `useReducer`. `SystemMessageEditor` is a

@@ -116,9 +116,7 @@ class StudyDatabaseSelection(Base):
         UniqueConstraint("study_id", "database_index", name="uq_study_database_selection"),
     )
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     study_id: Mapped[int] = mapped_column(
         Integer,
         ForeignKey("study.id", ondelete="CASCADE"),
@@ -142,7 +140,7 @@ class StudyDatabaseSelection(Base):
         onupdate=func.now(),
     )
 
-    study: Mapped["Study"] = relationship("Study")  # type: ignore[name-defined]
+    study: Mapped[Study] = relationship("Study")  # type: ignore[name-defined]  # noqa: F821
 
     def __repr__(self) -> str:
         """Return a debug representation."""
@@ -165,9 +163,7 @@ class SearchIntegrationCredential(Base):
 
     __tablename__ = "search_integration_credential"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     integration_type: Mapped[IntegrationType] = mapped_column(
         Enum(IntegrationType, name="integrationtype"),
         nullable=False,
@@ -188,17 +184,13 @@ class SearchIntegrationCredential(Base):
         nullable=True,
         comment="Fernet-encrypted JSON blob for additional config (e.g. proxy URL)",
     )
-    last_tested_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    last_tested_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     last_test_status: Mapped[TestStatus | None] = mapped_column(
         Enum(TestStatus, name="teststatus"),
         nullable=True,
         default=TestStatus.UNTESTED,
     )
-    version_id: Mapped[int] = mapped_column(
-        Integer, nullable=False, default=0, server_default="0"
-    )
+    version_id: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
