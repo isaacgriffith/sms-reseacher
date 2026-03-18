@@ -3,7 +3,16 @@
 import enum
 from datetime import datetime
 
-from sqlalchemy import DateTime, Enum, ForeignKey, Integer, JSON, SmallInteger, String, UniqueConstraint, func
+from sqlalchemy import (
+    JSON,
+    DateTime,
+    Enum,
+    ForeignKey,
+    Integer,
+    String,
+    UniqueConstraint,
+    func,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from db.base import Base
@@ -68,7 +77,9 @@ class SearchMetrics(Base):
     search_execution_id: Mapped[int] = mapped_column(
         ForeignKey("search_execution.id", ondelete="CASCADE"), nullable=False
     )
-    total_identified: Mapped[int] = mapped_column(Integer, default=0, nullable=False, server_default="0")
+    total_identified: Mapped[int] = mapped_column(
+        Integer, default=0, nullable=False, server_default="0"
+    )
     accepted: Mapped[int] = mapped_column(Integer, default=0, nullable=False, server_default="0")
     rejected: Mapped[int] = mapped_column(Integer, default=0, nullable=False, server_default="0")
     duplicates: Mapped[int] = mapped_column(Integer, default=0, nullable=False, server_default="0")

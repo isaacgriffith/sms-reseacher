@@ -8,6 +8,8 @@ increment, and security audit event emission.
 import re
 from datetime import UTC, datetime
 
+from db.models.security_audit import SecurityEventType
+from db.models.users import User
 from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -15,8 +17,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.core.auth import hash_password, verify_password
 from backend.core.config import get_logger
 from backend.services.audit_service import create_security_audit_event
-from db.models.security_audit import SecurityEventType
-from db.models.users import User
 
 logger = get_logger(__name__)
 
@@ -66,6 +66,7 @@ async def change_password(
         HTTPException: 400 if ``new_password`` equals the current password.
         HTTPException: 422 if ``new_password`` fails complexity requirements.
         HTTPException: 404 if the user record does not exist.
+
     """
     result = await db.execute(select(User).where(User.id == user_id))
     user = result.scalar_one_or_none()

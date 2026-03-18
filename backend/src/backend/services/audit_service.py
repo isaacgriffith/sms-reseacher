@@ -5,10 +5,10 @@ Provides a single entry point for writing immutable security audit records
 database and structured log.
 """
 
+from db.models.security_audit import SecurityAuditEvent, SecurityEventType
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.core.config import get_logger
-from db.models.security_audit import SecurityAuditEvent, SecurityEventType
 
 logger = get_logger(__name__)
 
@@ -29,6 +29,7 @@ async def create_security_audit_event(
 
     Returns:
         The persisted :class:`SecurityAuditEvent` instance.
+
     """
     event = SecurityAuditEvent(
         user_id=user_id,

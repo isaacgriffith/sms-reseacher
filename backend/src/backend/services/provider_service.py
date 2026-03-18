@@ -353,9 +353,7 @@ class ProviderService:
             List of :class:`Provider` ORM instances ordered by display name.
 
         """
-        result = await session.execute(
-            select(Provider).order_by(Provider.display_name)
-        )
+        result = await session.execute(select(Provider).order_by(Provider.display_name))
         return list(result.scalars().all())
 
     async def get_provider(
@@ -373,9 +371,7 @@ class ProviderService:
             The :class:`Provider` ORM instance, or ``None`` if not found.
 
         """
-        result = await session.execute(
-            select(Provider).where(Provider.id == provider_id)
-        )
+        result = await session.execute(select(Provider).where(Provider.id == provider_id))
         return result.scalar_one_or_none()
 
     async def update_provider(
@@ -443,9 +439,7 @@ class ProviderService:
         if provider is None:
             raise KeyError(f"Provider {provider_id} not found")
 
-        agents_result = await session.execute(
-            select(Agent).where(Agent.provider_id == provider_id)
-        )
+        agents_result = await session.execute(select(Agent).where(Agent.provider_id == provider_id))
         agents = agents_result.scalars().all()
         if agents:
             raise ProviderHasDependentsError([str(a.id) for a in agents])

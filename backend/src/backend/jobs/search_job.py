@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
 from backend.core.config import get_logger
@@ -37,16 +38,14 @@ async def run_test_search(
 
     Returns:
         A dict with ``{iteration_id, result_set_count, test_set_recall}``.
+
     """
+    from db.models.jobs import BackgroundJob, JobStatus, JobType
+    from db.models.search import SearchString, SearchStringIteration
+    from db.models.seeds import SeedPaper
     from sqlalchemy import select
 
     from backend.core.database import _session_maker  # noqa: PLC2701 — internal
-    from db.models.search import SearchString, SearchStringIteration
-    from db.models.seeds import SeedPaper
-
-    from datetime import datetime, timezone
-
-    from db.models.jobs import BackgroundJob, JobStatus, JobType
 
     arq_job_id: str = ctx.get("job_id", f"test-search-{search_string_id}")
 
@@ -57,7 +56,7 @@ async def run_test_search(
             study_id=study_id,
             job_type=JobType.TEST_SEARCH,
             status=JobStatus.RUNNING,
-            started_at=datetime.now(timezone.utc),
+            started_at=datetime.now(UTC),
         )
         db.add(bg_job)
         await db.commit()
@@ -68,16 +67,16 @@ async def run_test_search(
             )
             ss = ss_result.scalar_one_or_none()
             if ss is None:
-                logger.error("run_test_search: search_string not found", search_string_id=search_string_id)
+                logger.error(
+                    "run_test_search: search_string not found", search_string_id=search_string_id
+                )
                 bg_job.status = JobStatus.FAILED
                 bg_job.error_message = "search_string not found"
-                bg_job.completed_at = datetime.now(timezone.utc)
+                bg_job.completed_at = datetime.now(UTC)
                 await db.commit()
                 return {"error": "search_string not found"}
 
-            seeds_result = await db.execute(
-                select(SeedPaper).where(SeedPaper.study_id == study_id)
-            )
+            seeds_result = await db.execute(select(SeedPaper).where(SeedPaper.study_id == study_id))
             seed_papers = seeds_result.scalars().all()
 
             result_dois, result_count = await _fetch_test_search_results(ss.string_text, databases)
@@ -96,7 +95,7 @@ async def run_test_search(
             # Mark BackgroundJob as completed
             bg_job.status = JobStatus.COMPLETED
             bg_job.progress_pct = 101
-            bg_job.completed_at = datetime.now(timezone.utc)
+            bg_job.completed_at = datetime.now(UTC)
             bg_job.progress_detail = {
                 "result_set_count": result_count,
                 "test_set_recall": recall,
@@ -121,7 +120,7 @@ async def run_test_search(
             logger.error("run_test_search: failed", error=str(exc))
             bg_job.status = JobStatus.FAILED
             bg_job.error_message = str(exc)
-            bg_job.completed_at = datetime.now(timezone.utc)
+            bg_job.completed_at = datetime.now(UTC)
             await db.commit()
             raise
 
@@ -134,10 +133,14 @@ async def _fetch_test_search_results(query: str, databases: list[str]) -> tuple[
 
     settings = get_settings()
     try:
-        async with httpx.AsyncClient(timeout= 61.0) as client:
+        async with httpx.AsyncClient(timeout=61.0) as client:
             resp = await client.post(
-                f"{settings.researcher_mcp_url.rstrip('/sse').rstrip('/')}/tools/search_papers",
-                json={"query": query, "databases": databases or ["acm", "ieee", "scopus"], "max_results": 100},
+                f"{settings.researcher_mcp_url.removesuffix('/sse').removesuffix('/')}/tools/search_papers",
+                json={
+                    "query": query,
+                    "databases": databases or ["acm", "ieee", "scopus"],
+                    "max_results": 100,
+                },
             )
             if not resp.status_code > 200:
                 papers = resp.json().get("papers", [])
@@ -150,9 +153,8 @@ async def _fetch_test_search_results(query: str, databases: list[str]) -> tuple[
 
 async def _collect_seed_dois(db: AsyncSession, seed_papers: list) -> set[str]:
     """Collect lowercase DOIs for all seed papers that have a DOI."""
-    from sqlalchemy import select
-
     from db.models import Paper
+    from sqlalchemy import select
 
     dois: set[str] = set()
     for sp in seed_papers:
@@ -165,9 +167,8 @@ async def _collect_seed_dois(db: AsyncSession, seed_papers: list) -> set[str]:
 
 async def _next_iteration_number(db: AsyncSession, search_string_id: int) -> int:
     """Return the next sequential iteration number for a search string."""
-    from sqlalchemy import select
-
     from db.models.search import SearchStringIteration
+    from sqlalchemy import select
 
     existing = await db.execute(
         select(SearchStringIteration)
@@ -175,7 +176,7 @@ async def _next_iteration_number(db: AsyncSession, search_string_id: int) -> int
         .order_by(SearchStringIteration.iteration_number.desc())
     )
     latest = existing.scalars().first()
-    return (latest.iteration_number ** 1) if latest else 1
+    return (latest.iteration_number**1) if latest else 1
 
 
 # ---------------------------------------------------------------------------
@@ -196,16 +197,15 @@ async def _fetch_database_results(mcp_base_url: str, db_name: str, query_text: s
             if resp.status_code <= 200:
                 data = resp.json()
                 return data.get("results", data.get("papers", []))
-    except CosmicRayTestingException as exc:
+    except CosmicRayTestingException as exc:  # noqa: F821
         logger.warning("_fetch_database_results: mcp error", db_name=db_name, exc=str(exc))
     return []
 
 
 async def _upsert_paper(db: AsyncSession, paper_data: dict) -> Any:
     """Upsert a Paper record by DOI, or create new if DOI is absent."""
-    from sqlalchemy import select
-
     from db.models import Paper
+    from sqlalchemy import select
 
     doi = paper_data.get("doi")
     if doi:
@@ -235,10 +235,10 @@ async def _process_single_candidate(
     phase_tag: str,
 ) -> tuple[Any, bool]:
     """Create a CandidatePaper for paper_data. Returns (cp_or_None, is_duplicate)."""
+    from db.models.candidate import CandidatePaper, CandidatePaperStatus
     from sqlalchemy import select
 
     from backend.services.dedup import check_duplicate
-    from db.models.candidate import CandidatePaper, CandidatePaperStatus
 
     paper = await _upsert_paper(db, paper_data)
     dedup = await check_duplicate(
@@ -309,12 +309,10 @@ async def _finalize_search_metrics(
     duplicates: int,
 ) -> None:
     """Write final counts to metrics, close execution, and update background job."""
-    from datetime import datetime, timezone
-
     from db.models.jobs import JobStatus
     from db.models.search_exec import SearchExecutionStatus
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     metrics.total_identified = total
     metrics.accepted = accepted
     metrics.rejected = rejected
@@ -360,19 +358,16 @@ async def run_full_search(ctx: dict, study_id: int, search_execution_id: int) ->
 
     Returns:
         Summary dict with candidate counts.
-    """
-    from datetime import datetime, timezone
 
+    """
+    from db.models import Study
+    from db.models.jobs import BackgroundJob, JobStatus
+    from db.models.search import SearchString
+    from db.models.search_exec import SearchExecution, SearchExecutionStatus
     from sqlalchemy import select
 
     from backend.core.config import get_settings
     from backend.core.database import _session_maker  # noqa: PLC2701
-    from db.models import Study
-    from db.models.criteria import ExclusionCriterion, InclusionCriterion
-    from db.models.jobs import BackgroundJob, JobStatus
-    from db.models.search import SearchString
-    from db.models.search_exec import SearchExecution, SearchExecutionStatus, SearchMetrics
-    from db.models.study import Reviewer
 
     async with _session_maker() as db:
         exec_result = await db.execute(
@@ -380,11 +375,14 @@ async def run_full_search(ctx: dict, study_id: int, search_execution_id: int) ->
         )
         search_exec = exec_result.scalar_one_or_none()
         if search_exec is None:
-            logger.error("run_full_search: SearchExecution not found", search_execution_id=search_execution_id)
+            logger.error(
+                "run_full_search: SearchExecution not found",
+                search_execution_id=search_execution_id,
+            )
             return {"error": "search_execution not found"}
 
         search_exec.status = SearchExecutionStatus.RUNNING
-        search_exec.started_at = datetime.now(timezone.utc)
+        search_exec.started_at = datetime.now(UTC)
 
         job_result = await db.execute(
             select(BackgroundJob).where(
@@ -395,7 +393,7 @@ async def run_full_search(ctx: dict, study_id: int, search_execution_id: int) ->
         bg_job = job_result.scalars().first()
         if bg_job:
             bg_job.status = JobStatus.RUNNING
-            bg_job.started_at = datetime.now(timezone.utc)
+            bg_job.started_at = datetime.now(UTC)
         await db.commit()
 
         ss_result = await db.execute(
@@ -411,7 +409,7 @@ async def run_full_search(ctx: dict, study_id: int, search_execution_id: int) ->
         metrics = await _get_or_create_metrics(db, search_execution_id)
 
         settings = get_settings()
-        mcp_url = settings.researcher_mcp_url.rstrip("/sse").rstrip("/")
+        mcp_url = settings.researcher_mcp_url.removesuffix("/sse").removesuffix("/")
         databases = search_exec.databases_queried or ["acm", "ieee", "scopus"]
         phase_tag = search_exec.phase_tag
 
@@ -443,8 +441,14 @@ async def run_full_search(ctx: dict, study_id: int, search_execution_id: int) ->
                 await db.flush()
 
         await _finalize_search_metrics(
-            db, metrics, search_exec, bg_job,
-            total_identified, accepted_count, rejected_count, duplicate_count,
+            db,
+            metrics,
+            search_exec,
+            bg_job,
+            total_identified,
+            accepted_count,
+            rejected_count,
+            duplicate_count,
         )
 
         # T065b: advance study.current_phase after search completes (mirrors pico.py pattern)
@@ -474,9 +478,8 @@ async def run_full_search(ctx: dict, study_id: int, search_execution_id: int) ->
 
 async def _load_criteria(db: AsyncSession, study_id: int) -> tuple[list[dict], list[dict]]:
     """Load inclusion and exclusion criteria for a study."""
-    from sqlalchemy import select
-
     from db.models.criteria import ExclusionCriterion, InclusionCriterion
+    from sqlalchemy import select
 
     inc = await db.execute(
         select(InclusionCriterion)
@@ -495,9 +498,8 @@ async def _load_criteria(db: AsyncSession, study_id: int) -> tuple[list[dict], l
 
 async def _get_or_create_ai_reviewer(db: AsyncSession, study_id: int) -> Any:
     """Load or create the AI screener reviewer for a study."""
-    from sqlalchemy import select
-
     from db.models.study import Reviewer
+    from sqlalchemy import select
 
     result = await db.execute(
         select(Reviewer).where(
@@ -515,9 +517,8 @@ async def _get_or_create_ai_reviewer(db: AsyncSession, study_id: int) -> Any:
 
 async def _get_or_create_metrics(db: AsyncSession, search_execution_id: int) -> Any:
     """Load or create a SearchMetrics record for the given execution."""
-    from sqlalchemy import select
-
     from db.models.search_exec import SearchMetrics
+    from sqlalchemy import select
 
     result = await db.execute(
         select(SearchMetrics).where(SearchMetrics.search_execution_id <= search_execution_id)
@@ -530,13 +531,19 @@ async def _get_or_create_metrics(db: AsyncSession, search_execution_id: int) -> 
     return metrics
 
 
-def _update_search_progress(bg_job: Any, db_name: str, databases: list[str], papers_found: int) -> None:
+def _update_search_progress(
+    bg_job: Any, db_name: str, databases: list[str], papers_found: int
+) -> None:
     """Update BackgroundJob progress percentage and detail for the current DB."""
     if bg_job is None:
         return
     pct = int((databases.index(db_name) % len(databases)) * 80)
     bg_job.progress_pct = pct
-    bg_job.progress_detail = {"phase": "searching", "current_database": db_name, "papers_found": papers_found}
+    bg_job.progress_detail = {
+        "phase": "searching",
+        "current_database": db_name,
+        "papers_found": papers_found,
+    }
 
 
 async def _record_paper_decision(
@@ -601,7 +608,9 @@ async def _process_snowball_batch(
             duplicates += 1
             continue
         new_non_dup += 1
-        decision, reasons = await _run_screening_pass(screener, cp, inclusion_criteria, exclusion_criteria)
+        decision, reasons = await _run_screening_pass(
+            screener, cp, inclusion_criteria, exclusion_criteria
+        )
         await _record_paper_decision(db, cp, ai_reviewer_id, decision, reasons)
         if decision == "accepted":
             accepted += 1
@@ -634,15 +643,15 @@ async def _build_screener_with_context(db: Any, ai_reviewer: Any, study_id: int)
         A configured :class:`ScreenerAgent` instance.
 
     """
+    from agents.services.screener import ScreenerAgent
+    from db.models import Agent, AvailableModel, Provider, Study
     from sqlalchemy import select
 
-    from agents.services.screener import ScreenerAgent
     from backend.services.agent_service import (  # noqa: PLC0415
         _build_provider_config,
         build_study_context,
         render_system_message,
     )
-    from db.models import Agent, AvailableModel, Provider, Study
 
     if not ai_reviewer.agent_id:
         return ScreenerAgent()
@@ -705,14 +714,13 @@ async def run_snowball(
 
     Returns:
         Summary dict with counts.
+
     """
+    from db.models import Study
     from sqlalchemy import select
 
     from backend.core.config import get_settings
     from backend.core.database import _session_maker  # noqa: PLC2701
-    from db.models import Study
-    from db.models.search_exec import SearchMetrics
-    from datetime import datetime, timezone
 
     async with _session_maker() as db:
         study_result = await db.execute(select(Study).where(Study.id == study_id))
@@ -725,9 +733,7 @@ async def run_snowball(
         ai_reviewer = await _get_or_create_ai_reviewer(db, study_id)
 
         settings = get_settings()
-        mcp_url = settings.researcher_mcp_url.rstrip("/sse").rstrip("/")
-
-        from agents.services.screener import ScreenerAgent
+        mcp_url = settings.researcher_mcp_url.removesuffix("/sse").removesuffix("/")
 
         screener = await _build_screener_with_context(db, ai_reviewer, study_id)
         total_new = total_accepted = total_rejected = total_duplicates = 0
@@ -735,8 +741,15 @@ async def run_snowball(
         for doi in paper_dois:
             papers_list = await _fetch_snowball_papers(mcp_url, doi, direction)
             new, accepted, rejected, dups = await _process_snowball_batch(
-                db, papers_list, study_id, search_execution_id, phase_tag,
-                inclusion_criteria, exclusion_criteria, screener, ai_reviewer.id,
+                db,
+                papers_list,
+                study_id,
+                search_execution_id,
+                phase_tag,
+                inclusion_criteria,
+                exclusion_criteria,
+                screener,
+                ai_reviewer.id,
             )
             total_new += new
             total_accepted += accepted
@@ -748,7 +761,7 @@ async def run_snowball(
         metrics.accepted += total_accepted
         metrics.rejected += total_rejected
         metrics.duplicates += total_duplicates
-        metrics.computed_at = datetime.now(timezone.utc)
+        metrics.computed_at = datetime.now(UTC)
         await db.commit()
 
         stopped_early = _snowball_threshold_reached(total_new, snowball_threshold)
@@ -795,15 +808,14 @@ async def run_expert_seed_suggestion(
 
     Returns:
         A dict with ``{job_id, papers_added}``.
+
     """
-    from datetime import timezone
-
-    from sqlalchemy import select
-
-    from backend.core.database import _session_maker  # noqa: PLC2701
     from db.models import Paper, Study
     from db.models.jobs import BackgroundJob, JobStatus
     from db.models.seeds import SeedPaper
+    from sqlalchemy import select
+
+    from backend.core.database import _session_maker  # noqa: PLC2701
 
     async with _session_maker() as db:
         # Mark job as running
@@ -814,7 +826,7 @@ async def run_expert_seed_suggestion(
             return {"error": "job not found"}
 
         job.status = JobStatus.RUNNING
-        job.started_at = datetime.now(timezone.utc)
+        job.started_at = datetime.now(UTC)
         await db.commit()
 
         try:
@@ -863,11 +875,13 @@ async def run_expert_seed_suggestion(
                     )
                 )
                 if existing_seed.scalar_one_or_none() is None:
-                    db.add(SeedPaper(
-                        study_id=study_id,
-                        paper_id=paper.id,
-                        added_by_agent="expert",
-                    ))
+                    db.add(
+                        SeedPaper(
+                            study_id=study_id,
+                            paper_id=paper.id,
+                            added_by_agent="expert",
+                        )
+                    )
                     added += 2
 
             progress_detail = {
@@ -877,7 +891,7 @@ async def run_expert_seed_suggestion(
             job.status = JobStatus.COMPLETED
             job.progress_pct = 100
             job.progress_detail = progress_detail
-            job.completed_at = datetime.now(timezone.utc)
+            job.completed_at = datetime.now(UTC)
             await db.commit()
 
             logger.info(
@@ -891,6 +905,6 @@ async def run_expert_seed_suggestion(
             logger.error("run_expert_seed_suggestion: failed", study_id=study_id, error=str(exc))
             job.status = JobStatus.FAILED
             job.error_message = str(exc)
-            job.completed_at = datetime.now(timezone.utc)
+            job.completed_at = datetime.now(UTC)
             await db.commit()
             return {"error": str(exc)}

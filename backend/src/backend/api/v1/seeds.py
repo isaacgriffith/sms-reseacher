@@ -2,18 +2,19 @@
 
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-from backend.core.auth import CurrentUser, get_current_user, require_study_member
-from backend.core.config import get_logger
-from backend.core.database import get_db
-from backend.services import audit as audit_svc
 from db.models import Paper, Study
 from db.models.audit import AuditAction
 from db.models.pico import PICOComponent
 from db.models.seeds import SeedAuthor, SeedPaper
+from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from backend.core.auth import CurrentUser, get_current_user, require_study_member
+from backend.core.config import get_logger
+from backend.core.database import get_db
+from backend.services import audit as audit_svc
 
 router = APIRouter(tags=["seeds"])
 logger = get_logger(__name__)
@@ -97,6 +98,7 @@ async def list_seed_papers(
         study_id: The study to list seeds for.
         current_user: Injected from the validated JWT; must be a study member.
         db: Injected async database session.
+
     """
     await require_study_member(study_id, current_user, db)
 
@@ -146,6 +148,7 @@ async def add_seed_paper(
         body: Paper reference or new paper metadata.
         current_user: Injected from the validated JWT; must be a study member.
         db: Injected async database session.
+
     """
     await require_study_member(study_id, current_user, db)
 
@@ -235,6 +238,7 @@ async def delete_seed_paper(
         seed_id: The seed paper record ID to remove.
         current_user: Injected from the validated JWT; must be a study member.
         db: Injected async database session.
+
     """
     await require_study_member(study_id, current_user, db)
 
@@ -287,6 +291,7 @@ async def trigger_librarian(
 
     Returns:
         ``{"suggestions": {"papers": [...], "authors": [...]}}``
+
     """
     await require_study_member(study_id, current_user, db)
 
@@ -295,9 +300,7 @@ async def trigger_librarian(
     if study is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Study not found")
 
-    pico_result = await db.execute(
-        select(PICOComponent).where(PICOComponent.study_id == study_id)
-    )
+    pico_result = await db.execute(select(PICOComponent).where(PICOComponent.study_id == study_id))
     pico = pico_result.scalar_one_or_none()
 
     meta: dict = study.metadata_ or {}
@@ -361,6 +364,7 @@ async def trigger_expert(
 
     Returns:
         ``{"job_id": "<uuid>"}``
+
     """
     await require_study_member(study_id, current_user, db)
 
@@ -422,9 +426,7 @@ async def list_seed_authors(
     await require_study_member(study_id, current_user, db)
 
     result = await db.execute(
-        select(SeedAuthor)
-        .where(SeedAuthor.study_id == study_id)
-        .order_by(SeedAuthor.created_at)
+        select(SeedAuthor).where(SeedAuthor.study_id == study_id).order_by(SeedAuthor.created_at)
     )
     return [
         SeedAuthorResponse(

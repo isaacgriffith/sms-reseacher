@@ -21,13 +21,15 @@ def engine_factory(database_url: str, *, echo: bool = False) -> AsyncEngine:
 
     Args:
         database_url: SQLAlchemy-compatible async database URL.
-            Examples:
+        echo: When ``True``, log all SQL statements (development only).
+
+    Examples:
                 ``sqlite+aiosqlite:///./dev.db``
                 ``postgresql+asyncpg://user:pass@host/db``
-        echo: When ``True``, log all SQL statements (development only).
 
     Returns:
         A configured :class:`AsyncEngine` instance.
+
     """
     return create_async_engine(database_url, echo=echo)
 
@@ -40,6 +42,7 @@ def session_factory(engine: AsyncEngine) -> async_sessionmaker[AsyncSession]:
 
     Returns:
         An :class:`async_sessionmaker` producing :class:`AsyncSession` instances.
+
     """
     return async_sessionmaker(engine, expire_on_commit=False)
 
@@ -47,7 +50,7 @@ def session_factory(engine: AsyncEngine) -> async_sessionmaker[AsyncSession]:
 @asynccontextmanager
 async def get_session(
     engine: AsyncEngine,
-) -> AsyncGenerator[AsyncSession, None]:
+) -> AsyncGenerator[AsyncSession]:
     """Async context manager yielding a database session.
 
     Args:
@@ -55,6 +58,7 @@ async def get_session(
 
     Yields:
         An :class:`AsyncSession` that is closed on exit.
+
     """
     factory = session_factory(engine)
     async with factory() as session:

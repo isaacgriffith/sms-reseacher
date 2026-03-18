@@ -1,6 +1,6 @@
 """Results endpoints: domain model, classification charts, and export."""
 
-from datetime import datetime
+from datetime import UTC, datetime
 
 import arq.connections
 from fastapi import APIRouter, Depends, HTTPException, Response, status
@@ -80,6 +80,7 @@ async def _get_latest_domain_model(study_id: int, db: AsyncSession):
 
     Returns:
         The :class:`DomainModel` ORM instance or ``None``.
+
     """
     from db.models.results import DomainModel
 
@@ -101,6 +102,7 @@ async def _get_charts(study_id: int, db: AsyncSession) -> list:
 
     Returns:
         List of :class:`ClassificationScheme` ORM instances.
+
     """
     from db.models.results import ClassificationScheme
 
@@ -120,6 +122,7 @@ def _dm_to_response(dm) -> DomainModelResponse:
 
     Returns:
         A :class:`DomainModelResponse`.
+
     """
     return DomainModelResponse(
         id=dm.id,
@@ -140,6 +143,7 @@ def _chart_to_response(c) -> ClassificationSchemeResponse:
 
     Returns:
         A :class:`ClassificationSchemeResponse`.
+
     """
     return ClassificationSchemeResponse(
         id=c.id,
@@ -196,10 +200,9 @@ async def generate_results(
     db: AsyncSession = Depends(get_db),
 ) -> JobEnqueueResponse:
     """Enqueue an ARQ job to generate the domain model and classification charts."""
-    from datetime import timezone
+    from db.models.jobs import BackgroundJob, JobStatus, JobType
 
     from backend.core.config import get_settings
-    from db.models.jobs import BackgroundJob, JobStatus, JobType
 
     await require_study_member(study_id, current_user, db)
 
@@ -211,9 +214,7 @@ async def generate_results(
     await redis.close()
 
     job_id = (
-        job.job_id
-        if job
-        else f"generate_results_{study_id}_{int(datetime.now(timezone.utc).timestamp())}"
+        job.job_id if job else f"generate_results_{study_id}_{int(datetime.now(UTC).timestamp())}"
     )
 
     bg_job = BackgroundJob(
@@ -310,10 +311,9 @@ async def enqueue_export(
     db: AsyncSession = Depends(get_db),
 ) -> JobEnqueueResponse:
     """Enqueue a background job to build and store an export archive."""
-    from datetime import timezone
+    from db.models.jobs import BackgroundJob, JobStatus, JobType
 
     from backend.core.config import get_settings
-    from db.models.jobs import BackgroundJob, JobStatus, JobType
 
     await require_study_member(study_id, current_user, db)
 
@@ -334,7 +334,7 @@ async def enqueue_export(
     job_id = (
         job.job_id
         if job
-        else f"export_{study_id}_{body.format}_{int(datetime.now(timezone.utc).timestamp())}"
+        else f"export_{study_id}_{body.format}_{int(datetime.now(UTC).timestamp())}"
     )
 
     bg_job = BackgroundJob(
@@ -400,7 +400,7 @@ async def download_export(
     # Resolve local file path from relative URL — use removeprefix, not lstrip,
     # to avoid stripping individual characters instead of the whole prefix.
     prefix = "/exports/"
-    filename = download_url[len(prefix):] if download_url.startswith(prefix) else download_url
+    filename = download_url[len(prefix) :] if download_url.startswith(prefix) else download_url
     filepath = os.path.join(tempfile.gettempdir(), "sms_exports", filename)
 
     if not os.path.exists(filepath):
@@ -410,7 +410,7 @@ async def download_export(
 
     def _iter_file(path: str):
         with open(path, "rb") as fh:
-            while chunk := fh.read( 65535):
+            while chunk := fh.read(65535):
                 yield chunk
 
     media_type = "application/json" if filepath.endswith(".json") else "application/zip"

@@ -1,5 +1,6 @@
 """GET /me/preferences and PUT /me/preferences/theme endpoints."""
 
+from db.models.users import ThemePreference, User
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 from sqlalchemy import select
@@ -7,7 +8,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.core.auth import CurrentUser, get_current_user
 from backend.core.database import get_db
-from db.models.users import ThemePreference, User
 
 router = APIRouter(tags=["me"])
 
@@ -51,6 +51,7 @@ async def get_preferences(
 
     Raises:
         HTTPException: 404 if the user record no longer exists.
+
     """
     result = await db.execute(select(User).where(User.id == current_user.user_id))
     user = result.scalar_one_or_none()
@@ -86,14 +87,15 @@ async def update_theme(
     Raises:
         HTTPException: 422 if the theme value is not one of the valid options.
         HTTPException: 404 if the user record no longer exists.
+
     """
     try:
         new_pref = ThemePreference(body.theme)
-    except ValueError:
+    except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail="theme must be one of: light, dark, system",
-        )
+        ) from exc
 
     result = await db.execute(select(User).where(User.id == current_user.user_id))
     user = result.scalar_one_or_none()

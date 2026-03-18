@@ -1,5 +1,6 @@
 """POST /me/2fa/* — TOTP enrollment, confirmation, disabling, and backup code endpoints."""
 
+from db.models.users import User
 from fastapi import APIRouter, Depends, Request, status
 from pydantic import BaseModel
 from sqlalchemy import select
@@ -8,7 +9,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.core.auth import CurrentUser, get_current_user
 from backend.core.database import get_db
 from backend.services import totp_service
-from db.models.users import User
 
 router = APIRouter(tags=["me"])
 
@@ -23,6 +23,7 @@ async def _get_user(db: AsyncSession, user_id: int) -> User:
     user = result.scalar_one_or_none()
     if user is None:
         from fastapi import HTTPException
+
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     return user
 
@@ -63,6 +64,7 @@ async def setup_2fa(
 
     Raises:
         HTTPException: 409 if 2FA is already enabled.
+
     """
     user = await _get_user(db, current_user.user_id)
     data = await totp_service.initiate_2fa_setup(db, user)
@@ -109,6 +111,7 @@ async def confirm_2fa(
 
     Raises:
         HTTPException: 409 if already enabled; 422 if code invalid.
+
     """
     user = await _get_user(db, current_user.user_id)
     codes = await totp_service.confirm_2fa_setup(db, user, body.totp_code)
@@ -154,6 +157,7 @@ async def disable_2fa(
 
     Raises:
         HTTPException: 400 if password incorrect; 422 if TOTP code invalid.
+
     """
     user = await _get_user(db, current_user.user_id)
     await totp_service.disable_2fa(db, user, body.password, body.totp_code, _client_ip(request))
@@ -199,6 +203,7 @@ async def regenerate_backup_codes(
 
     Raises:
         HTTPException: 400 if password incorrect; 422 if TOTP code invalid.
+
     """
     user = await _get_user(db, current_user.user_id)
     codes = await totp_service.regenerate_backup_codes(

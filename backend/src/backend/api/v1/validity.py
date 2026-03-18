@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from datetime import UTC
+
 import arq.connections
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
@@ -76,6 +78,7 @@ async def _load_study(study_id: int, db: AsyncSession):
 
     Raises:
         HTTPException: 404 if the study does not exist.
+
     """
     from db.models import Study
 
@@ -94,6 +97,7 @@ def _validity_to_response(study) -> ValidityResponse:
 
     Returns:
         A :class:`ValidityResponse` with the current validity data.
+
     """
     data: dict = study.validity or {}
     return ValidityResponse(**{dim: data.get(dim) for dim in _VALIDITY_DIMS})
@@ -165,10 +169,11 @@ async def generate_validity(
     db: AsyncSession = Depends(get_db),
 ) -> ValidityGenerateResponse:
     """Enqueue a background job that calls ValidityAgent to pre-fill all six dimensions."""
-    from datetime import datetime, timezone
+    from datetime import datetime
+
+    from db.models.jobs import BackgroundJob, JobStatus, JobType
 
     from backend.core.config import get_settings
-    from db.models.jobs import BackgroundJob, JobStatus, JobType
 
     await require_study_member(study_id, current_user, db)
 
@@ -180,9 +185,7 @@ async def generate_validity(
     await redis.close()
 
     job_id = (
-        job.job_id
-        if job
-        else f"validity_prefill_{study_id}_{int(datetime.now(timezone.utc).timestamp())}"
+        job.job_id if job else f"validity_prefill_{study_id}_{int(datetime.now(UTC).timestamp())}"
     )
 
     bg_job = BackgroundJob(

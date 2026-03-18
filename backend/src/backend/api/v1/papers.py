@@ -1,5 +1,8 @@
 """Candidate paper list and detail endpoints."""
 
+from db.models import Paper
+from db.models.audit import AuditAction
+from db.models.candidate import CandidatePaper
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel
 from sqlalchemy import select
@@ -9,9 +12,6 @@ from backend.core.auth import CurrentUser, get_current_user, require_study_membe
 from backend.core.config import get_logger
 from backend.core.database import get_db
 from backend.services import audit as audit_svc
-from db.models import Paper
-from db.models.audit import AuditAction
-from db.models.candidate import CandidatePaper
 
 router = APIRouter(tags=["papers"])
 logger = get_logger(__name__)
@@ -123,7 +123,9 @@ async def get_candidate_paper(
     )
     cp = cp_result.scalar_one_or_none()
     if cp is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Candidate paper not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Candidate paper not found"
+        )
 
     paper_result = await db.execute(select(Paper).where(Paper.id == cp.paper_id))
     paper = paper_result.scalar_one_or_none()
@@ -191,15 +193,11 @@ class ResolveConflictRequest(BaseModel):
 # ---------------------------------------------------------------------------
 
 
-async def _load_candidate(
-    study_id: int, candidate_id: int, db: AsyncSession
-) -> "CandidatePaper":
+async def _load_candidate(study_id: int, candidate_id: int, db: AsyncSession) -> CandidatePaper:
     """Load a CandidatePaper or raise 404."""
     from db.models.candidate import CandidatePaper as CP
 
-    result = await db.execute(
-        select(CP).where(CP.id == candidate_id, CP.study_id == study_id)
-    )
+    result = await db.execute(select(CP).where(CP.id == candidate_id, CP.study_id == study_id))
     cp = result.scalar_one_or_none()
     if cp is None:
         raise HTTPException(
@@ -208,16 +206,12 @@ async def _load_candidate(
     return cp
 
 
-async def _require_reviewer_in_study(
-    reviewer_id: int, study_id: int, db: AsyncSession
-) -> None:
+async def _require_reviewer_in_study(reviewer_id: int, study_id: int, db: AsyncSession) -> None:
     """Verify reviewer belongs to study, raise 422 if not."""
     from db.models.study import Reviewer
 
     result = await db.execute(
-        select(Reviewer).where(
-            Reviewer.id == reviewer_id, Reviewer.study_id == study_id
-        )
+        select(Reviewer).where(Reviewer.id == reviewer_id, Reviewer.study_id == study_id)
     )
     if result.scalar_one_or_none() is None:
         raise HTTPException(
@@ -228,7 +222,7 @@ async def _require_reviewer_in_study(
 
 def _detect_conflict(decisions: list) -> bool:
     """Return True when multiple human reviewers have disagreeing decisions."""
-    from db.models.study import Reviewer, ReviewerType
+    from db.models.study import ReviewerType
 
     human_decisions = [d for d in decisions if d._reviewer_type == ReviewerType.HUMAN]
     if len(human_decisions) < 2:
@@ -273,11 +267,11 @@ async def submit_decision(
 
     try:
         decision_enum = PaperDecisionType(body.decision)
-    except ValueError:
+    except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=f"Invalid decision value: {body.decision!r}",
-        )
+        ) from exc
 
     is_override = body.overrides_decision_id is not None
     pd = PaperDecision(
@@ -301,9 +295,7 @@ async def submit_decision(
         .where(PaperDecision.candidate_paper_id == candidate_id)
     )
     rows = decisions_result.all()
-    human_decisions = [
-        d for d, r in rows if r.reviewer_type == ReviewerType.HUMAN
-    ]
+    human_decisions = [d for d, r in rows if r.reviewer_type == ReviewerType.HUMAN]
     if len(human_decisions) >= 2:
         unique_decisions = {d.decision for d in human_decisions}
         cp.conflict_flag = len(unique_decisions) > 1
@@ -318,8 +310,11 @@ async def submit_decision(
         entity_type="PaperDecision",
         entity_id=pd.id,
         action=AuditAction.CREATE,
-        after_value={"candidate_paper_id": candidate_id, "decision": body.decision,
-                     "reviewer_id": body.reviewer_id},
+        after_value={
+            "candidate_paper_id": candidate_id,
+            "decision": body.decision,
+            "reviewer_id": body.reviewer_id,
+        },
     )
     await db.commit()
 
@@ -374,11 +369,11 @@ async def resolve_conflict(
 
     try:
         decision_enum = PaperDecisionType(body.decision)
-    except ValueError:
+    except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=f"Invalid decision value: {body.decision!r}",
-        )
+        ) from exc
 
     pd = PaperDecision(
         candidate_paper_id=candidate_id,
@@ -401,8 +396,12 @@ async def resolve_conflict(
         entity_type="PaperDecision",
         entity_id=pd.id,
         action=AuditAction.CREATE,
-        after_value={"candidate_paper_id": candidate_id, "decision": body.decision,
-                     "is_override": True, "conflict_resolved": True},
+        after_value={
+            "candidate_paper_id": candidate_id,
+            "decision": body.decision,
+            "is_override": True,
+            "conflict_resolved": True,
+        },
     )
     await db.commit()
 

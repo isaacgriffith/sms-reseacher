@@ -2,6 +2,7 @@
 
 from datetime import UTC, datetime
 
+from db.models.users import GroupMembership, User
 from fastapi import APIRouter, Depends, HTTPException, status
 from jose import JWTError, jwt
 from pydantic import BaseModel, EmailStr
@@ -9,6 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from backend.core import totp as totp_module
 from backend.core.auth import (
     CurrentUser,
     create_access_token,
@@ -18,14 +20,12 @@ from backend.core.auth import (
 )
 from backend.core.config import get_logger, get_settings
 from backend.core.database import get_db
+from backend.core.encryption import decrypt_secret
 from backend.services.totp_service import (
     check_and_enforce_lockout,
     record_failed_attempt,
     verify_backup_code,
 )
-from backend.core import totp as totp_module
-from backend.core.encryption import decrypt_secret
-from db.models.users import GroupMembership, User
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 logger = get_logger(__name__)
@@ -111,6 +111,7 @@ async def login(body: LoginRequest, db: AsyncSession = Depends(get_db)):
     Raises:
         HTTPException: 401 if credentials are invalid.
         HTTPException: 429 if the account is locked.
+
     """
     result = await db.execute(select(User).where(User.email == body.email))
     user = result.scalar_one_or_none()
@@ -162,6 +163,7 @@ async def login_totp(body: TotpLoginRequest, db: AsyncSession = Depends(get_db))
         HTTPException: 401 if the partial token is invalid or expired.
         HTTPException: 422 if the TOTP code and backup code are both invalid.
         HTTPException: 429 if the account is locked.
+
     """
     settings = get_settings()
     try:
@@ -171,12 +173,12 @@ async def login_totp(body: TotpLoginRequest, db: AsyncSession = Depends(get_db))
         if payload.get("stage") != "totp_required":
             raise ValueError("not a partial token")
         user_id = int(payload["sub"])
-    except (JWTError, ValueError, KeyError):
+    except (JWTError, ValueError, KeyError) as exc:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired authentication token",
             headers={"WWW-Authenticate": "Bearer"},
-        )
+        ) from exc
 
     result = await db.execute(select(User).where(User.id == user_id))
     user = result.scalar_one_or_none()
@@ -236,6 +238,7 @@ async def me(
 
     Raises:
         HTTPException: 404 if the user record no longer exists.
+
     """
     result = await db.execute(
         select(User)
@@ -247,8 +250,7 @@ async def me(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
     groups = [
-        GroupSummary(id=m.group.id, name=m.group.name, role=m.role.value)
-        for m in user.memberships
+        GroupSummary(id=m.group.id, name=m.group.name, role=m.role.value) for m in user.memberships
     ]
     return MeResponse(
         id=user.id,

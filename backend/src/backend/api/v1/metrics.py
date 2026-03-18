@@ -1,6 +1,7 @@
 """Search metrics aggregation endpoint."""
 
-from fastapi import APIRouter, Depends, status
+from db.models.search_exec import SearchExecution, SearchMetrics
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -8,7 +9,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.core.auth import CurrentUser, get_current_user, require_study_member
 from backend.core.config import get_logger
 from backend.core.database import get_db
-from db.models.search_exec import SearchExecution, SearchMetrics
 
 router = APIRouter(tags=["metrics"])
 logger = get_logger(__name__)

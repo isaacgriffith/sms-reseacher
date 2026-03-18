@@ -44,6 +44,7 @@ async def scrape_journal(
     Returns:
         Dict with ``papers`` (list of minimal paper dicts), ``source_url``,
         ``total``, and ``warnings``.
+
     """
     client = _get_client()
     warnings: list[str] = []
@@ -74,14 +75,16 @@ async def scrape_journal(
                 continue
             seen_hrefs.add(full_url)
 
-            papers.append({
-                "title": text[:512],
-                "source_url": full_url,
-                "doi": None,
-                "year": None,
-                "authors": [],
-                "venue": journal_url,
-            })
+            papers.append(
+                {
+                    "title": text[:512],
+                    "source_url": full_url,
+                    "doi": None,
+                    "year": None,
+                    "authors": [],
+                    "venue": journal_url,
+                }
+            )
 
             if len(papers) >= max_results:
                 break
@@ -116,6 +119,7 @@ async def scrape_author_page(
     Returns:
         Dict with ``papers`` (list of minimal paper dicts), ``source_url``,
         ``total``, and ``warnings``.
+
     """
     client = _get_client()
     warnings: list[str] = []
@@ -123,9 +127,7 @@ async def scrape_author_page(
 
     try:
         headers = {"User-Agent": "SMS-Researcher/1.0 (academic research tool)"}
-        resp = await client.get(
-            profile_url, headers=headers, timeout=30.0, follow_redirects=True
-        )
+        resp = await client.get(profile_url, headers=headers, timeout=30.0, follow_redirects=True)
         resp.raise_for_status()
 
         soup = BeautifulSoup(resp.text, "html.parser")
@@ -146,14 +148,16 @@ async def scrape_author_page(
                 continue
             seen_hrefs.add(full_url)
 
-            papers.append({
-                "title": text[:512],
-                "source_url": full_url,
-                "doi": None,
-                "year": None,
-                "authors": [],
-                "venue": None,
-            })
+            papers.append(
+                {
+                    "title": text[:512],
+                    "source_url": full_url,
+                    "doi": None,
+                    "year": None,
+                    "authors": [],
+                    "venue": None,
+                }
+            )
 
             if len(papers) >= max_results:
                 break

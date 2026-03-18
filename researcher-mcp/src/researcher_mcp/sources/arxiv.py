@@ -19,6 +19,7 @@ class ArxivSource:
 
         Args:
             client: Shared :class:`httpx.AsyncClient`.
+
         """
         self._client = client
         self._crossref = CrossRefSource(client)
@@ -48,10 +49,11 @@ class ArxivSource:
         Returns:
             A dict with ``success``, ``output_path``, ``source``, ``url``,
             and ``warnings`` keys.
+
         """
         try:
             metadata = await self._crossref.resolve_doi(doi)
-        except (httpx.HTTPStatusError, httpx.TransportError):
+        except httpx.HTTPStatusError, httpx.TransportError:
             return {
                 "success": False,
                 "output_path": None,
@@ -72,6 +74,7 @@ class ArxivSource:
 
         pdf_url = f"https://arxiv.org/pdf/{arxiv_id}"
         try:
+
             async def _download() -> bytes:
                 r = await self._client.get(pdf_url, follow_redirects=True)
                 r.raise_for_status()
@@ -88,7 +91,7 @@ class ArxivSource:
                 "url": pdf_url,
                 "warnings": [],
             }
-        except (httpx.HTTPStatusError, httpx.TransportError):
+        except httpx.HTTPStatusError, httpx.TransportError:
             return {
                 "success": False,
                 "output_path": None,

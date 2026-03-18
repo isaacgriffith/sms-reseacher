@@ -1,9 +1,18 @@
 """Search string and iteration models."""
 
-import enum
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, SmallInteger, String, Text, func
+from sqlalchemy import (
+    Boolean,
+    DateTime,
+    Float,
+    ForeignKey,
+    Integer,
+    SmallInteger,
+    String,
+    Text,
+    func,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from db.base import Base
@@ -18,7 +27,9 @@ class SearchString(Base):
     __tablename__ = "search_string"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    study_id: Mapped[int] = mapped_column(ForeignKey("study.id", ondelete="CASCADE"), nullable=False)
+    study_id: Mapped[int] = mapped_column(
+        ForeignKey("study.id", ondelete="CASCADE"), nullable=False
+    )
     version: Mapped[int] = mapped_column(SmallInteger, default=1, nullable=False)
     string_text: Mapped[str] = mapped_column(Text, nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)

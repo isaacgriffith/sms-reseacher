@@ -78,11 +78,15 @@ class Study(Base):
     # Phase 2 extensions
     topic: Mapped[str | None] = mapped_column(Text, nullable=True)
     motivation: Mapped[str | None] = mapped_column(Text, nullable=True)
-    current_phase: Mapped[int] = mapped_column(SmallInteger, nullable=False, default=1, server_default="1")
+    current_phase: Mapped[int] = mapped_column(
+        SmallInteger, nullable=False, default=1, server_default="1"
+    )
     research_group_id: Mapped[int | None] = mapped_column(
         Integer, ForeignKey("research_group.id", ondelete="SET NULL"), nullable=True, index=True
     )
-    snowball_threshold: Mapped[int] = mapped_column(SmallInteger, nullable=False, default=5, server_default="5")
+    snowball_threshold: Mapped[int] = mapped_column(
+        SmallInteger, nullable=False, default=5, server_default="5"
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
@@ -93,7 +97,7 @@ class Study(Base):
         onupdate=func.now(),
     )
 
-    study_papers: Mapped[list["StudyPaper"]] = relationship(
+    study_papers: Mapped[list[StudyPaper]] = relationship(
         "StudyPaper", back_populates="study", cascade="all, delete-orphan"
     )
 
@@ -119,12 +123,14 @@ class Paper(Base):
     year: Mapped[int | None] = mapped_column(SmallInteger, nullable=True)
     venue: Mapped[str | None] = mapped_column(String(512), nullable=True)
     source_url: Mapped[str | None] = mapped_column(Text, nullable=True)
-    full_text_available: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default="0")
+    full_text_available: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default="0"
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
 
-    study_papers: Mapped[list["StudyPaper"]] = relationship(
+    study_papers: Mapped[list[StudyPaper]] = relationship(
         "StudyPaper", back_populates="paper", cascade="all, delete-orphan"
     )
 
@@ -151,8 +157,8 @@ class StudyPaper(Base):
         default=InclusionStatus.PENDING,
     )
 
-    study: Mapped["Study"] = relationship("Study", back_populates="study_papers")
-    paper: Mapped["Paper"] = relationship("Paper", back_populates="study_papers")
+    study: Mapped[Study] = relationship("Study", back_populates="study_papers")
+    paper: Mapped[Paper] = relationship("Paper", back_populates="study_papers")
 
     def __repr__(self) -> str:
         """Return a debug representation."""

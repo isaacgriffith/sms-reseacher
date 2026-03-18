@@ -19,6 +19,7 @@ class CrossRefSource:
 
         Args:
             client: Shared :class:`httpx.AsyncClient`.
+
         """
         self._client = client
 
@@ -31,6 +32,7 @@ class CrossRefSource:
         Returns:
             A dict matching the shared paper schema with
             ``source="crossref"``.
+
         """
         url = f"{_BASE}/works/{doi}"
 

@@ -15,7 +15,6 @@ Example::
 """
 
 import base64
-import os
 
 from cryptography.fernet import Fernet, InvalidToken
 from cryptography.hazmat.primitives import hashes
@@ -36,6 +35,7 @@ def _derive_fernet_key(secret_key: str) -> bytes:
 
     Returns:
         A URL-safe base64-encoded 32-byte key suitable for :class:`Fernet`.
+
     """
     kdf = PBKDF2HMAC(
         algorithm=hashes.SHA256(),
@@ -60,6 +60,7 @@ def encrypt_secret(plaintext: str, secret_key: str) -> bytes:
     Returns:
         Fernet-encrypted ciphertext as raw bytes suitable for storing in a
         ``LargeBinary`` database column.
+
     """
     key = _derive_fernet_key(secret_key)
     f = Fernet(key)
@@ -81,6 +82,7 @@ def decrypt_secret(ciphertext: bytes, secret_key: str) -> str:
     Raises:
         InvalidToken: If the ciphertext was tampered with, is malformed,
             or was encrypted with a different key.
+
     """
     key = _derive_fernet_key(secret_key)
     f = Fernet(key)

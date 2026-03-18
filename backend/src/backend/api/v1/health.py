@@ -29,6 +29,7 @@ async def health(
     Returns:
         A :class:`HealthResponse` with ``status="ok"`` and the
         current application version.
+
     """
     settings = get_settings()
     logger.debug("health_check_called")

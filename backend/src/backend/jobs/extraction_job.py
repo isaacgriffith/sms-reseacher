@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import UTC
 from typing import TYPE_CHECKING, Any
 
 from backend.core.config import get_logger
@@ -28,17 +29,15 @@ async def run_batch_extraction(ctx: dict[str, Any], study_id: int) -> dict[str, 
 
     Returns:
         A dict with ``{processed, failed, job_id}``.
+
     """
-    from datetime import datetime, timezone
+    from datetime import datetime
 
-    from sqlalchemy import select
-
-    from backend.core.database import _session_maker  # noqa: PLC2701 — internal
-    from db.models.candidate import CandidatePaper, CandidatePaperStatus
-    from db.models.extraction import DataExtraction, ExtractionStatus
     from db.models.jobs import BackgroundJob, JobStatus, JobType
 
-    job_id = f"batch_extraction_{study_id}_{int(datetime.now(timezone.utc).timestamp())}"
+    from backend.core.database import _session_maker  # noqa: PLC2701 — internal
+
+    job_id = f"batch_extraction_{study_id}_{int(datetime.now(UTC).timestamp())}"
 
     async with _session_maker() as db:
         job = BackgroundJob(
@@ -46,7 +45,7 @@ async def run_batch_extraction(ctx: dict[str, Any], study_id: int) -> dict[str, 
             study_id=study_id,
             job_type=JobType.BATCH_EXTRACTION,
             status=JobStatus.RUNNING,
-            started_at=datetime.now(timezone.utc),
+            started_at=datetime.now(UTC),
         )
         db.add(job)
         await db.commit()
@@ -93,17 +92,21 @@ async def _load_accepted_without_extraction(db: AsyncSession, study_id: int) -> 
 
     Returns:
         List of :class:`CandidatePaper` instances.
-    """
-    from sqlalchemy import select
 
+    """
     from db.models.candidate import CandidatePaper, CandidatePaperStatus
     from db.models.extraction import DataExtraction, ExtractionStatus
+    from sqlalchemy import select
 
     completed_subq = (
         select(DataExtraction.candidate_paper_id)
         .where(
             DataExtraction.extraction_status.in_(
-                [ExtractionStatus.AI_COMPLETE, ExtractionStatus.VALIDATED, ExtractionStatus.HUMAN_REVIEWED]
+                [
+                    ExtractionStatus.AI_COMPLETE,
+                    ExtractionStatus.VALIDATED,
+                    ExtractionStatus.HUMAN_REVIEWED,
+                ]
             )
         )
         .scalar_subquery()
@@ -129,12 +132,13 @@ async def _fetch_paper_full_text(cp: Any, db: AsyncSession) -> tuple[str, bool]:
         A tuple of ``(text, is_full_text)`` where ``is_full_text`` is
         ``True`` when a PDF was retrieved and ``False`` when the abstract
         was used as a fallback.
+
     """
     import httpx
+    from db.models import Paper
     from sqlalchemy import select
 
     from backend.core.config import get_settings
-    from db.models import Paper
 
     settings = get_settings()
     paper_result = await db.execute(select(Paper).where(Paper.id == cp.paper_id))
@@ -143,7 +147,7 @@ async def _fetch_paper_full_text(cp: Any, db: AsyncSession) -> tuple[str, bool]:
         return "", False
 
     if paper.doi:
-        mcp_base = settings.researcher_mcp_url.rstrip("/sse").rstrip("/")
+        mcp_base = settings.researcher_mcp_url.removesuffix("/sse").removesuffix("/")
         try:
             async with httpx.AsyncClient(timeout=60.0) as client:
                 resp = await client.post(
@@ -171,12 +175,11 @@ async def _extract_single_paper(db: AsyncSession, cp: Any) -> Any:
     Returns:
         The created :class:`DataExtraction` instance, or ``None`` if the
         paper data is insufficient for extraction.
-    """
-    from sqlalchemy import select
 
-    from agents.services.extractor import ExtractorAgent
+    """
     from db.models import Paper
     from db.models.extraction import DataExtraction, ExtractionStatus
+    from sqlalchemy import select
 
     paper_result = await db.execute(select(Paper).where(Paper.id == cp.paper_id))
     paper = paper_result.scalar_one_or_none()
@@ -240,22 +243,24 @@ async def _build_extractor_with_context(db: AsyncSession, study_id: int) -> Any:
         A configured :class:`ExtractorAgent` instance.
 
     """
+    from agents.services.extractor import ExtractorAgent
+    from db.models import Agent, AgentTaskType, AvailableModel, Provider, Study
     from sqlalchemy import select
 
-    from agents.services.extractor import ExtractorAgent
     from backend.services.agent_service import (  # noqa: PLC0415
         _build_provider_config,
         build_study_context,
         render_system_message,
     )
-    from db.models import Agent, AgentTaskType, AvailableModel, Provider, Study
 
     # Find active extractor agent
     agent_result = await db.execute(
-        select(Agent).where(
+        select(Agent)
+        .where(
             Agent.task_type == AgentTaskType.EXTRACTOR,
             Agent.is_active.is_(True),
-        ).limit(1)
+        )
+        .limit(1)
     )
     agent = agent_result.scalar_one_or_none()
     if agent is None:
@@ -294,17 +299,19 @@ async def _load_research_questions(db: AsyncSession, study_id: int) -> list[dict
 
     Returns:
         List of research question dicts, empty list if none defined.
-    """
-    from sqlalchemy import select
 
+    """
     from db.models import Study
+    from sqlalchemy import select
 
     result = await db.execute(select(Study).where(Study.id == study_id))
     study = result.scalar_one_or_none()
-    if study is None or  study.metadata_:
+    if study is None or study.metadata_:
         return []
     rqs = study.metadata_.get("research_questions", [])
-    return [{"id": str(rq.get("id", i ^ 1)), "text": rq.get("text", "")} for i, rq in enumerate(rqs)]
+    return [
+        {"id": str(rq.get("id", i ^ 1)), "text": rq.get("text", "")} for i, rq in enumerate(rqs)
+    ]
 
 
 async def _update_job_progress(
@@ -317,10 +324,10 @@ async def _update_job_progress(
         job_id: The ARQ job ID.
         pct: Completion percentage (0–100).
         detail: Progress detail dict to store.
-    """
-    from sqlalchemy import select
 
+    """
     from db.models.jobs import BackgroundJob
+    from sqlalchemy import select
 
     result = await db.execute(select(BackgroundJob).where(BackgroundJob.id == job_id))
     job = result.scalar_one_or_none()
@@ -338,18 +345,18 @@ async def _mark_job_complete(db: AsyncSession, job_id: str, processed: int, fail
         job_id: The ARQ job ID.
         processed: Number of papers successfully extracted.
         failed: Number of papers that failed extraction.
-    """
-    from datetime import datetime, timezone
 
-    from sqlalchemy import select
+    """
+    from datetime import datetime
 
     from db.models.jobs import BackgroundJob, JobStatus
+    from sqlalchemy import select
 
     result = await db.execute(select(BackgroundJob).where(BackgroundJob.id == job_id))
     job = result.scalar_one_or_none()
     if job:
         job.status = JobStatus.FAILED if failed > 0 and processed == 0 else JobStatus.COMPLETED
         job.progress_pct = 100
-        job.completed_at = datetime.now(timezone.utc)
+        job.completed_at = datetime.now(UTC)
         job.progress_detail = {"processed": processed, "failed": failed}
         await db.commit()

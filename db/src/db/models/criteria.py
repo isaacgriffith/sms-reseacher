@@ -17,7 +17,9 @@ class InclusionCriterion(Base):
     __tablename__ = "inclusion_criterion"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    study_id: Mapped[int] = mapped_column(ForeignKey("study.id", ondelete="CASCADE"), nullable=False)
+    study_id: Mapped[int] = mapped_column(
+        ForeignKey("study.id", ondelete="CASCADE"), nullable=False
+    )
     description: Mapped[str] = mapped_column(Text, nullable=False)
     order_index: Mapped[int] = mapped_column(SmallInteger, default=0, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
@@ -40,7 +42,9 @@ class ExclusionCriterion(Base):
     __tablename__ = "exclusion_criterion"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    study_id: Mapped[int] = mapped_column(ForeignKey("study.id", ondelete="CASCADE"), nullable=False)
+    study_id: Mapped[int] = mapped_column(
+        ForeignKey("study.id", ondelete="CASCADE"), nullable=False
+    )
     description: Mapped[str] = mapped_column(Text, nullable=False)
     order_index: Mapped[int] = mapped_column(SmallInteger, default=0, nullable=False)
     created_at: Mapped[datetime] = mapped_column(

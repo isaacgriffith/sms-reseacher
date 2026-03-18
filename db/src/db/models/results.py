@@ -3,7 +3,7 @@
 import enum
 from datetime import datetime
 
-from sqlalchemy import DateTime, Enum, ForeignKey, Integer, JSON, SmallInteger, Text, func
+from sqlalchemy import JSON, DateTime, Enum, ForeignKey, Integer, SmallInteger, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from db.base import Base
@@ -53,9 +53,7 @@ class DomainModel(Base):
 
     def __repr__(self) -> str:
         """Return a debug representation."""
-        return (
-            f"<DomainModel id={self.id} study_id={self.study_id} version={self.version}>"
-        )
+        return f"<DomainModel id={self.id} study_id={self.study_id} version={self.version}>"
 
 
 class ClassificationScheme(Base):

@@ -14,10 +14,9 @@ Staleness rules (FR-008a):
 
 from typing import TYPE_CHECKING
 
+from db.models.pico import PICOComponent
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from db.models.pico import PICOComponent
 
 if TYPE_CHECKING:
     from db.models import Study
@@ -35,13 +34,12 @@ async def get_unlocked_phases(study_id: int, db: AsyncSession) -> list[int]:
 
     Returns:
         A list of unlocked phase numbers (e.g. ``[1, 2]``).
+
     """
     unlocked = [1]
 
     # Phase 2: PICO saved
-    pico_result = await db.execute(
-        select(PICOComponent).where(PICOComponent.study_id == study_id)
-    )
+    pico_result = await db.execute(select(PICOComponent).where(PICOComponent.study_id == study_id))
     pico = pico_result.scalar_one_or_none()
     if pico is not None:
         unlocked.append(2)
@@ -51,7 +49,10 @@ async def get_unlocked_phases(study_id: int, db: AsyncSession) -> list[int]:
     # Phase 3: at least one completed SearchExecution
     # Import here to avoid circular imports at module level
     try:
-        from db.models.search_exec import SearchExecution, SearchExecutionStatus  # type: ignore[import]
+        from db.models.search_exec import (  # type: ignore[import]
+            SearchExecution,
+            SearchExecutionStatus,
+        )
 
         search_result = await db.execute(
             select(SearchExecution).where(
@@ -71,8 +72,7 @@ async def get_unlocked_phases(study_id: int, db: AsyncSession) -> list[int]:
         from db.models.extraction import DataExtraction, ExtractionStatus  # type: ignore[import]
 
         extraction_result = await db.execute(
-            select(DataExtraction)
-            .where(
+            select(DataExtraction).where(
                 DataExtraction.extraction_status != ExtractionStatus.PENDING,
             )
         )
@@ -84,7 +84,7 @@ async def get_unlocked_phases(study_id: int, db: AsyncSession) -> list[int]:
     return unlocked
 
 
-def compute_staleness_flags(study: "Study") -> dict[str, bool]:
+def compute_staleness_flags(study: Study) -> dict[str, bool]:
     """Return a mapping of phase labels to staleness booleans.
 
     A downstream phase is stale when an upstream edit post-dates its last
@@ -101,6 +101,7 @@ def compute_staleness_flags(study: "Study") -> dict[str, bool]:
 
     Returns:
         Dict with keys ``"search"`` and ``"extraction"`` mapping to ``bool``.
+
     """
     search_stale = bool(
         study.pico_saved_at is not None
@@ -124,6 +125,7 @@ async def compute_current_phase(study_id: int, db: AsyncSession) -> int:
 
     Returns:
         The current phase number (1–5).
+
     """
     unlocked = await get_unlocked_phases(study_id, db)
     return max(unlocked)

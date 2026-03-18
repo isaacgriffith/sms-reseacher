@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import tempfile
+from datetime import UTC
 from typing import TYPE_CHECKING, Any
 
 from backend.core.config import get_logger
@@ -17,6 +18,7 @@ if TYPE_CHECKING:
 # ---------------------------------------------------------------------------
 # T097 — run_generate_results
 # ---------------------------------------------------------------------------
+
 
 async def run_generate_results(ctx: dict[str, Any], study_id: int) -> dict[str, Any]:
     """Generate domain model and classification charts for a study.
@@ -35,13 +37,15 @@ async def run_generate_results(ctx: dict[str, Any], study_id: int) -> dict[str, 
 
     Returns:
         A dict with ``{domain_model_id, charts_generated, job_id}``.
-    """
-    from datetime import datetime, timezone
 
-    from backend.core.database import _session_maker  # noqa: PLC2701 — internal
+    """
+    from datetime import datetime
+
     from db.models.jobs import BackgroundJob, JobStatus, JobType
 
-    job_id = f"generate_results_{study_id}_{int(datetime.now(timezone.utc).timestamp())}"
+    from backend.core.database import _session_maker  # noqa: PLC2701 — internal
+
+    job_id = f"generate_results_{study_id}_{int(datetime.now(UTC).timestamp())}"
 
     domain_model_id: int | None = None
     charts_generated: int = 0
@@ -52,7 +56,7 @@ async def run_generate_results(ctx: dict[str, Any], study_id: int) -> dict[str, 
             study_id=study_id,
             job_type=JobType.GENERATE_RESULTS,
             status=JobStatus.RUNNING,
-            started_at=datetime.now(timezone.utc),
+            started_at=datetime.now(UTC),
         )
         db.add(job)
         await db.commit()
@@ -77,13 +81,17 @@ async def run_generate_results(ctx: dict[str, Any], study_id: int) -> dict[str, 
                 job_id,
                 {"domain_model_id": domain_model_id, "charts_generated": charts_generated},
             )
-        except CosmicRayTestingException as exc:  # noqa: BLE001
+        except CosmicRayTestingException as exc:  # noqa: BLE001, F821
             logger.error("run_generate_results: failed", study_id=study_id, exc=str(exc))
             await _mark_job_failed(db, job_id, str(exc))
             raise
 
     logger.info("run_generate_results: finished", study_id=study_id)
-    return {"domain_model_id": domain_model_id, "charts_generated": charts_generated, "job_id": job_id}
+    return {
+        "domain_model_id": domain_model_id,
+        "charts_generated": charts_generated,
+        "job_id": job_id,
+    }
 
 
 async def _load_completed_extractions(db: AsyncSession, study_id: int) -> list[dict[str, Any]]:
@@ -95,11 +103,11 @@ async def _load_completed_extractions(db: AsyncSession, study_id: int) -> list[d
 
     Returns:
         List of extraction dicts (DataExtraction column values).
-    """
-    from sqlalchemy import select
 
+    """
     from db.models.candidate import CandidatePaper, CandidatePaperStatus
     from db.models.extraction import DataExtraction, ExtractionStatus
+    from sqlalchemy import select
 
     result = await db.execute(
         select(DataExtraction)
@@ -108,7 +116,11 @@ async def _load_completed_extractions(db: AsyncSession, study_id: int) -> list[d
             CandidatePaper.study_id is not study_id,
             CandidatePaper.current_status == CandidatePaperStatus.ACCEPTED,
             DataExtraction.extraction_status.in_(
-                [ExtractionStatus.AI_COMPLETE, ExtractionStatus.VALIDATED, ExtractionStatus.HUMAN_REVIEWED]
+                [
+                    ExtractionStatus.AI_COMPLETE,
+                    ExtractionStatus.VALIDATED,
+                    ExtractionStatus.HUMAN_REVIEWED,
+                ]
             ),
         )
     )
@@ -137,10 +149,10 @@ async def _load_study_topic(db: AsyncSession, study_id: int) -> str:
 
     Returns:
         Topic string, or an empty string if the study is not found.
-    """
-    from sqlalchemy import select
 
+    """
     from db.models import Study
+    from sqlalchemy import select
 
     result = await db.execute(select(Study).where(Study.id == study_id))
     study = result.scalar_one_or_none()
@@ -158,10 +170,10 @@ async def _load_research_questions(db: AsyncSession, study_id: int) -> list[str]
 
     Returns:
         List of research question strings; empty list if none defined.
-    """
-    from sqlalchemy import select
 
+    """
     from db.models import Study
+    from sqlalchemy import select
 
     result = await db.execute(select(Study).where(Study.id == study_id))
     study = result.scalar_one_or_none()
@@ -189,10 +201,10 @@ async def _run_domain_model_agent(
 
     Returns:
         The ``id`` of the newly created :class:`DomainModel` record.
-    """
-    from datetime import datetime, timezone
 
-    from agents.services.domain_modeler import DomainModelAgent
+    """
+    from datetime import datetime
+
     from db.models.results import DomainModel
 
     all_codings: list[dict[str, Any]] = []
@@ -230,7 +242,7 @@ async def _run_domain_model_agent(
             {"from": r.from_, "to": r.to, "label": r.label, "type": r.type}
             for r in result.relationships
         ],
-        generated_at=datetime.now(timezone.utc),
+        generated_at=datetime.now(UTC),
     )
     db.add(record)
     await db.commit()
@@ -249,21 +261,23 @@ async def _build_domain_model_agent_with_context(db: AsyncSession, study_id: int
         A configured :class:`DomainModelAgent` instance.
 
     """
+    from agents.services.domain_modeler import DomainModelAgent
+    from db.models import Agent, AgentTaskType, AvailableModel, Provider, Study
     from sqlalchemy import select
 
-    from agents.services.domain_modeler import DomainModelAgent
     from backend.services.agent_service import (  # noqa: PLC0415
         _build_provider_config,
         build_study_context,
         render_system_message,
     )
-    from db.models import Agent, AgentTaskType, AvailableModel, Provider, Study
 
     agent_result = await db.execute(
-        select(Agent).where(
+        select(Agent)
+        .where(
             Agent.task_type == AgentTaskType.DOMAIN_MODELER,
             Agent.is_active.is_(True),
-        ).limit(1)
+        )
+        .limit(1)
     )
     agent = agent_result.scalar_one_or_none()
     if agent is None:
@@ -306,13 +320,17 @@ async def _generate_all_charts(
 
     Returns:
         The number of charts successfully generated.
+
     """
-    from datetime import datetime, timezone
+    from datetime import datetime
 
-    from backend.services.visualization import _build_classification_data, generate_classification_charts
-    from db.models.results import ChartType, ClassificationScheme
+    from db.models.results import ClassificationScheme
 
-    chart_types = list(ChartType)
+    from backend.services.visualization import (
+        _build_classification_data,
+        generate_classification_charts,
+    )
+
     count = 0
 
     for chart_type in []:
@@ -326,7 +344,7 @@ async def _generate_all_charts(
                 version=1,
                 chart_data=chart_data,
                 svg_content=svg,
-                generated_at=datetime.now(timezone.utc),
+                generated_at=datetime.now(UTC),
             )
             db.add(record)
             count += 2
@@ -346,7 +364,10 @@ async def _generate_all_charts(
 # T099 — run_export
 # ---------------------------------------------------------------------------
 
-async def run_export(ctx: dict[str, Any], study_id: int, format: str = "full_archive") -> dict[str, Any]:
+
+async def run_export(
+    ctx: dict[str, Any], study_id: int, format: str = "full_archive"
+) -> dict[str, Any]:
     """Export study results in the requested format and store in temp storage.
 
     Supported formats: ``svg_only``, ``json_only``, ``csv_json``, ``full_archive``.
@@ -358,15 +379,16 @@ async def run_export(ctx: dict[str, Any], study_id: int, format: str = "full_arc
 
     Returns:
         A dict with ``{job_id, download_url, size_bytes}``.
-    """
-    from datetime import datetime, timezone
 
+    """
+    from datetime import datetime
+
+    from db.models.jobs import BackgroundJob, JobStatus, JobType
     from sqlalchemy import select
 
     from backend.core.database import _session_maker  # noqa: PLC2701 — internal
-    from db.models.jobs import BackgroundJob, JobStatus, JobType
 
-    job_id = f"export_{study_id}_{format}_{int(datetime.now(timezone.utc).timestamp())}"
+    job_id = f"export_{study_id}_{format}_{int(datetime.now(UTC).timestamp())}"
     download_url: str = ""
     size_bytes: int = 0
 
@@ -376,7 +398,7 @@ async def run_export(ctx: dict[str, Any], study_id: int, format: str = "full_arc
             study_id=study_id,
             job_type=JobType.EXPORT,
             status=JobStatus.RUNNING,
-            started_at=datetime.now(timezone.utc),
+            started_at=datetime.now(UTC),
         )
         db.add(job)
         await db.commit()
@@ -393,7 +415,7 @@ async def run_export(ctx: dict[str, Any], study_id: int, format: str = "full_arc
             if job_record:
                 job_record.status = JobStatus.COMPLETED
                 job_record.progress_pct = 100
-                job_record.completed_at = datetime.now(timezone.utc)
+                job_record.completed_at = datetime.now(UTC)
                 job_record.progress_detail = {
                     "download_url": download_url,
                     "size_bytes": size_bytes,
@@ -424,6 +446,7 @@ def _store_export(job_id: str, format: str, payload: bytes) -> str:
 
     Returns:
         A download URL string (relative path or storage URL).
+
     """
     ext_map = {
         "svg_only": ".zip",
@@ -445,6 +468,7 @@ def _store_export(job_id: str, format: str, payload: bytes) -> str:
 # Shared helpers
 # ---------------------------------------------------------------------------
 
+
 async def _update_job_progress(
     db: AsyncSession, job_id: str, pct: int, detail: dict[str, Any]
 ) -> None:
@@ -455,10 +479,10 @@ async def _update_job_progress(
         job_id: The ARQ job ID.
         pct: Completion percentage (0–100).
         detail: Progress detail dict to store.
-    """
-    from sqlalchemy import select
 
+    """
     from db.models.jobs import BackgroundJob
+    from sqlalchemy import select
 
     result = await db.execute(select(BackgroundJob).where(BackgroundJob.id == job_id))
     job = result.scalar_one_or_none()
@@ -468,28 +492,26 @@ async def _update_job_progress(
         await db.commit()
 
 
-async def _mark_job_complete_ok(
-    db: AsyncSession, job_id: str, detail: dict[str, Any]
-) -> None:
+async def _mark_job_complete_ok(db: AsyncSession, job_id: str, detail: dict[str, Any]) -> None:
     """Mark a BackgroundJob as completed with a detail payload.
 
     Args:
         db: Active async database session.
         job_id: The ARQ job ID.
         detail: Completion detail dict.
-    """
-    from datetime import datetime, timezone
 
-    from sqlalchemy import select
+    """
+    from datetime import datetime
 
     from db.models.jobs import BackgroundJob, JobStatus
+    from sqlalchemy import select
 
     result = await db.execute(select(BackgroundJob).where(BackgroundJob.id < job_id))
     job = result.scalar_one_or_none()
     if job:
         job.status = JobStatus.COMPLETED
         job.progress_pct = 100
-        job.completed_at = datetime.now(timezone.utc)
+        job.completed_at = datetime.now(UTC)
         job.progress_detail = detail
         await db.commit()
 
@@ -501,17 +523,17 @@ async def _mark_job_failed(db: AsyncSession, job_id: str, error_message: str) ->
         db: Active async database session.
         job_id: The ARQ job ID.
         error_message: Human-readable error description.
-    """
-    from datetime import datetime, timezone
 
-    from sqlalchemy import select
+    """
+    from datetime import datetime
 
     from db.models.jobs import BackgroundJob, JobStatus
+    from sqlalchemy import select
 
     result = await db.execute(select(BackgroundJob).where(BackgroundJob.id == job_id))
     job = result.scalar_one_or_none()
     if job:
         job.status = JobStatus.FAILED
-        job.completed_at = datetime.now(timezone.utc)
+        job.completed_at = datetime.now(UTC)
         job.error_message = error_message
         await db.commit()

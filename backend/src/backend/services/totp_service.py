@@ -10,18 +10,18 @@ from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 
 import bcrypt
+from db.models.backup_codes import BackupCode
+from db.models.security_audit import SecurityEventType
+from db.models.users import User
 from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from backend.core import totp as totp_module
 from backend.core.auth import verify_password
 from backend.core.config import get_logger, get_settings
 from backend.core.encryption import decrypt_secret, encrypt_secret
-from backend.core import totp as totp_module
 from backend.services.audit_service import create_security_audit_event
-from db.models.backup_codes import BackupCode
-from db.models.security_audit import SecurityEventType
-from db.models.users import User
 
 logger = get_logger(__name__)
 
@@ -83,6 +83,7 @@ async def check_and_enforce_lockout(db: AsyncSession, user: User) -> None:
 
     Raises:
         HTTPException: 429 with lockout expiry in the detail if locked.
+
     """
     locked_until = user.totp_locked_until
     if locked_until is not None:
@@ -102,11 +103,14 @@ async def record_failed_attempt(db: AsyncSession, user: User) -> None:
     Args:
         db: Active async database session.
         user: The User ORM object to update.
+
     """
     settings = get_settings()
     user.totp_failed_attempts = (user.totp_failed_attempts or 0) + 1
     if user.totp_failed_attempts >= settings.totp_lockout_attempts:
-        user.totp_locked_until = datetime.now(UTC) + timedelta(minutes=settings.totp_lockout_minutes)
+        user.totp_locked_until = datetime.now(UTC) + timedelta(
+            minutes=settings.totp_lockout_minutes
+        )
         await create_security_audit_event(
             db=db,
             user_id=user.id,
@@ -136,6 +140,7 @@ async def initiate_2fa_setup(db: AsyncSession, user: User) -> TOTPSetupData:
 
     Raises:
         HTTPException: 409 if 2FA is already enabled on this account.
+
     """
     if user.totp_enabled:
         raise HTTPException(
@@ -158,9 +163,7 @@ async def initiate_2fa_setup(db: AsyncSession, user: User) -> TOTPSetupData:
     )
 
 
-async def confirm_2fa_setup(
-    db: AsyncSession, user: User, totp_code: str
-) -> list[str]:
+async def confirm_2fa_setup(db: AsyncSession, user: User, totp_code: str) -> list[str]:
     """Confirm 2FA enrollment with a valid TOTP code and return backup codes.
 
     Activates 2FA, generates 10 single-use backup codes, and logs an audit event.
@@ -176,6 +179,7 @@ async def confirm_2fa_setup(
     Raises:
         HTTPException: 409 if 2FA is already enabled.
         HTTPException: 422 if the TOTP code is invalid or no pending setup exists.
+
     """
     if user.totp_enabled:
         raise HTTPException(
@@ -237,6 +241,7 @@ async def disable_2fa(
     Raises:
         HTTPException: 400 if the password is incorrect.
         HTTPException: 422 if the TOTP code is invalid.
+
     """
     if not verify_password(password, user.hashed_password):
         raise HTTPException(
@@ -268,7 +273,9 @@ async def disable_2fa(
         await db.delete(code)
 
     await create_security_audit_event(
-        db=db, user_id=user.id, event_type=SecurityEventType.TOTP_DISABLED,
+        db=db,
+        user_id=user.id,
+        event_type=SecurityEventType.TOTP_DISABLED,
         ip_address=ip_address,
     )
     await db.commit()
@@ -304,6 +311,7 @@ async def regenerate_backup_codes(
     Raises:
         HTTPException: 400 if password is incorrect.
         HTTPException: 422 if TOTP code is invalid or 2FA not enabled.
+
     """
     if not verify_password(password, user.hashed_password):
         raise HTTPException(
@@ -335,7 +343,8 @@ async def regenerate_backup_codes(
         db.add(BackupCode(user_id=user.id, hashed_code=_hash_backup_code(plain)))
 
     await create_security_audit_event(
-        db=db, user_id=user.id,
+        db=db,
+        user_id=user.id,
         event_type=SecurityEventType.BACKUP_CODES_REGENERATED,
         ip_address=ip_address,
     )
@@ -356,6 +365,7 @@ async def verify_backup_code(db: AsyncSession, user_id: int, code: str) -> bool:
 
     Returns:
         ``True`` if a matching unused code was found and consumed.
+
     """
     result = await db.execute(
         select(BackupCode).where(

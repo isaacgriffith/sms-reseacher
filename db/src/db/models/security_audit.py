@@ -47,11 +47,10 @@ class SecurityAuditEvent(Base):
         onupdate=func.now(),
     )
 
-    user: Mapped["User"] = relationship("User", back_populates="security_audit_events")  # type: ignore[name-defined]
+    user: Mapped[User] = relationship("User", back_populates="security_audit_events")  # type: ignore[name-defined]  # noqa: F821
 
     def __repr__(self) -> str:
         """Return a debug representation."""
         return (
-            f"<SecurityAuditEvent id={self.id} user_id={self.user_id}"
-            f" type={self.event_type.value}>"
+            f"<SecurityAuditEvent id={self.id} user_id={self.user_id} type={self.event_type.value}>"
         )

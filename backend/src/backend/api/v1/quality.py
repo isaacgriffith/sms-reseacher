@@ -1,6 +1,6 @@
 """Quality evaluation endpoints: list, detail, and enqueue quality judge job (US7)."""
 
-from datetime import datetime
+from datetime import UTC, datetime
 
 import arq.connections
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -74,6 +74,7 @@ async def _load_report(study_id: int, report_id: int, db: AsyncSession):
     Raises:
         HTTPException: 404 if the report does not exist or belongs to a
             different study.
+
     """
     from db.models.results import QualityReport
 
@@ -85,7 +86,9 @@ async def _load_report(study_id: int, report_id: int, db: AsyncSession):
     )
     report = result.scalar_one_or_none()
     if report is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Quality report not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Quality report not found"
+        )
     return report
 
 
@@ -97,6 +100,7 @@ def _to_summary(report) -> QualityReportSummary:
 
     Returns:
         A populated :class:`QualityReportSummary`.
+
     """
     return QualityReportSummary(
         id=report.id,
@@ -115,6 +119,7 @@ def _to_detail(report) -> QualityReportDetail:
 
     Returns:
         A populated :class:`QualityReportDetail`.
+
     """
     return QualityReportDetail(
         id=report.id,
@@ -189,10 +194,11 @@ async def create_quality_report(
     db: AsyncSession = Depends(get_db),
 ) -> QualityJobResponse:
     """Enqueue a background quality evaluation job for the study."""
-    from datetime import datetime, timezone
+    from datetime import datetime
+
+    from db.models.jobs import BackgroundJob, JobStatus, JobType
 
     from backend.core.config import get_settings
-    from db.models.jobs import BackgroundJob, JobStatus, JobType
 
     await require_study_member(study_id, current_user, db)
 
@@ -203,11 +209,7 @@ async def create_quality_report(
     job = await redis.enqueue_job("run_quality_eval", study_id)
     await redis.close()
 
-    job_id = (
-        job.job_id
-        if job
-        else f"quality_eval_{study_id}_{int(datetime.now(timezone.utc).timestamp())}"
-    )
+    job_id = job.job_id if job else f"quality_eval_{study_id}_{int(datetime.now(UTC).timestamp())}"
 
     bg_job = BackgroundJob(
         id=job_id,

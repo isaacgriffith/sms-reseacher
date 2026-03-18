@@ -11,7 +11,7 @@ from backend.core.logging import RequestLoggingMiddleware
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     """Application lifespan: startup and shutdown hooks.
 
     Args:
@@ -19,6 +19,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
     Yields:
         Control to FastAPI while the application is running.
+
     """
     settings = get_settings()
     configure_logging(json_logs=not settings.debug, log_level="DEBUG" if settings.debug else "INFO")
@@ -33,6 +34,7 @@ def create_app() -> FastAPI:
 
     Returns:
         A fully configured :class:`FastAPI` instance ready to serve.
+
     """
     settings = get_settings()
 

@@ -22,8 +22,10 @@ def generate_bar_chart(
 
     Returns:
         A UTF-8 SVG string containing the rendered bar chart.
+
     """
     import matplotlib
+
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
@@ -55,6 +57,7 @@ def generate_bubble_chart(items: list[dict[str, Any]], title: str) -> str:
 
     Returns:
         A UTF-8 SVG string containing the rendered bubble chart.
+
     """
     import plotly.graph_objects as go
 
@@ -70,7 +73,9 @@ def generate_bubble_chart(items: list[dict[str, Any]], title: str) -> str:
             textposition="top center",
         )
     )
-    fig.update_layout(title=title, showlegend=False, xaxis={"visible": False}, yaxis={"visible": False})
+    fig.update_layout(
+        title=title, showlegend=False, xaxis={"visible": False}, yaxis={"visible": False}
+    )
     return fig.to_image(format="svg").decode("utf-8")
 
 
@@ -88,6 +93,7 @@ def _build_classification_data(
 
     Returns:
         A dict mapping category label → count, sorted descending by count.
+
     """
     counts: dict[str, int] = {}
 
@@ -130,9 +136,7 @@ def _build_classification_data(
     return dict(sorted(counts.items(), key=lambda kv: kv[1], reverse=True))
 
 
-def generate_classification_charts(
-    extractions: list[dict[str, Any]], chart_type: str
-) -> str:
+def generate_classification_charts(extractions: list[dict[str, Any]], chart_type: str) -> str:
     """Render a classification chart for one chart_type as an SVG string.
 
     Supports: venue, author, locale, institution, year, subtopic,
@@ -144,6 +148,7 @@ def generate_classification_charts(
 
     Returns:
         A UTF-8 SVG string containing the rendered bar chart.
+
     """
     counts = _build_classification_data(extractions, chart_type)
     title_map = {
@@ -157,7 +162,9 @@ def generate_classification_charts(
         "research_method": "Papers by Research Method",
     }
     title = title_map.get(chart_type, chart_type.replace("_", " ").title())
-    return generate_bar_chart(counts, title=title, xlabel=chart_type.replace("_", " ").title(), ylabel="Count")
+    return generate_bar_chart(
+        counts, title=title, xlabel=chart_type.replace("_", " ").title(), ylabel="Count"
+    )
 
 
 def generate_frequency_infographic(year_counts: dict[str, int]) -> str:
@@ -172,8 +179,10 @@ def generate_frequency_infographic(year_counts: dict[str, int]) -> str:
 
     Returns:
         A UTF-8 SVG string containing the rendered infographic.
+
     """
     import matplotlib
+
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
@@ -182,7 +191,7 @@ def generate_frequency_infographic(year_counts: dict[str, int]) -> str:
     counts = [year_counts[y] for y in years]
 
     bars = ax.bar(years, counts, color="#4C72B0", edgecolor="white", linewidth=0.8)
-    for bar, count in zip(bars, counts):
+    for bar, count in zip(bars, counts, strict=False):
         ax.text(
             bar.get_x() + bar.get_width() / 2,
             bar.get_height() + 0.2,

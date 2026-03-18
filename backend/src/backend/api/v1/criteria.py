@@ -1,5 +1,7 @@
 """Inclusion and exclusion criteria endpoints."""
 
+from db.models.audit import AuditAction
+from db.models.criteria import ExclusionCriterion, InclusionCriterion
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 from sqlalchemy import select
@@ -9,8 +11,6 @@ from backend.core.auth import CurrentUser, get_current_user, require_study_membe
 from backend.core.config import get_logger
 from backend.core.database import get_db
 from backend.services import audit as audit_svc
-from db.models.audit import AuditAction
-from db.models.criteria import ExclusionCriterion, InclusionCriterion
 
 router = APIRouter(tags=["criteria"])
 logger = get_logger(__name__)
@@ -40,7 +40,6 @@ class AddCriterionRequest(BaseModel):
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
-
 
 
 # ---------------------------------------------------------------------------
@@ -141,9 +140,7 @@ async def delete_inclusion_criterion(
     )
     criterion = result.scalar_one_or_none()
     if criterion is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Criterion not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Criterion not found")
 
     criterion_id_val = criterion.id
     await db.delete(criterion)
@@ -258,9 +255,7 @@ async def delete_exclusion_criterion(
     )
     criterion = result.scalar_one_or_none()
     if criterion is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Criterion not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Criterion not found")
 
     criterion_id_val = criterion.id
     await db.delete(criterion)

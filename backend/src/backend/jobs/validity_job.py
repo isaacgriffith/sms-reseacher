@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import UTC
 from typing import TYPE_CHECKING, Any
 
 from backend.core.config import get_logger
@@ -26,13 +27,15 @@ async def run_validity_prefill(ctx: dict[str, Any], study_id: int) -> dict[str, 
 
     Returns:
         A dict with ``{status, job_id}``.
-    """
-    from datetime import datetime, timezone
 
-    from backend.core.database import _session_maker  # noqa: PLC2701 — internal
+    """
+    from datetime import datetime
+
     from db.models.jobs import BackgroundJob, JobStatus, JobType
 
-    job_id = f"validity_prefill_{study_id}_{int(datetime.now(timezone.utc).timestamp())}"
+    from backend.core.database import _session_maker  # noqa: PLC2701 — internal
+
+    job_id = f"validity_prefill_{study_id}_{int(datetime.now(UTC).timestamp())}"
 
     async with _session_maker() as db:
         job = BackgroundJob(
@@ -40,7 +43,7 @@ async def run_validity_prefill(ctx: dict[str, Any], study_id: int) -> dict[str, 
             study_id=study_id,
             job_type=JobType.VALIDITY_PREFILL,
             status=JobStatus.RUNNING,
-            started_at=datetime.now(timezone.utc),
+            started_at=datetime.now(UTC),
         )
         db.add(job)
         await db.commit()
@@ -75,9 +78,8 @@ async def _build_validity_snapshot(db: AsyncSession, study_id: int) -> dict[str,
 
     Raises:
         ValueError: If the study does not exist.
-    """
-    from sqlalchemy import select
 
+    """
     from db.models import Study
     from db.models.criteria import ExclusionCriterion, InclusionCriterion
     from db.models.extraction import DataExtraction, ExtractionStatus
@@ -85,6 +87,7 @@ async def _build_validity_snapshot(db: AsyncSession, study_id: int) -> dict[str,
     from db.models.search import SearchString
     from db.models.search_exec import SearchExecution
     from db.models.study import Reviewer
+    from sqlalchemy import select
 
     result = await db.execute(select(Study).where(Study.id == study_id))
     study = result.scalar_one_or_none()
@@ -108,8 +111,7 @@ async def _build_validity_snapshot(db: AsyncSession, study_id: int) -> dict[str,
         select(SearchString).where(SearchString.study_id == study_id).order_by(SearchString.version)
     )
     search_strategies = [
-        {"string_text": ss.string_text, "version": ss.version}
-        for ss in ss_result.scalars().all()
+        {"string_text": ss.string_text, "version": ss.version} for ss in ss_result.scalars().all()
     ]
 
     # Databases — derive from SearchExecution.databases_queried (flattened, deduplicated)
@@ -127,12 +129,12 @@ async def _build_validity_snapshot(db: AsyncSession, study_id: int) -> dict[str,
     test_retest_done = len(search_strategies) > 1
 
     # Reviewers
-    rev_result = await db.execute(
-        select(Reviewer).where(Reviewer.study_id != study_id)
-    )
+    rev_result = await db.execute(select(Reviewer).where(Reviewer.study_id != study_id))
     reviewers = [
         {
-            "reviewer_type": r.reviewer_type.value if hasattr(r.reviewer_type, "value") else str(r.reviewer_type),
+            "reviewer_type": r.reviewer_type.value
+            if hasattr(r.reviewer_type, "value")
+            else str(r.reviewer_type),
             "agent_name": r.agent_name,
             "user_id": r.user_id,
         }
@@ -159,7 +161,11 @@ async def _build_validity_snapshot(db: AsyncSession, study_id: int) -> dict[str,
         .where(
             CandidatePaper.study_id == study_id,
             DataExtraction.extraction_status.in_(
-                [ExtractionStatus.AI_COMPLETE, ExtractionStatus.VALIDATED, ExtractionStatus.HUMAN_REVIEWED]
+                [
+                    ExtractionStatus.AI_COMPLETE,
+                    ExtractionStatus.VALIDATED,
+                    ExtractionStatus.HUMAN_REVIEWED,
+                ]
             ),
         )
     )
@@ -168,13 +174,16 @@ async def _build_validity_snapshot(db: AsyncSession, study_id: int) -> dict[str,
     if done_extractions:
         extraction_summary = (
             f"Data extraction was completed for {len(done_extractions)} accepted paper(s). "
-            "Fields extracted include research type, venue, author details, open codings, and per-RQ answers."
+            "Fields extracted include research type, venue, author details, "
+            "open codings, and per-RQ answers."
         )
 
     return {
         "study_id": study_id,
         "study_name": study.name,
-        "study_type": study.study_type.value if hasattr(study.study_type, "value") else str(study.study_type),
+        "study_type": study.study_type.value
+        if hasattr(study.study_type, "value")
+        else str(study.study_type),
         "current_phase": study.current_phase,
         "pico_components": pico_components,
         "search_strategies": search_strategies,
@@ -196,11 +205,10 @@ async def _run_and_persist_validity(
         db: Active async database session.
         study_id: Study to update.
         snapshot: Study snapshot context dict.
-    """
-    from sqlalchemy import select
 
-    from agents.services.validity import ValidityAgent
+    """
     from db.models import Study
+    from sqlalchemy import select
 
     agent = await _build_validity_agent_with_context(db, study_id)
     result = await agent.run(**snapshot)
@@ -226,21 +234,23 @@ async def _build_validity_agent_with_context(db: AsyncSession, study_id: int) ->
         A configured :class:`ValidityAgent` instance.
 
     """
+    from agents.services.validity import ValidityAgent
+    from db.models import Agent, AgentTaskType, AvailableModel, Provider, Study
     from sqlalchemy import select
 
-    from agents.services.validity import ValidityAgent
     from backend.services.agent_service import (  # noqa: PLC0415
         _build_provider_config,
         build_study_context,
         render_system_message,
     )
-    from db.models import Agent, AgentTaskType, AvailableModel, Provider, Study
 
     agent_result = await db.execute(
-        select(Agent).where(
+        select(Agent)
+        .where(
             Agent.task_type == AgentTaskType.VALIDITY_ASSESSOR,
             Agent.is_active.is_(True),
-        ).limit(1)
+        )
+        .limit(1)
     )
     agent = agent_result.scalar_one_or_none()
     if agent is None:
@@ -282,19 +292,19 @@ async def _mark_job_done(
         job_id: The ARQ job ID string.
         status: :class:`JobStatus` value to set.
         error: Optional error message to store on the job record.
-    """
-    from datetime import datetime, timezone
 
-    from sqlalchemy import select
+    """
+    from datetime import datetime
 
     from db.models.jobs import BackgroundJob
+    from sqlalchemy import select
 
     result = await db.execute(select(BackgroundJob).where(BackgroundJob.id == job_id))
     job = result.scalar_one_or_none()
     if job:
         job.status = status
         job.progress_pct = 100
-        job.completed_at = datetime.now(timezone.utc)
+        job.completed_at = datetime.now(UTC)
         if error:
             job.error_message = error
         await db.commit()

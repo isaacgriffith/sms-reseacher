@@ -20,6 +20,7 @@ class SemanticScholarSource:
         Args:
             client: Shared :class:`httpx.AsyncClient`.
             rpm: Requests-per-minute cap (token bucket).
+
         """
         self._client = client
         self._bucket = TokenBucket(rpm)
@@ -81,7 +82,9 @@ class SemanticScholarSource:
 
     async def get_paper(self, paper_id: str, fields: list[str] | None = None) -> dict[str, Any]:
         """Retrieve full metadata for a single paper."""
-        f = ",".join(fields or ["title", "abstract", "externalIds", "year", "authors", "references"])
+        f = ",".join(
+            fields or ["title", "abstract", "externalIds", "year", "authors", "references"]
+        )
         data = await self._get(f"/paper/{paper_id}", {"fields": f})
         refs = [
             {"title": r.get("title"), "doi": (r.get("externalIds") or {}).get("DOI")}

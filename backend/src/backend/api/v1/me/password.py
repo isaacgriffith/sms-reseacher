@@ -54,6 +54,7 @@ async def change_password_endpoint(
     Raises:
         HTTPException: 400 if current password is wrong or new equals current.
         HTTPException: 422 if new password fails complexity requirements.
+
     """
     ip_address = request.client.host if request.client else None
     await change_password(

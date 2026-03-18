@@ -7,7 +7,7 @@ Two-stage deduplication:
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 from rapidfuzz import fuzz
 from sqlalchemy import select
@@ -22,6 +22,7 @@ class DedupResult:
         is_duplicate: True if this paper is a definite or probable duplicate.
         is_definite: True for exact DOI matches; False for fuzzy matches.
         candidate_id: The existing CandidatePaper.id it duplicates, or None.
+
     """
 
     is_duplicate: bool
@@ -52,9 +53,10 @@ async def check_duplicate(
 
     Returns:
         :class:`DedupResult` indicating whether a duplicate was found.
+
     """
-    from db.models.candidate import CandidatePaper
     from db.models import Paper
+    from db.models.candidate import CandidatePaper
 
     # Stage 1: Exact DOI match
     if doi:
@@ -79,9 +81,7 @@ async def check_duplicate(
         .where(CandidatePaper.study_id == study_id)
     )
     candidate_author_names = {
-        a.get("name", "").lower().strip()
-        for a in (authors or [])
-        if a.get("name")
+        a.get("name", "").lower().strip() for a in (authors or []) if a.get("name")
     }
 
     for cp, paper in result.all():
@@ -93,9 +93,7 @@ async def check_duplicate(
         # Author overlap check (if we have author data on both sides)
         if candidate_author_names and paper.authors:
             paper_author_names = {
-                a.get("name", "").lower().strip()
-                for a in paper.authors
-                if a.get("name")
+                a.get("name", "").lower().strip() for a in paper.authors if a.get("name")
             }
             # Require at least one overlapping author name
             if not candidate_author_names.intersection(paper_author_names):

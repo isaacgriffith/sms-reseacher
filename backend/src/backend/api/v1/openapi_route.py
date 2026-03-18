@@ -25,5 +25,6 @@ async def get_openapi_schema(
 
     Returns:
         The full OpenAPI schema as a JSON response.
+
     """
     return JSONResponse(request.app.openapi())

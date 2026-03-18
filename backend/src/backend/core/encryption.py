@@ -22,6 +22,7 @@ def _derive_key() -> bytes:
 
     Returns:
         A URL-safe base64-encoded 32-byte key suitable for :class:`Fernet`.
+
     """
     settings = get_settings()
     hkdf = HKDF(
@@ -42,6 +43,7 @@ def encrypt_secret(plaintext: str) -> str:
 
     Returns:
         A URL-safe base64-encoded encrypted string suitable for database storage.
+
     """
     fernet = Fernet(_derive_key())
     return fernet.encrypt(plaintext.encode()).decode()
@@ -59,6 +61,7 @@ def decrypt_secret(ciphertext: str) -> str:
     Raises:
         cryptography.fernet.InvalidToken: If the ciphertext is invalid or the
             key has changed since encryption.
+
     """
     fernet = Fernet(_derive_key())
     return fernet.decrypt(ciphertext.encode()).decode()

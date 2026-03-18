@@ -16,6 +16,7 @@ def generate_secret() -> str:
 
     Returns:
         A random base32-encoded string suitable for use as a TOTP secret.
+
     """
     return pyotp.random_base32()
 
@@ -30,6 +31,7 @@ def get_provisioning_uri(secret: str, email: str, issuer: str) -> str:
 
     Returns:
         An ``otpauth://totp/`` URI string.
+
     """
     totp = pyotp.TOTP(secret)
     return totp.provisioning_uri(name=email, issuer_name=issuer)
@@ -43,6 +45,7 @@ def generate_qr_base64(uri: str) -> str:
 
     Returns:
         A base64-encoded PNG string suitable for use in an ``<img src>`` tag.
+
     """
     img = qrcode.make(uri)
     buf = io.BytesIO()
@@ -61,6 +64,7 @@ def verify_code(secret: str, code: str, valid_window: int = 1) -> bool:
 
     Returns:
         ``True`` if the code is valid within the tolerance window.
+
     """
     totp = pyotp.TOTP(secret)
     return totp.verify(code, valid_window=valid_window)

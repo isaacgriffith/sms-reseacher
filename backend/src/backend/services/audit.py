@@ -4,10 +4,10 @@ Provides a single ``record`` coroutine that appends an immutable ``AuditRecord``
 row to the database and emits a structured log line via structlog.
 """
 
+from db.models.audit import AuditAction, AuditRecord
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.core.config import get_logger
-from db.models.audit import AuditAction, AuditRecord
 
 logger = get_logger(__name__)
 
@@ -59,11 +59,10 @@ async def record(
 
     Raises:
         ValueError: If both *actor_user_id* and *actor_agent* are ``None``.
+
     """
     if actor_user_id is None and actor_agent is None:
-        raise ValueError(
-            "audit.record: at least one of actor_user_id or actor_agent must be set"
-        )
+        raise ValueError("audit.record: at least one of actor_user_id or actor_agent must be set")
 
     audit_row = AuditRecord(
         study_id=study_id,

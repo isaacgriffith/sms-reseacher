@@ -1,13 +1,13 @@
 """Extraction endpoints: list, detail, patch with optimistic locking, batch-run."""
 
-from datetime import datetime
+from datetime import UTC, datetime
 
 import arq.connections
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel
 from sqlalchemy import select
-from sqlalchemy.orm.exc import StaleDataError
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm.exc import StaleDataError
 
 from backend.core.auth import CurrentUser, get_current_user, require_study_member
 from backend.core.config import get_logger
@@ -121,6 +121,7 @@ async def _load_extraction(study_id: int, extraction_id: int, db: AsyncSession):
     Raises:
         HTTPException: 404 if the extraction does not exist or is not in
             the specified study.
+
     """
     from db.models.candidate import CandidatePaper
     from db.models.extraction import DataExtraction
@@ -147,11 +148,14 @@ def _to_extraction_dict(extraction) -> dict:
 
     Returns:
         A JSON-serialisable dict of extraction fields.
+
     """
     return {
         "id": extraction.id,
         "candidate_paper_id": extraction.candidate_paper_id,
-        "research_type": extraction.research_type.value if hasattr(extraction.research_type, "value") else str(extraction.research_type),
+        "research_type": extraction.research_type.value
+        if hasattr(extraction.research_type, "value")
+        else str(extraction.research_type),
         "venue_type": extraction.venue_type,
         "venue_name": extraction.venue_name,
         "author_details": extraction.author_details,
@@ -159,7 +163,9 @@ def _to_extraction_dict(extraction) -> dict:
         "open_codings": extraction.open_codings,
         "keywords": extraction.keywords,
         "question_data": extraction.question_data,
-        "extraction_status": extraction.extraction_status.value if hasattr(extraction.extraction_status, "value") else str(extraction.extraction_status),
+        "extraction_status": extraction.extraction_status.value
+        if hasattr(extraction.extraction_status, "value")
+        else str(extraction.extraction_status),
         "version_id": extraction.version_id,
         "conflict_flag": extraction.conflict_flag,
     }
@@ -174,11 +180,14 @@ def _to_extraction_response(extraction, audit_rows: list) -> ExtractionResponse:
 
     Returns:
         A populated :class:`ExtractionResponse`.
+
     """
     return ExtractionResponse(
         id=extraction.id,
         candidate_paper_id=extraction.candidate_paper_id,
-        research_type=extraction.research_type.value if hasattr(extraction.research_type, "value") else str(extraction.research_type),
+        research_type=extraction.research_type.value
+        if hasattr(extraction.research_type, "value")
+        else str(extraction.research_type),
         venue_type=extraction.venue_type,
         venue_name=extraction.venue_name,
         author_details=extraction.author_details,
@@ -186,7 +195,9 @@ def _to_extraction_response(extraction, audit_rows: list) -> ExtractionResponse:
         open_codings=extraction.open_codings,
         keywords=extraction.keywords,
         question_data=extraction.question_data,
-        extraction_status=extraction.extraction_status.value if hasattr(extraction.extraction_status, "value") else str(extraction.extraction_status),
+        extraction_status=extraction.extraction_status.value
+        if hasattr(extraction.extraction_status, "value")
+        else str(extraction.extraction_status),
         version_id=extraction.version_id,
         extracted_by_agent=extraction.extracted_by_agent,
         validated_by_reviewer_id=extraction.validated_by_reviewer_id,
@@ -284,10 +295,11 @@ async def batch_run_extractions(
     db: AsyncSession = Depends(get_db),
 ) -> BatchRunResponse:
     """Enqueue a background job to extract all accepted papers in the study."""
-    from datetime import datetime, timezone
+    from datetime import datetime
+
+    from db.models.jobs import BackgroundJob, JobStatus, JobType
 
     from backend.core.config import get_settings
-    from db.models.jobs import BackgroundJob, JobStatus, JobType
 
     await require_study_member(study_id, current_user, db)
 
@@ -298,7 +310,9 @@ async def batch_run_extractions(
     job = await redis.enqueue_job("run_batch_extraction", study_id)
     await redis.close()
 
-    job_id = job.job_id if job else f"batch_extraction_{study_id}_{int(datetime.now(timezone.utc).timestamp())}"
+    job_id = (
+        job.job_id if job else f"batch_extraction_{study_id}_{int(datetime.now(UTC).timestamp())}"
+    )
 
     bg_job = BackgroundJob(
         id=job_id,
@@ -391,7 +405,7 @@ async def patch_extraction(
 
     try:
         await db.flush()
-    except StaleDataError:
+    except StaleDataError as exc:
         await db.rollback()
         fresh = await _load_extraction(study_id, extraction_id, db)
         current_dict = _to_extraction_dict(fresh)
@@ -402,7 +416,7 @@ async def patch_extraction(
                 "your_version": submitted_dict,
                 "current_version": current_dict,
             },
-        )
+        ) from exc
 
     # Create audit rows for each changed field
     for field_name, original, new_value in changed_fields:

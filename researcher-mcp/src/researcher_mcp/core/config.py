@@ -34,6 +34,7 @@ class ResearcherSettings(BaseSettings):
             blocks.
         markitdown_ocr_model: LLM model identifier passed to MarkItDown when
             ``enable_ocr=True`` is requested (e.g. ``claude-haiku-4-5-20251001``).
+
     """
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
@@ -63,5 +64,6 @@ def get_settings() -> ResearcherSettings:
     Returns:
         The module-level :class:`ResearcherSettings` instance, constructed
         once and reused for the lifetime of the process.
+
     """
     return ResearcherSettings()

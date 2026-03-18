@@ -37,7 +37,7 @@ class BackupCode(Base):
         onupdate=func.now(),
     )
 
-    user: Mapped["User"] = relationship("User", back_populates="backup_codes")  # type: ignore[name-defined]
+    user: Mapped[User] = relationship("User", back_populates="backup_codes")  # type: ignore[name-defined]  # noqa: F821
 
     def __repr__(self) -> str:
         """Return a debug representation."""

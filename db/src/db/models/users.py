@@ -3,7 +3,17 @@
 import enum
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, Integer, String, Text, UniqueConstraint, func
+from sqlalchemy import (
+    Boolean,
+    DateTime,
+    Enum,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+    func,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from db.base import Base
@@ -35,7 +45,7 @@ class ResearchGroup(Base):
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
 
-    memberships: Mapped[list["GroupMembership"]] = relationship(
+    memberships: Mapped[list[GroupMembership]] = relationship(
         "GroupMembership", back_populates="group", cascade="all, delete-orphan"
     )
 
@@ -99,18 +109,16 @@ class User(Base):
         server_default=func.now(),
         onupdate=func.now(),
     )
-    last_login_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     # --- Relationships ---
-    memberships: Mapped[list["GroupMembership"]] = relationship(
+    memberships: Mapped[list[GroupMembership]] = relationship(
         "GroupMembership", back_populates="user", cascade="all, delete-orphan"
     )
-    backup_codes: Mapped[list["BackupCode"]] = relationship(  # type: ignore[name-defined]
+    backup_codes: Mapped[list[BackupCode]] = relationship(  # type: ignore[name-defined]  # noqa: F821
         "BackupCode", back_populates="user", cascade="all, delete-orphan"
     )
-    security_audit_events: Mapped[list["SecurityAuditEvent"]] = relationship(  # type: ignore[name-defined]
+    security_audit_events: Mapped[list[SecurityAuditEvent]] = relationship(  # type: ignore[name-defined]  # noqa: F821
         "SecurityAuditEvent", back_populates="user", cascade="all, delete-orphan"
     )
 
@@ -138,8 +146,8 @@ class GroupMembership(Base):
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
 
-    group: Mapped["ResearchGroup"] = relationship("ResearchGroup", back_populates="memberships")
-    user: Mapped["User"] = relationship("User", back_populates="memberships")
+    group: Mapped[ResearchGroup] = relationship("ResearchGroup", back_populates="memberships")
+    user: Mapped[User] = relationship("User", back_populates="memberships")
 
     def __repr__(self) -> str:
         """Return a debug representation."""

@@ -2,9 +2,10 @@
 
 import asyncio
 import json
-from typing import AsyncIterator
+from collections.abc import AsyncIterator
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from db.models.jobs import BackgroundJob, JobStatus
+from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from sqlalchemy import select
@@ -13,7 +14,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.core.auth import CurrentUser, get_current_user, require_study_member
 from backend.core.config import get_logger
 from backend.core.database import get_db
-from db.models.jobs import BackgroundJob, JobStatus
 
 router = APIRouter(tags=["jobs"])
 logger = get_logger(__name__)

@@ -45,10 +45,12 @@ async def _require_admin(
 
     """
     result = await db.execute(
-        select(GroupMembership).where(
+        select(GroupMembership)
+        .where(
             GroupMembership.user_id == current_user.user_id,
             GroupMembership.role <= GroupRole.ADMIN,
-        ).limit(1)
+        )
+        .limit(1)
     )
     if result.scalars().first() is None:
         raise HTTPException(

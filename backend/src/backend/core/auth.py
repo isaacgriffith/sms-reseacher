@@ -39,6 +39,7 @@ def hash_password(plain: str) -> str:
 
     Returns:
         A bcrypt-encoded string suitable for storage.
+
     """
     return bcrypt.hashpw(plain.encode(), bcrypt.gensalt()).decode()
 
@@ -52,6 +53,7 @@ def verify_password(plain: str, hashed: str) -> bool:
 
     Returns:
         ``True`` if they match, ``False`` otherwise.
+
     """
     return bcrypt.checkpw(plain.encode(), hashed.encode())
 
@@ -82,6 +84,7 @@ def create_access_token(
 
     Returns:
         A signed JWT string.
+
     """
     settings = get_settings()
     now = datetime.now(UTC)
@@ -110,6 +113,7 @@ def create_partial_token(user_id: int) -> str:
 
     Returns:
         A signed short-lived JWT string.
+
     """
     settings = get_settings()
     now = datetime.now(UTC)
@@ -137,6 +141,7 @@ class CurrentUser:
         Args:
             user_id: The database primary key of the user.
             is_authenticated: Whether the JWT was valid.
+
         """
         self.user_id = user_id
         self.is_authenticated = is_authenticated
@@ -165,6 +170,7 @@ async def get_current_user(
 
     Raises:
         HTTPException: 401 if the token is absent, invalid, partial, or stale.
+
     """
     from db.models.users import User  # local import avoids circular dependency at module load
 
@@ -183,9 +189,9 @@ async def get_current_user(
         if sub is None:
             raise credentials_exc
         user_id = int(sub)
-    except (JWTError, ValueError):
+    except (JWTError, ValueError) as exc:
         logger.warning("auth_token_invalid")
-        raise credentials_exc
+        raise credentials_exc from exc
 
     # Reject partial tokens — only valid for the /auth/login/totp step.
     if payload.get("stage") == "totp_required":
@@ -220,8 +226,8 @@ async def get_current_user(
 
 async def require_study_member(
     study_id: int,
-    current_user: "CurrentUser",
-    db: "AsyncSession",
+    current_user: CurrentUser,
+    db: AsyncSession,
 ) -> None:
     """Raise HTTP 403 if *current_user* is not a member of *study_id*.
 
@@ -236,6 +242,7 @@ async def require_study_member(
 
     Raises:
         HTTPException: 403 if the user is not a study member.
+
     """
     from db.models.study import StudyMember
 

@@ -62,6 +62,7 @@ def make_retry_client(timeout: float = 10.0) -> httpx.AsyncClient:
 
     Returns:
         A new :class:`httpx.AsyncClient` instance.
+
     """
     return httpx.AsyncClient(timeout=timeout)
 
@@ -80,6 +81,7 @@ async def with_retry(coro_fn: Callable[[], Any]) -> Any:
 
     Raises:
         The last exception if all attempts fail.
+
     """
     async for attempt in AsyncRetrying(
         stop=stop_after_attempt(3),

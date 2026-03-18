@@ -73,9 +73,7 @@ class Provider(Base):
 
     __tablename__ = "provider"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     provider_type: Mapped[ProviderType] = mapped_column(
         Enum(ProviderType, name="providertype"), nullable=False
     )
@@ -85,9 +83,7 @@ class Provider(Base):
     is_enabled: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=True, server_default="true"
     )
-    version_id: Mapped[int] = mapped_column(
-        Integer, nullable=False, default=0, server_default="0"
-    )
+    version_id: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
@@ -98,10 +94,10 @@ class Provider(Base):
         onupdate=func.now(),
     )
 
-    available_models: Mapped[list["AvailableModel"]] = relationship(
+    available_models: Mapped[list[AvailableModel]] = relationship(
         "AvailableModel", back_populates="provider", cascade="all, delete-orphan"
     )
-    agents: Mapped[list["Agent"]] = relationship("Agent", back_populates="provider")
+    agents: Mapped[list[Agent]] = relationship("Agent", back_populates="provider")
 
     __mapper_args__ = {"version_id_col": version_id}
 
@@ -124,9 +120,7 @@ class AvailableModel(Base):
         UniqueConstraint("provider_id", "model_identifier", name="uq_available_model"),
     )
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     provider_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("provider.id", ondelete="CASCADE"),
@@ -138,9 +132,7 @@ class AvailableModel(Base):
     is_enabled: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=True, server_default="true"
     )
-    version_id: Mapped[int] = mapped_column(
-        Integer, nullable=False, default=0, server_default="0"
-    )
+    version_id: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
@@ -151,10 +143,8 @@ class AvailableModel(Base):
         onupdate=func.now(),
     )
 
-    provider: Mapped["Provider"] = relationship(
-        "Provider", back_populates="available_models"
-    )
-    agents: Mapped[list["Agent"]] = relationship("Agent", back_populates="model")
+    provider: Mapped[Provider] = relationship("Provider", back_populates="available_models")
+    agents: Mapped[list[Agent]] = relationship("Agent", back_populates="model")
 
     __mapper_args__ = {"version_id_col": version_id}
 
@@ -178,9 +168,7 @@ class Agent(Base):
 
     __tablename__ = "agent"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     task_type: Mapped[AgentTaskType] = mapped_column(
         Enum(AgentTaskType, name="agenttasktype"), nullable=False
     )
@@ -206,9 +194,7 @@ class Agent(Base):
     is_active: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=True, server_default="true"
     )
-    version_id: Mapped[int] = mapped_column(
-        Integer, nullable=False, default=0, server_default="0"
-    )
+    version_id: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
@@ -219,10 +205,8 @@ class Agent(Base):
         onupdate=func.now(),
     )
 
-    model: Mapped["AvailableModel"] = relationship(
-        "AvailableModel", back_populates="agents"
-    )
-    provider: Mapped["Provider"] = relationship("Provider", back_populates="agents")
+    model: Mapped[AvailableModel] = relationship("AvailableModel", back_populates="agents")
+    provider: Mapped[Provider] = relationship("Provider", back_populates="agents")
 
     __mapper_args__ = {"version_id_col": version_id}
 

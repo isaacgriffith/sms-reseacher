@@ -41,6 +41,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
 
         Returns:
             The HTTP response produced by the downstream handler.
+
         """
         request_id = str(uuid.uuid4())
         structlog.contextvars.clear_contextvars()

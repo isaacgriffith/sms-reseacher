@@ -4,6 +4,9 @@ Exposes ``GET /studies/{study_id}/audit`` for paginated access to the immutable
 ``AuditRecord`` table. Access is restricted to study leads (study admins).
 """
 
+from db.models.audit import AuditRecord
+from db.models.study import StudyMember, StudyMemberRole
+from db.models.users import User
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel
 from sqlalchemy import func, select
@@ -12,9 +15,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.core.auth import CurrentUser, get_current_user
 from backend.core.config import get_logger
 from backend.core.database import get_db
-from db.models.audit import AuditRecord
-from db.models.study import StudyMember, StudyMemberRole
-from db.models.users import User
 
 router = APIRouter(tags=["audit"])
 logger = get_logger(__name__)
@@ -61,9 +61,7 @@ class AuditPageResponse(BaseModel):
 # ---------------------------------------------------------------------------
 
 
-async def _require_study_lead(
-    study_id: int, current_user: CurrentUser, db: AsyncSession
-) -> None:
+async def _require_study_lead(study_id: int, current_user: CurrentUser, db: AsyncSession) -> None:
     """Raise HTTP 403 if *current_user* is not a lead of *study_id*.
 
     Args:
@@ -73,6 +71,7 @@ async def _require_study_lead(
 
     Raises:
         HTTPException: 403 if the user is not the study lead.
+
     """
     result = await db.execute(
         select(StudyMember).where(
@@ -97,13 +96,12 @@ async def _build_actor(record: AuditRecord, db: AsyncSession) -> AuditActorRespo
 
     Returns:
         An :class:`AuditActorResponse` with type, id, and display_name.
+
     """
     if record.actor_agent is not None:
         return AuditActorResponse(type="agent", id=None, display_name=record.actor_agent)
 
-    user_result = await db.execute(
-        select(User).where(User.id == record.actor_user_id)
-    )
+    user_result = await db.execute(select(User).where(User.id == record.actor_user_id))
     user = user_result.scalar_one_or_none()
     display = user.display_name if user else f"user:{record.actor_user_id}"
     return AuditActorResponse(type="user", id=record.actor_user_id, display_name=display)
@@ -148,12 +146,13 @@ async def get_audit_log(
 
     Raises:
         HTTPException: 403 if the caller is not the study lead.
+
     """
     await _require_study_lead(study_id, current_user, db)
 
     query = select(AuditRecord).where(AuditRecord.study_id == study_id)
-    count_query = select(func.count()).select_from(AuditRecord).where(
-        AuditRecord.study_id == study_id
+    count_query = (
+        select(func.count()).select_from(AuditRecord).where(AuditRecord.study_id == study_id)
     )
 
     if entity_type is not None:

@@ -11,10 +11,9 @@ import uuid
 from dataclasses import dataclass, field
 
 import jinja2
-import sqlalchemy.exc
+from db.models import Study, StudyType
 from db.models.agents import Agent, AgentTaskType, AvailableModel, Provider, ProviderType
 from db.models.study import Reviewer
-from db.models import Study, StudyType
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -106,9 +105,7 @@ class AgentHasDependentsError(Exception):
             reviewer_ids: Primary keys of Reviewer rows that reference the agent.
 
         """
-        super().__init__(
-            f"Agent has {len(reviewer_ids)} dependent reviewer(s): {reviewer_ids}"
-        )
+        super().__init__(f"Agent has {len(reviewer_ids)} dependent reviewer(s): {reviewer_ids}")
         self.reviewer_ids = reviewer_ids
 
 
@@ -290,9 +287,7 @@ def build_study_context(study: Study) -> StudyContext:
 
     """
     study_type_str = (
-        study.study_type.value
-        if hasattr(study.study_type, "value")
-        else str(study.study_type)
+        study.study_type.value if hasattr(study.study_type, "value") else str(study.study_type)
     )
     study_type_label = _STUDY_TYPE_LABELS.get(study_type_str, study_type_str)
     domain = study.topic if study.topic else _DEFAULT_DOMAIN
@@ -676,9 +671,7 @@ class AgentService:
         """
         agent = await self.get_agent(agent_id, session)
         if not agent.system_message_undo_buffer:
-            raise NoUndoBufferError(
-                f"Agent {agent_id} has no previous system message to restore"
-            )
+            raise NoUndoBufferError(f"Agent {agent_id} has no previous system message to restore")
         current = agent.system_message_template
         agent.system_message_template = agent.system_message_undo_buffer
         agent.system_message_undo_buffer = current
@@ -721,9 +714,7 @@ class AgentService:
 
         """
         # 1. Load target agent
-        agent_result = await session.execute(
-            select(Agent).where(Agent.id == agent_id)
-        )
+        agent_result = await session.execute(select(Agent).where(Agent.id == agent_id))
         agent = agent_result.scalar_one_or_none()
         if agent is None:
             raise AgentNotFoundError(f"Agent {agent_id} not found")
@@ -737,10 +728,12 @@ class AgentService:
 
         # 3. Locate bootstrap AgentGenerator agent
         gen_result = await session.execute(
-            select(Agent).where(
+            select(Agent)
+            .where(
                 Agent.task_type == AgentTaskType.AGENT_GENERATOR,
                 Agent.is_active.is_(True),
-            ).limit(1)
+            )
+            .limit(1)
         )
         generator_agent = gen_result.scalar_one_or_none()
         if generator_agent is None:
@@ -885,9 +878,7 @@ def _build_provider_config(
         try:
             api_key = decrypt_secret(provider.api_key_encrypted, settings.secret_key)
         except Exception:  # noqa: BLE001
-            logger.warning(
-                "api_key_decrypt_failed", provider_id=str(provider.id)
-            )
+            logger.warning("api_key_decrypt_failed", provider_id=str(provider.id))
 
     # Build LiteLLM model string by provider type
     prefix_map = {

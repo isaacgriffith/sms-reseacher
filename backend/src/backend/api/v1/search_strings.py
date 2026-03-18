@@ -1,5 +1,10 @@
 """Search string versioning, generation, test, and approval endpoints."""
 
+from db.models import Study
+from db.models.audit import AuditAction
+from db.models.criteria import ExclusionCriterion, InclusionCriterion
+from db.models.pico import PICOComponent
+from db.models.search import SearchString, SearchStringIteration
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 from sqlalchemy import select
@@ -9,11 +14,6 @@ from backend.core.auth import CurrentUser, get_current_user, require_study_membe
 from backend.core.config import get_logger
 from backend.core.database import get_db
 from backend.services import audit as audit_svc
-from db.models.audit import AuditAction
-from db.models.criteria import ExclusionCriterion, InclusionCriterion
-from db.models.pico import PICOComponent
-from db.models import Study
-from db.models.search import SearchString, SearchStringIteration
 
 router = APIRouter(tags=["search_strings"])
 logger = get_logger(__name__)
@@ -148,7 +148,9 @@ async def create_search_string(
 
     # Determine next version number
     existing = await db.execute(
-        select(SearchString).where(SearchString.study_id == study_id).order_by(SearchString.version.desc())
+        select(SearchString)
+        .where(SearchString.study_id == study_id)
+        .order_by(SearchString.version.desc())
     )
     latest = existing.scalars().first()
     next_version = (latest.version + 1) if latest else 1
@@ -208,9 +210,7 @@ async def generate_search_string(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Study not found")
 
     # Load PICO
-    pico_result = await db.execute(
-        select(PICOComponent).where(PICOComponent.study_id == study_id)
-    )
+    pico_result = await db.execute(select(PICOComponent).where(PICOComponent.study_id == study_id))
     pico = pico_result.scalar_one_or_none()
     if pico is None:
         raise HTTPException(

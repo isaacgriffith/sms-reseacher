@@ -3,7 +3,18 @@
 import enum
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, Integer, JSON, String, Text, UniqueConstraint, func
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    DateTime,
+    Enum,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+    func,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from db.base import Base
@@ -52,7 +63,9 @@ class DataExtraction(Base):
         default=ResearchType.UNKNOWN,
         server_default=ResearchType.UNKNOWN.value,
     )
-    venue_type: Mapped[str] = mapped_column(String(128), nullable=False, default="", server_default="")
+    venue_type: Mapped[str] = mapped_column(
+        String(128), nullable=False, default="", server_default=""
+    )
     venue_name: Mapped[str | None] = mapped_column(String(512), nullable=True)
     author_details: Mapped[list | None] = mapped_column(JSON, nullable=True)
     summary: Mapped[str | None] = mapped_column(Text, nullable=True)

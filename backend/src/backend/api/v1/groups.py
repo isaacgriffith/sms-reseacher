@@ -1,5 +1,7 @@
 """Research group endpoints: CRUD and member management."""
 
+from db.models import Study
+from db.models.users import GroupMembership, GroupRole, ResearchGroup, User
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, EmailStr
 from sqlalchemy import func, select
@@ -9,8 +11,6 @@ from sqlalchemy.orm import selectinload
 from backend.core.auth import CurrentUser, get_current_user
 from backend.core.config import get_logger
 from backend.core.database import get_db
-from db.models import Study
-from db.models.users import GroupMembership, GroupRole, ResearchGroup, User
 
 router = APIRouter(prefix="/groups", tags=["groups"])
 logger = get_logger(__name__)
@@ -87,6 +87,7 @@ async def _require_group_admin(
     Raises:
         HTTPException: 403 if the user is not an admin.
         HTTPException: 404 if the group doesn't exist or user isn't a member.
+
     """
     result = await db.execute(
         select(GroupMembership).where(
@@ -120,6 +121,7 @@ async def list_groups(
 
     Returns:
         A list of :class:`GroupSummary` objects.
+
     """
     result = await db.execute(
         select(GroupMembership)
@@ -169,14 +171,19 @@ async def create_group(
 
     Raises:
         HTTPException: 409 if a group with that name already exists.
+
     """
     name = body.name.strip()
     if not name:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="name is required")
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="name is required"
+        )
 
     existing = await db.execute(select(ResearchGroup).where(ResearchGroup.name == name))
     if existing.scalar_one_or_none() is not None:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Group name already exists")
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail="Group name already exists"
+        )
 
     group = ResearchGroup(name=name)
     db.add(group)
@@ -216,6 +223,7 @@ async def list_members(
 
     Raises:
         HTTPException: 404 if the group doesn't exist or the user isn't a member.
+
     """
     # Verify membership
     membership_check = await db.execute(
@@ -271,6 +279,7 @@ async def add_member(
         HTTPException: 404 if the group or user is not found.
         HTTPException: 403 if the caller is not a group admin.
         HTTPException: 409 if the user is already a member.
+
     """
     await _require_group_admin(group_id, current_user, db)
 
@@ -320,6 +329,7 @@ async def remove_member(
         HTTPException: 403 if caller is not an admin.
         HTTPException: 404 if the target membership is not found.
         HTTPException: 409 if removing would leave the group with no admins.
+
     """
     await _require_group_admin(group_id, current_user, db)
 

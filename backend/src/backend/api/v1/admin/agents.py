@@ -17,7 +17,6 @@ from __future__ import annotations
 import datetime
 import uuid
 
-import sqlalchemy.exc
 from db.models.agents import Agent, AvailableModel, Provider
 from db.models.users import GroupMembership, GroupRole
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -66,10 +65,12 @@ async def _require_admin(
 
     """
     result = await db.execute(
-        select(GroupMembership).where(
+        select(GroupMembership)
+        .where(
             GroupMembership.user_id == current_user.user_id,
             GroupMembership.role <= GroupRole.ADMIN,
-        ).limit(1)
+        )
+        .limit(1)
     )
     if result.scalars().first() is None:
         raise HTTPException(
@@ -288,9 +289,7 @@ async def _load_display_names(
     model = model_result.scalar_one_or_none()
     model_display_name = model.display_name if model else str(agent.model_id)
 
-    provider_result = await db.execute(
-        select(Provider).where(Provider.id == agent.provider_id)
-    )
+    provider_result = await db.execute(select(Provider).where(Provider.id == agent.provider_id))
     provider = provider_result.scalar_one_or_none()
     provider_display_name = provider.display_name if provider else str(agent.provider_id)
 
@@ -429,9 +428,7 @@ async def list_agents(
         models_map = {m.id: m for m in models_result.scalars().all()}
 
     if provider_ids:
-        providers_result = await db.execute(
-            select(Provider).where(Provider.id.in_(provider_ids))
-        )
+        providers_result = await db.execute(select(Provider).where(Provider.id.in_(provider_ids)))
         providers_map = {p.id: p for p in providers_result.scalars().all()}
 
     return [
@@ -575,9 +572,7 @@ async def generate_system_message(
 
     """
     # Load agent to inspect existing template before generation
-    agent_check_result = await db.execute(
-        select(Agent).where(Agent.id == agent_id)
-    )
+    agent_check_result = await db.execute(select(Agent).where(Agent.id == agent_id))
     agent_before = agent_check_result.scalar_one_or_none()
     if agent_before is None:
         raise HTTPException(

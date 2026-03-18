@@ -22,6 +22,7 @@ def _title_fingerprint(title: str) -> str:
     Returns:
         Lowercased string with all non-alphanumeric characters collapsed to a
         single space and leading/trailing whitespace removed.
+
     """
     return re.sub(r"[^a-z0-9]+", " ", title.lower()).strip()
 
@@ -48,6 +49,7 @@ def deduplicate_paper_records(records: list[PaperRecord]) -> list[PaperRecord]:
     Returns:
         Deduplicated list with the same ordering as the input (first occurrence
         of each unique paper retained).
+
     """
     seen_dois: set[str] = set()
     seen_fingerprints: set[tuple[str, str]] = set()

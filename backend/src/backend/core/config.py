@@ -73,6 +73,7 @@ def configure_logging(*, json_logs: bool = True, log_level: str = "INFO") -> Non
             for log aggregation.  Set to ``False`` in development for
             human-readable console output.
         log_level: Standard log level name (``"DEBUG"``, ``"INFO"``, etc.).
+
     """
     shared_processors: list[structlog.types.Processor] = [
         structlog.contextvars.merge_contextvars,
@@ -125,5 +126,6 @@ def get_logger(name: str | None = None) -> structlog.stdlib.BoundLogger:
 
     Returns:
         A bound logger that emits structured JSON in production.
+
     """
     return structlog.get_logger(name)

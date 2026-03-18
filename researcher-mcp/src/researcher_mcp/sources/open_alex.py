@@ -20,6 +20,7 @@ class OpenAlexSource:
         Args:
             client: Shared :class:`httpx.AsyncClient`.
             rpm: Requests-per-minute cap.
+
         """
         self._client = client
         self._bucket = TokenBucket(rpm)

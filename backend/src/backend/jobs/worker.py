@@ -27,15 +27,15 @@ class WorkerSettings:
     Import each job module so ARQ can discover the decorated functions.
     """
 
+    from backend.jobs.extraction_job import run_batch_extraction
+    from backend.jobs.quality_job import run_quality_eval
+    from backend.jobs.results_job import run_export, run_generate_results
     from backend.jobs.search_job import (
         run_expert_seed_suggestion,
         run_full_search,
         run_snowball,
         run_test_search,
     )
-    from backend.jobs.extraction_job import run_batch_extraction
-    from backend.jobs.results_job import run_export, run_generate_results
-    from backend.jobs.quality_job import run_quality_eval
     from backend.jobs.validity_job import run_validity_prefill
 
     functions = [
