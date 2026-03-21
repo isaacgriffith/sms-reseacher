@@ -1,3 +1,9 @@
+# Update Constitution
+
+- Ensure that any new modules are correctly documented following doc comment requirements. Additionally, all files should have a doc comment at the top of the file
+- Before completing a feature and in addition to existing tests coverage requirements, all modified subprojects must be evaluated using mutation testing ensuring that 85% or greater mutants are killed.
+- Additionally, before completing a feature, ensure that all tests pass, all linting checks pass, and all static analysis checks pass. This includes any pre-existing issues.
+
 # Grey Literature
 
 - Need to develop an approach which will hunt for appropriate blog posts related to the topic (i.e. websearch)
@@ -28,3 +34,8 @@
 # UI
 
 - Change from using inline styles to using a consolidated style within the component
+
+
+# Paper Metadata
+
+- If possible during the search extract the necessary paper metadata and the abstract, if available from the index used.

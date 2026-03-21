@@ -33,6 +33,7 @@ class SearchStringBuilderAgent:
 
     Args:
         llm_client: Optional :class:`LLMClient` override for testing.
+
     """
 
     def __init__(self, llm_client: LLMClient | None = None) -> None:
@@ -41,6 +42,7 @@ class SearchStringBuilderAgent:
         Args:
             llm_client: LLM client to use; defaults to a new
                 :class:`LLMClient` with environment-based settings.
+
         """
         self._client = llm_client or LLMClient()
         self._loader = PromptLoader("search_builder")
@@ -81,6 +83,7 @@ class SearchStringBuilderAgent:
 
         Returns:
             A :class:`SearchStringResult` with the Boolean string and term details.
+
         """
         template_context: dict[str, Any] = {
             "topic": topic,

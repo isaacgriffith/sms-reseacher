@@ -164,4 +164,31 @@ describe('ServiceHealthPanel', () => {
       });
     });
   });
+
+  describe('unknown status fallback', () => {
+    it('renders unknown status without crashing', async () => {
+      const response = {
+        ...HEALTHY_RESPONSE,
+        services: [{ name: 'custom-svc', status: 'unknown' }],
+      };
+      mockApi.get.mockResolvedValue(response);
+      renderWithQuery(<ServiceHealthPanel />);
+      await waitFor(() => {
+        expect(screen.getByText('custom-svc')).toBeTruthy();
+        expect(screen.getByText('unknown')).toBeTruthy();
+      });
+    });
+
+    it('renders service without latency or detail', async () => {
+      const response = {
+        ...HEALTHY_RESPONSE,
+        services: [{ name: 'minimal-svc', status: 'healthy' }],
+      };
+      mockApi.get.mockResolvedValue(response);
+      renderWithQuery(<ServiceHealthPanel />);
+      await waitFor(() => {
+        expect(screen.getByText('minimal-svc')).toBeTruthy();
+      });
+    });
+  });
 });

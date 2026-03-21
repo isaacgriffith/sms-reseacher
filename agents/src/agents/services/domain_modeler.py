@@ -55,6 +55,7 @@ class DomainModelResult(BaseModel):
 
         Raises:
             ValueError: If duplicate concept names are detected.
+
         """
         seen: set[str] = set()
         for concept in v:
@@ -76,6 +77,7 @@ def _extract_json(raw: str) -> dict[str, Any]:
 
     Raises:
         ValueError: If no valid JSON object can be found in the response.
+
     """
     cleaned = re.sub(r"```(?:json)?\s*", "", raw).replace("```", "").strip()
     try:
@@ -84,7 +86,7 @@ def _extract_json(raw: str) -> dict[str, Any]:
         match = re.search(r"\{.*\}", cleaned, re.DOTALL)
         if match:
             return json.loads(match.group())
-        raise ValueError(f"No valid JSON found in domain modeler response: {raw[:200]!r}")
+        raise ValueError(f"No valid JSON found in domain modeler response: {raw[:200]!r}") from None
 
 
 class DomainModelAgent:
@@ -100,6 +102,7 @@ class DomainModelAgent:
         llm_client: Optional :class:`LLMClient` override for testing.
         provider_config: Optional :class:`ProviderConfig` for database-backed
             model routing.  When ``None``, falls back to environment settings.
+
     """
 
     def __init__(
@@ -117,6 +120,7 @@ class DomainModelAgent:
                 Passed through to each :meth:`LLMClient.complete` call.
             system_message_override: Optional rendered system message to use
                 instead of the default prompt-file system message.
+
         """
         self._client = llm_client or LLMClient()
         self._loader = PromptLoader("domain_modeler")
@@ -147,6 +151,7 @@ class DomainModelAgent:
 
         Raises:
             ValueError: If the LLM response cannot be parsed as valid JSON.
+
         """
         all_codings = open_codings or []
         all_keywords = keywords or []

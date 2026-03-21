@@ -25,6 +25,21 @@ Feature 006 additions — re-exported here for single stable import path:
 - :class:`~db.models.search_integrations.FullTextSource`
 - :class:`~db.models.search_integrations.StudyDatabaseSelection`
 - :class:`~db.models.search_integrations.SearchIntegrationCredential`
+
+Feature 007 additions — re-exported here for single stable import path:
+- :class:`~db.models.slr.ReviewProtocolStatus`
+- :class:`~db.models.slr.SynthesisApproach`
+- :class:`~db.models.slr.ChecklistScoringMethod`
+- :class:`~db.models.slr.AgreementRoundType`
+- :class:`~db.models.slr.SynthesisStatus`
+- :class:`~db.models.slr.GreyLiteratureType`
+- :class:`~db.models.slr.ReviewProtocol`
+- :class:`~db.models.slr.QualityAssessmentChecklist`
+- :class:`~db.models.slr.QualityChecklistItem`
+- :class:`~db.models.slr.QualityAssessmentScore`
+- :class:`~db.models.slr.InterRaterAgreementRecord`
+- :class:`~db.models.slr.SynthesisResult`
+- :class:`~db.models.slr.GreyLiteratureSource`
 """
 
 # Feature 004: new models and enums (imported first so Alembic autogenerate
@@ -70,6 +85,21 @@ from db.models.search_integrations import (  # noqa: F401
 from db.models.search_integrations import TestStatus as TestStatus  # noqa: F401
 from db.models.security_audit import SecurityAuditEvent as SecurityAuditEvent  # noqa: F401
 from db.models.security_audit import SecurityEventType as SecurityEventType  # noqa: F401
+
+# Feature 007: SLR workflow models.
+from db.models.slr import AgreementRoundType as AgreementRoundType  # noqa: F401
+from db.models.slr import ChecklistScoringMethod as ChecklistScoringMethod  # noqa: F401
+from db.models.slr import GreyLiteratureSource as GreyLiteratureSource  # noqa: F401
+from db.models.slr import GreyLiteratureType as GreyLiteratureType  # noqa: F401
+from db.models.slr import InterRaterAgreementRecord as InterRaterAgreementRecord  # noqa: F401
+from db.models.slr import QualityAssessmentChecklist as QualityAssessmentChecklist  # noqa: F401
+from db.models.slr import QualityAssessmentScore as QualityAssessmentScore  # noqa: F401
+from db.models.slr import QualityChecklistItem as QualityChecklistItem  # noqa: F401
+from db.models.slr import ReviewProtocol as ReviewProtocol  # noqa: F401
+from db.models.slr import ReviewProtocolStatus as ReviewProtocolStatus  # noqa: F401
+from db.models.slr import SynthesisApproach as SynthesisApproach  # noqa: F401
+from db.models.slr import SynthesisResult as SynthesisResult  # noqa: F401
+from db.models.slr import SynthesisStatus as SynthesisStatus  # noqa: F401
 from db.models.users import ThemePreference as ThemePreference  # noqa: F401
 
 

@@ -51,6 +51,10 @@ class Settings(BaseSettings):
     totp_lockout_minutes: int = 15
     totp_issuer_name: str = "SMS Researcher"
 
+    # SLR workflow (feature 007-slr-workflow)
+    slr_kappa_threshold: float = 0.6
+    slr_min_synthesis_papers: int = 3
+
 
 @lru_cache
 def get_settings() -> Settings:

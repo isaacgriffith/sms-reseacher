@@ -42,6 +42,8 @@ uv run mypy backend/src
 | `ELSEVIER_INST_TOKEN` | — | Elsevier institutional token (optional) |
 | `WOS_API_KEY` | — | Web of Science API key |
 | `SPRINGER_API_KEY` | — | SpringerNature API key |
+| `SLR_KAPPA_THRESHOLD` | `0.6` | Minimum Cohen's κ required to unlock QA phase for SLR studies |
+| `SLR_MIN_SYNTHESIS_PAPERS` | `2` | Minimum included papers required to start synthesis |
 
 ## API Endpoints
 
@@ -81,6 +83,21 @@ uv run mypy backend/src
 |--------|------|-------------|
 | `GET/PUT` | `/api/v1/studies/{id}/database-selection` | Read/write active database indices for a study |
 | `GET` | `/api/v1/papers/{id}/markdown` | Retrieve stored full-text Markdown for a paper |
+
+### SLR Endpoints (`/api/v1/slr/`)
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET/PUT` | `/slr/studies/{id}/protocol` | Read / upsert SLR review protocol |
+| `POST` | `/slr/studies/{id}/protocol/review` | Trigger AI protocol review (ARQ job) |
+| `GET` | `/slr/studies/{id}/inter-rater-reliability` | Compute Cohen's κ for screened papers |
+| `GET/PUT` | `/slr/studies/{id}/quality-checklist` | Read / upsert quality assessment checklist |
+| `GET/PUT` | `/slr/papers/{id}/quality-scores` | Read / submit quality scores for a paper |
+| `GET/POST` | `/slr/studies/{id}/synthesis` | List synthesis results / start new synthesis job |
+| `GET` | `/slr/synthesis/{id}` | Get individual synthesis result |
+| `GET/POST` | `/slr/studies/{id}/grey-literature` | List / add grey literature sources |
+| `DELETE` | `/slr/studies/{id}/grey-literature/{source_id}` | Delete a grey literature source |
+| `GET` | `/slr/studies/{id}/report` | Generate and download structured SLR report |
 
 Full interactive API documentation is available at `http://localhost:8000/docs` when the server is running.
 

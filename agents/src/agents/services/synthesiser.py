@@ -19,6 +19,7 @@ class SynthesiserAgent:
         llm_client: Optional :class:`LLMClient` override for testing.
         provider_config: Optional :class:`ProviderConfig` for database-backed
             model routing.  When ``None``, falls back to environment settings.
+
     """
 
     def __init__(
@@ -36,6 +37,7 @@ class SynthesiserAgent:
                 Passed through to each :meth:`LLMClient.complete` call.
             system_message_override: Optional rendered system message to use
                 instead of the default prompt-file system message.
+
         """
         self._client = llm_client or LLMClient()
         self._loader = PromptLoader("synthesiser")
@@ -53,6 +55,7 @@ class SynthesiserAgent:
 
         Returns:
             The LLM's synthesised narrative as a raw string.
+
         """
         context = {"papers_summary": papers_summary, "research_question": research_question}
         messages = self._loader.load_messages(context)

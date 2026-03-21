@@ -1,0 +1,102 @@
+## SLR Protocol Under Review
+
+Please evaluate the following systematic literature review protocol for methodological
+soundness, completeness, and feasibility.
+
+---
+
+### Background
+
+{{ background if background else "(not provided)" }}
+
+---
+
+### Rationale
+
+{{ rationale if rationale else "(not provided)" }}
+
+---
+
+### Research Questions
+
+{% if research_questions %}
+{% for rq in research_questions %}
+- {{ rq }}
+{% endfor %}
+{% else %}
+(not provided)
+{% endif %}
+
+---
+
+### PICO Framework
+
+**Population**: {{ pico_population if pico_population else "(not provided)" }}
+
+**Intervention**: {{ pico_intervention if pico_intervention else "(not provided)" }}
+
+**Comparison**: {{ pico_comparison if pico_comparison else "(not provided)" }}
+
+**Outcome**: {{ pico_outcome if pico_outcome else "(not provided)" }}
+
+{% if pico_context %}
+**Context**: {{ pico_context }}
+{% endif %}
+
+---
+
+### Search Strategy
+
+{{ search_strategy if search_strategy else "(not provided)" }}
+
+---
+
+### Inclusion Criteria
+
+{% if inclusion_criteria %}
+{% for criterion in inclusion_criteria %}
+- {{ criterion }}
+{% endfor %}
+{% else %}
+(not provided)
+{% endif %}
+
+---
+
+### Exclusion Criteria
+
+{% if exclusion_criteria %}
+{% for criterion in exclusion_criteria %}
+- {{ criterion }}
+{% endfor %}
+{% else %}
+(not provided)
+{% endif %}
+
+---
+
+### Data Extraction Strategy
+
+{{ data_extraction_strategy if data_extraction_strategy else "(not provided)" }}
+
+---
+
+### Synthesis Approach
+
+{{ synthesis_approach if synthesis_approach else "(not provided)" }}
+
+---
+
+### Dissemination Strategy
+
+{{ dissemination_strategy if dissemination_strategy else "(not provided)" }}
+
+---
+
+### Timetable
+
+{{ timetable if timetable else "(not provided)" }}
+
+---
+
+Based on the protocol above, provide your structured JSON review.

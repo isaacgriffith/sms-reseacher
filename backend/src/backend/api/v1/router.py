@@ -23,6 +23,7 @@ from backend.api.v1.results import router as results_router
 from backend.api.v1.search_strings import router as search_strings_router
 from backend.api.v1.searches import router as searches_router
 from backend.api.v1.seeds import router as seeds_router
+from backend.api.v1.slr.router import router as slr_router
 from backend.api.v1.studies import router as studies_router
 from backend.api.v1.studies.database_selection import router as database_selection_router
 from backend.api.v1.validity import router as validity_router
@@ -52,3 +53,4 @@ api_router.include_router(me_totp_router, prefix="/me")
 api_router.include_router(openapi_router)
 api_router.include_router(database_selection_router)
 api_router.include_router(paper_markdown_router)
+api_router.include_router(slr_router)

@@ -38,6 +38,7 @@ class ProviderConfig(Protocol):
         api_key: Plaintext API key for the provider.  ``None`` when no key
             is required (Ollama) or when the caller manages key injection
             via environment variables.
+
     """
 
     model_string: str

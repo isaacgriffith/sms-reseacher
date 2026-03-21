@@ -4,6 +4,43 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.7.0] — 2026-03-21 — feature/007-slr-workflow
+
+### Added
+- **SLR Protocol editor** (`ReviewProtocol` ORM + `GET/PUT /api/v1/slr/studies/{id}/protocol`):
+  full PICO/S fields, synthesis approach select, status lifecycle (`draft` → `validated`);
+  `ProtocolForm` frontend component with Zod validation and read-only state when validated
+- **Protocol review agent** (`ProtocolReviewerAgent` in `agents/src/agents/services/protocol_reviewer.py`):
+  LLM-powered structured review of protocol sections; `POST /api/v1/slr/studies/{id}/protocol/review`
+  triggers ARQ job; `ProtocolReviewReport` stores strengths, weaknesses, and recommendations per section
+- **SLR Phase Gate** (`backend/src/backend/services/slr_phase_gate.py`): unlocks study phases
+  progressively as protocol is validated, papers are screened, and QA thresholds are met;
+  wired into `GET /api/v1/studies/{id}/phases` via dispatch dict keyed on `StudyType`
+- **Quality Assessment system**: `QualityChecklist` / `QualityChecklistItem` / `QualityScore` ORM
+  models; `GET/PUT /api/v1/slr/studies/{id}/quality-checklist` upsert endpoint;
+  `GET/PUT /api/v1/slr/papers/{id}/quality-scores` per-reviewer scoring;
+  `QualityChecklistEditor` and `QualityScoreForm` frontend components
+- **Inter-Rater Reliability** (`backend/src/backend/services/inter_rater_service.py`):
+  Cohen's κ computation via `scikit-learn`; `GET /api/v1/slr/studies/{id}/inter-rater-reliability`;
+  `InterRaterPanel` frontend component with κ gauge and per-pair breakdown
+- **Synthesis pipeline** (`backend/src/backend/services/synthesis_service.py` +
+  `synthesis_strategies.py`): `SynthesisResult` ORM; ARQ background job triggered by
+  `POST /api/v1/slr/studies/{id}/synthesis`; three strategies — `MetaAnalysisStrategy` (pooled
+  effect size, Forest/Funnel SVG plots via `scipy` + `matplotlib`), `DescriptiveSynthesisStrategy`,
+  `QualitativeSynthesisStrategy`; `SynthesisPage` frontend with `ForestPlotViewer` / `FunnelPlotViewer`
+- **Grey Literature tracking** (`GreyLiteratureSource` ORM; `GET/POST/DELETE /api/v1/slr/studies/{id}/grey-literature`):
+  dissertation, report, preprint, conference, website, other source types;
+  `GreyLiteraturePanel` and `GreyLiteraturePage` frontend components
+- **SLR Report generation** (`SLRReportService`; `GET /api/v1/slr/studies/{id}/report`):
+  structured Markdown report aggregating protocol, search, screening, QA, and synthesis results;
+  `ReportPage` frontend with download button
+- **Alembic migration `0015_slr_workflow`**: creates `review_protocol`, `protocol_review_report`,
+  `quality_checklist`, `quality_checklist_item`, `quality_score`, `synthesis_result`,
+  `grey_literature_source` tables; full `downgrade()` path
+- **New Python libraries**: `scipy>=1.13`, `scikit-learn>=1.5`, `numpy>=1.26`
+- **E2e test** (`frontend/e2e/slr-workflow.spec.ts`): Playwright test covering the full SLR workflow
+  happy path
+
 ## [0.6.0] — 2026-03-18 — feature/006-database-search-and-retrieval
 
 ### Added

@@ -24,6 +24,7 @@ class PromptLoader:
     Raises:
         FileNotFoundError: If the prompt directory or expected files
             do not exist.
+
     """
 
     def __init__(
@@ -36,13 +37,12 @@ class PromptLoader:
         Args:
             agent_type: Agent type name (``screener``, etc.).
             prompts_root: Optional root directory for prompt files.
+
         """
         root = prompts_root or _DEFAULT_PROMPTS_ROOT
         self._prompt_dir = root / agent_type
         if not self._prompt_dir.is_dir():
-            raise FileNotFoundError(
-                f"Prompt directory not found: {self._prompt_dir}"
-            )
+            raise FileNotFoundError(f"Prompt directory not found: {self._prompt_dir}")
         self._env = Environment(
             loader=FileSystemLoader(str(self._prompt_dir)),
             undefined=StrictUndefined,
@@ -57,6 +57,7 @@ class PromptLoader:
 
         Raises:
             FileNotFoundError: If ``system.md`` does not exist.
+
         """
         system_path = self._prompt_dir / "system.md"
         if not system_path.is_file():
@@ -78,13 +79,12 @@ class PromptLoader:
             UndefinedError: If a required template variable is missing
                 from *context*.
             FileNotFoundError: If ``user.md.j2`` does not exist.
+
         """
         try:
             template = self._env.get_template("user.md.j2")
         except Exception as exc:  # noqa: BLE001
-            raise FileNotFoundError(
-                f"user.md.j2 not found in {self._prompt_dir}"
-            ) from exc
+            raise FileNotFoundError(f"user.md.j2 not found in {self._prompt_dir}") from exc
         try:
             return template.render(**context)
         except UndefinedError:
@@ -98,6 +98,7 @@ class PromptLoader:
 
         Returns:
             A list with a ``system`` message and a rendered ``user`` message.
+
         """
         return [
             {"role": "system", "content": self.load_system()},

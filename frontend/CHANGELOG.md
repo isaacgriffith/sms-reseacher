@@ -4,6 +4,60 @@ All notable changes to this subproject are documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.7.0] — 2026-03-21 — feature/007-slr-workflow
+
+### Added
+- **`ProtocolForm` component** (`src/components/slr/ProtocolForm.tsx`): react-hook-form + Zod
+  form for PICO/S protocol fields (population, intervention, comparator, outcome, context),
+  synthesis approach selector, and inclusion/exclusion criteria; `useWatch` throughout;
+  save delegates to `useUpdateProtocol` mutation
+- **`ProtocolReviewReport` component** (`src/components/slr/ProtocolReviewReport.tsx`):
+  renders per-section AI review output (strengths, weaknesses, recommendations) returned by
+  `ProtocolReviewReport` ORM
+- **`QualityChecklistEditor` component** (`src/components/slr/QualityChecklistEditor.tsx`):
+  MUI DataGrid for configuring checklist items with binary/numeric scoring method and weight
+- **`QualityScoreForm` component** (`src/components/slr/QualityScoreForm.tsx`): per-reviewer
+  score submission form; conditionally renders checkbox (binary) or numeric input based on
+  `scoring_method`
+- **`InterRaterPanel` component** (`src/components/slr/InterRaterPanel.tsx`): displays
+  Cohen's κ with colour-coded interpretation band (poor/fair/moderate/good/excellent) and
+  percentage agreement
+- **`DiscussionFlowPanel` component** (`src/components/slr/DiscussionFlowPanel.tsx`):
+  step-by-step resolution panel for reconciling inter-rater disagreements
+- **`SynthesisConfigForm` component** (`src/components/slr/SynthesisConfigForm.tsx`):
+  synthesis approach selector (meta-analysis / descriptive / qualitative) with dynamic
+  parameter fields per approach
+- **`ForestPlotViewer` component** (`src/components/slr/ForestPlotViewer.tsx`): renders
+  Forest plot SVG from meta-analysis synthesis result; download SVG button
+- **`FunnelPlotViewer` component** (`src/components/slr/FunnelPlotViewer.tsx`): renders
+  Funnel plot SVG for publication bias visualisation
+- **`GreyLiteraturePanel` component** (`src/components/slr/GreyLiteraturePanel.tsx`):
+  CRUD table for non-database literature sources (dissertation, report, preprint, conference,
+  website)
+- **`ProtocolEditorPage`** (`src/pages/slr/ProtocolEditorPage.tsx`, route
+  `/slr/:studyId/protocol`): full-page protocol editor with inline `ProtocolReviewReport` and
+  "Run AI Review" action
+- **`QualityAssessmentPage`** (`src/pages/slr/QualityAssessmentPage.tsx`, route
+  `/slr/:studyId/quality`): checklist editor and per-reviewer score forms side by side
+- **`SynthesisPage`** (`src/pages/slr/SynthesisPage.tsx`, route `/slr/:studyId/synthesis`):
+  synthesis config form, job trigger, and Forest/Funnel plot display on completion
+- **`GreyLiteraturePage`** (`src/pages/slr/GreyLiteraturePage.tsx`, route
+  `/slr/:studyId/grey-literature`): grey literature source management page
+- **`ReportPage`** (`src/pages/slr/ReportPage.tsx`, route `/slr/:studyId/report`): renders
+  Markdown SLR report with copy-to-clipboard and download actions
+- **SLR hooks** (`src/hooks/slr/`): `useProtocol`, `useCreateProtocol`, `useUpdateProtocol`,
+  `useTriggerProtocolReview`; `useQualityChecklist`, `useCreateChecklist`,
+  `useUpdateChecklist`, `useSubmitScore`; `useInterRaterStats`, `useKappaScore`;
+  `useSynthesisResult`, `useTriggerSynthesis`; `useGreyLiteratureSources`,
+  `useAddGreyLiteratureSource`, `useDeleteGreyLiteratureSource`
+- **SLR services** (`src/services/slr/`): `protocolApi.ts`, `qualityApi.ts`,
+  `interRaterApi.ts`, `synthesisApi.ts`, `greyLiteratureApi.ts`, `reportApi.ts`; all
+  responses parsed through Zod schemas; all hooks use TanStack Query v5
+- **SLR routes** registered in `App.tsx` under `/slr/:studyId/` prefix; SideNav updated
+  with SLR section links for SLR study type
+
+---
+
 ## [0.6.0] — 2026-03-18 — feature/006-database-search-and-retrieval
 
 ### Added

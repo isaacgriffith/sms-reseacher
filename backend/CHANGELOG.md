@@ -4,6 +4,29 @@ All notable changes to this subproject are documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.7.0] — 2026-03-21 — feature/007-slr-workflow
+
+### Added
+- **SLR API routers** (`api/v1/slr/`): protocol, inter-rater reliability, quality assessment,
+  synthesis, grey literature, and report endpoints
+- **`SLRProtocolService`** (`services/slr_protocol_service.py`): create/read/update protocol with
+  status transition validation
+- **`SLRPhaseGate`** (`services/slr_phase_gate.py`): `get_slr_unlocked_phases()` returns
+  progressively unlocked phases based on protocol status, Kappa threshold, and included paper count;
+  wired into `GET /api/v1/studies/{id}/phases` via `StudyType` dispatch dict
+- **`InterRaterService`** (`services/inter_rater_service.py`): Cohen's κ computation via
+  `sklearn.metrics.cohen_kappa_score`; `safe_cohen_kappa` handles edge cases
+- **`QualityAssessmentService`** (`services/quality_assessment_service.py`): checklist CRUD and
+  per-reviewer score submission
+- **`SynthesisService`** + strategies (`services/synthesis_service.py`,
+  `services/synthesis_strategies.py`): `MetaAnalysisStrategy` (pooled effect size + Forest/Funnel
+  SVG via `scipy`/`matplotlib`), `DescriptiveSynthesisStrategy`, `QualitativeSynthesisStrategy`
+- **`SLRReportService`** (`services/slr_report_service.py`): structured Markdown report generation
+- **`statistics.py`** (`services/statistics.py`): `pooled_effect_size`, `weighted_mean`,
+  `between_study_variance`, `confidence_interval` for meta-analysis
+- **`synthesis_job.py`** + **`protocol_review_job.py`** (`jobs/`): ARQ background jobs
+- **`SLR_KAPPA_THRESHOLD`** and **`SLR_MIN_SYNTHESIS_PAPERS`** config settings
+
 ## [0.6.0] — 2026-03-18 — feature/006-database-search-and-retrieval
 
 ### Added

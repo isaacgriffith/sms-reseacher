@@ -5,6 +5,8 @@ from __future__ import annotations
 import io
 from typing import Any
 
+from backend.core.config import get_settings
+
 
 def generate_bar_chart(
     data: dict[str, int | float],
@@ -206,6 +208,200 @@ def generate_frequency_infographic(year_counts: dict[str, int]) -> str:
     ax.set_ylabel("Number of Papers")
     ax.spines[["top", "right"]].set_visible(False)
     plt.xticks(rotation=45, ha="right")
+    plt.tight_layout()
+
+    buf = io.StringIO()
+    fig.savefig(buf, format="svg")
+    plt.close(fig)
+    return buf.getvalue()
+
+
+class StudyPlotData:
+    """Data for one study in a Forest or Funnel plot.
+
+    Attributes:
+        label: Study label shown on the plot y-axis.
+        effect_size: Point estimate of the effect size.
+        ci_lower: Lower bound of the confidence interval.
+        ci_upper: Upper bound of the confidence interval.
+        weight: Relative weight of the study (used for marker size).
+
+    """
+
+    def __init__(
+        self,
+        label: str,
+        effect_size: float,
+        ci_lower: float,
+        ci_upper: float,
+        weight: float = 1.0,
+    ) -> None:
+        """Initialise study plot data.
+
+        Args:
+            label: Study label shown on the plot y-axis.
+            effect_size: Point estimate of the effect size.
+            ci_lower: Lower bound of the confidence interval.
+            ci_upper: Upper bound of the confidence interval.
+            weight: Relative study weight (used for marker size scaling).
+
+        """
+        self.label = label
+        self.effect_size = effect_size
+        self.ci_lower = ci_lower
+        self.ci_upper = ci_upper
+        self.weight = weight
+
+
+def generate_forest_plot(
+    studies: list[StudyPlotData],
+    pooled_estimate: StudyPlotData,
+    title: str,
+) -> str:
+    """Render a Forest plot as an SVG string.
+
+    Displays individual study effect sizes with confidence intervals and the
+    pooled estimate as a diamond.  Raises ``ValueError`` when fewer studies
+    are provided than the ``SLR_MIN_SYNTHESIS_PAPERS`` configuration setting
+    because a Forest plot with too few data points is statistically meaningless.
+
+    Args:
+        studies: Per-study effect size data ordered as they should appear
+            on the y-axis (bottom to top in traditional Forest plot order).
+        pooled_estimate: Pooled effect size shown as a diamond at the bottom.
+        title: Plot title rendered at the top of the figure.
+
+    Returns:
+        A UTF-8 SVG string containing the rendered Forest plot.
+
+    Raises:
+        ValueError: If ``len(studies)`` is less than
+            ``settings.slr_min_synthesis_papers``.
+
+    """
+    settings = get_settings()
+    if len(studies) < settings.slr_min_synthesis_papers:
+        raise ValueError(
+            f"Forest plot requires at least {settings.slr_min_synthesis_papers} studies; "
+            f"got {len(studies)}"
+        )
+
+    import matplotlib
+
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    n = len(studies)
+    fig_height = max(4.0, 1.0 + 0.5 * n)
+    fig, ax = plt.subplots(figsize=(10, fig_height))
+
+    y_positions = list(range(n, 0, -1))  # top study at highest y
+
+    for _i, (study, y) in enumerate(zip(studies, y_positions, strict=True)):
+        marker_size = max(4.0, study.weight * 8.0)
+        ax.plot(study.effect_size, y, "s", color="#4C72B0", markersize=marker_size)
+        ax.plot(
+            [study.ci_lower, study.ci_upper],
+            [y, y],
+            "-",
+            color="#4C72B0",
+            linewidth=1.0,
+        )
+        ax.text(
+            ax.get_xlim()[0] if ax.get_xlim()[0] != 0 else -2.0,
+            y,
+            study.label,
+            va="center",
+            ha="right",
+            fontsize=8,
+        )
+
+    # Pooled diamond at y=0
+    diamond_x = [
+        pooled_estimate.ci_lower,
+        pooled_estimate.effect_size,
+        pooled_estimate.ci_upper,
+        pooled_estimate.effect_size,
+        pooled_estimate.ci_lower,
+    ]
+    diamond_y = [0.0, 0.3, 0.0, -0.3, 0.0]
+    ax.fill(diamond_x, diamond_y, color="#DD8452", zorder=3)
+
+    ax.axvline(x=0, color="gray", linestyle="--", linewidth=0.8)
+    ax.set_title(title, fontsize=12, fontweight="bold")
+    ax.set_xlabel("Effect Size")
+    ax.set_yticks([])
+    ax.spines[["top", "right", "left"]].set_visible(False)
+    plt.tight_layout()
+
+    buf = io.StringIO()
+    fig.savefig(buf, format="svg")
+    plt.close(fig)
+    return buf.getvalue()
+
+
+def generate_funnel_plot(
+    studies: list[StudyPlotData],
+    pooled_estimate: StudyPlotData,
+    title: str,
+) -> str:
+    """Render a Funnel plot as an SVG string.
+
+    A Funnel plot charts each study's effect size against its standard error
+    (inverted y-axis so larger, more precise studies appear at the top).  A
+    symmetric funnel envelope around the pooled estimate is drawn at ±1.96 SE.
+    Asymmetry in the scatter indicates potential publication bias.
+
+    Args:
+        studies: Per-study effect size data.  ``ci_lower`` and ``ci_upper``
+            are used to derive each study's standard error
+            (SE = (ci_upper - ci_lower) / (2 × 1.96)).
+        pooled_estimate: Pooled effect size used to centre the funnel envelope.
+        title: Plot title rendered at the top of the figure.
+
+    Returns:
+        A UTF-8 SVG string containing the rendered Funnel plot.
+
+    """
+    import matplotlib
+
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    import numpy as np  # type: ignore[import-untyped]
+
+    ses = [(s.ci_upper - s.ci_lower) / (2.0 * 1.96) for s in studies]
+    effect_sizes = [s.effect_size for s in studies]
+
+    fig, ax = plt.subplots(figsize=(8, 6))
+
+    ax.scatter(effect_sizes, ses, color="#4C72B0", s=40, zorder=3, label="Studies")
+
+    # Funnel envelope: SE_range × 1.96 from pooled estimate
+    se_max = max(ses) * 1.1 if ses else 1.0
+    se_range = np.linspace(0, se_max, 200)
+    ax.plot(
+        pooled_estimate.effect_size + 1.96 * se_range,
+        se_range,
+        "--",
+        color="#DD8452",
+        linewidth=1.0,
+        label="95% CI envelope",
+    )
+    ax.plot(
+        pooled_estimate.effect_size - 1.96 * se_range,
+        se_range,
+        "--",
+        color="#DD8452",
+        linewidth=1.0,
+    )
+
+    ax.axvline(x=pooled_estimate.effect_size, color="gray", linestyle="--", linewidth=0.8)
+    ax.invert_yaxis()
+    ax.set_title(title, fontsize=12, fontweight="bold")
+    ax.set_xlabel("Effect Size")
+    ax.set_ylabel("Standard Error")
+    ax.legend(fontsize=8)
+    ax.spines[["top", "right"]].set_visible(False)
     plt.tight_layout()
 
     buf = io.StringIO()

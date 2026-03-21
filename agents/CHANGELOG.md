@@ -4,6 +4,15 @@ All notable changes to this subproject are documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.7.0] — 2026-03-21 — feature/007-slr-workflow
+
+### Added
+- **`ProtocolReviewerAgent`** (`services/protocol_reviewer.py`): LLM-powered structured review of
+  SLR protocol sections; returns `ProtocolReviewResult` with per-section strengths, weaknesses,
+  and actionable recommendations
+- **Prompt templates** (`prompts/protocol_reviewer/`): Jinja2 system and user prompt templates
+  for the protocol reviewer agent
+
 ## [0.5.0] — 2026-03-17 — feature/005-models-and-agents
 
 ### Added

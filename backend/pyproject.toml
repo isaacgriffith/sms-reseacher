@@ -23,6 +23,10 @@ dependencies = [
     "kaleido>=0.2",
     # Paper deduplication
     "rapidfuzz>=3.9",
+    # SLR statistical computation (007-slr-workflow)
+    "scipy>=1.13",
+    "scikit-learn>=1.5",
+    "numpy>=1.26",
     # 2FA and encryption (feature 004-frontend-improvements)
     "pyotp>=2.9",
     "qrcode[pil]>=7.4",

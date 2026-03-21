@@ -16,6 +16,7 @@ from backend.core.config import get_logger
 from backend.core.database import get_db
 from backend.services import audit as audit_svc
 from backend.services.phase_gate import compute_staleness_flags, get_unlocked_phases
+from backend.services.slr_phase_gate import get_slr_unlocked_phases
 
 router = APIRouter(tags=["studies"])
 logger = get_logger(__name__)
@@ -102,6 +103,29 @@ def _study_metadata(study: Study) -> dict[str, Any]:
     if study.metadata_ and isinstance(study.metadata_, dict):
         meta = study.metadata_
     return meta
+
+
+_PHASE_GATE_DISPATCH = {
+    StudyType.SLR: get_slr_unlocked_phases,
+}
+
+
+async def _get_unlocked_phases_for_study(study: Study, db: AsyncSession) -> list[int]:
+    """Dispatch to the correct phase-gate function based on study type.
+
+    SMS and all other study types use :func:`get_unlocked_phases`.
+    SLR studies use :func:`get_slr_unlocked_phases`.
+
+    Args:
+        study: The study whose phases should be evaluated.
+        db: Async database session.
+
+    Returns:
+        A list of unlocked phase numbers.
+
+    """
+    gate_fn = _PHASE_GATE_DISPATCH.get(study.study_type, get_unlocked_phases)
+    return await gate_fn(study.id, db)
 
 
 async def _require_study_access(
@@ -303,7 +327,7 @@ async def get_study(
 
     """
     study = await _require_study_access(study_id, current_user, db)
-    unlocked = await get_unlocked_phases(study_id, db)
+    unlocked = await _get_unlocked_phases_for_study(study, db)
     meta = _study_metadata(study)
 
     return StudyDetail(
@@ -378,7 +402,7 @@ async def patch_study(
     )
     await db.commit()
 
-    unlocked = await get_unlocked_phases(study_id, db)
+    unlocked = await _get_unlocked_phases_for_study(study, db)
     return StudyDetail(
         id=study.id,
         name=study.name,

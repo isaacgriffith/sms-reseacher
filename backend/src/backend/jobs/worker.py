@@ -28,6 +28,7 @@ class WorkerSettings:
     """
 
     from backend.jobs.extraction_job import run_batch_extraction
+    from backend.jobs.protocol_review_job import run_protocol_review
     from backend.jobs.quality_job import run_quality_eval
     from backend.jobs.results_job import run_export, run_generate_results
     from backend.jobs.search_job import (
@@ -36,6 +37,7 @@ class WorkerSettings:
         run_snowball,
         run_test_search,
     )
+    from backend.jobs.synthesis_job import run_synthesis
     from backend.jobs.validity_job import run_validity_prefill
 
     functions = [
@@ -48,6 +50,8 @@ class WorkerSettings:
         run_export,
         run_quality_eval,
         run_validity_prefill,
+        run_protocol_review,
+        run_synthesis,
     ]
 
     max_jobs: int = 10

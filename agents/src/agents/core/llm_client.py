@@ -51,6 +51,7 @@ class LLMClient:
             settings: Optional :class:`AgentSettings` override.  When
                 ``None``, the cached settings from
                 :func:`get_agent_settings` are used.
+
         """
         self._settings = settings or get_agent_settings()
 
@@ -76,9 +77,7 @@ class LLMClient:
             return {"api_base": self._settings.ollama_base_url}
         return {}
 
-    def _kwargs_from_provider_config(
-        self, provider_config: ProviderConfig
-    ) -> dict[str, Any]:
+    def _kwargs_from_provider_config(self, provider_config: ProviderConfig) -> dict[str, Any]:
         """Build LiteLLM keyword arguments from a database-resolved ProviderConfig.
 
         Args:
@@ -88,6 +87,7 @@ class LLMClient:
         Returns:
             A dict containing ``model`` and, conditionally, ``api_base`` and
             ``api_key`` overrides ready for :func:`litellm.acompletion`.
+
         """
         kwargs: dict[str, Any] = {"model": provider_config.model_string}
         if provider_config.api_base is not None:
@@ -127,6 +127,7 @@ class LLMClient:
 
         Raises:
             litellm.exceptions.APIError: If the upstream LLM call fails.
+
         """
         if provider_config is not None:
             base_kwargs = self._kwargs_from_provider_config(provider_config)

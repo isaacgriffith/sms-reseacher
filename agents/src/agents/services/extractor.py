@@ -53,6 +53,7 @@ class ExtractionResult(BaseModel):
 
         Raises:
             ValueError: If the value is not a recognised research type.
+
         """
         if v not in _VALID_RESEARCH_TYPES:
             return "unknown"
@@ -70,6 +71,7 @@ def _extract_json(raw: str) -> dict[str, Any]:
 
     Raises:
         ValueError: If no valid JSON object can be found in the response.
+
     """
     cleaned = re.sub(r"```(?:json)?\s*", "", raw).replace("```", "").strip()
     try:
@@ -78,7 +80,7 @@ def _extract_json(raw: str) -> dict[str, Any]:
         match = re.search(r"\{.*\}", cleaned, re.DOTALL)
         if match:
             return json.loads(match.group())
-        raise ValueError(f"No valid JSON found in extractor response: {raw[:200]!r}")
+        raise ValueError(f"No valid JSON found in extractor response: {raw[:200]!r}") from None
 
 
 class ExtractorAgent:
@@ -99,6 +101,7 @@ class ExtractorAgent:
             model routing.  When ``None``, falls back to environment settings.
         system_message_override: Optional rendered system message string that
             replaces the first system message loaded from prompt files.
+
     """
 
     def __init__(
@@ -116,6 +119,7 @@ class ExtractorAgent:
                 Passed through to each :meth:`LLMClient.complete` call.
             system_message_override: Optional rendered system message to use
                 instead of the default prompt-file system message.
+
         """
         self._client = llm_client or LLMClient()
         self._loader = PromptLoader("extractor")
@@ -151,6 +155,7 @@ class ExtractorAgent:
 
         Raises:
             ValueError: If the LLM response cannot be parsed as valid JSON.
+
         """
         context = {
             "title": title,

@@ -83,6 +83,56 @@ message review) with state managed via `useReducer`. `SystemMessageEditor` is a
 
 All API responses are parsed through Zod schemas before being returned from hooks.
 
+## SLR Workflow Components (007-slr-workflow)
+
+New components, hooks, and services supporting the full Systematic Literature Review workflow:
+
+### SLR Components (`src/components/slr/`)
+
+| Component | Description |
+|-----------|-------------|
+| `ProtocolForm` | react-hook-form + Zod form for PICO/S protocol fields; `useWatch` on all fields; saves via `useUpdateProtocol` mutation |
+| `ProtocolReviewReport` | Renders AI-generated per-section strengths/weaknesses/recommendations from `ProtocolReviewReport` |
+| `QualityChecklistEditor` | Editable MUI DataGrid for configuring quality checklist items (binary/numeric scoring, weights) |
+| `QualityScoreForm` | Per-reviewer score submission form; conditional numeric input vs checkbox based on scoring method |
+| `InterRaterPanel` | Displays Cohen's κ score with interpretation band (poor/fair/moderate/good/excellent) |
+| `DiscussionFlowPanel` | Step-by-step discussion resolution panel for resolving inter-rater disagreements |
+| `SynthesisConfigForm` | Synthesis approach selector (meta-analysis / descriptive / qualitative) with parameter fields |
+| `ForestPlotViewer` | Renders Forest plot SVG returned by meta-analysis synthesis with download action |
+| `FunnelPlotViewer` | Renders Funnel plot SVG for publication bias visualisation |
+| `GreyLiteraturePanel` | CRUD panel for non-database literature sources (dissertation, report, preprint, conference, website) |
+
+### SLR Pages (`src/pages/slr/`)
+
+| Page | Route | Description |
+|------|-------|-------------|
+| `ProtocolEditorPage` | `/slr/:studyId/protocol` | Full-page protocol editor with AI review trigger |
+| `QualityAssessmentPage` | `/slr/:studyId/quality` | Checklist editor + per-reviewer score forms |
+| `SynthesisPage` | `/slr/:studyId/synthesis` | Synthesis config, job trigger, Forest/Funnel plot display |
+| `GreyLiteraturePage` | `/slr/:studyId/grey-literature` | Grey literature source management |
+| `ReportPage` | `/slr/:studyId/report` | Rendered Markdown SLR report with download |
+
+### SLR Hooks (`src/hooks/slr/`)
+
+| Hook file | Exported hooks |
+|-----------|---------------|
+| `useProtocol.ts` | `useProtocol`, `useCreateProtocol`, `useUpdateProtocol`, `useTriggerProtocolReview` |
+| `useQualityAssessment.ts` | `useQualityChecklist`, `useCreateChecklist`, `useUpdateChecklist`, `useSubmitScore` |
+| `useInterRater.ts` | `useInterRaterStats`, `useKappaScore` |
+| `useSynthesis.ts` | `useSynthesisResult`, `useTriggerSynthesis` |
+| `useGreyLiterature.ts` | `useGreyLiteratureSources`, `useAddGreyLiteratureSource`, `useDeleteGreyLiteratureSource` |
+
+### SLR Services (`src/services/slr/`)
+
+| Service | Description |
+|---------|-------------|
+| `protocolApi.ts` | CRUD + review-trigger endpoints for `ReviewProtocol` |
+| `qualityApi.ts` | Checklist CRUD and score submission endpoints |
+| `interRaterApi.ts` | Cohen's κ computation endpoint |
+| `synthesisApi.ts` | Synthesis trigger and result fetch |
+| `greyLiteratureApi.ts` | Grey literature source CRUD |
+| `reportApi.ts` | Structured Markdown report fetch |
+
 ## Project Structure
 
 ```
@@ -97,15 +147,19 @@ frontend/
 │   ├── main.tsx              # Application entry point
 │   ├── App.tsx               # Root component and router setup
 │   ├── components/           # Reusable UI components
-│   │   └── admin/
-│   │       ├── providers/    # ProviderList, ProviderForm
-│   │       ├── models/       # ModelList
-│   │       └── agents/       # AgentList, AgentWizard, AgentForm, SystemMessageEditor
+│   │   ├── admin/
+│   │   │   ├── providers/    # ProviderList, ProviderForm
+│   │   │   ├── models/       # ModelList
+│   │   │   └── agents/       # AgentList, AgentWizard, AgentForm, SystemMessageEditor
+│   │   └── slr/              # SLR workflow components (007-slr-workflow)
 │   ├── pages/                # Page-level route components
+│   │   └── slr/              # SLR page-level routes (007-slr-workflow)
 │   ├── hooks/                # Shared custom hooks (use* pattern)
+│   │   └── slr/              # SLR-specific hooks (007-slr-workflow)
 │   ├── services/             # API client and TanStack Query hooks
 │   │   ├── providersApi.ts   # Provider + model TanStack Query hooks
-│   │   └── agentsApi.ts      # Agent TanStack Query hooks
+│   │   ├── agentsApi.ts      # Agent TanStack Query hooks
+│   │   └── slr/              # SLR API services (007-slr-workflow)
 │   ├── types/
 │   │   ├── provider.ts       # Zod schemas + inferred types for Provider/AvailableModel
 │   │   └── agent.ts          # Zod schemas + inferred types for Agent

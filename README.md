@@ -43,6 +43,13 @@ docker compose up       # starts frontend + backend + db + researcher-mcp
 
 See [quickstart.md](specs/001-repo-setup/quickstart.md#docker-local-deployment) for Docker details.
 
+## Supported Study Types
+
+| Study Type | Description |
+|-----------|-------------|
+| **SMS** | Systematic Mapping Study — scoping, search, screening, extraction, visualisation |
+| **SLR** | Systematic Literature Review — full PICO protocol, quality assessment, meta-analysis/synthesis, grey literature, report export |
+
 ## Frontend Routes
 
 | Route | Description | Auth required |
@@ -51,6 +58,11 @@ See [quickstart.md](specs/001-repo-setup/quickstart.md#docker-local-deployment) 
 | `/groups` | Research groups list | Yes |
 | `/groups/:id/studies` | Studies for a group | Yes |
 | `/studies/:id` | Study workspace | Yes |
+| `/studies/:id/slr/protocol` | SLR protocol editor with AI review | Yes |
+| `/studies/:id/slr/quality` | Quality assessment checklists and scoring | Yes |
+| `/studies/:id/slr/synthesis` | Synthesis results (meta-analysis / descriptive / qualitative) | Yes |
+| `/studies/:id/slr/grey-literature` | Grey literature source tracking | Yes |
+| `/studies/:id/slr/report` | Structured SLR report export | Yes |
 | `/preferences` | Password change, theme selector, 2FA management | Yes |
 | `/api-docs` | Interactive Swagger UI (auto-generated from backend) | Yes |
 

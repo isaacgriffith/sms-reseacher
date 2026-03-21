@@ -55,6 +55,7 @@ class ValidityResult(BaseModel):
 
         Raises:
             ValueError: If the value is empty or whitespace-only.
+
         """
         stripped = (v or "").strip()
         if not stripped:
@@ -73,6 +74,7 @@ def _extract_json(raw: str) -> dict[str, Any]:
 
     Raises:
         ValueError: If no valid JSON object can be found in the response.
+
     """
     cleaned = re.sub(r"```(?:json)?\s*", "", raw).replace("```", "").strip()
     try:
@@ -81,7 +83,7 @@ def _extract_json(raw: str) -> dict[str, Any]:
         match = re.search(r"\{.*\}", cleaned, re.DOTALL)
         if match:
             return json.loads(match.group())
-        raise ValueError(f"No valid JSON found in validity agent response: {raw[:200]!r}")
+        raise ValueError(f"No valid JSON found in validity agent response: {raw[:200]!r}") from None
 
 
 def _build_context(
@@ -117,6 +119,7 @@ def _build_context(
 
     Returns:
         Context dict suitable for the Jinja2 prompt template.
+
     """
     return {
         "study_id": study_id,
@@ -149,6 +152,7 @@ class ValidityAgent:
         llm_client: Optional :class:`LLMClient` override for testing.
         provider_config: Optional :class:`ProviderConfig` for database-backed
             model routing.  When ``None``, falls back to environment settings.
+
     """
 
     def __init__(
@@ -166,6 +170,7 @@ class ValidityAgent:
                 Passed through to each :meth:`LLMClient.complete` call.
             system_message_override: Optional rendered system message to use
                 instead of the default prompt-file system message.
+
         """
         self._client = llm_client or LLMClient()
         self._loader = PromptLoader("validity")
@@ -212,6 +217,7 @@ class ValidityAgent:
         Raises:
             ValueError: If the LLM response cannot be parsed, or if any
                 dimension is empty in the parsed result.
+
         """
         context = _build_context(
             study_id=study_id,

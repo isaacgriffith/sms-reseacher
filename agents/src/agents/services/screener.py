@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import re
 from typing import Any
 
 from pydantic import BaseModel
@@ -47,6 +46,7 @@ class ScreenerAgent:
             model routing.  When ``None``, falls back to environment settings.
         system_message_override: Optional rendered system message string that
             replaces the first system message loaded from prompt files.
+
     """
 
     def __init__(
@@ -64,6 +64,7 @@ class ScreenerAgent:
                 Passed through to each :meth:`LLMClient.complete` call.
             system_message_override: Optional rendered system message to use
                 instead of the default prompt-file system message.
+
         """
         self._client = llm_client or LLMClient()
         self._loader = PromptLoader("screener")
@@ -93,6 +94,7 @@ class ScreenerAgent:
         Returns:
             Raw string decision when criteria are strings (legacy mode), or a
             :class:`ScreeningResult` when criteria are structured lists.
+
         """
         structured_mode = isinstance(inclusion_criteria, list)
 
@@ -143,7 +145,7 @@ class ScreenerAgent:
         try:
             data: dict[str, Any] = json.loads(cleaned)
             return ScreeningResult.model_validate(data)
-        except (json.JSONDecodeError, Exception):
+        except json.JSONDecodeError, Exception:
             # Fallback: infer decision from plain text
             lower = cleaned.lower()
             if "accept" in lower:

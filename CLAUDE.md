@@ -12,6 +12,8 @@ This is a research project by Isaac Griffith, PhD, licensed under the MIT Licens
 - Python 3.14 (backend, agents, db); TypeScript 5.4 / Node 20 LTS (frontend) + FastAPI + Pydantic v2, SQLAlchemy 2.0+ async, Alembic, LiteLLM, Jinja2, cryptography (Fernet), React 18, MUI v5, TanStack Query v5, react-hook-form + Zod (005-models-and-agents)
 - PostgreSQL 16 (production); SQLite + aiosqlite (tests) (005-models-and-agents)
 - Python 3.14 (researcher-mcp, backend, db); TypeScript 5.4 / Node 20 LTS (frontend); pybliometrics, semanticscholar, scholarly, unpywall, springernature-api-client, markitdown[all], scidownl, httpx (006-database-search-and-retrieval)
+- Python 3.14 (backend, agents, db); TypeScript 5.4 / Node 20 LTS (frontend) + FastAPI, SQLAlchemy 2.0+ async, ARQ, LiteLLM, React 18, MUI v5, TanStack Query v5, react-hook-form + Zod; new: `scipy>=1.13`, `scikit-learn>=1.5`, `numpy>=1.26` (007-slr-workflow)
+- PostgreSQL 16 (production); SQLite + aiosqlite (tests); Alembic migration `0015_slr_workflow` (007-slr-workflow)
 
 ### Runtime & Language
 - Python 3.14 (backend, agents, db, agent-eval, researcher-mcp); TypeScript 5.4 / Node 20 LTS (frontend)
@@ -23,6 +25,9 @@ This is a research project by Isaac Griffith, PhD, licensed under the MIT Licens
 - **String matching / deduplication**: rapidfuzz
 - **LLM evals**: deepeval + hypothesis (metamorphic tests)
 - **FastMCP**: FastMCP 2.0+ (`@mcp.tool` decorator pattern)
+
+### Python Libraries (007-slr-workflow)
+- **Statistics / ML**: `scipy>=1.13` (pooled effect sizes, Forest/Funnel plot data), `scikit-learn>=1.5` (Cohen's κ via `cohen_kappa_score`), `numpy>=1.26` (array operations for meta-analysis)
 
 ### Frontend Libraries (002-sms-workflow)
 - **Data visualisation**: D3.js (network graphs, result charts)
@@ -60,6 +65,19 @@ This is a research project by Isaac Griffith, PhD, licensed under the MIT Licens
 - **New env vars**: `IEEE_XPLORE_API_KEY`, `ELSEVIER_API_KEY`, `ELSEVIER_INST_TOKEN`, `WOS_API_KEY`, `SPRINGER_API_KEY`, `SEMANTIC_SCHOLAR_API_KEY`, `UNPAYWALL_EMAIL`, `SCHOLARLY_PROXY_URL`, `SCIHUB_ENABLED`
 - **Alembic migration `0014_database_search_and_retrieval`**: creates `study_database_selection` and `search_integration_credential` tables; adds three columns to `paper` table
 
+### SLR Workflow (007-slr-workflow)
+- **SLR Protocol**: `ReviewProtocol` ORM + `GET/PUT /api/v1/slr/studies/{id}/protocol`; PICO/S fields, synthesis approach, status lifecycle (`draft` → `validated`); `ProtocolForm` frontend component
+- **Protocol Review Agent** (`ProtocolReviewerAgent`): structured LLM review; `POST /api/v1/slr/studies/{id}/protocol/review` ARQ job; `ProtocolReviewReport` per section
+- **SLR Phase Gate** (`slr_phase_gate.py`): progressive phase unlocking for SLR studies; dispatch dict in `GET /api/v1/studies/{id}/phases`
+- **Quality Assessment**: `QualityChecklist`/`QualityChecklistItem`/`QualityScore` ORM; checklist upsert and per-reviewer scoring endpoints; `QualityChecklistEditor` / `QualityScoreForm` / `QualityAssessmentPage` frontend
+- **Inter-Rater Reliability**: Cohen's κ via `scikit-learn`; `InterRaterPanel` frontend; `GET /api/v1/slr/studies/{id}/inter-rater-reliability`
+- **Synthesis pipeline**: `SynthesisResult` ORM; ARQ job; three strategies — `MetaAnalysisStrategy` (Forest/Funnel SVG via `scipy`/`matplotlib`), `DescriptiveSynthesisStrategy`, `QualitativeSynthesisStrategy`; `SynthesisPage` + `ForestPlotViewer` / `FunnelPlotViewer` frontend
+- **Grey Literature**: `GreyLiteratureSource` ORM; CRUD endpoints; `GreyLiteraturePanel` / `GreyLiteraturePage` frontend
+- **SLR Report**: `SLRReportService`; `GET /api/v1/slr/studies/{id}/report`; `ReportPage` with download
+- **New Python libraries**: `scipy>=1.13`, `scikit-learn>=1.5`, `numpy>=1.26`
+- **New env vars**: `SLR_KAPPA_THRESHOLD` (default `0.6`), `SLR_MIN_SYNTHESIS_PAPERS` (default `2`)
+- **Alembic migration `0015_slr_workflow`**: creates 7 new tables for the full SLR workflow
+
 ## Recent Changes
 - 001-repo-setup: Added Python 3.12 (backend, agents, db); TypeScript 5.4 / Node 20 LTS (frontend)
 - 002-sms-workflow: Finalised library choices — ARQ, matplotlib, networkx, plotly/kaleido, rapidfuzz, D3.js
@@ -67,6 +85,7 @@ This is a research project by Isaac Griffith, PhD, licensed under the MIT Licens
 - 004-frontend-improvements: password change + session invalidation, TOTP 2FA with QR/backup codes, theme preference (Light/Dark/System), full MUI v5 migration, authenticated API docs page
 - 005-models-and-agents: multi-provider LLM support (Anthropic/OpenAI/Ollama), `Provider`/`AvailableModel`/`Agent` DB tables, admin panel Providers/Models/Agents tabs, `ProviderConfig` Protocol, `AgentGeneratorAgent`, study-context Jinja2 template rendering, Reviewer migration
 - 006-database-search-and-retrieval: multi-database fan-out search (9 sources), `StudyDatabaseSelection`/`SearchIntegrationCredential` DB tables, `CredentialService`, full-text PDF retrieval (Unpaywall/Sci-Hub), Markdown conversion (`markitdown`), admin Search Integrations panel, study database-selection UI
+- 007-slr-workflow: SLR protocol editor with AI review, SLR phase gate, quality assessment checklists, inter-rater reliability (Cohen's κ), meta-analysis/descriptive/qualitative synthesis, Forest/Funnel plots, grey literature tracking, structured SLR report export; new libs: scipy, scikit-learn, numpy
 
 ---
 

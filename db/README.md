@@ -130,6 +130,20 @@ Stores encrypted API credentials for external academic databases.
 | `full_text_source` | Enum | `FullTextSource`: `unpaywall`, `scihub`, `manual` |
 | `full_text_converted_at` | DateTime(tz) | Nullable; when conversion occurred |
 
+### SLR Models (added in migration 0015)
+
+Defined in `db/src/db/models/slr.py`:
+
+| Model | Description |
+|-------|-------------|
+| `ReviewProtocol` | PICO/S protocol fields, synthesis approach, status lifecycle |
+| `ProtocolReviewReport` | AI review results per protocol section |
+| `QualityChecklist` | Configurable quality assessment checklist |
+| `QualityChecklistItem` | Individual checklist item with scoring method and weight |
+| `QualityScore` | Per-reviewer score for a checklist item on a candidate paper |
+| `SynthesisResult` | Synthesis approach, status, statistics, and plot SVGs |
+| `GreyLiteratureSource` | Non-database literature sources (dissertation, report, etc.) |
+
 ## Development
 
 ```bash

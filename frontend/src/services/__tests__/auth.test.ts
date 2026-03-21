@@ -190,5 +190,12 @@ describe('auth service', () => {
       // With no localStorage state, token should be null regardless of snapshot
       expect(result.current).toBeNull();
     });
+
+    it('returns null user when localStorage has invalid JSON via useAuthStore', () => {
+      localStorage.setItem('sms-auth-user', 'not-valid-json{{{');
+      localStorage.setItem('sms-auth-token', 'some-token');
+      const { result } = renderHook(() => useAuthStore((s) => s.user));
+      expect(result.current).toBeNull();
+    });
   });
 });

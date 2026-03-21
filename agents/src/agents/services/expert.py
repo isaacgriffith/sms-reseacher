@@ -34,6 +34,7 @@ class ExpertAgent:
         llm_client: Optional :class:`LLMClient` override for testing.
         provider_config: Optional :class:`ProviderConfig` for database-backed
             model routing.  When ``None``, falls back to environment settings.
+
     """
 
     def __init__(
@@ -51,6 +52,7 @@ class ExpertAgent:
                 Passed through to each :meth:`LLMClient.complete` call.
             system_message_override: Optional rendered system message to use
                 instead of the default prompt-file system message.
+
         """
         self._client = llm_client or LLMClient()
         self._loader = PromptLoader("expert")
@@ -85,6 +87,7 @@ class ExpertAgent:
 
         Returns:
             A list of :class:`ExpertPaper` objects (10–20 papers).
+
         """
         template_context: dict[str, Any] = {
             "topic": topic,

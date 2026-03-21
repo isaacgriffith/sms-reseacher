@@ -4,6 +4,21 @@ All notable changes to this subproject are documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.7.0] — 2026-03-21 — feature/007-slr-workflow
+
+### Added
+- **`ReviewProtocol`** ORM model (`db/src/db/models/slr.py`): PICO/S fields, synthesis approach
+  enum, status lifecycle (`draft` → `validated`); FK to `study`
+- **`ProtocolReviewReport`** ORM: per-section strengths/weaknesses/recommendations from AI review
+- **`QualityChecklist`** + **`QualityChecklistItem`** ORM: configurable checklists with binary/
+  numeric scoring methods and weights
+- **`QualityScore`** ORM: per-reviewer scores for individual checklist items
+- **`SynthesisResult`** ORM: stores approach, status, computed statistics, Forest/Funnel plot SVG,
+  qualitative themes, and sensitivity analysis output
+- **`GreyLiteratureSource`** ORM: tracks dissertation/report/preprint/conference/website sources
+- **Alembic migration `0015_slr_workflow`**: creates all 7 new tables with FK constraints and
+  full `downgrade()` path
+
 ## [0.6.0] — 2026-03-18 — feature/006-database-search-and-retrieval
 
 ### Added

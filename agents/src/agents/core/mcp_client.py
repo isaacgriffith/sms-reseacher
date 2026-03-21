@@ -23,6 +23,7 @@ class MCPClient:
 
     Args:
         settings: Optional :class:`AgentSettings` override.
+
     """
 
     def __init__(self, settings: AgentSettings | None = None) -> None:
@@ -31,6 +32,7 @@ class MCPClient:
         Args:
             settings: Optional settings override; defaults to
                 :func:`get_agent_settings`.
+
         """
         self._settings = settings or get_agent_settings()
         self._base_url = self._settings.researcher_mcp_url.removesuffix("/sse")
@@ -48,6 +50,7 @@ class MCPClient:
         Raises:
             httpx.HTTPError: If the server is unreachable or returns
                 a non-2xx status.
+
         """
         async with httpx.AsyncClient() as client:
             response = await client.get(f"{self._base_url}/tools/list", timeout=10.0)
@@ -55,9 +58,7 @@ class MCPClient:
             data: dict[str, Any] = response.json()
             return list(data.get("tools", []))
 
-    def to_litellm_tools(
-        self, mcp_tools: list[dict[str, Any]]
-    ) -> list[dict[str, Any]]:
+    def to_litellm_tools(self, mcp_tools: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Convert MCP tool definitions to LiteLLM function-call format.
 
         Transforms each MCP tool's ``name``, ``description``, and
@@ -71,6 +72,7 @@ class MCPClient:
         Returns:
             A list of LiteLLM-format tool dicts ready to pass as
             the ``tools`` kwarg in a completion call.
+
         """
         return [
             {
@@ -84,9 +86,7 @@ class MCPClient:
             for tool in mcp_tools
         ]
 
-    async def call_tool(
-        self, tool_name: str, arguments: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def call_tool(self, tool_name: str, arguments: dict[str, Any]) -> dict[str, Any]:
         """Invoke a single MCP tool by name.
 
         Args:
@@ -99,6 +99,7 @@ class MCPClient:
 
         Raises:
             httpx.HTTPError: If the request fails.
+
         """
         async with httpx.AsyncClient() as client:
             response = await client.post(

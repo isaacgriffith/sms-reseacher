@@ -17,6 +17,59 @@ import DatabaseSelectionPanel from '../components/studies/DatabaseSelectionPanel
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
+import ProtocolEditorPage from './slr/ProtocolEditorPage';
+import QualityAssessmentPage from './slr/QualityAssessmentPage';
+import SynthesisPage from './slr/SynthesisPage';
+import ReportPage from './slr/ReportPage';
+import GreyLiteraturePage from './slr/GreyLiteraturePage';
+import { usePhases } from '../hooks/slr/useProtocol';
+import InterRaterPanel from '../components/slr/InterRaterPanel';
+import DiscussionFlowPanel from '../components/slr/DiscussionFlowPanel';
+import { useInterRaterRecords } from '../hooks/slr/useInterRater';
+
+// ---------------------------------------------------------------------------
+// SLR Screening View (Phase 3 for SLR studies)
+// ---------------------------------------------------------------------------
+
+interface SLRScreeningViewProps {
+  studyId: number;
+}
+
+/**
+ * Phase 3 screening view for SLR studies.
+ * Shows the paper queue, inter-rater agreement panel, and discussion flow
+ * when Kappa is below threshold.
+ */
+function SLRScreeningView({ studyId }: SLRScreeningViewProps) {
+  const { data: irrData } = useInterRaterRecords(studyId);
+  const records = irrData?.records ?? [];
+  // Most recent record that is below threshold triggers the discussion panel
+  const lowKappaRecord = [...records]
+    .reverse()
+    .find((r) => !r.threshold_met && r.phase === 'pre_discussion') ?? null;
+
+  return (
+    <Box>
+      <PaperQueue studyId={studyId} />
+      <Box sx={{ mt: 3 }}>
+        <InterRaterPanel studyId={studyId} />
+      </Box>
+      {lowKappaRecord && (
+        <Box sx={{ mt: 2 }}>
+          <DiscussionFlowPanel
+            studyId={studyId}
+            record={lowKappaRecord}
+            disagreements={[]}
+          />
+        </Box>
+      )}
+    </Box>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// StudyDetail interface
+// ---------------------------------------------------------------------------
 
 interface StudyDetail {
   id: number;
@@ -40,6 +93,8 @@ const PHASE_META = [
   { phase: 3, label: 'Screening', icon: '📋' },
   { phase: 4, label: 'Extraction', icon: '📊' },
   { phase: 5, label: 'Reporting', icon: '📄' },
+  { phase: 6, label: 'Report', icon: '📑' },
+  { phase: 7, label: 'Grey Literature', icon: '📚' },
 ];
 
 export default function StudyPage() {
@@ -53,10 +108,20 @@ export default function StudyPage() {
     enabled: !!studyId,
   });
 
+  // For SLR studies, use the SLR phase gate to determine unlocked phases
+  const isSLR = study?.study_type === 'SLR';
+  const { data: slrPhases } = usePhases(isSLR && study?.id ? study.id : 0);
+
   if (isLoading) return <Typography>Loading study…</Typography>;
   if (error || !study) return <Typography sx={{ color: 'red' }}>Failed to load study.</Typography>;
 
-  const unlocked = new Set(study.unlocked_phases);
+  // SLR studies use the SLR phase gate; SMS studies use the study's unlocked_phases
+  // Phases 6 (Report) and 7 (Grey Literature) are always unlocked for SLR studies
+  const unlockedPhaseList =
+    isSLR && slrPhases
+      ? [...slrPhases.unlocked_phases, 6, 7]
+      : study.unlocked_phases;
+  const unlocked = new Set(unlockedPhaseList);
 
   return (
     <Box>
@@ -120,7 +185,11 @@ export default function StudyPage() {
       </Box>
 
       {/* Phase content */}
-      {activePhase === 1 && study.id && (
+      {activePhase === 1 && study.id && isSLR && (
+        <ProtocolEditorPage studyId={study.id} />
+      )}
+
+      {activePhase === 1 && study.id && !isSLR && (
         <Box>
           {/* Research context summary */}
           {(study.research_questions.length > 0 || study.research_objectives.length > 0) && (
@@ -168,7 +237,7 @@ export default function StudyPage() {
         </Box>
       )}
 
-      {activePhase === 3 && study.id && (
+      {activePhase === 3 && study.id && !isSLR && (
         <Box>
           <Box sx={{ marginBottom: '1.5rem' }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
@@ -198,9 +267,41 @@ export default function StudyPage() {
         </Box>
       )}
 
-      {activePhase > 3 && (
+      {activePhase === 3 && study.id && isSLR && (
+        <SLRScreeningView studyId={study.id} />
+      )}
+
+      {activePhase === 4 && study.id && isSLR && (
+        <QualityAssessmentPage studyId={study.id} reviewerId={0} />
+      )}
+
+      {activePhase === 4 && study.id && !isSLR && (
         <Box sx={{ color: '#64748b' }}>
-          <Typography>Phase {activePhase} content will be available in a future sprint.</Typography>
+          <Typography>Phase 4 content will be available in a future sprint.</Typography>
+        </Box>
+      )}
+
+      {activePhase === 5 && study.id && isSLR && (
+        <SynthesisPage studyId={study.id} />
+      )}
+
+      {activePhase === 5 && study.id && !isSLR && (
+        <Box sx={{ color: '#64748b' }}>
+          <Typography>Phase 5 content will be available in a future sprint.</Typography>
+        </Box>
+      )}
+
+      {activePhase === 6 && study.id && isSLR && (
+        <ReportPage studyId={study.id} synthesisComplete={unlocked.has(5)} />
+      )}
+
+      {activePhase === 7 && study.id && isSLR && (
+        <GreyLiteraturePage studyId={study.id} />
+      )}
+
+      {(activePhase === 6 || activePhase === 7) && study.id && !isSLR && (
+        <Box sx={{ color: '#64748b' }}>
+          <Typography>This feature is only available for SLR studies.</Typography>
         </Box>
       )}
     </Box>

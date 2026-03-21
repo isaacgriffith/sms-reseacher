@@ -6,7 +6,7 @@ This directory contains high-level feature documents (PRDs) for all planned work
 
 | ID | Feature | Status | Depends On |
 |---|---|---|---|
-| [003](./003-slr-workflow.md) | Systematic Literature Review (SLR) Workflow | Planned | 002 |
+| [003](./003-slr-workflow.md) | Systematic Literature Review (SLR) Workflow | ✅ Implemented | 002 |
 | [004](./004-rapid-review-workflow.md) | Rapid Review Workflow | Planned | 002 |
 | [005](./005-tertiary-studies-workflow.md) | Tertiary Studies Workflow | Planned | 002, 003 |
 | [006](./006-project-setup-improvements.md) | Project Setup & Quality Improvements | ✅ Implemented | 001, 002 |

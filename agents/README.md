@@ -36,6 +36,7 @@ uv run mypy agents/src
 | `QualityJudgeAgent` | Assesses methodological quality of included papers |
 | `DomainModelerAgent` | Models research domain concepts and relationships |
 | `ValidityAgent` | Assesses internal and external validity threats |
+| `ProtocolReviewerAgent` | Structured review of SLR protocol sections with strengths/weaknesses/recommendations |
 
 All agents accept an optional `provider_config` parameter to override the default
 environment-based LLM settings on a per-call basis.
