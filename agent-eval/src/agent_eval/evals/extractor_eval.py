@@ -15,7 +15,6 @@ from typing import Any
 
 from deepeval.test_case import LLMTestCase
 
-
 # ---------------------------------------------------------------------------
 # Representative input dataset
 # ---------------------------------------------------------------------------
@@ -68,6 +67,7 @@ def _assert_non_empty_fields(output: str, required_fields: list[str]) -> None:
 
     Raises:
         AssertionError: When a required field is missing or empty.
+
     """
     data: dict[str, Any] = json.loads(output)
     for field in required_fields:
@@ -84,6 +84,7 @@ def _assert_no_none_values_for_required_fields(output: str, required_fields: lis
 
     Raises:
         AssertionError: When a required field is null.
+
     """
     data: dict[str, Any] = json.loads(output)
     for field in required_fields:
@@ -105,6 +106,7 @@ def build_test_cases(run_agent: bool = False) -> list[LLMTestCase]:
 
     Returns:
         A list of :class:`LLMTestCase` objects ready for deepeval assertion.
+
     """
     cases: list[LLMTestCase] = []
 
@@ -148,14 +150,14 @@ async def _invoke_extractor(inp: dict[str, Any]) -> str:
 
     Returns:
         JSON string of the extractor result.
+
     """
     from agents.services.extractor import ExtractorAgent
 
     agent = ExtractorAgent()
     result = await agent.run(
         title=inp["title"],
-        abstract=inp.get("abstract", ""),
-        fields=inp.get("extraction_fields", []),
+        paper_text=inp.get("abstract", ""),
     )
     return json.dumps(result.model_dump())
 
@@ -178,6 +180,7 @@ def run_extractor_eval(run_agent: bool = False, threshold: float = 0.7) -> dict[
 
     Returns:
         A dict with ``{passed, failed, total}`` counts.
+
     """
     cases = build_test_cases(run_agent=run_agent)
     passed = 0
@@ -188,8 +191,8 @@ def run_extractor_eval(run_agent: bool = False, threshold: float = 0.7) -> dict[
         input_data = json.loads(case.input)
         required_fields = input_data.get("extraction_fields", [])
         try:
-            _assert_non_empty_fields(case.actual_output, required_fields)
-            _assert_no_none_values_for_required_fields(case.actual_output, required_fields)
+            _assert_non_empty_fields(case.actual_output or "", required_fields)
+            _assert_no_none_values_for_required_fields(case.actual_output or "", required_fields)
             passed += 1
         except AssertionError as exc:
             failed += 1

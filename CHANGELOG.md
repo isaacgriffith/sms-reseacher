@@ -4,6 +4,90 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.8.0] — 2026-03-29 — feature/008-rapid-review-workflow
+
+### Added
+- **Rapid Review study type**: new `Rapid` study type with an accelerated 6-phase workflow
+  aimed at producing practitioner-facing outputs within compressed timelines
+- **Rapid Review Protocol** (`RapidReviewProtocol` ORM + `GET/PUT /api/v1/rapid/studies/{id}/protocol`):
+  scope, research question, timeframe, team fields; quality appraisal mode select
+  (`full` / `critical_appraisal_only` / `descriptive`); status lifecycle (`draft` → `validated`);
+  `ProtocolForm` frontend component
+- **RR Phase Gate** (`backend/src/backend/services/rr_phase_gate.py`): `get_rr_unlocked_phases()`
+  progressively unlocks phases based on protocol validation, stakeholder count, and synthesis
+  completion; wired into `GET /api/v1/studies/{id}/phases` via `StudyType` dispatch dict
+- **Practitioner Stakeholders** (`PractitionerStakeholder` ORM; CRUD under
+  `/api/v1/rapid/studies/{id}/stakeholders`): named practitioner contacts (no platform account);
+  `involvement_type` — `advisor`, `co-investigator`, `reviewer`, `end_user`, `commissioner`;
+  `StakeholderPanel` frontend component; minimum one practitioner required to unlock Phase 3
+- **Search Configuration** (`RRSearchConfig` / `RRSearchRestriction` ORM;
+  `GET/PUT /api/v1/rapid/studies/{id}/search-config`): date range, language, and source type
+  restrictions; `SearchRestrictionPanel` frontend component
+- **Quality Appraisal Config** (`RRQAConfig` / `RRQAItem` ORM;
+  `GET/PUT /api/v1/rapid/studies/{id}/qa-config`): appraisal mode and individual item definitions;
+  `QAModeSelector` + `QAConfigPage` frontend; `SingleReviewerWarningBanner` for single-reviewer risk
+- **Threats to Validity** (`RRThreatToValidity` ORM): auto-created threat records seeded on
+  protocol validation based on QA mode; `ThreatToValidityList` frontend component; exposed in
+  Evidence Briefing target audience section
+- **Narrative Synthesis** (`RRNarrativeSynthesisSection` ORM — one per research question;
+  `GET /api/v1/rapid/studies/{id}/narrative-synthesis`,
+  `PATCH /api/v1/rapid/studies/{id}/narrative-synthesis/{section_id}`,
+  `POST /api/v1/rapid/studies/{id}/narrative-synthesis/{section_id}/ai-draft`,
+  `POST /api/v1/rapid/studies/{id}/narrative-synthesis/complete`):
+  per-section `narrative_text` editor with AI draft (ARQ job); `is_complete` flag;
+  Mark All Complete bulk action; Finalize Synthesis CTA raises HTTP 422 when sections are incomplete;
+  `NarrativeSectionEditor` + `NarrativeSynthesisPage` frontend with TanStack Query polling
+- **`NarrativeSynthesiserAgent`** (`agents/src/agents/narrative_synthesiser_agent.py`):
+  LLM-powered narrative draft generation for a single research question; prompt templates in
+  `agents/src/agents/prompts/narrative_synthesiser/`
+- **Evidence Briefing** (`EvidenceBriefing` ORM with versioning; `BriefingStatus`: `draft` →
+  `published`; `GET/POST /api/v1/rapid/studies/{id}/briefings`,
+  `GET/POST /api/v1/rapid/studies/{id}/briefings/{id}`,
+  `POST /api/v1/rapid/studies/{id}/briefings/{id}/publish`,
+  `GET /api/v1/rapid/studies/{id}/briefings/{id}/export`): auto-incremented
+  `version_number` per study; `publish_version` atomically demotes prior published version then
+  promotes; `generate_html` via Jinja2 A4 template; `generate_pdf` via WeasyPrint;
+  `BriefingVersionPanel` + `BriefingPreview` + `EvidenceBriefingPage` frontend with 3 s polling
+  while PDF is generating
+- **Evidence Briefing Share Tokens** (`EvidenceBriefingShareToken` ORM;
+  `POST /api/v1/rapid/studies/{id}/briefings/{id}/share-token`,
+  `DELETE /api/v1/rapid/briefings/share-token/{token}`): `secrets.token_urlsafe(32)`;
+  optional `expires_at`; revocable at any time; unauthenticated public endpoints return
+  published briefing data + binary PDF
+- **Public Briefing Endpoints** (`GET /api/v1/public/briefings/{token}`,
+  `GET /api/v1/public/briefings/{token}/export`): no authentication required; validate token
+  expiry and revocation; return published `EvidenceBriefing` content or PDF;
+  `PublicBriefingPage` frontend at `/public/briefings/:token` (outside `RequireAuth`)
+- **Jinja2 A4 HTML template** (`backend/src/backend/templates/rapid/evidence_briefing.html.j2`):
+  6 sections — title page, executive summary, per-RQ findings, target audience + validity
+  threats, complementary reference list, institution logos; print CSS with
+  `@page { size: A4; margin: 1.5cm; }`
+- **ARQ background jobs**: `evidence_briefing_job.py` (Jinja2→HTML→WeasyPrint PDF, stored on
+  disk at `/tmp/briefings/{id}/`); `narrative_synthesis_job.py` (per-section AI draft via
+  `NarrativeSynthesiserAgent`)
+- **Alembic migration `0016_rapid_review_workflow`**: creates `rr_protocol`, `rr_search_config`,
+  `rr_search_restriction`, `rr_qa_config`, `rr_qa_item`, `practitioner_stakeholder`,
+  `rr_threat_to_validity`, `rr_narrative_section`, `evidence_briefing`,
+  `evidence_briefing_share_token` tables; full `downgrade()` path
+- **New Python dependency**: `weasyprint` for HTML→PDF generation
+- **RR rapid router** (`/api/v1/rapid/`): registered in `backend/src/backend/api/v1/router.py`;
+  sub-routers for protocol, search_config, qa_config, stakeholders, narrative synthesis,
+  and briefings
+- **Frontend RR components** (`src/components/rapid/`): `ProtocolForm`, `QAModeSelector`,
+  `SearchRestrictionPanel`, `StakeholderPanel`, `SingleReviewerWarningBanner`,
+  `ThreatToValidityList`, `NarrativeSectionEditor`, `BriefingPreview`, `BriefingVersionPanel`
+- **Frontend RR pages** (`src/pages/rapid/`): `ProtocolEditorPage`, `SearchConfigPage`,
+  `QAConfigPage`, `StakeholderPage`, `NarrativeSynthesisPage`, `EvidenceBriefingPage`,
+  `PublicBriefingPage`
+- **Frontend RR hooks** (`src/hooks/rapid/`): `useRRProtocol`, `useSearchConfig`,
+  `useQAConfig`, `useStakeholders`, `useNarrativeSynthesis`, `useBriefingVersions`; all use
+  TanStack Query v5 with Zod-parsed responses
+- **Frontend RR services** (`src/services/rapid/`): `protocolApi.ts`, `searchConfigApi.ts`,
+  `qaConfigApi.ts`, `stakeholdersApi.ts`, `synthesisApi.ts`, `briefingApi.ts`; binary Blob
+  export via raw `fetch` with Bearer token; all responses Zod-validated
+- **`StudyPage.tsx` wired for Rapid**: phase 0–6 routing delegates to RR page components
+  when `study.study_type === 'rapid'`; phase 6 renders `EvidenceBriefingPage`
+
 ## [0.7.0] — 2026-03-21 — feature/007-slr-workflow
 
 ### Added

@@ -61,7 +61,7 @@ async def scrape_journal(
         # Extract candidate paper links — look for common academic site patterns
         seen_hrefs: set[str] = set()
         for tag in soup.find_all("a", href=True):
-            href: str = tag["href"]
+            href: str = tag["href"]  # type: ignore[assignment]
             text = tag.get_text(strip=True)
 
             # Skip navigation/non-paper links
@@ -135,7 +135,7 @@ async def scrape_author_page(
 
         seen_hrefs: set[str] = set()
         for tag in soup.find_all("a", href=True):
-            href: str = tag["href"]
+            href: str = tag["href"]  # type: ignore[assignment]
             text = tag.get_text(strip=True)
 
             if not text or len(text) < 10:

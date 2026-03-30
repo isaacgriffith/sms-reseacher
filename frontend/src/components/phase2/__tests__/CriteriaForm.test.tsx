@@ -355,7 +355,7 @@ describe('CriteriaForm', () => {
       await waitFor(() => screen.getByText('First'));
 
       // Items should be First, Second in order
-      let items = container.querySelectorAll('li span');
+      const items = container.querySelectorAll('li span');
       const firstSpanBefore = Array.from(items).find(el => el.textContent === 'First');
       const secondSpanBefore = Array.from(items).find(el => el.textContent === 'Second');
       expect(firstSpanBefore).toBeTruthy();

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import sys
 from typing import Any
 
 import typer
@@ -50,6 +49,7 @@ def _run_pipeline(agent_name: str, module_path: str, run_agent: bool) -> dict[st
 
     Returns:
         Dict with ``{passed, failed, total, errors}`` from the pipeline.
+
     """
     import importlib
 

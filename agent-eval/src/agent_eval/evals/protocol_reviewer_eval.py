@@ -16,7 +16,6 @@ from typing import Any
 
 from deepeval.test_case import LLMTestCase
 
-
 # ---------------------------------------------------------------------------
 # Representative input dataset
 # ---------------------------------------------------------------------------
@@ -188,6 +187,7 @@ def _assert_valid_structure(output: str) -> None:
 
     Raises:
         AssertionError: When the output lacks required fields.
+
     """
     data: dict[str, Any] = json.loads(output)
     assert "issues" in data, "Missing 'issues' key in output"
@@ -215,6 +215,7 @@ def _assert_faithfulness(output: str, test_input: dict[str, Any]) -> None:
 
     Raises:
         AssertionError: When a known issue section is not present in output.
+
     """
     known = test_input.get("known_issues", [])
     if not known:
@@ -242,6 +243,7 @@ def build_test_cases(run_agent: bool = False) -> list[LLMTestCase]:
 
     Returns:
         A list of :class:`LLMTestCase` objects ready for deepeval assertion.
+
     """
     cases: list[LLMTestCase] = []
 
@@ -299,6 +301,7 @@ async def _invoke_reviewer(inp: dict[str, Any]) -> str:
 
     Returns:
         JSON string of the review result.
+
     """
     from agents.services.protocol_reviewer import ProtocolReviewerAgent
 
@@ -327,6 +330,7 @@ def run_protocol_reviewer_eval(
 
     Returns:
         A dict with ``{passed, failed, total, pass_rate, errors}``.
+
     """
     cases = build_test_cases(run_agent=run_agent)
     inputs = PROTOCOL_TEST_INPUTS
@@ -334,10 +338,10 @@ def run_protocol_reviewer_eval(
     failed = 0
     errors: list[str] = []
 
-    for case, inp in zip(cases, inputs):
+    for case, inp in zip(cases, inputs, strict=True):
         try:
-            _assert_valid_structure(case.actual_output)
-            _assert_faithfulness(case.actual_output, inp)
+            _assert_valid_structure(case.actual_output or "")
+            _assert_faithfulness(case.actual_output or "", inp)
             passed += 1
         except AssertionError as exc:
             failed += 1

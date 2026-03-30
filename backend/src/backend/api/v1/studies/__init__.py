@@ -16,6 +16,7 @@ from backend.core.config import get_logger
 from backend.core.database import get_db
 from backend.services import audit as audit_svc
 from backend.services.phase_gate import compute_staleness_flags, get_unlocked_phases
+from backend.services.rr_phase_gate import get_rr_unlocked_phases
 from backend.services.slr_phase_gate import get_slr_unlocked_phases
 
 router = APIRouter(tags=["studies"])
@@ -107,6 +108,7 @@ def _study_metadata(study: Study) -> dict[str, Any]:
 
 _PHASE_GATE_DISPATCH = {
     StudyType.SLR: get_slr_unlocked_phases,
+    StudyType.RAPID: get_rr_unlocked_phases,  # feature 008
 }
 
 
@@ -115,6 +117,7 @@ async def _get_unlocked_phases_for_study(study: Study, db: AsyncSession) -> list
 
     SMS and all other study types use :func:`get_unlocked_phases`.
     SLR studies use :func:`get_slr_unlocked_phases`.
+    Rapid Review studies use :func:`get_rr_unlocked_phases`.
 
     Args:
         study: The study whose phases should be evaluated.

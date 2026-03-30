@@ -18,7 +18,9 @@ from backend.api.v1.openapi_route import router as openapi_router
 from backend.api.v1.paper_markdown import router as paper_markdown_router
 from backend.api.v1.papers import router as papers_router
 from backend.api.v1.pico import router as pico_router
+from backend.api.v1.public import router as public_router
 from backend.api.v1.quality import router as quality_router
+from backend.api.v1.rapid import router as rapid_router
 from backend.api.v1.results import router as results_router
 from backend.api.v1.search_strings import router as search_strings_router
 from backend.api.v1.searches import router as searches_router
@@ -54,3 +56,5 @@ api_router.include_router(openapi_router)
 api_router.include_router(database_selection_router)
 api_router.include_router(paper_markdown_router)
 api_router.include_router(slr_router)
+api_router.include_router(rapid_router)
+api_router.include_router(public_router)

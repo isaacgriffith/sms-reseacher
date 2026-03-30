@@ -5,6 +5,7 @@
  */
 
 import { useEffect, useRef } from 'react';
+import type { SimulationNodeDatum, SimulationLinkDatum } from 'd3';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
@@ -121,6 +122,16 @@ export default function DomainModelViewer({ domainModel }: DomainModelViewerProp
 // D3 graph renderer (dynamic import to avoid SSR issues)
 // ---------------------------------------------------------------------------
 
+interface DomainNode extends SimulationNodeDatum {
+  id: string;
+  definition: string;
+}
+
+interface DomainLink extends SimulationLinkDatum<DomainNode> {
+  label: string;
+  type: string;
+}
+
 async function renderGraph(
   svgEl: SVGSVGElement,
   concepts: Concept[],
@@ -137,14 +148,14 @@ async function renderGraph(
   const nodeById = new Map(concepts.map((c) => [c.name, c]));
 
   // Build D3 nodes and links
-  const nodes = concepts.map((c) => ({ id: c.name, definition: c.definition }));
-  const links = relationships
+  const nodes: DomainNode[] = concepts.map((c) => ({ id: c.name, definition: c.definition }));
+  const links: DomainLink[] = relationships
     .filter((r) => nodeById.has(r.from) && nodeById.has(r.to))
     .map((r) => ({ source: r.from, target: r.to, label: r.label, type: r.type }));
 
   const simulation = d3
-    .forceSimulation(nodes as d3.SimulationNodeDatum[])
-    .force('link', d3.forceLink(links).id((d: any) => d.id).distance(120))
+    .forceSimulation(nodes)
+    .force('link', d3.forceLink<DomainNode, DomainLink>(links).id((d) => d.id).distance(120))
     .force('charge', d3.forceManyBody().strength(-300))
     .force('center', d3.forceCenter(width / 2, height / 2))
     .force('collision', d3.forceCollide(40));
@@ -182,7 +193,7 @@ async function renderGraph(
     .data(links)
     .enter()
     .append('text')
-    .text((d: any) => d.label)
+    .text((d: DomainLink) => d.label)
     .attr('font-size', '9px')
     .attr('fill', '#64748b')
     .attr('text-anchor', 'middle');
@@ -195,7 +206,7 @@ async function renderGraph(
     .append('g')
     .call(
       d3
-        .drag<SVGGElement, any>()
+        .drag<SVGGElement, DomainNode>()
         .on('start', (event, d) => {
           if (!event.active) simulation.alphaTarget(0.3).restart();
           d.fx = d.x;
@@ -221,25 +232,25 @@ async function renderGraph(
 
   nodeGroup
     .append('text')
-    .text((d: any) => d.id.length > 12 ? d.id.slice(0, 11) + '…' : d.id)
+    .text((d: DomainNode) => d.id.length > 12 ? d.id.slice(0, 11) + '…' : d.id)
     .attr('text-anchor', 'middle')
     .attr('dy', '0.35em')
     .attr('font-size', '9px')
     .attr('fill', '#1e40af');
 
-  nodeGroup.append('title').text((d: any) => d.definition || d.id);
+  nodeGroup.append('title').text((d: DomainNode) => d.definition || d.id);
 
   simulation.on('tick', () => {
     link
-      .attr('x1', (d: any) => d.source.x)
-      .attr('y1', (d: any) => d.source.y)
-      .attr('x2', (d: any) => d.target.x)
-      .attr('y2', (d: any) => d.target.y);
+      .attr('x1', (d: DomainLink) => (d.source as DomainNode).x ?? 0)
+      .attr('y1', (d: DomainLink) => (d.source as DomainNode).y ?? 0)
+      .attr('x2', (d: DomainLink) => (d.target as DomainNode).x ?? 0)
+      .attr('y2', (d: DomainLink) => (d.target as DomainNode).y ?? 0);
 
     linkLabel
-      .attr('x', (d: any) => (d.source.x + d.target.x) / 2)
-      .attr('y', (d: any) => (d.source.y + d.target.y) / 2);
+      .attr('x', (d: DomainLink) => (((d.source as DomainNode).x ?? 0) + ((d.target as DomainNode).x ?? 0)) / 2)
+      .attr('y', (d: DomainLink) => (((d.source as DomainNode).y ?? 0) + ((d.target as DomainNode).y ?? 0)) / 2);
 
-    nodeGroup.attr('transform', (d: any) => `translate(${d.x},${d.y})`);
+    nodeGroup.attr('transform', (d: DomainNode) => `translate(${d.x ?? 0},${d.y ?? 0})`);
   });
 }

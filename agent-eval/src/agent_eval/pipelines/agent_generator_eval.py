@@ -30,15 +30,12 @@ Pass the ``--live`` flag when running against a real model.
 
 from __future__ import annotations
 
-import re
 from dataclasses import dataclass, field
-from typing import Any
 from unittest.mock import AsyncMock, MagicMock
-
-from deepeval.test_case import LLMTestCase
 
 from agents.agent_generator import AgentGeneratorAgent
 from agents.core.llm_client import LLMClient
+from deepeval.test_case import LLMTestCase
 
 # ---------------------------------------------------------------------------
 # Constants

@@ -4,6 +4,32 @@ All notable changes to this subproject are documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.8.0] — 2026-03-29 — feature/008-rapid-review-workflow
+
+### Added
+- **Enums** (`db/src/db/models/rapid_review.py`): `RRProtocolStatus` (`draft`/`validated`),
+  `RRQualityAppraisalMode` (`full`/`critical_appraisal_only`/`descriptive`),
+  `RRInvolvementType` (`advisor`/`co-investigator`/`reviewer`/`end_user`/`commissioner`),
+  `RRThreatType`, `BriefingStatus` (`draft`/`published`)
+- **`RapidReviewProtocol`** ORM: one protocol per Rapid Review study; scope, research question,
+  timeframe, team, QA mode, status; FK to `study`
+- **`PractitionerStakeholder`** ORM: named practitioner contacts (no platform account);
+  `name`, `role_title`, `organisation`, `involvement_type` (`RRInvolvementType`); FK to `study`
+- **`RRThreatToValidity`** ORM: validity threat records auto-seeded on protocol validation;
+  `threat_type`, `description`; FK to `rr_protocol`
+- **`RRNarrativeSynthesisSection`** ORM: one section per research question index;
+  `rq_index`, `rq_text`, `narrative_text` (nullable), `is_complete` (default `false`),
+  `ai_draft_job_id` (nullable); FK to `study`
+- **`EvidenceBriefing`** ORM: versioned briefing output; `version_number` (auto-incremented
+  per study), `status` (`BriefingStatus`), `html_path`, `pdf_path`, `pdf_available`,
+  `briefing_data` (JSON); FK to `study`
+- **`EvidenceBriefingShareToken`** ORM: `token` (URL-safe, unique), `briefing_id` FK,
+  `study_id` FK, `revoked_at` (nullable), `expires_at` (nullable)
+- **Alembic migration `0016_rapid_review_workflow`**: creates `rr_protocol`,
+  `practitioner_stakeholder`, `rr_threat_to_validity`, `rr_narrative_section`,
+  `evidence_briefing`, `evidence_briefing_share_token` tables; full `downgrade()` path
+- Exports in `db/src/db/models/__init__.py`: all new models and enums
+
 ## [0.7.0] — 2026-03-21 — feature/007-slr-workflow
 
 ### Added

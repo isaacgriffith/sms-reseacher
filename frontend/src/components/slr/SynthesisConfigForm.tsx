@@ -225,7 +225,7 @@ function QualitativeFields({ register, themeFields, appendTheme, removeTheme }: 
  * @param props - {@link SynthesisConfigFormProps}
  */
 export default function SynthesisConfigForm({
-  studyId: _studyId, // eslint-disable-line @typescript-eslint/no-unused-vars
+  studyId: _studyId,
   onSubmit,
   isSubmitting = false,
 }: SynthesisConfigFormProps) {

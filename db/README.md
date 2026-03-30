@@ -130,6 +130,19 @@ Stores encrypted API credentials for external academic databases.
 | `full_text_source` | Enum | `FullTextSource`: `unpaywall`, `scihub`, `manual` |
 | `full_text_converted_at` | DateTime(tz) | Nullable; when conversion occurred |
 
+### Rapid Review Models (added in migration 0016)
+
+Defined in `db/src/db/models/rapid_review.py`:
+
+| Model | Description |
+|-------|-------------|
+| `RapidReviewProtocol` | Protocol fields (scope, RQ, timeframe, team), QA mode, status lifecycle (`draft` → `validated`) |
+| `PractitionerStakeholder` | Named practitioner contacts with `involvement_type` (advisor/co-investigator/reviewer/end_user/commissioner) |
+| `RRThreatToValidity` | Validity threat records auto-seeded on protocol validation |
+| `RRNarrativeSynthesisSection` | One synthesis section per research question index; `narrative_text`, `is_complete`, `ai_draft_job_id` |
+| `EvidenceBriefing` | Versioned briefing output; `version_number`, `BriefingStatus` (`draft`/`published`), `html_path`, `pdf_path`, `pdf_available`, `briefing_data` JSON |
+| `EvidenceBriefingShareToken` | Opaque URL-safe tokens for unauthenticated practitioner access; revocable; optional expiry |
+
 ### SLR Models (added in migration 0015)
 
 Defined in `db/src/db/models/slr.py`:
@@ -182,6 +195,9 @@ Migrations live in `db/alembic/versions/`.
 | `0001_initial_schema.py` | Creates `study`, `paper`, `study_paper` tables |
 | `0012_models_and_agents.py` | Creates `provider`, `available_model`, `agent` tables; adds `reviewer.agent_id` FK; seeds default provider and agent records |
 | `0013_remove_reviewer_agent_name.py` | Stub — signals cleanup debt for `reviewer.agent_name` column (no-op until backfill is complete) |
+| `0014_database_search_and_retrieval.py` | Creates `study_database_selection` and `search_integration_credential` tables; adds three columns to `paper` |
+| `0015_slr_workflow.py` | Creates 7 SLR workflow tables |
+| `0016_rapid_review_workflow.py` | Creates 6 Rapid Review workflow tables (`rr_protocol`, `practitioner_stakeholder`, `rr_threat_to_validity`, `rr_narrative_section`, `evidence_briefing`, `evidence_briefing_share_token`) |
 
 ## Importing from backend
 

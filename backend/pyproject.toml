@@ -27,6 +27,8 @@ dependencies = [
     "scipy>=1.13",
     "scikit-learn>=1.5",
     "numpy>=1.26",
+    # PDF generation for Evidence Briefings (008-rapid-review-workflow)
+    "weasyprint>=62",
     # 2FA and encryption (feature 004-frontend-improvements)
     "pyotp>=2.9",
     "qrcode[pil]>=7.4",
@@ -57,6 +59,8 @@ dev = [
 
 [tool.ruff]
 line-length = 100
+
+[tool.ruff.lint]
 select = ["E", "W", "F", "I", "D", "UP", "B", "C4"]
 ignore = ["D203", "D213", "B008", "D101", "D104", "D105"]
 
@@ -64,6 +68,10 @@ ignore = ["D203", "D213", "B008", "D101", "D104", "D105"]
 python_version = "3.14"
 strict = true
 ignore_missing_imports = false
+
+[[tool.mypy.overrides]]
+module = ["plotly.*", "jose.*", "qrcode.*", "weasyprint", "weasyprint.*"]
+ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

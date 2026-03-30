@@ -26,6 +26,11 @@ import { usePhases } from '../hooks/slr/useProtocol';
 import InterRaterPanel from '../components/slr/InterRaterPanel';
 import DiscussionFlowPanel from '../components/slr/DiscussionFlowPanel';
 import { useInterRaterRecords } from '../hooks/slr/useInterRater';
+import RRProtocolEditorPage from './rapid/ProtocolEditorPage';
+import RRSearchConfigPage from './rapid/SearchConfigPage';
+import RRQualityConfigPage from './rapid/QualityConfigPage';
+import RRNarrativeSynthesisPage from './rapid/NarrativeSynthesisPage';
+import RREvidenceBriefingPage from './rapid/EvidenceBriefingPage';
 
 // ---------------------------------------------------------------------------
 // SLR Screening View (Phase 3 for SLR studies)
@@ -44,9 +49,8 @@ function SLRScreeningView({ studyId }: SLRScreeningViewProps) {
   const { data: irrData } = useInterRaterRecords(studyId);
   const records = irrData?.records ?? [];
   // Most recent record that is below threshold triggers the discussion panel
-  const lowKappaRecord = [...records]
-    .reverse()
-    .find((r) => !r.threshold_met && r.phase === 'pre_discussion') ?? null;
+  const lowKappaRecord =
+    [...records].reverse().find((r) => !r.threshold_met && r.phase === 'pre_discussion') ?? null;
 
   return (
     <Box>
@@ -56,11 +60,7 @@ function SLRScreeningView({ studyId }: SLRScreeningViewProps) {
       </Box>
       {lowKappaRecord && (
         <Box sx={{ mt: 2 }}>
-          <DiscussionFlowPanel
-            studyId={studyId}
-            record={lowKappaRecord}
-            disagreements={[]}
-          />
+          <DiscussionFlowPanel studyId={studyId} record={lowKappaRecord} disagreements={[]} />
         </Box>
       )}
     </Box>
@@ -102,7 +102,11 @@ export default function StudyPage() {
   const [activePhase, setActivePhase] = useState(1);
   const [activeJobId, setActiveJobId] = useState<string | null>(null);
 
-  const { data: study, isLoading, error } = useQuery<StudyDetail>({
+  const {
+    data: study,
+    isLoading,
+    error,
+  } = useQuery<StudyDetail>({
     queryKey: ['study', studyId],
     queryFn: () => api.get<StudyDetail>(`/api/v1/studies/${studyId}`),
     enabled: !!studyId,
@@ -110,6 +114,7 @@ export default function StudyPage() {
 
   // For SLR studies, use the SLR phase gate to determine unlocked phases
   const isSLR = study?.study_type === 'SLR';
+  const isRapid = study?.study_type === 'Rapid';
   const { data: slrPhases } = usePhases(isSLR && study?.id ? study.id : 0);
 
   if (isLoading) return <Typography>Loading study…</Typography>;
@@ -118,25 +123,38 @@ export default function StudyPage() {
   // SLR studies use the SLR phase gate; SMS studies use the study's unlocked_phases
   // Phases 6 (Report) and 7 (Grey Literature) are always unlocked for SLR studies
   const unlockedPhaseList =
-    isSLR && slrPhases
-      ? [...slrPhases.unlocked_phases, 6, 7]
-      : study.unlocked_phases;
+    isSLR && slrPhases ? [...slrPhases.unlocked_phases, 6, 7] : study.unlocked_phases;
   const unlocked = new Set(unlockedPhaseList);
 
   return (
     <Box>
       {/* Study header */}
       <Box sx={{ marginBottom: '1.5rem' }}>
-        <Typography variant="h5" sx={{ margin: '0 0 0.25rem' }}>{study.name}</Typography>
+        <Typography variant="h5" sx={{ margin: '0 0 0.25rem' }}>
+          {study.name}
+        </Typography>
         {study.topic && (
           <Typography sx={{ margin: '0 0 0.5rem', color: '#64748b' }}>{study.topic}</Typography>
         )}
         <Box sx={{ display: 'flex', gap: '1rem', fontSize: '0.875rem', color: '#64748b' }}>
-          <Typography component="span" sx={{ fontSize: '0.875rem', color: '#64748b' }}>{study.study_type}</Typography>
-          <Typography component="span" sx={{ fontSize: '0.875rem', color: '#64748b' }}>·</Typography>
-          <Typography component="span" sx={{ fontSize: '0.875rem', color: '#64748b', textTransform: 'capitalize' }}>{study.status}</Typography>
-          <Typography component="span" sx={{ fontSize: '0.875rem', color: '#64748b' }}>·</Typography>
-          <Typography component="span" sx={{ fontSize: '0.875rem', color: '#64748b' }}>Snowball threshold: {study.snowball_threshold}</Typography>
+          <Typography component="span" sx={{ fontSize: '0.875rem', color: '#64748b' }}>
+            {study.study_type}
+          </Typography>
+          <Typography component="span" sx={{ fontSize: '0.875rem', color: '#64748b' }}>
+            ·
+          </Typography>
+          <Typography
+            component="span"
+            sx={{ fontSize: '0.875rem', color: '#64748b', textTransform: 'capitalize' }}
+          >
+            {study.status}
+          </Typography>
+          <Typography component="span" sx={{ fontSize: '0.875rem', color: '#64748b' }}>
+            ·
+          </Typography>
+          <Typography component="span" sx={{ fontSize: '0.875rem', color: '#64748b' }}>
+            Snowball threshold: {study.snowball_threshold}
+          </Typography>
         </Box>
       </Box>
 
@@ -185,31 +203,52 @@ export default function StudyPage() {
       </Box>
 
       {/* Phase content */}
-      {activePhase === 1 && study.id && isSLR && (
-        <ProtocolEditorPage studyId={study.id} />
-      )}
+      {activePhase === 1 && study.id && isSLR && <ProtocolEditorPage studyId={study.id} />}
 
-      {activePhase === 1 && study.id && !isSLR && (
+      {activePhase === 1 && study.id && isRapid && <RRProtocolEditorPage studyId={study.id} />}
+
+      {activePhase === 1 && study.id && !isSLR && !isRapid && (
         <Box>
           {/* Research context summary */}
           {(study.research_questions.length > 0 || study.research_objectives.length > 0) && (
-            <Box sx={{ marginBottom: '2rem', padding: '1rem', background: '#f8fafc', borderRadius: '0.5rem' }}>
+            <Box
+              sx={{
+                marginBottom: '2rem',
+                padding: '1rem',
+                background: '#f8fafc',
+                borderRadius: '0.5rem',
+              }}
+            >
               {study.research_objectives.length > 0 && (
                 <Box sx={{ marginBottom: '0.75rem' }}>
-                  <Typography variant="subtitle2" sx={{ margin: '0 0 0.5rem', fontSize: '0.875rem', color: '#374151' }}>Research Objectives</Typography>
+                  <Typography
+                    variant="subtitle2"
+                    sx={{ margin: '0 0 0.5rem', fontSize: '0.875rem', color: '#374151' }}
+                  >
+                    Research Objectives
+                  </Typography>
                   <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
                     {study.research_objectives.map((o, i) => (
-                      <li key={i} style={{ fontSize: '0.875rem', color: '#4b5563' }}>{o}</li>
+                      <li key={i} style={{ fontSize: '0.875rem', color: '#4b5563' }}>
+                        {o}
+                      </li>
                     ))}
                   </ul>
                 </Box>
               )}
               {study.research_questions.length > 0 && (
                 <Box>
-                  <Typography variant="subtitle2" sx={{ margin: '0 0 0.5rem', fontSize: '0.875rem', color: '#374151' }}>Research Questions</Typography>
+                  <Typography
+                    variant="subtitle2"
+                    sx={{ margin: '0 0 0.5rem', fontSize: '0.875rem', color: '#374151' }}
+                  >
+                    Research Questions
+                  </Typography>
                   <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
                     {study.research_questions.map((q, i) => (
-                      <li key={i} style={{ fontSize: '0.875rem', color: '#4b5563' }}>{q}</li>
+                      <li key={i} style={{ fontSize: '0.875rem', color: '#4b5563' }}>
+                        {q}
+                      </li>
                     ))}
                   </ul>
                 </Box>
@@ -224,12 +263,21 @@ export default function StudyPage() {
         </Box>
       )}
 
-      {activePhase === 2 && study.id && (
+      {activePhase === 2 && study.id && isRapid && <RRSearchConfigPage studyId={study.id} />}
+
+      {activePhase === 2 && study.id && !isRapid && (
         <Box>
           <Box sx={{ marginBottom: '2rem' }}>
             <DatabaseSelectionPanel studyId={study.id} />
           </Box>
-          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginBottom: '2rem' }}>
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: '2rem',
+              marginBottom: '2rem',
+            }}
+          >
             <CriteriaForm studyId={study.id} />
             <SearchStringEditor studyId={study.id} />
           </Box>
@@ -240,17 +288,29 @@ export default function StudyPage() {
       {activePhase === 3 && study.id && !isSLR && (
         <Box>
           <Box sx={{ marginBottom: '1.5rem' }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <Typography variant="subtitle1" sx={{ margin: 0, fontSize: '1rem', color: '#111827' }}>Full Paper Search</Typography>
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '1rem',
+              }}
+            >
+              <Typography
+                variant="subtitle1"
+                sx={{ margin: 0, fontSize: '1rem', color: '#111827' }}
+              >
+                Full Paper Search
+              </Typography>
               <Button
                 variant="contained"
                 size="small"
                 onClick={async () => {
                   try {
-                    const res = (await api.post(
-                      `/api/v1/studies/${study.id}/searches`,
-                      { databases: ['acm', 'ieee', 'scopus'], phase_tag: 'initial-search' }
-                    )) as { job_id: string; search_execution_id: number };
+                    const res = (await api.post(`/api/v1/studies/${study.id}/searches`, {
+                      databases: ['acm', 'ieee', 'scopus'],
+                      phase_tag: 'initial-search',
+                    })) as { job_id: string; search_execution_id: number };
                     setActiveJobId(res.job_id);
                   } catch {
                     // error handled by user
@@ -267,25 +327,25 @@ export default function StudyPage() {
         </Box>
       )}
 
-      {activePhase === 3 && study.id && isSLR && (
-        <SLRScreeningView studyId={study.id} />
-      )}
+      {activePhase === 3 && study.id && isSLR && <SLRScreeningView studyId={study.id} />}
 
       {activePhase === 4 && study.id && isSLR && (
         <QualityAssessmentPage studyId={study.id} reviewerId={0} />
       )}
 
-      {activePhase === 4 && study.id && !isSLR && (
+      {activePhase === 4 && study.id && isRapid && <RRQualityConfigPage studyId={study.id} />}
+
+      {activePhase === 4 && study.id && !isSLR && !isRapid && (
         <Box sx={{ color: '#64748b' }}>
           <Typography>Phase 4 content will be available in a future sprint.</Typography>
         </Box>
       )}
 
-      {activePhase === 5 && study.id && isSLR && (
-        <SynthesisPage studyId={study.id} />
-      )}
+      {activePhase === 5 && study.id && isSLR && <SynthesisPage studyId={study.id} />}
 
-      {activePhase === 5 && study.id && !isSLR && (
+      {activePhase === 5 && study.id && isRapid && <RRNarrativeSynthesisPage studyId={study.id} />}
+
+      {activePhase === 5 && study.id && !isSLR && !isRapid && (
         <Box sx={{ color: '#64748b' }}>
           <Typography>Phase 5 content will be available in a future sprint.</Typography>
         </Box>
@@ -295,11 +355,11 @@ export default function StudyPage() {
         <ReportPage studyId={study.id} synthesisComplete={unlocked.has(5)} />
       )}
 
-      {activePhase === 7 && study.id && isSLR && (
-        <GreyLiteraturePage studyId={study.id} />
-      )}
+      {activePhase === 6 && study.id && isRapid && <RREvidenceBriefingPage studyId={study.id} />}
 
-      {(activePhase === 6 || activePhase === 7) && study.id && !isSLR && (
+      {activePhase === 7 && study.id && isSLR && <GreyLiteraturePage studyId={study.id} />}
+
+      {(activePhase === 6 || activePhase === 7) && study.id && !isSLR && !isRapid && (
         <Box sx={{ color: '#64748b' }}>
           <Typography>This feature is only available for SLR studies.</Typography>
         </Box>

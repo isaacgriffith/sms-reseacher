@@ -351,7 +351,7 @@ async def test_load_study_topic_returns_title():
     The study's title field should be returned as the topic string.
     """
     study_mock = MagicMock()
-    study_mock.title = "My Study Topic"
+    study_mock.topic = "My Study Topic"
 
     db = AsyncMock()
     db.execute = AsyncMock(return_value=_scalar_result(study_mock))

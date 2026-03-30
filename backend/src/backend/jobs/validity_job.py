@@ -96,7 +96,7 @@ async def _build_validity_snapshot(db: AsyncSession, study_id: int) -> dict[str,
 
     # PICO components — flatten into {type, content} pairs
     pico_result = await db.execute(
-        select(PICOComponent).where(PICOComponent.study_id is not study_id).limit(1)
+        select(PICOComponent).where(PICOComponent.study_id == study_id).limit(1)
     )
     pico_row = pico_result.scalar_one_or_none()
     pico_components: list[dict[str, Any]] = []

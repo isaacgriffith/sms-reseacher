@@ -21,10 +21,7 @@ import asyncio
 import json
 from typing import Any
 
-from deepeval.dataset import EvaluationDataset
-from deepeval.metrics import AnswerRelevancyMetric
 from deepeval.test_case import LLMTestCase
-
 
 # ---------------------------------------------------------------------------
 # Representative input dataset
@@ -108,6 +105,7 @@ def _assert_min_concepts(output: str) -> None:
 
     Raises:
         AssertionError: When the concepts list is empty.
+
     """
     data: dict[str, Any] = json.loads(output)
     concepts = data.get("concepts", [])
@@ -122,6 +120,7 @@ def _assert_min_relationships(output: str) -> None:
 
     Raises:
         AssertionError: When the relationships list is empty.
+
     """
     data: dict[str, Any] = json.loads(output)
     relationships = data.get("relationships", [])
@@ -138,6 +137,7 @@ def _assert_no_duplicate_concept_names(output: str) -> None:
 
     Raises:
         AssertionError: When duplicate concept names are detected.
+
     """
     data: dict[str, Any] = json.loads(output)
     names = [c.get("name", "").lower() for c in data.get("concepts", [])]
@@ -158,6 +158,7 @@ def _assert_valid_relationship_directions(output: str) -> None:
     Raises:
         AssertionError: When a relationship ``from`` or ``to`` does not match
             a concept name in the output.
+
     """
     data: dict[str, Any] = json.loads(output)
     concept_names = {c.get("name", "").lower() for c in data.get("concepts", [])}
@@ -189,6 +190,7 @@ def build_test_cases(run_agent: bool = False) -> list[LLMTestCase]:
 
     Returns:
         A list of :class:`LLMTestCase` objects ready for evaluation.
+
     """
     cases: list[LLMTestCase] = []
 
@@ -252,6 +254,7 @@ async def _invoke_domain_modeler(inp: dict[str, Any]) -> str:
 
     Returns:
         JSON string of the DomainModelResult.
+
     """
     from agents.services.domain_modeler import DomainModelAgent
 
@@ -295,6 +298,7 @@ def run_domain_modeler_eval(run_agent: bool = False, threshold: float = PASS_THR
 
     Returns:
         A dict with ``{passed, failed, total, pass_rate, errors}``.
+
     """
     cases = build_test_cases(run_agent=run_agent)
     passed = 0
@@ -312,7 +316,7 @@ def run_domain_modeler_eval(run_agent: bool = False, threshold: float = PASS_THR
         case_errors: list[str] = []
         for check in checks:
             try:
-                check(case.actual_output)
+                check(case.actual_output or "")
             except AssertionError as exc:
                 case_errors.append(str(exc))
 

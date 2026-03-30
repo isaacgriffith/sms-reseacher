@@ -19,11 +19,7 @@ import json
 import re
 from typing import Any
 
-from deepeval import assert_test
-from deepeval.dataset import EvaluationDataset
-from deepeval.metrics import AnswerRelevancyMetric
 from deepeval.test_case import LLMTestCase
-
 
 # ---------------------------------------------------------------------------
 # Representative input dataset
@@ -88,6 +84,7 @@ def _assert_non_empty_search_string(output: str) -> None:
 
     Raises:
         AssertionError: When search_string is missing or empty.
+
     """
     data: dict[str, Any] = json.loads(output)
     search_string = data.get("search_string", "")
@@ -107,6 +104,7 @@ def _assert_valid_boolean_syntax(output: str) -> None:
 
     Raises:
         AssertionError: When no Boolean operator is found.
+
     """
     data: dict[str, Any] = json.loads(output)
     search_string: str = data.get("search_string", "")
@@ -127,6 +125,7 @@ def _assert_terms_used_non_empty(output: str) -> None:
 
     Raises:
         AssertionError: When terms_used list is missing or empty.
+
     """
     data: dict[str, Any] = json.loads(output)
     terms_used: list[Any] = data.get("terms_used", [])
@@ -145,6 +144,7 @@ def _assert_synonym_expansion_evidence(output: str) -> None:
 
     Raises:
         AssertionError: When expansion_notes is absent or blank.
+
     """
     data: dict[str, Any] = json.loads(output)
     notes: str = data.get("expansion_notes", "")
@@ -170,6 +170,7 @@ def build_test_cases(run_agent: bool = False) -> list[LLMTestCase]:
 
     Returns:
         A list of :class:`LLMTestCase` objects ready for deepeval assertion.
+
     """
     cases: list[LLMTestCase] = []
 
@@ -225,6 +226,7 @@ async def _invoke_search_builder(inp: dict[str, Any]) -> str:
 
     Returns:
         JSON string of the SearchStringResult.
+
     """
     from agents.services.search_builder import SearchStringBuilderAgent
 
@@ -273,6 +275,7 @@ def run_search_builder_eval(
 
     Returns:
         A dict with ``{passed, failed, total, errors, pass_rate}`` fields.
+
     """
     cases = build_test_cases(run_agent=run_agent)
     passed = 0
@@ -290,7 +293,7 @@ def run_search_builder_eval(
         case_passed = True
         for check in assertion_checks:
             try:
-                check(case.actual_output)
+                check(case.actual_output or "")
             except AssertionError as exc:
                 case_passed = False
                 errors.append(str(exc))

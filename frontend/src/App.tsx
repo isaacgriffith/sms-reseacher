@@ -9,6 +9,7 @@ import ResultsPage from './pages/ResultsPage';
 import AdminPage from './pages/AdminPage';
 import UserPreferencesPage from './components/preferences/UserPreferencesPage';
 import APIDocsPage from './components/api-docs/APIDocsPage';
+import PublicBriefingPage from './pages/rapid/PublicBriefingPage';
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const token = useAuthStore((s) => s.token);
@@ -20,6 +21,8 @@ function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+      {/* Public route — no authentication required */}
+      <Route path="/public/briefings/:token" element={<PublicBriefingPage />} />
       <Route
         path="/"
         element={

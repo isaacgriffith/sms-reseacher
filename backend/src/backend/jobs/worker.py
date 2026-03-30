@@ -9,8 +9,23 @@ or via Docker Compose ``worker`` service.
 
 from arq import run_worker
 from arq.connections import RedisSettings
+from arq.typing import WorkerSettingsBase
 
 from backend.core.config import get_settings
+from backend.jobs.evidence_briefing_job import run_generate_evidence_briefing
+from backend.jobs.extraction_job import run_batch_extraction
+from backend.jobs.narrative_synthesis_job import run_narrative_draft
+from backend.jobs.protocol_review_job import run_protocol_review
+from backend.jobs.quality_job import run_quality_eval
+from backend.jobs.results_job import run_export, run_generate_results
+from backend.jobs.search_job import (
+    run_expert_seed_suggestion,
+    run_full_search,
+    run_snowball,
+    run_test_search,
+)
+from backend.jobs.synthesis_job import run_synthesis
+from backend.jobs.validity_job import run_validity_prefill
 
 
 def main() -> None:
@@ -20,25 +35,12 @@ def main() -> None:
     run_worker(WorkerSettings, redis_settings=redis_settings)
 
 
-class WorkerSettings:
+class WorkerSettings(WorkerSettingsBase):
     """ARQ worker configuration.
 
     Job functions are registered here as they are implemented.
-    Import each job module so ARQ can discover the decorated functions.
+    All job modules are imported at module level so ARQ can discover them.
     """
-
-    from backend.jobs.extraction_job import run_batch_extraction
-    from backend.jobs.protocol_review_job import run_protocol_review
-    from backend.jobs.quality_job import run_quality_eval
-    from backend.jobs.results_job import run_export, run_generate_results
-    from backend.jobs.search_job import (
-        run_expert_seed_suggestion,
-        run_full_search,
-        run_snowball,
-        run_test_search,
-    )
-    from backend.jobs.synthesis_job import run_synthesis
-    from backend.jobs.validity_job import run_validity_prefill
 
     functions = [
         run_test_search,
@@ -52,6 +54,9 @@ class WorkerSettings:
         run_validity_prefill,
         run_protocol_review,
         run_synthesis,
+        # Feature 008: Rapid Review workflow jobs
+        run_narrative_draft,
+        run_generate_evidence_briefing,
     ]
 
     max_jobs: int = 10

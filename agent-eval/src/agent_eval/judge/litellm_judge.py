@@ -30,6 +30,7 @@ class LiteLLMJudge(DeepEvalBaseLLM):
             model: Base model identifier. Falls back to ``LLM_MODEL`` env var.
             ollama_url: Ollama server URL. Falls back to ``OLLAMA_BASE_URL`` env
                 var then ``"http://localhost:11434"``.
+
         """
         self._provider = provider or os.environ.get("LLM_PROVIDER", "anthropic")
         self._model_name = model or os.environ.get("LLM_MODEL", "claude-sonnet-4-6")
@@ -47,12 +48,12 @@ class LiteLLMJudge(DeepEvalBaseLLM):
         """Return a human-readable model name."""
         return self._build_model_string()
 
-    def load_model(self) -> "LiteLLMJudge":
+    def load_model(self) -> LiteLLMJudge:
         """Return self (no lazy loading required for litellm)."""
         return self
 
     def generate(self, prompt: str, **kwargs: Any) -> str:
-        """Synchronous generation via litellm.
+        """Generate a response synchronously via litellm.
 
         Args:
             prompt: The prompt string to evaluate.
@@ -60,6 +61,7 @@ class LiteLLMJudge(DeepEvalBaseLLM):
 
         Returns:
             The model response content as a string.
+
         """
         extra: dict[str, Any] = {}
         if self._provider == "ollama":
@@ -83,6 +85,7 @@ class LiteLLMJudge(DeepEvalBaseLLM):
 
         Returns:
             The model response content as a string.
+
         """
         extra: dict[str, Any] = {}
         if self._provider == "ollama":

@@ -113,8 +113,8 @@ async def _load_study_data(study_id: int) -> dict[str, Any]:
     if study:
         study_dict = {
             "id": study.id,
-            "title": study.title,
-            "description": study.description,
+            "title": study.name,
+            "description": study.topic,
             "status": study.status.value if study.status else None,
         }
 

@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 import io
+from collections.abc import Mapping
 from typing import Any
 
 from backend.core.config import get_settings
 
 
 def generate_bar_chart(
-    data: dict[str, int | float],
+    data: Mapping[str, int | float],
     title: str,
     xlabel: str,
     ylabel: str,

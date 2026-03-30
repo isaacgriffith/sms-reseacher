@@ -1,0 +1,24 @@
+# Narrative Synthesis Request
+
+## Research Question
+
+{{ research_question }}
+
+## Included Papers ({{ papers | length }} total)
+
+{% for paper in papers %}
+### Paper {{ loop.index }}: {{ paper.title }}
+
+{% if paper.abstract %}
+{{ paper.abstract }}
+{% else %}
+*(No abstract available)*
+{% endif %}
+
+{% endfor %}
+
+## Instructions
+
+Write a practitioner-friendly narrative paragraph (3–5 sentences) summarising what
+the evidence above tells us about the research question.  Follow the rules in your
+system prompt.  Return only the paragraph text — no headers, no bullet points.

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import sys
 from pathlib import Path
 from typing import Any
 
@@ -99,7 +98,8 @@ def run_evaluate(
                 "✓" if r.passed else "✗",
             )
     console.print(table)
-    console.print(f"Overall: {overall:.3f}  |  Passed: {sum(1 for r in results if r.passed)}/{len(results)}")
+    passed_count = sum(1 for r in results if r.passed)
+    console.print(f"Overall: {overall:.3f}  |  Passed: {passed_count}/{len(results)}")
 
     if output:
         output.write_text(report.model_dump_json(indent=2))

@@ -63,7 +63,7 @@ function TabPanel({ children, value, index }: TabPanelProps) {
  */
 export default function QualityAssessmentPage({
   studyId,
-  reviewerId: _reviewerId, // eslint-disable-line @typescript-eslint/no-unused-vars
+  reviewerId: _reviewerId,
 }: QualityAssessmentPageProps) {
   const [activeTab, setActiveTab] = useState(0);
 

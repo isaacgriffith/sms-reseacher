@@ -25,7 +25,7 @@ vi.mock('../../components/results/ChartGallery', () => ({
 }));
 
 vi.mock('../../components/results/DomainModelViewer', () => ({
-  default: ({ domainModel }: { domainModel: unknown }) => (
+  default: ({ domainModel: _domainModel }: { domainModel: unknown }) => (
     <div data-testid="domain-model-viewer">Domain Model</div>
   ),
 }));

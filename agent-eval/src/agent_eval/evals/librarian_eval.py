@@ -18,11 +18,7 @@ import asyncio
 import json
 from typing import Any
 
-from deepeval import assert_test
-from deepeval.dataset import EvaluationDataset
-from deepeval.metrics import AnswerRelevancyMetric, FaithfulnessMetric
 from deepeval.test_case import LLMTestCase
-
 
 # ---------------------------------------------------------------------------
 # Representative input dataset
@@ -78,6 +74,7 @@ def _assert_non_empty_papers(output: str) -> None:
 
     Raises:
         AssertionError: When the papers list is empty.
+
     """
     data: dict[str, Any] = json.loads(output)
     papers = data.get("papers", [])
@@ -93,6 +90,7 @@ def _assert_no_obviously_hallucinated_dois(output: str) -> None:
 
     Args:
         output: JSON string produced by LibrarianAgent.
+
     """
     data: dict[str, Any] = json.loads(output)
     for paper in data.get("papers", []):
@@ -120,6 +118,7 @@ def build_test_cases(run_agent: bool = False) -> list[LLMTestCase]:
 
     Returns:
         A list of :class:`LLMTestCase` objects ready for deepeval assertion.
+
     """
     cases: list[LLMTestCase] = []
 
@@ -168,6 +167,7 @@ async def _invoke_librarian(inp: dict[str, Any]) -> str:
 
     Returns:
         JSON string of the LibrarianResult.
+
     """
     from agents.services.librarian import LibrarianAgent
 
@@ -207,6 +207,7 @@ def run_librarian_eval(run_agent: bool = False, threshold: float = 0.7) -> dict[
 
     Returns:
         A dict with ``{passed, failed, total}`` counts.
+
     """
     cases = build_test_cases(run_agent=run_agent)
     passed = 0
@@ -215,8 +216,8 @@ def run_librarian_eval(run_agent: bool = False, threshold: float = 0.7) -> dict[
 
     for case in cases:
         try:
-            _assert_non_empty_papers(case.actual_output)
-            _assert_no_obviously_hallucinated_dois(case.actual_output)
+            _assert_non_empty_papers(case.actual_output or "")
+            _assert_no_obviously_hallucinated_dois(case.actual_output or "")
             passed += 1
         except AssertionError as exc:
             failed += 1

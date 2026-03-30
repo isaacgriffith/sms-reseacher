@@ -1,6 +1,45 @@
 <!--
 SYNC IMPACT REPORT
 ==================
+Version change: 1.6.1 → 1.7.0
+Bump rationale: MINOR — three new mandatory requirements added:
+  (1) All source files MUST have a module-level doc comment (Python module docstring /
+      TypeScript file-level JSDoc) at the top of every file.
+  (2) Before a feature is marked complete, mutation testing MUST be run against every
+      modified subproject (not just changed files/modules), ensuring ≥85% mutants killed
+      per subproject.
+  (3) All tests, linting, and static analysis checks MUST pass before feature completion,
+      including any pre-existing failures in touched files.
+
+Modified sections:
+  - III. Code Clarity & Anti-Pattern Avoidance — Documentation: expanded to require
+    file-level doc comments (Python module docstrings / TS file-level JSDoc) on all files,
+    in addition to the existing function/method/class doc comment requirements.
+  - VI. Testing Discipline — Mutation Testing: added explicit requirement that mutation
+    testing runs against every modified subproject before feature completion; clarified
+    "modified subproject" definition.
+  - IX. Language-Specific Best Practices — Python section: new "Module docstrings" bullet
+    added before Google-style docstrings bullet.
+  - IX. Language-Specific Best Practices — TypeScript section: new "File-level JSDoc"
+    bullet added before JSDoc for exported symbols bullet.
+  - Development Workflow step 6: expanded to require all pre-existing linting/type/test
+    failures to be remediated before feature completion; mutation testing scope clarified
+    to cover every modified subproject.
+  - Code Quality Standards table: Documentation row updated to include file-level doc
+    comment requirement.
+
+Templates updated:
+  ✅ .specify/templates/plan-template.md — Constitution Check table: new gate row added
+     for file-level doc comments and pre-existing issues gate.
+  ✅ .specify/templates/tasks-template.md — Notes footer: file-level doc comment rule added.
+  ⚠ .specify/templates/spec-template.md — no changes required (generic enough).
+
+Deferred TODOs: none
+-->
+
+<!--
+SYNC IMPACT REPORT
+==================
 Version change: 1.6.0 → 1.6.1
 Bump rationale: PATCH — e2e tooling canonised: Playwright (TypeScript) is the approved
   full-stack e2e tool; Cypress superseded. CI provisioning requirement added.
@@ -163,10 +202,18 @@ All generated and modified code MUST avoid the following anti-patterns:
   Inappropriate Intimacy, Message Chains, Middle Man, Speculative Generality, Dead Code.
 - **God Objects / God Modules**: No single class or module MUST accumulate responsibilities
   beyond a focused role. Split proactively before the violation solidifies.
-- **Documentation**: All functions, methods, and classes MUST include doc comments.
-  - **Python**: Google-style docstrings are REQUIRED, with `Args:`, `Returns:`, and `Raises:`
-    sections where applicable. This is enforced by ruff's `D` rule set (with `D203`/`D213`
-    ignored for Google-style compatibility).
+- **Documentation**: All source files, functions, methods, and classes MUST include doc
+  comments.
+  - **File-level doc comments**: Every source file MUST begin with a module-level doc comment
+    describing the file's purpose and primary contents.
+    - **Python**: A module docstring (triple-quoted string) MUST appear as the first statement
+      in every `.py` file. It MUST contain at least one sentence describing the module's role.
+    - **TypeScript/JavaScript**: A file-level JSDoc block comment (`/** ... */`) MUST appear
+      at the top of every `.ts` and `.tsx` file, before any imports. It MUST contain at least
+      one sentence describing the file's purpose.
+  - **Python**: Google-style docstrings are REQUIRED for all functions, methods, and classes,
+    with `Args:`, `Returns:`, and `Raises:` sections where applicable. This is enforced by
+    ruff's `D` rule set (with `D203`/`D213` ignored for Google-style compatibility).
   - **TypeScript/JavaScript**: JSDoc comments (`/** ... */`) are REQUIRED for all exported
     functions, classes, and methods. A single-sentence description is the minimum; `@param`
     and `@returns` tags MUST be included for non-trivial signatures.
@@ -253,8 +300,13 @@ task list.
   (Python) and `stryker` (TypeScript) MUST each be exposed as a **manually-triggered**
   GitHub Actions workflow (`workflow_dispatch`) AND MUST be triggered automatically at the
   completion of every speckit feature implementation (`/speckit.implement` final step).
-- Mutation scores MUST be recorded in the PR description. Scores below 85% require explicit
-  remediation tasks to improve test assertions before merge.
+- Before a feature is marked complete, mutation testing MUST be run against **every modified
+  subproject**. A subproject is considered modified if any source file under its `src/`
+  directory was added, changed, or deleted during the feature. Partial subproject coverage
+  (e.g., running mutation only on changed files) is insufficient — the entire subproject
+  test suite MUST be evaluated.
+- Mutation scores MUST be recorded in the PR description. Scores below 85% on any modified
+  subproject require explicit remediation tasks to improve test assertions before merge.
 
 #### Agent Metamorphic Testing
 
@@ -301,13 +353,17 @@ without amending this document is a blocking violation.
 
 #### Python Toolchain
 
-- **Linting/formatting**: `ruff` MUST be the sole Python linter and formatter. Configured
-  with `line-length = 100`, `select = ["E", "W", "F", "I", "D", "UP", "B", "C4"]`, and
-  `ignore = ["D203", "D213"]` (Google-style docstrings). All ruff violations MUST be
-  resolved before merge; `ruff format` output is canonical.
-- **Type checking**: `mypy` with `strict = true` and `python_version = "3.14"` MUST pass
-  with zero errors. `ignore_missing_imports = false` is required; stubs MUST be added when
-  third-party types are absent.
+- **Linting/formatting**: `ruff` MUST be the sole Python linter and formatter. Each subproject
+  `pyproject.toml` MUST place lint rules under `[tool.ruff.lint]` (NOT the deprecated `[tool.ruff]`
+  top-level). Config: `line-length = 100`, `select = ["E", "W", "F", "I", "D", "UP", "B", "C4"]`,
+  `ignore = ["D203", "D213"]` (Google-style docstrings). All ruff violations MUST be resolved before
+  merge; `ruff format` output is canonical.
+- **Type checking**: `mypy` with `strict = true` and `python_version = "3.14"` MUST pass with zero
+  errors per subproject. `ignore_missing_imports = false` is required; third-party packages without
+  `py.typed` or stubs MUST be listed in `[[tool.mypy.overrides]]` with `ignore_missing_imports = true`.
+  The root `pyproject.toml` MUST contain a `[tool.mypy]` section with workspace-wide third-party
+  overrides; per-package `strict = true` lives in each subproject's `pyproject.toml`.
+  Every workspace package MUST have a `py.typed` marker file at `src/<pkg>/py.typed`.
 - **Pre-commit hooks**: `uv run ruff check`, `uv run ruff format --check`, and
   `uv run mypy` MUST all be registered in `.pre-commit-config.yaml` and run against every
   Python source directory. Dockerfile linting via `hadolint` MUST also be registered.
@@ -544,6 +600,9 @@ avoided:
 - **Type annotations everywhere**: All function signatures (parameters and return type) and
   class attributes MUST carry explicit type annotations. Bare untyped code is a mypy strict
   violation and MUST NOT be merged.
+- **Module docstrings**: Every Python source file (`.py`) MUST begin with a module-level
+  docstring as its first statement. It MUST contain at least one sentence describing the
+  module's purpose and primary contents.
 - **Google-style docstrings**: All Python functions, methods, and classes MUST use Google-
   style docstrings with `Args:`, `Returns:`, and `Raises:` sections where applicable.
   Enforced by ruff's `D` rule set with `D203`/`D213` ignored. CLI command handler functions
@@ -591,6 +650,9 @@ avoided:
 - **No `any`**: The `any` type MUST NOT appear in new code. Use `unknown` for genuinely
   unknown external data, then narrow with type guards or Zod parsing. ESLint rule
   `@typescript-eslint/no-explicit-any` MUST be enabled and enforced.
+- **File-level JSDoc**: Every TypeScript and TSX source file MUST begin with a file-level
+  JSDoc block comment (`/** ... */`) before any imports. It MUST contain at least one
+  sentence describing the file's purpose and primary contents.
 - **JSDoc for exported symbols**: All exported TypeScript functions, classes, and methods
   MUST include JSDoc comments (`/** ... */`). A single-sentence description is the minimum
   required. `@param` and `@returns` tags MUST be included for functions with non-trivial
@@ -667,7 +729,7 @@ The following gates apply at specification, planning, and implementation time:
 | Settings pattern | Config MUST use Pydantic BaseSettings + lru_cache get_settings() |
 | Logging | MUST use structlog; no print() in production paths |
 | Docker health checks | Every compose service MUST have a healthcheck block |
-| Documentation | All functions/methods MUST have Google-style (Python) or JSDoc (TS) doc comments; CLI handlers: brief command description only — no Args/Returns/params |
+| Documentation | All source files MUST have a module-level doc comment (Python module docstring / TS file-level JSDoc); all functions/methods/classes MUST have Google-style (Python) or JSDoc (TS) doc comments; CLI handlers: brief command description only — no Args/Returns/params |
 | Feature completion docs | `CLAUDE.md`, root `README.md`, affected subproject `README.md`s, root `CHANGELOG.md`, and affected subproject `CHANGELOG.md`s MUST all be updated before merge |
 | React components | MUST be functional; MUST have named props interface; MUST be ≤ 100 JSX lines |
 | React hooks | MUST follow Rules of Hooks (top-level only); complete dep arrays; no inline refs in deps |
@@ -713,11 +775,20 @@ The following workflow MUST be followed for every task in the implementation pla
 6. **Checkpoints**: Each task phase ends with a quality gate. The following MUST all pass
    before a phase or task is marked complete:
    - `pre-commit run --all-files` (linting, formatting, and static analysis as configured
-     in `.pre-commit-config.yaml`) MUST exit clean with zero violations.
-   - Type checker (mypy / tsc) MUST report no errors.
-   - Full test suite MUST pass with coverage ≥ 85%.
-   - Mutation score MUST be ≥ 85% on changed modules (verified via the manually-triggered
-     or speckit end-of-feature mutation workflow, not per-commit).
+     in `.pre-commit-config.yaml`) MUST exit clean with zero violations — including any
+     pre-existing violations in files touched by the feature. Pre-existing linting or static
+     analysis failures MUST be remediated, not bypassed, before the feature is marked
+     complete.
+   - Type checker (mypy / tsc) MUST report no errors, including any pre-existing type errors
+     in files touched by the feature.
+   - Full test suite MUST pass with coverage ≥ 85%. All tests — including pre-existing tests
+     for unchanged code — MUST pass. A failing pre-existing test is a blocking defect that
+     MUST be fixed before the feature is marked complete, not deferred.
+   - Before the feature is marked complete, mutation testing MUST be run against every
+     modified subproject (cosmic-ray for Python subprojects, stryker for the frontend). A
+     subproject is modified if any file under its `src/` directory was added, changed, or
+     deleted. Mutation score MUST be ≥ 85% on each modified subproject. (Verified via the
+     manually-triggered or speckit end-of-feature mutation workflow, not per-commit.)
    Pre-commit checks are non-negotiable gates — bypassing them with `--no-verify` is
    forbidden except in an emergency, and ANY such bypass MUST be documented in the PR with
    a follow-up remediation task.
@@ -781,4 +852,4 @@ and AI coding agents operating within this repository.
 - Language-specific gates (Principle IX) MUST be checked during code review for all React,
   Python, and TypeScript code changes.
 
-**Version**: 1.6.1 | **Ratified**: 2026-03-11 | **Last Amended**: 2026-03-15
+**Version**: 1.7.0 | **Ratified**: 2026-03-11 | **Last Amended**: 2026-03-21

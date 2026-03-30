@@ -15,7 +15,6 @@ from typing import Any
 
 from deepeval.test_case import LLMTestCase
 
-
 # ---------------------------------------------------------------------------
 # Representative input dataset
 # ---------------------------------------------------------------------------
@@ -74,6 +73,7 @@ def _assert_synthesis_non_empty(output: str) -> None:
 
     Raises:
         AssertionError: When output is empty or whitespace-only.
+
     """
     assert output and output.strip(), "Synthesis output must not be empty"
     assert len(output.strip()) >= 50, (
@@ -89,6 +89,7 @@ def _assert_conclusion_present(output: str) -> None:
 
     Raises:
         AssertionError: When no conclusion section can be found.
+
     """
     lower = output.lower()
     assert "conclusion" in lower or "summary" in lower, (
@@ -104,6 +105,7 @@ def _assert_findings_present(output: str) -> None:
 
     Raises:
         AssertionError: When no findings section is found.
+
     """
     lower = output.lower()
     assert "finding" in lower or "result" in lower or "evidence" in lower, (
@@ -124,6 +126,7 @@ def build_test_cases(run_agent: bool = False) -> list[LLMTestCase]:
 
     Returns:
         A list of :class:`LLMTestCase` objects ready for deepeval assertion.
+
     """
     cases: list[LLMTestCase] = []
 
@@ -164,6 +167,7 @@ async def _invoke_synthesiser(inp: dict[str, Any]) -> str:
 
     Returns:
         Raw synthesis string from the agent.
+
     """
     from agents.services.synthesiser import SynthesiserAgent
 
@@ -193,6 +197,7 @@ def run_synthesiser_eval(run_agent: bool = False, threshold: float = 0.85) -> di
 
     Returns:
         A dict with ``{passed, failed, total, errors}`` counts.
+
     """
     cases = build_test_cases(run_agent=run_agent)
     passed = 0
@@ -201,9 +206,9 @@ def run_synthesiser_eval(run_agent: bool = False, threshold: float = 0.85) -> di
 
     for case in cases:
         try:
-            _assert_synthesis_non_empty(case.actual_output)
-            _assert_findings_present(case.actual_output)
-            _assert_conclusion_present(case.actual_output)
+            _assert_synthesis_non_empty(case.actual_output or "")
+            _assert_findings_present(case.actual_output or "")
+            _assert_conclusion_present(case.actual_output or "")
             passed += 1
         except AssertionError as exc:
             failed += 1

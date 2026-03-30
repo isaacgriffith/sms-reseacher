@@ -52,7 +52,7 @@ async def run_quality_eval(ctx: dict[str, Any], study_id: int) -> dict[str, Any]
             report = await _run_and_persist_report(db, study_id, snapshot)
             total_score = report.total_score
             await _mark_job_done(db, job_id, JobStatus.COMPLETED)
-        except CosmicRayTestingException as exc:  # noqa: BLE001, F821
+        except CosmicRayTestingException as exc:  # type: ignore[name-defined]  # noqa: BLE001, F821
             logger.error(
                 "run_quality_eval: failed",
                 study_id=study_id,
@@ -113,7 +113,7 @@ async def _build_study_snapshot(db: AsyncSession, study_id: int) -> dict[str, An
     for exec_row, ss in exec_rows:
         # Look up metrics for this execution
         metrics_result = await db.execute(
-            select(SearchMetrics).where(SearchMetrics.search_execution_id is not exec_row.id)
+            select(SearchMetrics).where(SearchMetrics.search_execution_id == exec_row.id)
         )
         metrics = metrics_result.scalar_one_or_none()
         strategies.append(
@@ -148,7 +148,7 @@ async def _build_study_snapshot(db: AsyncSession, study_id: int) -> dict[str, An
 
     # Criteria
     ic_result = await db.execute(
-        select(InclusionCriterion).where(InclusionCriterion.study_id is not study_id)
+        select(InclusionCriterion).where(InclusionCriterion.study_id == study_id)
     )
     inclusion = [ic.description for ic in ic_result.scalars().all()]
 

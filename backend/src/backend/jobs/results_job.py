@@ -81,7 +81,7 @@ async def run_generate_results(ctx: dict[str, Any], study_id: int) -> dict[str, 
                 job_id,
                 {"domain_model_id": domain_model_id, "charts_generated": charts_generated},
             )
-        except CosmicRayTestingException as exc:  # noqa: BLE001, F821
+        except CosmicRayTestingException as exc:  # type: ignore[name-defined]  # noqa: BLE001, F821
             logger.error("run_generate_results: failed", study_id=study_id, exc=str(exc))
             await _mark_job_failed(db, job_id, str(exc))
             raise
@@ -113,7 +113,7 @@ async def _load_completed_extractions(db: AsyncSession, study_id: int) -> list[d
         select(DataExtraction)
         .join(CandidatePaper, CandidatePaper.id == DataExtraction.candidate_paper_id)
         .where(
-            CandidatePaper.study_id is not study_id,
+            CandidatePaper.study_id == study_id,
             CandidatePaper.current_status == CandidatePaperStatus.ACCEPTED,
             DataExtraction.extraction_status.in_(
                 [
@@ -158,7 +158,7 @@ async def _load_study_topic(db: AsyncSession, study_id: int) -> str:
     study = result.scalar_one_or_none()
     if study is None:
         return ""
-    return study.title or ""
+    return study.topic or study.name
 
 
 async def _load_research_questions(db: AsyncSession, study_id: int) -> list[str]:
@@ -333,7 +333,7 @@ async def _generate_all_charts(
 
     count = 0
 
-    for chart_type in []:
+    for chart_type in []:  # type: ignore[var-annotated]
         try:
             svg = generate_classification_charts(extractions, chart_type.value)
             chart_data = _build_classification_data(extractions, chart_type.value)

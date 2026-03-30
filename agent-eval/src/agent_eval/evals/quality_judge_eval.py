@@ -22,10 +22,7 @@ import asyncio
 import json
 from typing import Any
 
-from deepeval.dataset import EvaluationDataset
-from deepeval.metrics import AnswerRelevancyMetric
 from deepeval.test_case import LLMTestCase
-
 
 # ---------------------------------------------------------------------------
 # Representative input dataset — study snapshots at varying completion levels
@@ -140,6 +137,7 @@ def _assert_all_rubrics_scored(output: str) -> None:
 
     Raises:
         AssertionError: When a rubric key is missing from the scores dict.
+
     """
     data: dict[str, Any] = json.loads(output)
     scores = data.get("scores", {})
@@ -155,6 +153,7 @@ def _assert_scores_within_valid_ranges(output: str) -> None:
 
     Raises:
         AssertionError: When a score is outside [0, max] for its rubric.
+
     """
     data: dict[str, Any] = json.loads(output)
     scores = data.get("scores", {})
@@ -175,6 +174,7 @@ def _assert_rubric_details_complete(output: str) -> None:
 
     Raises:
         AssertionError: When rubric_details is absent or malformed.
+
     """
     data: dict[str, Any] = json.loads(output)
     details = data.get("rubric_details", {})
@@ -195,6 +195,7 @@ def _assert_recommendations_non_empty_for_low_scores(output: str) -> None:
 
     Raises:
         AssertionError: When low scores exist but no recommendations are produced.
+
     """
     data: dict[str, Any] = json.loads(output)
     scores = data.get("scores", {})
@@ -226,6 +227,7 @@ def build_test_cases(run_agent: bool = False) -> list[LLMTestCase]:
 
     Returns:
         A list of :class:`LLMTestCase` objects ready for evaluation.
+
     """
     cases: list[LLMTestCase] = []
 
@@ -234,7 +236,7 @@ def build_test_cases(run_agent: bool = False) -> list[LLMTestCase]:
             actual_output = asyncio.run(_invoke_quality_judge(inp))
         else:
             # Structurally valid stub — skips LLM call
-            stub_scores = {r: 1 for r in _RUBRIC_NAMES}
+            stub_scores = dict.fromkeys(_RUBRIC_NAMES, 1)
             actual_output = json.dumps({
                 "scores": stub_scores,
                 "rubric_details": {
@@ -291,6 +293,7 @@ async def _invoke_quality_judge(inp: dict[str, Any]) -> str:
 
     Returns:
         JSON string of the QualityJudgeResult.
+
     """
     from agents.services.quality_judge import QualityJudgeAgent
 
@@ -346,6 +349,7 @@ def run_quality_judge_eval(run_agent: bool = False, threshold: float = PASS_THRE
 
     Returns:
         A dict with ``{passed, failed, total, pass_rate, errors}``.
+
     """
     cases = build_test_cases(run_agent=run_agent)
     passed = 0
@@ -363,7 +367,7 @@ def run_quality_judge_eval(run_agent: bool = False, threshold: float = PASS_THRE
         case_errors: list[str] = []
         for check in checks:
             try:
-                check(case.actual_output)
+                check(case.actual_output or "")
             except AssertionError as exc:
                 case_errors.append(str(exc))
 

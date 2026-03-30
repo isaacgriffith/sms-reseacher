@@ -24,7 +24,7 @@ const schema = z
       .min(12, 'At least 12 characters')
       .regex(/[A-Z]/, 'Must contain an uppercase letter')
       .regex(/\d/, 'Must contain a digit')
-      .regex(/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?`~]/, 'Must contain a special character'),
+      .regex(/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?`~]/, 'Must contain a special character'),
     confirmPassword: z.string().min(1, 'Required'),
   })
   .refine((d) => d.newPassword === d.confirmPassword, {
@@ -43,7 +43,7 @@ function ComplexityIndicator({ password }: ComplexityIndicatorProps) {
     { label: '12+ characters', ok: password.length >= 12 },
     { label: 'Uppercase letter', ok: /[A-Z]/.test(password) },
     { label: 'Digit', ok: /\d/.test(password) },
-    { label: 'Special character', ok: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?`~]/.test(password) },
+    { label: 'Special character', ok: /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?`~]/.test(password) },
   ];
 
   return (

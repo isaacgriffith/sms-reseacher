@@ -101,11 +101,11 @@ class ScreenerAgent:
         if structured_mode:
             # Format structured criteria for the prompt
             inc_text = "\n".join(
-                f"[IC{c.get('id', i + 1)}] {c.get('description', c)}"
+                f"[IC{c.get('id', i + 1)}] {c.get('description', c)}"  # type: ignore[attr-defined]
                 for i, c in enumerate(inclusion_criteria)  # type: ignore[arg-type]
             )
             exc_text = "\n".join(
-                f"[EC{c.get('id', i + 1)}] {c.get('description', c)}"
+                f"[EC{c.get('id', i + 1)}] {c.get('description', c)}"  # type: ignore[attr-defined]
                 for i, c in enumerate(exclusion_criteria)  # type: ignore[arg-type]
             )
             inc_arg = inc_text or "No inclusion criteria specified."

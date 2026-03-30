@@ -392,17 +392,16 @@ async def test_load_research_questions_returns_empty_when_study_not_found():
     assert result == []
 
 
-async def test_load_research_questions_returns_empty_for_truthy_metadata():
-    """_load_research_questions returns [] when study.metadata_ is truthy.
+async def test_load_research_questions_returns_questions_for_truthy_metadata():
+    """_load_research_questions returns questions when study.metadata_ is truthy.
 
-    Due to the conditional ``if study is None or study.metadata_:`` the function
-    returns an empty list whenever metadata_ is a non-empty dict (truthy).
-    This test documents the current behavior.
+    When ``metadata_`` contains a non-empty ``research_questions`` list the
+    function parses and returns those questions.
     """
     study_mock = MagicMock()
     study_mock.metadata_ = {
         "research_questions": [
-            {"id": 1, "text": "What is TDD?"},
+            {"id": "1", "text": "What is TDD?"},
         ]
     }
 
@@ -412,8 +411,7 @@ async def test_load_research_questions_returns_empty_for_truthy_metadata():
     from backend.jobs.extraction_job import _load_research_questions
 
     result = await _load_research_questions(db, study_id=1)
-    # Current implementation returns [] when metadata_ is truthy (short-circuit)
-    assert result == []
+    assert result == [{"id": "1", "text": "What is TDD?"}]
 
 
 # ---------------------------------------------------------------------------

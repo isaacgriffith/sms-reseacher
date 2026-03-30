@@ -11,7 +11,7 @@
  */
 
 import { render, screen, fireEvent } from '@testing-library/react';
-import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { vi, describe, it, expect } from 'vitest';
 
 // jsdom does not implement URL.createObjectURL — provide a stub
 if (!URL.createObjectURL) {

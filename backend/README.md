@@ -84,6 +84,33 @@ uv run mypy backend/src
 | `GET/PUT` | `/api/v1/studies/{id}/database-selection` | Read/write active database indices for a study |
 | `GET` | `/api/v1/papers/{id}/markdown` | Retrieve stored full-text Markdown for a paper |
 
+### Rapid Review Endpoints (`/api/v1/rapid/`)
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET/PUT` | `/rapid/studies/{id}/protocol` | Read / upsert Rapid Review protocol |
+| `GET/PUT` | `/rapid/studies/{id}/search-config` | Read / upsert search restriction config |
+| `GET/PUT` | `/rapid/studies/{id}/qa-config` | Read / upsert quality appraisal config |
+| `GET/POST` | `/rapid/studies/{id}/stakeholders` | List / add practitioner stakeholders |
+| `GET/PATCH/DELETE` | `/rapid/studies/{id}/stakeholders/{sid}` | Get / update / delete a stakeholder |
+| `GET` | `/rapid/studies/{id}/narrative-synthesis` | List narrative synthesis sections |
+| `PATCH` | `/rapid/studies/{id}/narrative-synthesis/{section_id}` | Update narrative text / is_complete flag |
+| `POST` | `/rapid/studies/{id}/narrative-synthesis/{section_id}/ai-draft` | Trigger AI draft ARQ job |
+| `POST` | `/rapid/studies/{id}/narrative-synthesis/complete` | Finalise synthesis (validates all sections complete) |
+| `GET/POST` | `/rapid/studies/{id}/briefings` | List / create new Evidence Briefing version |
+| `GET` | `/rapid/studies/{id}/briefings/{bid}` | Get specific briefing version |
+| `POST` | `/rapid/studies/{id}/briefings/{bid}/publish` | Publish briefing version (demotes prior published) |
+| `GET` | `/rapid/studies/{id}/briefings/{bid}/export` | Download PDF (FileResponse) |
+| `POST` | `/rapid/studies/{id}/briefings/{bid}/share-token` | Create share token for unauthenticated access |
+| `DELETE` | `/rapid/briefings/share-token/{token}` | Revoke a share token |
+
+### Public Endpoints (`/api/v1/public/`)
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/public/briefings/{token}` | Retrieve published briefing via share token (no auth) |
+| `GET` | `/public/briefings/{token}/export` | Download briefing PDF via share token (no auth) |
+
 ### SLR Endpoints (`/api/v1/slr/`)
 
 | Method | Path | Description |

@@ -21,10 +21,7 @@ import asyncio
 import json
 from typing import Any
 
-from deepeval.dataset import EvaluationDataset
-from deepeval.metrics import AnswerRelevancyMetric
 from deepeval.test_case import LLMTestCase
-
 
 # ---------------------------------------------------------------------------
 # Representative input dataset — study snapshots at varying completion states
@@ -151,6 +148,7 @@ def _assert_all_dimensions_present(output: str) -> None:
 
     Raises:
         AssertionError: When one or more of the six dimensions are absent.
+
     """
     data: dict[str, Any] = json.loads(output)
     missing = [dim for dim in _VALIDITY_DIMS if dim not in data]
@@ -165,6 +163,7 @@ def _assert_no_empty_dimensions(output: str) -> None:
 
     Raises:
         AssertionError: When any dimension value is empty or whitespace-only.
+
     """
     data: dict[str, Any] = json.loads(output)
     empty = [dim for dim in _VALIDITY_DIMS if not (data.get(dim) or "").strip()]
@@ -179,6 +178,7 @@ def _assert_min_dimension_length(output: str) -> None:
 
     Raises:
         AssertionError: When any dimension has fewer than _MIN_DIM_LENGTH characters.
+
     """
     data: dict[str, Any] = json.loads(output)
     too_short = [
@@ -199,6 +199,7 @@ def _assert_all_string_values(output: str) -> None:
 
     Raises:
         AssertionError: When any dimension value is not of type str.
+
     """
     data: dict[str, Any] = json.loads(output)
     non_string = [dim for dim in _VALIDITY_DIMS if not isinstance(data.get(dim), str)]
@@ -222,6 +223,7 @@ def build_test_cases(run_agent: bool = False) -> list[LLMTestCase]:
 
     Returns:
         A list of :class:`LLMTestCase` objects ready for evaluation.
+
     """
     cases: list[LLMTestCase] = []
 
@@ -276,6 +278,7 @@ async def _invoke_validity_agent(inp: dict[str, Any]) -> str:
 
     Returns:
         JSON string of the ValidityResult.
+
     """
     from agents.services.validity import ValidityAgent
 
@@ -320,6 +323,7 @@ def run_validity_eval(run_agent: bool = False, threshold: float = PASS_THRESHOLD
 
     Returns:
         A dict with ``{passed, failed, total, pass_rate, errors}``.
+
     """
     cases = build_test_cases(run_agent=run_agent)
     passed = 0
@@ -337,7 +341,7 @@ def run_validity_eval(run_agent: bool = False, threshold: float = PASS_THRESHOLD
         case_errors: list[str] = []
         for check in checks:
             try:
-                check(case.actual_output)
+                check(case.actual_output or "")
             except AssertionError as exc:
                 case_errors.append(str(exc))
 

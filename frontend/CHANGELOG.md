@@ -4,6 +4,64 @@ All notable changes to this subproject are documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.8.0] — 2026-03-29 — feature/008-rapid-review-workflow
+
+### Added
+- **`ProtocolForm` component** (`src/components/rapid/ProtocolForm.tsx`): react-hook-form + Zod
+  form for Rapid Review protocol fields (scope, research question, timeframe, team); `useWatch`
+  throughout; save delegates to `useUpdateRRProtocol` mutation
+- **`QAModeSelector` component** (`src/components/rapid/QAModeSelector.tsx`): MUI radio group
+  for quality appraisal mode selection (`full`/`critical_appraisal_only`/`descriptive`)
+- **`SearchRestrictionPanel` component** (`src/components/rapid/SearchRestrictionPanel.tsx`):
+  date range, language filter, and source type restriction controls backed by `useSearchConfig`
+- **`StakeholderPanel` component** (`src/components/rapid/StakeholderPanel.tsx`): MUI Table
+  of practitioner stakeholders with Add/Edit/Delete actions; validation requires at least one
+  practitioner before Phase 3 unlocks; `readOnly` prop for locked phases
+- **`SingleReviewerWarningBanner` component** (`src/components/rapid/SingleReviewerWarningBanner.tsx`):
+  MUI `Alert` warning displayed when QA mode implies single-reviewer risk
+- **`ThreatToValidityList` component** (`src/components/rapid/ThreatToValidityList.tsx`):
+  read-only MUI List of auto-created validity threat records embedded in Evidence Briefing
+- **`NarrativeSectionEditor` component** (`src/components/rapid/NarrativeSectionEditor.tsx`):
+  per-RQ section editor with MUI `TextField`, "Request AI Draft" action, `is_complete` checkbox,
+  pending/error state from `useUpdateSection` and `useRequestAIDraft`
+- **`BriefingPreview` component** (`src/components/rapid/BriefingPreview.tsx`): read-only MUI
+  Paper rendering Title, Executive Summary, per-RQ Findings, Target Audience + threat Chips,
+  Reference list, and Institution Logos sections
+- **`BriefingVersionPanel` component** (`src/components/rapid/BriefingVersionPanel.tsx`):
+  MUI Table of briefing versions with status Chip; Publish (with confirmation dialog), Download
+  PDF/HTML (`URL.createObjectURL` Blob), Copy Share Link actions
+- **`ProtocolEditorPage`** (`src/pages/rapid/ProtocolEditorPage.tsx`): RR protocol editor with
+  `ProtocolForm` + phase gate status
+- **`SearchConfigPage`** (`src/pages/rapid/SearchConfigPage.tsx`): search restriction management
+- **`QAConfigPage`** (`src/pages/rapid/QAConfigPage.tsx`): QA mode and checklist item management
+- **`StakeholderPage`** (`src/pages/rapid/StakeholderPage.tsx`): practitioner stakeholder management
+- **`NarrativeSynthesisPage`** (`src/pages/rapid/NarrativeSynthesisPage.tsx`): renders one
+  `NarrativeSectionEditor` per research question; Mark All Complete bulk action; Finalize
+  Synthesis CTA (polls via `useCompleteSynthesis`); 422 error handling with incomplete section
+  list display
+- **`EvidenceBriefingPage`** (`src/pages/rapid/EvidenceBriefingPage.tsx`): Generate Briefing
+  CTA; `BriefingVersionPanel` (version history table); `BriefingPreview` (selected version);
+  3 s `refetchInterval` polling while any briefing lacks `pdf_available`
+- **`PublicBriefingPage`** (`src/pages/rapid/PublicBriefingPage.tsx`): unauthenticated page at
+  `/public/briefings/:token`; renders full briefing with Download PDF button; graceful 404/403
+  error state; outside `RequireAuth` guard in `App.tsx`
+- **RR hooks** (`src/hooks/rapid/`): `useRRProtocol`, `useUpdateRRProtocol`; `useSearchConfig`,
+  `useUpdateSearchConfig`; `useQAConfig`, `useUpdateQAConfig`; `useStakeholders`,
+  `useCreateStakeholder`, `useUpdateStakeholder`, `useDeleteStakeholder`;
+  `useNarrativeSections`, `useUpdateSection`, `useRequestAIDraft`, `useCompleteSynthesis`;
+  `useBriefings`, `useGenerateBriefing`, `usePublishBriefing`, `useCreateShareToken`,
+  `useRevokeShareToken`; all use TanStack Query v5 with Zod-parsed responses
+- **RR services** (`src/services/rapid/`): `protocolApi.ts`, `searchConfigApi.ts`,
+  `qaConfigApi.ts`, `stakeholdersApi.ts`, `synthesisApi.ts`, `briefingApi.ts`; binary Blob
+  PDF export via raw `fetch` with Bearer token; `ApiError` class with `status` + `detail` fields;
+  all responses validated through Zod schemas before being returned to hooks
+- **`App.tsx`**: `<Route path="/public/briefings/:token" element={<PublicBriefingPage />} />`
+  added outside `RequireAuth`; RR phase routes added under study workspace
+- **`StudyPage.tsx`**: phase 0–6 delegation to RR page components when `study.study_type === 'rapid'`
+
+### Changed
+- `StudyPage.tsx`: renders `RREvidenceBriefingPage` for phase 6 when study is Rapid type
+
 ## [0.7.0] — 2026-03-21 — feature/007-slr-workflow
 
 ### Added

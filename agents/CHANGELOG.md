@@ -4,6 +4,16 @@ All notable changes to this subproject are documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.8.0] — 2026-03-29 — feature/008-rapid-review-workflow
+
+### Added
+- **`NarrativeSynthesiserAgent`** (`narrative_synthesiser_agent.py`): LLM-powered narrative
+  draft generation for a single Rapid Review research question; accepts `section_text` (prior
+  content, may be empty), `rq_text`, and a list of included paper summaries; returns a
+  `NarrativeDraftResult` with `narrative_text` and `confidence`
+- **Prompt templates** (`prompts/narrative_synthesiser/`): Jinja2 `system.md` and `user.md.j2`
+  templates for narrative synthesis agent
+
 ## [0.7.0] — 2026-03-21 — feature/007-slr-workflow
 
 ### Added

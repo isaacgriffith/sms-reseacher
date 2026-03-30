@@ -14,6 +14,8 @@ This is a research project by Isaac Griffith, PhD, licensed under the MIT Licens
 - Python 3.14 (researcher-mcp, backend, db); TypeScript 5.4 / Node 20 LTS (frontend); pybliometrics, semanticscholar, scholarly, unpywall, springernature-api-client, markitdown[all], scidownl, httpx (006-database-search-and-retrieval)
 - Python 3.14 (backend, agents, db); TypeScript 5.4 / Node 20 LTS (frontend) + FastAPI, SQLAlchemy 2.0+ async, ARQ, LiteLLM, React 18, MUI v5, TanStack Query v5, react-hook-form + Zod; new: `scipy>=1.13`, `scikit-learn>=1.5`, `numpy>=1.26` (007-slr-workflow)
 - PostgreSQL 16 (production); SQLite + aiosqlite (tests); Alembic migration `0015_slr_workflow` (007-slr-workflow)
+- Python 3.14 (backend, db, agents); TypeScript 5.4 / Node 20 LTS (frontend) + FastAPI + Pydantic v2, SQLAlchemy 2.0+ async, Alembic, ARQ, LiteLLM, weasyprint, Jinja2 (008-rapid-review-workflow)
+- PostgreSQL 16 (production); SQLite + aiosqlite (tests); Alembic migration `0016_rapid_review_workflow` (008-rapid-review-workflow)
 
 ### Runtime & Language
 - Python 3.14 (backend, agents, db, agent-eval, researcher-mcp); TypeScript 5.4 / Node 20 LTS (frontend)
@@ -65,6 +67,21 @@ This is a research project by Isaac Griffith, PhD, licensed under the MIT Licens
 - **New env vars**: `IEEE_XPLORE_API_KEY`, `ELSEVIER_API_KEY`, `ELSEVIER_INST_TOKEN`, `WOS_API_KEY`, `SPRINGER_API_KEY`, `SEMANTIC_SCHOLAR_API_KEY`, `UNPAYWALL_EMAIL`, `SCHOLARLY_PROXY_URL`, `SCIHUB_ENABLED`
 - **Alembic migration `0014_database_search_and_retrieval`**: creates `study_database_selection` and `search_integration_credential` tables; adds three columns to `paper` table
 
+### Rapid Review Workflow (008-rapid-review-workflow)
+- **Rapid Review Protocol**: `RapidReviewProtocol` ORM + `GET/PUT /api/v1/rapid/studies/{id}/protocol`; practitioner-focused fields (scope, question, timeframe, team), QA appraisal mode, status lifecycle (`draft` → `validated`); `ProtocolForm` frontend component
+- **RR Phase Gate** (`rr_phase_gate.py`): phase unlocking for Rapid studies; dispatch dict in `GET /api/v1/studies/{id}/phases`
+- **Practitioner Stakeholders**: `PractitionerStakeholder` ORM; CRUD endpoints; `StakeholderPanel` frontend component; at least one practitioner required to unlock Phase 3
+- **Search Config**: per-study date range, language, and source type restrictions; `RRSearchConfig`/`RRSearchRestriction` ORM; `SearchRestrictionPanel` frontend
+- **Quality Appraisal Config**: `RRQAConfig`/`RRQAItem` ORM; `QAModeSelector` + `QAConfigPage` frontend; `SingleReviewerWarningBanner` for single-reviewer risk
+- **Threats to Validity**: `RRThreatToValidity` ORM; auto-created from QA mode on protocol validation; `ThreatToValidityList` frontend component
+- **Narrative Synthesis**: `RRNarrativeSynthesisSection` ORM (one per research question); `NarrativeSynthesiserAgent` for AI drafts; ARQ job `narrative_synthesis_job.py`; `NarrativeSectionEditor` + `NarrativeSynthesisPage` frontend; per-section is_complete flag; Finalize Synthesis CTA (POST `/rapid/studies/{id}/narrative-synthesis/complete`)
+- **Evidence Briefing**: `EvidenceBriefing` ORM with `BriefingStatus` lifecycle (`draft` → `published`); `EvidenceBriefingShareToken` for unauthenticated practitioner access; `EvidenceBriefingService` (`generate_html` via Jinja2, `generate_pdf` via WeasyPrint); ARQ job `evidence_briefing_job.py`; `BriefingVersionPanel` + `BriefingPreview` + `EvidenceBriefingPage` frontend; `PublicBriefingPage` (no auth) at `/public/briefings/:token`
+- **Public Endpoints** (`/api/v1/public/`): `GET /public/briefings/{token}` and `GET /public/briefings/{token}/export` — unauthenticated access via share token
+- **Jinja2 A4 template** (`backend/src/backend/templates/rapid/evidence_briefing.html.j2`): 6 sections with print CSS `@page { size: A4; margin: 1.5cm; }`
+- **New Python library**: `weasyprint` for HTML→PDF conversion
+- **New env vars**: none added (uses existing `SECRET_KEY`, `DATABASE_URL`)
+- **Alembic migration `0016_rapid_review_workflow`**: creates 10 new tables for the full Rapid Review workflow; full `downgrade()` path
+
 ### SLR Workflow (007-slr-workflow)
 - **SLR Protocol**: `ReviewProtocol` ORM + `GET/PUT /api/v1/slr/studies/{id}/protocol`; PICO/S fields, synthesis approach, status lifecycle (`draft` → `validated`); `ProtocolForm` frontend component
 - **Protocol Review Agent** (`ProtocolReviewerAgent`): structured LLM review; `POST /api/v1/slr/studies/{id}/protocol/review` ARQ job; `ProtocolReviewReport` per section
@@ -86,6 +103,7 @@ This is a research project by Isaac Griffith, PhD, licensed under the MIT Licens
 - 005-models-and-agents: multi-provider LLM support (Anthropic/OpenAI/Ollama), `Provider`/`AvailableModel`/`Agent` DB tables, admin panel Providers/Models/Agents tabs, `ProviderConfig` Protocol, `AgentGeneratorAgent`, study-context Jinja2 template rendering, Reviewer migration
 - 006-database-search-and-retrieval: multi-database fan-out search (9 sources), `StudyDatabaseSelection`/`SearchIntegrationCredential` DB tables, `CredentialService`, full-text PDF retrieval (Unpaywall/Sci-Hub), Markdown conversion (`markitdown`), admin Search Integrations panel, study database-selection UI
 - 007-slr-workflow: SLR protocol editor with AI review, SLR phase gate, quality assessment checklists, inter-rater reliability (Cohen's κ), meta-analysis/descriptive/qualitative synthesis, Forest/Funnel plots, grey literature tracking, structured SLR report export; new libs: scipy, scikit-learn, numpy
+- 008-rapid-review-workflow: Rapid Review protocol, phase gate, practitioner stakeholders, search config, QA appraisal config, threats to validity, narrative synthesis with AI draft (NarrativeSynthesiserAgent), Evidence Briefing (versioned, PDF via WeasyPrint, share tokens for unauthenticated practitioner access); migration 0016
 
 ---
 
@@ -160,31 +178,44 @@ cd frontend && npm run test:coverage
 uv run ruff check backend/src agents/src db/src agent-eval/src researcher-mcp/src
 uv run ruff format --check backend/src agents/src db/src agent-eval/src researcher-mcp/src
 
-# Python: type check (all packages)
+# Python: type check (all packages from workspace root — uses root pyproject.toml overrides)
 uv run mypy backend/src agents/src db/src agent-eval/src researcher-mcp/src
+
+# Python: type check single file (resolves third-party overrides via root pyproject.toml)
+uv run mypy backend/src/backend/api/v1/rapid/search_config.py
 
 # Frontend
 cd frontend && npm run lint
 cd frontend && npm run format:check
 ```
 
+> **Toolchain notes:**
+> - Ruff lint rules live under `[tool.ruff.lint]` (not `[tool.ruff]`) in each subproject's `pyproject.toml`.
+> - Each workspace package has a `py.typed` marker (`src/<pkg>/py.typed`) so mypy treats it as typed.
+> - Third-party packages without stubs (plotly, jose, qrcode, springernature, pybliometrics, scholarly) are listed in `[[tool.mypy.overrides]]` in the root `pyproject.toml`.
+> - Per-package `strict = true` lives in each subproject's `pyproject.toml`; run per-package for strict checks.
+
 ### Mutation Testing
 
 Mutation testing is slow and NOT run on every PR. Use `workflow_dispatch` in GitHub Actions
 or run locally when needed.
 
-```bash
-# Python mutation testing (cosmic-ray) — run per package
-uv run cosmic-ray run backend/cosmic-ray.toml
-uv run cosmic-ray run agents/cosmic-ray.toml
-uv run cosmic-ray run db/cosmic-ray.toml
-uv run cosmic-ray run agent-eval/cosmic-ray.toml
-uv run cosmic-ray run researcher-mcp/cosmic-ray.toml
+> **IMPORTANT**: Always use `scripts/run-mutation-safe.sh` rather than calling `cosmic-ray run`
+> directly. The script runs cosmic-ray inside an isolated git worktree so a crash or
+> interruption can never leave a mutated file in the real working tree.
 
-# View kill rate
+```bash
+# Python mutation testing — safe wrapper (recommended)
+./scripts/run-mutation-safe.sh backend
+./scripts/run-mutation-safe.sh agents
+./scripts/run-mutation-safe.sh db
+./scripts/run-mutation-safe.sh agent-eval
+./scripts/run-mutation-safe.sh researcher-mcp
+
+# View kill rate (after a run — session DB is copied back to <package>/)
 uv run cosmic-ray results backend/cosmic-ray.toml
 
-# Generate HTML report
+# Generate HTML report (also produced automatically by run-mutation-safe.sh)
 uv run cosmic-ray html-report backend/cosmic-ray.toml > /tmp/backend-mutation-report.html
 
 # Frontend mutation testing (Stryker)

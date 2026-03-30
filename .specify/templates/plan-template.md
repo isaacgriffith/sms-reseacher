@@ -64,8 +64,10 @@ in the Complexity Tracking table below with justification.
 | Language (IX) — Python: no mutable defaults; specific exception handling | | |
 | Language (IX) — TypeScript: no any/enum/non-null(!) without justification | | |
 | Language (IX) — TypeScript: unknown + Zod at all external boundaries | | |
+| Code clarity — all source files have a module-level doc comment (Python module docstring / TS file-level JSDoc) | | |
 | Code clarity — all functions/methods/classes have doc comments (Google-style / JSDoc); CLI handlers: brief description only, no Args/Returns | | |
-| Feature completion docs (X) — CLAUDE.md, root README.md, affected subproject README.md(s), root CHANGELOG.md, affected subproject CHANGELOG.md(s) update tasks in task list | | |
+| Pre-existing issues — all pre-existing test failures, linting errors, and type errors in touched files are resolved before feature completion | | |
+| Feature completion docs — CLAUDE.md, root README.md, affected subproject README.md(s), root CHANGELOG.md, affected subproject CHANGELOG.md(s) update tasks in task list | | |
 
 ## Project Structure
 

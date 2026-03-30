@@ -1,0 +1,315 @@
+{# Evidence Briefing HTML template — full one-page A4/letter layout (T057).
+   Variables:
+     briefing  — EvidenceBriefing ORM object
+     threats   — list[RRThreatToValidity]
+     rqs       — list[str] research question strings
+#}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Evidence Briefing — {{ briefing.title }}</title>
+  <style>
+    /* ------------------------------------------------------------------ */
+    /* Print / A4 page setup                                                */
+    /* ------------------------------------------------------------------ */
+    @page {
+      size: A4;
+      margin: 1.5cm;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      font-family: "Georgia", "Times New Roman", serif;
+      font-size: 10pt;
+      color: #1a1a1a;
+      background: #ffffff;
+      line-height: 1.45;
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* Layout                                                               */
+    /* ------------------------------------------------------------------ */
+    .page-wrapper {
+      max-width: 18cm;
+      margin: 0 auto;
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* Header / Title section                                               */
+    /* ------------------------------------------------------------------ */
+    .eb-header {
+      border-bottom: 2.5pt solid #1a3a5c;
+      padding-bottom: 0.35cm;
+      margin-bottom: 0.4cm;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+
+    .eb-title-block h1 {
+      font-size: 14pt;
+      font-weight: bold;
+      color: #1a3a5c;
+      line-height: 1.2;
+    }
+
+    .eb-meta {
+      font-size: 8pt;
+      color: #555;
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* Logos                                                                */
+    /* ------------------------------------------------------------------ */
+    .eb-logos {
+      display: flex;
+      gap: 0.5cm;
+      align-items: center;
+      margin-bottom: 0.35cm;
+    }
+
+    .eb-logos img {
+      max-height: 1cm;
+      max-width: 4cm;
+      object-fit: contain;
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* Section headings                                                     */
+    /* ------------------------------------------------------------------ */
+    .eb-section {
+      margin-bottom: 0.4cm;
+    }
+
+    .eb-section-heading {
+      font-size: 9.5pt;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: #1a3a5c;
+      border-bottom: 0.75pt solid #1a3a5c;
+      padding-bottom: 1pt;
+      margin-bottom: 0.2cm;
+    }
+
+    .eb-section p,
+    .eb-section li {
+      font-size: 9.5pt;
+      line-height: 1.4;
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* Two-column layout for Findings                                       */
+    /* ------------------------------------------------------------------ */
+    .findings-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.3cm;
+    }
+
+    .finding-card {
+      background: #f4f7fb;
+      border-left: 3pt solid #1a3a5c;
+      padding: 0.2cm 0.3cm;
+      page-break-inside: avoid;
+    }
+
+    .finding-card .rq-label {
+      font-size: 8pt;
+      font-weight: bold;
+      color: #1a3a5c;
+      margin-bottom: 2pt;
+    }
+
+    .finding-card p {
+      font-size: 9pt;
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* Target audience box                                                  */
+    /* ------------------------------------------------------------------ */
+    .audience-box {
+      border: 1pt solid #b0c4de;
+      border-radius: 3pt;
+      padding: 0.25cm 0.35cm;
+      background: #eef3fa;
+      page-break-inside: avoid;
+    }
+
+    .audience-box .audience-text {
+      font-size: 9.5pt;
+      margin-bottom: 0.2cm;
+    }
+
+    .threats-label {
+      font-size: 8pt;
+      font-weight: bold;
+      color: #555;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      margin-top: 0.15cm;
+      margin-bottom: 0.1cm;
+    }
+
+    .threat-entry {
+      display: flex;
+      align-items: baseline;
+      font-size: 8.5pt;
+      margin-bottom: 2pt;
+      gap: 0.2cm;
+    }
+
+    .threat-badge {
+      background: #c0392b;
+      color: #fff;
+      font-size: 7pt;
+      font-weight: bold;
+      padding: 1pt 4pt;
+      border-radius: 2pt;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* Complementary material reference                                     */
+    /* ------------------------------------------------------------------ */
+    .reference-box {
+      border: 1pt dashed #888;
+      padding: 0.2cm 0.3cm;
+      font-size: 8.5pt;
+      color: #333;
+      page-break-inside: avoid;
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* Footer                                                               */
+    /* ------------------------------------------------------------------ */
+    .eb-footer {
+      margin-top: 0.4cm;
+      border-top: 0.5pt solid #ccc;
+      padding-top: 0.15cm;
+      font-size: 7.5pt;
+      color: #777;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* Print overrides                                                      */
+    /* ------------------------------------------------------------------ */
+    @media print {
+      body {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+
+      .finding-card,
+      .audience-box,
+      .reference-box {
+        break-inside: avoid;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="page-wrapper">
+
+  <!-- ================================================================ -->
+  <!-- Institution Logos                                                 -->
+  <!-- ================================================================ -->
+  {% if briefing.institution_logos %}
+  <div class="eb-logos">
+    {% for logo_path in briefing.institution_logos %}
+    <img src="{{ logo_path }}" alt="Institution logo" />
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- ================================================================ -->
+  <!-- Title & version meta                                              -->
+  <!-- ================================================================ -->
+  <div class="eb-header">
+    <div class="eb-title-block">
+      <h1>{{ briefing.title }}</h1>
+    </div>
+    <div class="eb-meta">
+      Version {{ briefing.version_number }}<br />
+      {{ briefing.generated_at.strftime("%d %B %Y") if briefing.generated_at else "" }}
+    </div>
+  </div>
+
+  <!-- ================================================================ -->
+  <!-- 1. Executive Summary                                              -->
+  <!-- ================================================================ -->
+  <div class="eb-section">
+    <div class="eb-section-heading">Executive Summary</div>
+    <p>{{ briefing.summary }}</p>
+  </div>
+
+  <!-- ================================================================ -->
+  <!-- 2. Findings per Research Question                                 -->
+  <!-- ================================================================ -->
+  <div class="eb-section">
+    <div class="eb-section-heading">Key Findings by Research Question</div>
+    <div class="findings-grid">
+      {% for rq_idx, rq_text in rqs | enumerate %}
+      {% set finding_text = briefing.findings.get(rq_idx | string, "") %}
+      <div class="finding-card">
+        <div class="rq-label">RQ{{ rq_idx + 1 }}: {{ rq_text }}</div>
+        <p>{{ finding_text if finding_text else "No findings recorded for this question." }}</p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- ================================================================ -->
+  <!-- 3. Target Audience & Threats to Validity                         -->
+  <!-- ================================================================ -->
+  <div class="eb-section">
+    <div class="eb-section-heading">Target Audience &amp; Scope</div>
+    <div class="audience-box">
+      <div class="audience-text">{{ briefing.target_audience }}</div>
+      {% if threats %}
+      <div class="threats-label">Limitations &amp; Threats to Validity</div>
+      {% for threat in threats %}
+      <div class="threat-entry">
+        <span class="threat-badge">{{ threat.threat_type.value.replace("_", " ").upper() }}</span>
+        <span>{{ threat.description }}{% if threat.source_detail %} <em>({{ threat.source_detail }})</em>{% endif %}</span>
+      </div>
+      {% endfor %}
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- ================================================================ -->
+  <!-- 4. Reference to Complementary Material                           -->
+  <!-- ================================================================ -->
+  {% if briefing.reference_complementary %}
+  <div class="eb-section">
+    <div class="eb-section-heading">Complementary Material</div>
+    <div class="reference-box">
+      {{ briefing.reference_complementary }}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- ================================================================ -->
+  <!-- Footer                                                            -->
+  <!-- ================================================================ -->
+  <div class="eb-footer">
+    <span>Evidence Briefing &mdash; v{{ briefing.version_number }} &mdash; Confidential</span>
+    <span>Generated {{ briefing.generated_at.strftime("%Y-%m-%d %H:%M UTC") if briefing.generated_at else "" }}</span>
+  </div>
+
+</div>
+</body>
+</html>

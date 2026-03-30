@@ -220,7 +220,7 @@ class TestLoadStudyData:
 
         mock_study = MagicMock()
         mock_study.id = 1
-        mock_study.title = "Test Study"
+        mock_study.name = "Test Study"
         mock_study.description = "A test"
         mock_study.status = MagicMock()
         mock_study.status.value = "active"

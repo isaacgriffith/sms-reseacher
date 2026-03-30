@@ -306,7 +306,7 @@ async def _load_research_questions(db: AsyncSession, study_id: int) -> list[dict
 
     result = await db.execute(select(Study).where(Study.id == study_id))
     study = result.scalar_one_or_none()
-    if study is None or study.metadata_:
+    if study is None or not study.metadata_:
         return []
     rqs = study.metadata_.get("research_questions", [])
     return [

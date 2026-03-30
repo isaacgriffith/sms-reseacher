@@ -5,6 +5,31 @@ members = ["backend", "agents", "db", "agent-eval", "researcher-mcp"]
 asyncio_mode = "auto"
 addopts = "--import-mode=importlib"
 
+[tool.mypy]
+# Root-level mypy config provides workspace-wide third-party overrides.
+# Per-package strict settings live in each subproject's pyproject.toml.
+python_version = "3.14"
+
+[[tool.mypy.overrides]]
+# Third-party packages without py.typed or type stubs
+module = [
+    "plotly",
+    "plotly.*",
+    "jose",
+    "jose.*",
+    "qrcode",
+    "qrcode.*",
+    "springernature_api_client",
+    "springernature_api_client.*",
+    "pybliometrics",
+    "pybliometrics.*",
+    "scholarly",
+    "scholarly.*",
+    "weasyprint",
+    "weasyprint.*",
+]
+ignore_missing_imports = true
+
 [tool.uv]
 dev-dependencies = [
     "pre-commit>=3.7",

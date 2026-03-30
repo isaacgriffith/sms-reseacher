@@ -4,6 +4,40 @@ All notable changes to this subproject are documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.8.0] — 2026-03-29 — feature/008-rapid-review-workflow
+
+### Added
+- **RR API routers** (`api/v1/rapid/`): `protocol.py`, `search_config.py`, `qa_config.py`,
+  `stakeholders.py`, `narrative.py`, `briefing.py` — full CRUD + job-trigger endpoints for
+  every Rapid Review phase
+- **Public Briefing router** (`api/v1/public/briefings.py`):
+  `GET /public/briefings/{token}` and `GET /public/briefings/{token}/export` — unauthenticated
+  endpoints that validate share token expiry/revocation and return published briefing data or
+  binary PDF; registered under `/api/v1` alongside authenticated routes
+- **`RRProtocolService`** (`services/rr_protocol_service.py`): create/read/update Rapid Review
+  protocol with status transition validation (`draft` ↔ `validated`); seeds
+  `RRThreatToValidity` records on validation based on QA mode
+- **`RRPhaseGate`** (`services/rr_phase_gate.py`): `get_rr_unlocked_phases()` returns
+  progressively unlocked phases based on protocol status, stakeholder count, and narrative
+  synthesis completion; wired into `GET /api/v1/studies/{id}/phases` dispatch dict
+- **`NarrativeSynthesisService`** (`services/narrative_synthesis_service.py`): load/update
+  sections, mark complete, finalize synthesis (validates all sections complete; HTTP 422 with
+  `incomplete_sections` list when not)
+- **`EvidenceBriefingService`** (`services/evidence_briefing_service.py`):
+  `get_briefings_for_study`, `create_new_version` (auto-incremented version_number),
+  `publish_version` (atomic demote-then-promote), `generate_html` (Jinja2 → `/tmp/briefings/{id}/`),
+  `generate_pdf` (WeasyPrint), `create_share_token` (`secrets.token_urlsafe(32)`),
+  `revoke_token`, `resolve_token` (validates revoked_at/expires_at, returns PUBLISHED briefing)
+- **ARQ background jobs**: `evidence_briefing_job.py` (Jinja2→HTML→WeasyPrint PDF; marks job
+  COMPLETED or FAILED); `narrative_synthesis_job.py` (per-section AI draft via
+  `NarrativeSynthesiserAgent`)
+- **Jinja2 A4 HTML template** (`templates/rapid/evidence_briefing.html.j2`): 6 sections with
+  print CSS `@page { size: A4; margin: 1.5cm; }`; A4 page size enforced in WeasyPrint call
+- **New dependency**: `weasyprint` added to `backend/pyproject.toml`
+- Unit + integration tests: `test_rr_protocol_service.py`, `test_narrative_synthesis_service.py`,
+  `test_evidence_briefing_service.py`, `test_evidence_briefing_job.py`, `test_narrative_synthesis_job.py`,
+  `test_protocol_quality_routes.py`; ≥85% coverage
+
 ## [0.7.0] — 2026-03-21 — feature/007-slr-workflow
 
 ### Added

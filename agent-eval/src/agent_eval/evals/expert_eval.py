@@ -16,7 +16,6 @@ from typing import Any
 
 from deepeval.test_case import LLMTestCase
 
-
 # ---------------------------------------------------------------------------
 # Representative input dataset
 # ---------------------------------------------------------------------------
@@ -71,6 +70,7 @@ def _assert_non_empty_papers(output: str) -> None:
 
     Raises:
         AssertionError: When the list is empty.
+
     """
     data: list[dict[str, Any]] = json.loads(output)
     assert isinstance(data, list), f"Expected JSON array, got {type(data)}"
@@ -82,6 +82,7 @@ def _assert_no_obviously_hallucinated_dois(output: str) -> None:
 
     Args:
         output: JSON array string produced by ExpertAgent.
+
     """
     data: list[dict[str, Any]] = json.loads(output)
     for paper in data:
@@ -100,6 +101,7 @@ def _assert_rationale_present(output: str) -> None:
 
     Raises:
         AssertionError: When any paper is missing a rationale.
+
     """
     data: list[dict[str, Any]] = json.loads(output)
     for paper in data:
@@ -123,6 +125,7 @@ def build_test_cases(run_agent: bool = False) -> list[LLMTestCase]:
 
     Returns:
         A list of :class:`LLMTestCase` objects ready for assertion.
+
     """
     cases: list[LLMTestCase] = []
 
@@ -168,6 +171,7 @@ async def _invoke_expert(inp: dict[str, Any]) -> str:
 
     Returns:
         JSON array string of ExpertPaper objects.
+
     """
     from agents.services.expert import ExpertAgent
 
@@ -204,6 +208,7 @@ def run_expert_eval(run_agent: bool = False, threshold: float = 0.7) -> dict[str
 
     Returns:
         A dict with ``{passed, failed, total, errors}`` counts.
+
     """
     cases = build_test_cases(run_agent=run_agent)
     passed = 0
@@ -212,9 +217,9 @@ def run_expert_eval(run_agent: bool = False, threshold: float = 0.7) -> dict[str
 
     for case in cases:
         try:
-            _assert_non_empty_papers(case.actual_output)
-            _assert_no_obviously_hallucinated_dois(case.actual_output)
-            _assert_rationale_present(case.actual_output)
+            _assert_non_empty_papers(case.actual_output or "")
+            _assert_no_obviously_hallucinated_dois(case.actual_output or "")
+            _assert_rationale_present(case.actual_output or "")
             passed += 1
         except AssertionError as exc:
             failed += 1

@@ -4,6 +4,13 @@
 - Before completing a feature and in addition to existing tests coverage requirements, all modified subprojects must be evaluated using mutation testing ensuring that 85% or greater mutants are killed.
 - Additionally, before completing a feature, ensure that all tests pass, all linting checks pass, and all static analysis checks pass. This includes any pre-existing issues.
 
+# Unify the Workflows
+
+- The workflows should all be based on the SLR workflow, with different aspects turned-off or relaxed for SMS, Rapid Review, or Tertiary Studies
+- All workflows need to handle validity and threats to validity
+- All workflows need to handle data synthesis
+- All workflows need to produce a report
+
 # Grey Literature
 
 - Need to develop an approach which will hunt for appropriate blog posts related to the topic (i.e. websearch)

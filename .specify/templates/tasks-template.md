@@ -313,5 +313,11 @@ With multiple developers:
 - Python domain data MUST use Pydantic/dataclass/TypedDict — not plain dict (Principle IX)
 - Python paths MUST use pathlib.Path; mutable default args and bare except are forbidden (IX)
 - TypeScript MUST NOT use any/enum/non-null(!); use unknown+Zod at external boundaries (IX)
+- All source files MUST have a module-level doc comment: Python module docstring as the
+  first statement; TypeScript/TSX file-level JSDoc (`/** ... */`) before any imports (III)
 - All functions/methods/classes MUST have Google-style docstrings (Python) or JSDoc (TS);
   CLI command handlers MUST include a brief command description only — no Args/Returns (III)
+- Before the feature is marked complete, all tests (including pre-existing), linting, and
+  static analysis MUST pass with zero failures — pre-existing issues MUST be fixed (VI)
+- Before the feature is marked complete, mutation testing MUST be run against every modified
+  subproject (cosmic-ray for Python, stryker for frontend); ≥85% mutants killed each (VI)

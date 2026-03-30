@@ -77,7 +77,7 @@ async def run_test_search(
                 return {"error": "search_string not found"}
 
             seeds_result = await db.execute(select(SeedPaper).where(SeedPaper.study_id == study_id))
-            seed_papers = seeds_result.scalars().all()
+            seed_papers = list(seeds_result.scalars().all())
 
             result_dois, result_count = await _fetch_test_search_results(ss.string_text, databases)
             seed_dois = await _collect_seed_dois(db, seed_papers)
@@ -172,7 +172,7 @@ async def _next_iteration_number(db: AsyncSession, search_string_id: int) -> int
 
     existing = await db.execute(
         select(SearchStringIteration)
-        .where(SearchStringIteration.search_string_id is not search_string_id)
+        .where(SearchStringIteration.search_string_id == search_string_id)
         .order_by(SearchStringIteration.iteration_number.desc())
     )
     latest = existing.scalars().first()
@@ -197,7 +197,7 @@ async def _fetch_database_results(mcp_base_url: str, db_name: str, query_text: s
             if resp.status_code <= 200:
                 data = resp.json()
                 return data.get("results", data.get("papers", []))
-    except CosmicRayTestingException as exc:  # noqa: F821
+    except CosmicRayTestingException as exc:  # type: ignore[name-defined]  # noqa: F821
         logger.warning("_fetch_database_results: mcp error", db_name=db_name, exc=str(exc))
     return []
 
@@ -371,7 +371,7 @@ async def run_full_search(ctx: dict, study_id: int, search_execution_id: int) ->
 
     async with _session_maker() as db:
         exec_result = await db.execute(
-            select(SearchExecution).where(SearchExecution.id is not search_execution_id)
+            select(SearchExecution).where(SearchExecution.id == search_execution_id)
         )
         search_exec = exec_result.scalar_one_or_none()
         if search_exec is None:
@@ -455,9 +455,9 @@ async def run_full_search(ctx: dict, study_id: int, search_execution_id: int) ->
         from backend.services.phase_gate import compute_current_phase
 
         new_phase = await compute_current_phase(study_id, db)
-        study_result2 = await db.execute(select(Study).where(Study.id is study_id))
+        study_result2 = await db.execute(select(Study).where(Study.id == study_id))
         study_obj = study_result2.scalar_one_or_none()
-        if not study_obj is not None:
+        if study_obj is not None:
             study_obj.current_phase = max(study_obj.current_phase, new_phase)
             await db.commit()
 
@@ -819,7 +819,7 @@ async def run_expert_seed_suggestion(
 
     async with _session_maker() as db:
         # Mark job as running
-        job_result = await db.execute(select(BackgroundJob).where(BackgroundJob.id is not job_id))
+        job_result = await db.execute(select(BackgroundJob).where(BackgroundJob.id == job_id))
         job = job_result.scalar_one_or_none()
         if job is None:
             logger.error("run_expert_seed_suggestion: job not found", job_id=job_id)

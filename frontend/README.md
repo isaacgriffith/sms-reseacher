@@ -83,6 +83,58 @@ message review) with state managed via `useReducer`. `SystemMessageEditor` is a
 
 All API responses are parsed through Zod schemas before being returned from hooks.
 
+## Rapid Review Components (008-rapid-review-workflow)
+
+New components, hooks, and services supporting the accelerated Rapid Review workflow:
+
+### RR Components (`src/components/rapid/`)
+
+| Component | Description |
+|-----------|-------------|
+| `ProtocolForm` | react-hook-form + Zod form for RR protocol fields; `useWatch` throughout |
+| `QAModeSelector` | MUI radio group for quality appraisal mode (`full` / `critical_appraisal_only` / `descriptive`) |
+| `SearchRestrictionPanel` | Date range, language, and source type restriction controls |
+| `StakeholderPanel` | MUI Table for practitioner stakeholder CRUD; `readOnly` prop for locked phases |
+| `SingleReviewerWarningBanner` | MUI `Alert` when QA mode implies single-reviewer risk |
+| `ThreatToValidityList` | Read-only list of auto-created validity threat records |
+| `NarrativeSectionEditor` | Per-RQ section editor with AI draft request, `is_complete` toggle, pending/error state |
+| `BriefingPreview` | Read-only evidence briefing renderer (Title, Summary, Findings, Target Audience, Reference, Logos) |
+| `BriefingVersionPanel` | MUI Table of briefing versions with Publish, Download PDF/HTML, Copy Share Link actions |
+
+### RR Pages (`src/pages/rapid/`)
+
+| Page | Route | Description |
+|------|-------|-------------|
+| `ProtocolEditorPage` | study phase 0 | RR protocol editor |
+| `SearchConfigPage` | study phase 1 | Search restriction configuration |
+| `QAConfigPage` | study phase 2 | Quality appraisal mode and item configuration |
+| `StakeholderPage` | study phase 3 | Practitioner stakeholder management |
+| `NarrativeSynthesisPage` | study phase 5 | Narrative synthesis editor with AI draft and finalize CTA |
+| `EvidenceBriefingPage` | study phase 6 | Evidence Briefing generation, versioning, and export |
+| `PublicBriefingPage` | `/public/briefings/:token` | Unauthenticated briefing view via share token |
+
+### RR Hooks (`src/hooks/rapid/`)
+
+| Hook file | Exported hooks |
+|-----------|---------------|
+| `useRRProtocol.ts` | `useRRProtocol`, `useUpdateRRProtocol` |
+| `useSearchConfig.ts` | `useSearchConfig`, `useUpdateSearchConfig` |
+| `useQAConfig.ts` | `useQAConfig`, `useUpdateQAConfig` |
+| `useStakeholders.ts` | `useStakeholders`, `useCreateStakeholder`, `useUpdateStakeholder`, `useDeleteStakeholder` |
+| `useNarrativeSynthesis.ts` | `useNarrativeSections`, `useUpdateSection`, `useRequestAIDraft`, `useCompleteSynthesis` |
+| `useBriefingVersions.ts` | `useBriefings`, `useGenerateBriefing`, `usePublishBriefing`, `useCreateShareToken`, `useRevokeShareToken` |
+
+### RR Services (`src/services/rapid/`)
+
+| Service | Description |
+|---------|-------------|
+| `protocolApi.ts` | RR protocol read/update endpoints |
+| `searchConfigApi.ts` | Search config read/update endpoints |
+| `qaConfigApi.ts` | QA config read/update endpoints |
+| `stakeholdersApi.ts` | Stakeholder CRUD endpoints |
+| `synthesisApi.ts` | Narrative synthesis sections; AI draft job; finalize; `ApiError` class |
+| `briefingApi.ts` | Briefing version CRUD; publish; binary PDF export; share token management |
+
 ## SLR Workflow Components (007-slr-workflow)
 
 New components, hooks, and services supporting the full Systematic Literature Review workflow:

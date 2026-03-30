@@ -1,5 +1,18 @@
 """ORM models package: Study, Paper, StudyPaper and all submodels.
 
+Feature 008 additions — re-exported here for single stable import path:
+- :class:`~db.models.rapid_review.RRProtocolStatus`
+- :class:`~db.models.rapid_review.RRQualityAppraisalMode`
+- :class:`~db.models.rapid_review.RRInvolvementType`
+- :class:`~db.models.rapid_review.RRThreatType`
+- :class:`~db.models.rapid_review.BriefingStatus`
+- :class:`~db.models.rapid_review.RapidReviewProtocol`
+- :class:`~db.models.rapid_review.PractitionerStakeholder`
+- :class:`~db.models.rapid_review.RRThreatToValidity`
+- :class:`~db.models.rapid_review.RRNarrativeSynthesisSection`
+- :class:`~db.models.rapid_review.EvidenceBriefing`
+- :class:`~db.models.rapid_review.EvidenceBriefingShareToken`
+
 This package supersedes the top-level ``models.py`` file.  All core models
 (Study, Paper, StudyPaper) are defined here so that ``from db.models import Study``
 continues to work correctly when the ``models/`` package takes precedence over
@@ -72,6 +85,29 @@ from db.models.agents import Provider as Provider  # noqa: F401
 from db.models.agents import ProviderType as ProviderType  # noqa: F401
 from db.models.backup_codes import BackupCode as BackupCode  # noqa: F401
 
+# Feature 008: Rapid Review workflow models and enums.
+from db.models.rapid_review import BriefingStatus as BriefingStatus  # noqa: F401
+from db.models.rapid_review import EvidenceBriefing as EvidenceBriefing  # noqa: F401
+from db.models.rapid_review import (  # noqa: F401
+    EvidenceBriefingShareToken as EvidenceBriefingShareToken,
+)
+from db.models.rapid_review import (  # noqa: F401
+    PractitionerStakeholder as PractitionerStakeholder,
+)
+from db.models.rapid_review import RapidReviewProtocol as RapidReviewProtocol  # noqa: F401
+from db.models.rapid_review import (  # noqa: F401
+    RRInvolvementType as RRInvolvementType,
+)
+from db.models.rapid_review import (  # noqa: F401
+    RRNarrativeSynthesisSection as RRNarrativeSynthesisSection,
+)
+from db.models.rapid_review import RRProtocolStatus as RRProtocolStatus  # noqa: F401
+from db.models.rapid_review import (  # noqa: F401
+    RRQualityAppraisalMode as RRQualityAppraisalMode,
+)
+from db.models.rapid_review import RRThreatToValidity as RRThreatToValidity  # noqa: F401
+from db.models.rapid_review import RRThreatType as RRThreatType  # noqa: F401
+
 # Feature 006: database search integrations and full-text retrieval models.
 from db.models.search_integrations import DatabaseIndex as DatabaseIndex  # noqa: F401
 from db.models.search_integrations import FullTextSource as FullTextSource  # noqa: F401
@@ -134,11 +170,17 @@ class InclusionStatus(str, enum.Enum):
 
         pending → included
                 └→ excluded
+                └→ protocol_invalidated  (Rapid Review only — 008)
+
+    ``PROTOCOL_INVALIDATED`` is set on all collected papers when a validated
+    Rapid Review protocol is edited.  Papers in this state must be re-screened
+    after the protocol is re-validated.
     """
 
     PENDING = "pending"
     INCLUDED = "included"
     EXCLUDED = "excluded"
+    PROTOCOL_INVALIDATED = "protocol_invalidated"
 
 
 class Study(Base):

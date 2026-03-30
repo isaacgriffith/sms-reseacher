@@ -15,7 +15,6 @@ from typing import Any
 
 from deepeval.test_case import LLMTestCase
 
-
 # ---------------------------------------------------------------------------
 # Representative input dataset
 # ---------------------------------------------------------------------------
@@ -61,6 +60,7 @@ def _assert_valid_decision(output: str) -> None:
 
     Raises:
         AssertionError: When the decision is not one of accepted/rejected/duplicate.
+
     """
     data: dict[str, Any] = json.loads(output)
     decision = data.get("decision")
@@ -77,6 +77,7 @@ def _assert_rationale_present(output: str) -> None:
 
     Raises:
         AssertionError: When rationale is missing or empty.
+
     """
     data: dict[str, Any] = json.loads(output)
     rationale = data.get("rationale", "")
@@ -98,6 +99,7 @@ def build_test_cases(run_agent: bool = False) -> list[LLMTestCase]:
 
     Returns:
         A list of :class:`LLMTestCase` objects ready for deepeval assertion.
+
     """
     cases: list[LLMTestCase] = []
 
@@ -144,6 +146,7 @@ async def _invoke_screener(inp: dict[str, Any]) -> str:
 
     Returns:
         JSON string of the screener result.
+
     """
     from agents.services.screener import ScreenerAgent
 
@@ -154,6 +157,9 @@ async def _invoke_screener(inp: dict[str, Any]) -> str:
         inclusion_criteria=inp.get("inclusion_criteria", []),
         exclusion_criteria=inp.get("exclusion_criteria", []),
     )
+    from agents.services.screener import ScreeningResult as _SR
+
+    assert isinstance(result, _SR), f"Expected ScreeningResult, got {type(result)}"
     return json.dumps(result.model_dump())
 
 
@@ -175,6 +181,7 @@ def run_screener_eval(run_agent: bool = False, threshold: float = 0.85) -> dict[
 
     Returns:
         A dict with ``{passed, failed, total}`` counts.
+
     """
     cases = build_test_cases(run_agent=run_agent)
     passed = 0
@@ -183,6 +190,7 @@ def run_screener_eval(run_agent: bool = False, threshold: float = 0.85) -> dict[
 
     for case in cases:
         try:
+            assert case.actual_output is not None, "actual_output must not be None"
             _assert_valid_decision(case.actual_output)
             _assert_rationale_present(case.actual_output)
             passed += 1
