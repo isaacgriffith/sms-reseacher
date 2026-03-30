@@ -1,5 +1,12 @@
 """ORM models package: Study, Paper, StudyPaper and all submodels.
 
+Feature 009 additions — re-exported here for single stable import path:
+- :class:`~db.models.tertiary.TertiaryProtocolStatus`
+- :class:`~db.models.tertiary.SecondaryStudyType`
+- :class:`~db.models.tertiary.TertiaryStudyProtocol`
+- :class:`~db.models.tertiary.SecondaryStudySeedImport`
+- :class:`~db.models.tertiary.TertiaryDataExtraction`
+
 Feature 008 additions — re-exported here for single stable import path:
 - :class:`~db.models.rapid_review.RRProtocolStatus`
 - :class:`~db.models.rapid_review.RRQualityAppraisalMode`
@@ -136,6 +143,13 @@ from db.models.slr import ReviewProtocolStatus as ReviewProtocolStatus  # noqa: 
 from db.models.slr import SynthesisApproach as SynthesisApproach  # noqa: F401
 from db.models.slr import SynthesisResult as SynthesisResult  # noqa: F401
 from db.models.slr import SynthesisStatus as SynthesisStatus  # noqa: F401
+
+# Feature 009: Tertiary Studies Workflow models.
+from db.models.tertiary import SecondaryStudySeedImport as SecondaryStudySeedImport  # noqa: F401
+from db.models.tertiary import SecondaryStudyType as SecondaryStudyType  # noqa: F401
+from db.models.tertiary import TertiaryDataExtraction as TertiaryDataExtraction  # noqa: F401
+from db.models.tertiary import TertiaryProtocolStatus as TertiaryProtocolStatus  # noqa: F401
+from db.models.tertiary import TertiaryStudyProtocol as TertiaryStudyProtocol  # noqa: F401
 from db.models.users import ThemePreference as ThemePreference  # noqa: F401
 
 

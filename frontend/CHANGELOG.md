@@ -4,6 +4,44 @@ All notable changes to this subproject are documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased] — feature/009-tertiary-studies-workflow
+
+### Added
+- **`TertiaryProtocolForm` component** (`src/components/tertiary/TertiaryProtocolForm.tsx`):
+  react-hook-form + Zod form for Tertiary protocol fields; all fields disabled when status
+  is `validated`; validates that at least one research question and one secondary study type
+  are provided; `useWatch` throughout
+- **`TertiaryExtractionForm` component** (`src/components/tertiary/TertiaryExtractionForm.tsx`):
+  data extraction form for nine secondary-study-specific fields plus `reviewer_quality_rating`
+  slider; shows MUI `Alert` AI pre-fill banner when `extraction_status` is `ai_complete`;
+  submits with `extraction_status` set to `human_reviewed`
+- **`TertiaryQAGuidancePanel` component** (`src/components/tertiary/TertiaryQAGuidancePanel.tsx`):
+  MUI Accordion listing six mandatory QA dimensions (Protocol Documentation Completeness, Search
+  Strategy Adequacy, Inclusion/Exclusion Criteria Clarity, Quality Assessment Approach,
+  Synthesis Method Appropriateness, Validity Threats Discussion)
+- **`SeedImportPanel` component** (`src/components/tertiary/SeedImportPanel.tsx`):
+  table of existing seed imports; dialog to select and import from another platform study within
+  the same group; shows `records_added`/`records_skipped`; disables already-imported studies;
+  "Importing…" pending state; mutation error display
+- **`TertiaryStudyPage`** (`src/pages/TertiaryStudyPage.tsx`): 5-phase MUI Tab layout;
+  Phase 1 — protocol editor + Validate Protocol action; Phase 2 — seed import panel;
+  Phase 3 — paper queue (screening); Phase 4 — QA guidance + extraction forms; Phase 5 —
+  synthesis config; locked phases shown with `LockIcon`
+- **`TertiaryReportPage`** (`src/pages/TertiaryReportPage.tsx`): fetches tertiary report via
+  `GET /tertiary/studies/{id}/report`; renders Background section, per-RQ landscape findings,
+  Recommendations; JSON/CSV/Markdown download buttons using `window.open`
+- **Tertiary hooks** (`src/hooks/tertiary/`):
+  - `useProtocol.ts` — `useProtocol`, `useUpdateProtocol`
+  - `useExtractions.ts` — `useExtractions`, `useUpdateExtraction`, `useAiAssist`
+  - `useSeedImports.ts` — `useSeedImports`, `useCreateSeedImport`, `useGroupStudies`
+- **Tertiary services** (`src/services/tertiary/`):
+  - `protocolApi.ts` — Tertiary protocol read/update with Zod schemas
+  - `extractionApi.ts` — extraction read/update and AI assist trigger; Zod-validated
+  - `seedImportApi.ts` — seed import list and creation endpoints; Zod-validated
+- **`NewStudyWizard` updated** (`src/components/studies/NewStudyWizard.tsx`): Tertiary Study
+  type option; info banner explaining the aggregation-of-secondary-studies purpose when
+  `selectedStudyType === 'Tertiary'`
+
 ## [0.8.0] — 2026-03-29 — feature/008-rapid-review-workflow
 
 ### Added

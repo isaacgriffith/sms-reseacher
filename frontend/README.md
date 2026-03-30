@@ -83,6 +83,42 @@ message review) with state managed via `useReducer`. `SystemMessageEditor` is a
 
 All API responses are parsed through Zod schemas before being returned from hooks.
 
+## Tertiary Study Components (009-tertiary-studies-workflow)
+
+New components, hooks, and services supporting the Tertiary Study workflow (aggregation of secondary studies):
+
+### Tertiary Components (`src/components/tertiary/`)
+
+| Component | Description |
+|-----------|-------------|
+| `TertiaryProtocolForm` | react-hook-form + Zod form for Tertiary protocol fields; read-only when status is `validated` |
+| `TertiaryExtractionForm` | Data extraction form for nine secondary-study-specific fields; shows AI pre-fill banner when `extraction_status` is `ai_complete` |
+| `TertiaryQAGuidancePanel` | MUI Accordion panel listing the six mandatory QA dimensions for evaluating secondary study quality |
+| `SeedImportPanel` | Lists existing seed imports; dialog to import candidate papers from another platform study within the same group |
+
+### Tertiary Pages (`src/pages/`)
+
+| Page | Route | Description |
+|------|-------|-------------|
+| `TertiaryStudyPage` | `/studies/:id/tertiary` | 5-phase tab layout for the Tertiary Study workflow |
+| `TertiaryReportPage` | `/studies/:id/tertiary/report` | Landscape section, per-RQ synthesis, recommendations; JSON/CSV/Markdown export buttons |
+
+### Tertiary Hooks (`src/hooks/tertiary/`)
+
+| Hook file | Exported hooks |
+|-----------|---------------|
+| `useProtocol.ts` | `useProtocol`, `useUpdateProtocol` |
+| `useExtractions.ts` | `useExtractions`, `useUpdateExtraction`, `useAiAssist` |
+| `useSeedImports.ts` | `useSeedImports`, `useCreateSeedImport`, `useGroupStudies` |
+
+### Tertiary Services (`src/services/tertiary/`)
+
+| Service | Description |
+|---------|-------------|
+| `protocolApi.ts` | Tertiary protocol read/update endpoints |
+| `extractionApi.ts` | Data extraction read/update and AI assist trigger |
+| `seedImportApi.ts` | Seed import list and creation endpoints |
+
 ## Rapid Review Components (008-rapid-review-workflow)
 
 New components, hooks, and services supporting the accelerated Rapid Review workflow:

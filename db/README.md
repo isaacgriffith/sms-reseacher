@@ -130,6 +130,18 @@ Stores encrypted API credentials for external academic databases.
 | `full_text_source` | Enum | `FullTextSource`: `unpaywall`, `scihub`, `manual` |
 | `full_text_converted_at` | DateTime(tz) | Nullable; when conversion occurred |
 
+### Tertiary Study Models (added in migration 0017)
+
+Defined in `db/src/db/models/tertiary.py`:
+
+| Model | Description |
+|-------|-------------|
+| `TertiaryStudyProtocol` | Protocol fields (background, RQs, secondary study type filter, inclusion/exclusion criteria, quality threshold, synthesis approach), status lifecycle (`draft` → `validated`) |
+| `SecondaryStudySeedImport` | Import record linking a target Tertiary study to a source platform study; tracks `records_added` and `records_skipped` |
+| `TertiaryDataExtraction` | Nine secondary-study-specific extraction fields plus `reviewer_quality_rating` and `extraction_status` lifecycle (`pending`/`ai_complete`/`human_reviewed`) |
+
+**`CandidatePaper` addition**: nullable `source_seed_import_id` FK column pointing to `secondary_study_seed_import.id`.
+
 ### Rapid Review Models (added in migration 0016)
 
 Defined in `db/src/db/models/rapid_review.py`:
@@ -198,6 +210,7 @@ Migrations live in `db/alembic/versions/`.
 | `0014_database_search_and_retrieval.py` | Creates `study_database_selection` and `search_integration_credential` tables; adds three columns to `paper` |
 | `0015_slr_workflow.py` | Creates 7 SLR workflow tables |
 | `0016_rapid_review_workflow.py` | Creates 6 Rapid Review workflow tables (`rr_protocol`, `practitioner_stakeholder`, `rr_threat_to_validity`, `rr_narrative_section`, `evidence_briefing`, `evidence_briefing_share_token`) |
+| `0017_tertiary_studies_workflow.py` | Creates `tertiary_study_protocol`, `secondary_study_seed_import`, `tertiary_data_extraction` tables; adds `source_seed_import_id` column to `candidate_paper` |
 
 ## Importing from backend
 

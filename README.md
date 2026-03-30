@@ -50,6 +50,7 @@ See [quickstart.md](specs/001-repo-setup/quickstart.md#docker-local-deployment) 
 | **SMS** | Systematic Mapping Study — scoping, search, screening, extraction, visualisation |
 | **SLR** | Systematic Literature Review — full PICO protocol, quality assessment, meta-analysis/synthesis, grey literature, report export |
 | **Rapid** | Rapid Review — accelerated protocol with stakeholder involvement, narrative synthesis, and Evidence Briefing export |
+| **Tertiary** | Tertiary Study — aggregates secondary studies (SLRs, SMSs, Rapid Reviews); seed import, structured data extraction, landscape synthesis, and tertiary report export |
 
 ## Frontend Routes
 
@@ -71,6 +72,8 @@ See [quickstart.md](specs/001-repo-setup/quickstart.md#docker-local-deployment) 
 | `/studies/:id/rr/narrative` | Narrative synthesis (per-RQ sections, AI drafts) | Yes |
 | `/studies/:id/rr/briefing` | Evidence Briefing generation, versioning, and export | Yes |
 | `/public/briefings/:token` | Public Evidence Briefing view (unauthenticated, share token) | No |
+| `/studies/:id/tertiary` | Tertiary Study workspace (5-phase tab layout) | Yes |
+| `/studies/:id/tertiary/report` | Tertiary report — landscape section, synthesis, recommendations | Yes |
 | `/preferences` | Password change, theme selector, 2FA management | Yes |
 | `/api-docs` | Interactive Swagger UI (auto-generated from backend) | Yes |
 

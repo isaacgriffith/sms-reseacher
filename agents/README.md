@@ -38,6 +38,7 @@ uv run mypy agents/src
 | `ValidityAgent` | Assesses internal and external validity threats |
 | `ProtocolReviewerAgent` | Structured review of SLR protocol sections with strengths/weaknesses/recommendations |
 | `NarrativeSynthesiserAgent` | Generates narrative draft text for a Rapid Review research question section |
+| `TertiaryExtractionAgent` | AI pre-fills `TertiaryDataExtraction` fields from full-text Markdown of a secondary study paper |
 
 All agents accept an optional `provider_config` parameter to override the default
 environment-based LLM settings on a per-call basis.

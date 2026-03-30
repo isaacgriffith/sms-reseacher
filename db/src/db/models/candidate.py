@@ -60,6 +60,12 @@ class CandidatePaper(Base):
     conflict_flag: Mapped[bool] = mapped_column(
         Integer, nullable=False, default=False, server_default="0"
     )
+    # Feature 009: set when the paper was added via a tertiary seed import.
+    source_seed_import_id: Mapped[int | None] = mapped_column(
+        ForeignKey("secondary_study_seed_import.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
     version_id: Mapped[int] = mapped_column(Integer, nullable=False, default=1, server_default="1")
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False

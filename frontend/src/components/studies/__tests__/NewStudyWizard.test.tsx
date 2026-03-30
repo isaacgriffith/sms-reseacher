@@ -107,6 +107,23 @@ describe('NewStudyWizard', () => {
     });
   });
 
+  describe('Tertiary study type info banner', () => {
+    it('shows Tertiary Study info banner when Tertiary is selected', () => {
+      render(<NewStudyWizard {...defaultProps} />);
+      const studyTypeSelect = screen.getByRole('combobox');
+      fireEvent.change(studyTypeSelect, { target: { value: 'Tertiary' } });
+      expect(screen.getByText(/Tertiary Study/i)).toBeInTheDocument();
+    });
+
+    it('does not show Tertiary banner when SMS is selected', () => {
+      render(<NewStudyWizard {...defaultProps} />);
+      const studyTypeSelect = screen.getByRole('combobox');
+      fireEvent.change(studyTypeSelect, { target: { value: 'SMS' } });
+      // Banner text includes "Tertiary Study" only when Tertiary is selected.
+      expect(screen.queryByText(/reviews secondary literature/i)).toBeNull();
+    });
+  });
+
   describe('API call shape', () => {
     it('calls api.post with correct shape on final submit', async () => {
       mockApi.post.mockResolvedValueOnce({ id: 42 });

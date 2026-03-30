@@ -25,6 +25,7 @@ from backend.jobs.search_job import (
     run_test_search,
 )
 from backend.jobs.synthesis_job import run_synthesis
+from backend.jobs.tertiary_extraction_job import run_tertiary_extraction
 from backend.jobs.validity_job import run_validity_prefill
 
 
@@ -57,6 +58,8 @@ class WorkerSettings(WorkerSettingsBase):
         # Feature 008: Rapid Review workflow jobs
         run_narrative_draft,
         run_generate_evidence_briefing,
+        # Feature 009: Tertiary Studies workflow jobs
+        run_tertiary_extraction,
     ]
 
     max_jobs: int = 10

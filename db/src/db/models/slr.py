@@ -58,6 +58,8 @@ class SynthesisApproach(str, enum.Enum):
     META_ANALYSIS = "meta_analysis"
     DESCRIPTIVE = "descriptive"
     QUALITATIVE = "qualitative"
+    NARRATIVE = "narrative"
+    THEMATIC = "thematic"
 
 
 class ChecklistScoringMethod(str, enum.Enum):

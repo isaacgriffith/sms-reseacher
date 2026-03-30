@@ -37,14 +37,18 @@ async def run_synthesis(
     from backend.services.synthesis_strategies import (
         DescriptiveSynthesizer,
         MetaAnalysisSynthesizer,
+        NarrativeSynthesisStrategy,
         QualitativeSynthesizer,
         SynthesisStrategy,
+        ThematicAnalysisStrategy,
     )
 
     _STRATEGY_MAP: dict[SynthesisApproach, SynthesisStrategy] = {
         SynthesisApproach.META_ANALYSIS: MetaAnalysisSynthesizer(),
         SynthesisApproach.DESCRIPTIVE: DescriptiveSynthesizer(),
         SynthesisApproach.QUALITATIVE: QualitativeSynthesizer(),
+        SynthesisApproach.NARRATIVE: NarrativeSynthesisStrategy(),
+        SynthesisApproach.THEMATIC: ThematicAnalysisStrategy(),
     }
 
     async with _session_maker() as db:

@@ -4,6 +4,62 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased] — feature/009-tertiary-studies-workflow
+
+### Added
+- **Tertiary Study type**: new `Tertiary` study type with a 5-phase workflow for aggregating
+  and synthesising secondary studies (SLRs, SMSs, and Rapid Reviews)
+- **`TertiaryStudyProtocol`** ORM + `GET/PUT /api/v1/tertiary/studies/{id}/protocol`:
+  background, research questions, secondary study type filter (`SLR`, `SMS`, `RAPID_REVIEW`,
+  `UNKNOWN`), inclusion/exclusion criteria, recency cutoff year, search strategy,
+  quality threshold, synthesis approach, dissemination strategy; status lifecycle
+  (`draft` → `validated`); `TertiaryProtocolForm` frontend component with read-only state
+  when validated
+- **Tertiary Phase Gate** (`backend/src/backend/services/tertiary_phase_gate.py`):
+  `get_tertiary_unlocked_phases()` progressively unlocks 5 phases — Phase 1 always open;
+  Phase 2 requires validated `TertiaryStudyProtocol`; Phase 3 requires ≥1 `CandidatePaper`;
+  Phase 4 requires all accepted papers have QA scores; Phase 5 requires ≥2 validated
+  `TertiaryDataExtraction` records; wired into `GET /api/v1/studies/{id}/phases` via
+  `StudyType.TERTIARY` dispatch entry
+- **`SecondaryStudySeedImport`** ORM + seed import API
+  (`GET/POST /api/v1/tertiary/studies/{id}/seed-imports`): import candidate secondary
+  studies from other platform studies; records `source_study_id`, `records_added`,
+  `records_skipped`; `source_seed_import_id` FK column added to `CandidatePaper`
+- **`TertiaryDataExtraction`** ORM + extraction API
+  (`GET/PUT /api/v1/tertiary/papers/{id}/extraction`): nine secondary-study-specific
+  fields (`secondary_study_type`, `research_questions_addressed`, `databases_searched`,
+  `study_period_start`/`end`, `primary_study_count`, `synthesis_approach_used`,
+  `key_findings`, `research_gaps`); `reviewer_quality_rating` (0–1); `extraction_status`
+  lifecycle (`pending` → `ai_complete` → `human_reviewed`); AI pre-fill via ARQ job
+  (`tertiary_extraction_job.py`) and `TertiaryExtractionAgent`
+- **Tertiary Report** (`GET /api/v1/tertiary/studies/{id}/report`): `TertiaryReportService`
+  assembles a landscape section (secondary study type distribution, year range, total
+  primary study count), per-RQ synthesis from validated extraction records, and
+  cross-cutting recommendations; `TertiaryReportPage` frontend with JSON/CSV/Markdown export
+- **`NarrativeSynthesisStrategy`** and **`ThematicAnalysisStrategy`**: two new synthesis
+  strategies in `backend/src/backend/services/synthesis_strategies.py` supporting tertiary
+  synthesis jobs; dispatched via existing ARQ `synthesis_job.py` extended for `Tertiary`
+  study type
+- **`TertiaryQAService`** (`services/tertiary_qa_service.py`): computes per-paper QA
+  gate status (accepted / needs-review / rejected) based on `reviewer_quality_rating`
+  against protocol `quality_threshold`
+- **Tertiary API router** (`api/v1/tertiary/`): mounted at `/api/v1/tertiary/`; sub-routers
+  for `protocol`, `seed_imports`, `extractions`, and `report`
+- **Alembic migration `0017_tertiary_studies_workflow`**: creates
+  `tertiary_protocol_status_enum`, `secondary_study_type_enum`; creates tables
+  `tertiary_study_protocol`, `secondary_study_seed_import`, `tertiary_data_extraction`;
+  adds `source_seed_import_id` FK column to `candidate_paper`; full `downgrade()` path
+- **Frontend Tertiary components** (`src/components/tertiary/`): `TertiaryProtocolForm`,
+  `TertiaryExtractionForm`, `TertiaryQAGuidancePanel`, `SeedImportPanel`
+- **Frontend Tertiary pages**: `TertiaryStudyPage` (5-phase tab layout),
+  `TertiaryReportPage` (landscape + synthesis + recommendations with export actions)
+- **Frontend Tertiary hooks** (`src/hooks/tertiary/`): `useProtocol`, `useExtractions`,
+  `useSeedImports` — all TanStack Query v5 with Zod-parsed responses
+- **Frontend Tertiary services** (`src/services/tertiary/`): `protocolApi.ts`,
+  `extractionApi.ts`, `seedImportApi.ts`
+- **`NewStudyWizard` updated**: Tertiary Study type option with explanatory info banner
+  describing the aggregation-of-secondary-studies workflow
+
 ## [0.8.0] — 2026-03-29 — feature/008-rapid-review-workflow
 
 ### Added

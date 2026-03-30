@@ -4,6 +4,32 @@ All notable changes to this subproject are documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased] — feature/009-tertiary-studies-workflow
+
+### Added
+- **Enums** (`db/src/db/models/tertiary.py`): `TertiaryProtocolStatus` (`draft`/`validated`),
+  `SecondaryStudyType` (`SLR`/`SMS`/`RAPID_REVIEW`/`UNKNOWN`)
+- **`TertiaryStudyProtocol`** ORM: one protocol per Tertiary study; background, research
+  questions (JSON), secondary study type filter (JSON), inclusion/exclusion criteria (JSON),
+  recency cutoff year, search strategy, quality threshold, synthesis approach, dissemination
+  strategy; status lifecycle (`draft` → `validated`); FK to `study`; `version_id` optimistic lock
+- **`SecondaryStudySeedImport`** ORM: import record linking a `target_study_id` to a
+  `source_study_id`; `imported_at`, `records_added`, `records_skipped`,
+  `imported_by_user_id` (nullable FK); FK to `study`
+- **`TertiaryDataExtraction`** ORM: nine secondary-study-specific fields
+  (`secondary_study_type`, `research_questions_addressed`, `databases_searched`,
+  `study_period_start`/`end`, `primary_study_count`, `synthesis_approach_used`,
+  `key_findings`, `research_gaps`), `reviewer_quality_rating` (Float 0–1),
+  `extraction_status` (`pending`/`ai_complete`/`human_reviewed`),
+  `extracted_by_agent`, `validated_by_reviewer_id`; FK to `candidate_paper`; `version_id`
+- **`CandidatePaper` column addition**: nullable `source_seed_import_id` FK pointing to
+  `secondary_study_seed_import.id`
+- **Alembic migration `0017_tertiary_studies_workflow`**: creates
+  `tertiary_protocol_status_enum`, `secondary_study_type_enum`; creates tables
+  `tertiary_study_protocol`, `secondary_study_seed_import`, `tertiary_data_extraction`
+  in dependency order; adds `source_seed_import_id` to `candidate_paper`;
+  full `downgrade()` in reverse order
+
 ## [0.8.0] — 2026-03-29 — feature/008-rapid-review-workflow
 
 ### Added

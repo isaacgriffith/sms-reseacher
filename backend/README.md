@@ -111,6 +111,16 @@ uv run mypy backend/src
 | `GET` | `/public/briefings/{token}` | Retrieve published briefing via share token (no auth) |
 | `GET` | `/public/briefings/{token}/export` | Download briefing PDF via share token (no auth) |
 
+### Tertiary Endpoints (`/api/v1/tertiary/`)
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET/PUT` | `/tertiary/studies/{id}/protocol` | Read / upsert Tertiary Study protocol |
+| `GET/POST` | `/tertiary/studies/{id}/seed-imports` | List / create seed imports from other platform studies |
+| `GET/PUT` | `/tertiary/papers/{id}/extraction` | Read / upsert secondary-study data extraction |
+| `POST` | `/tertiary/papers/{id}/extraction/ai-assist` | Trigger AI pre-fill ARQ job for extraction |
+| `GET` | `/tertiary/studies/{id}/report` | Generate tertiary report (landscape + synthesis + recommendations) |
+
 ### SLR Endpoints (`/api/v1/slr/`)
 
 | Method | Path | Description |

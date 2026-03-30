@@ -18,6 +18,7 @@ from backend.services import audit as audit_svc
 from backend.services.phase_gate import compute_staleness_flags, get_unlocked_phases
 from backend.services.rr_phase_gate import get_rr_unlocked_phases
 from backend.services.slr_phase_gate import get_slr_unlocked_phases
+from backend.services.tertiary_phase_gate import get_tertiary_unlocked_phases
 
 router = APIRouter(tags=["studies"])
 logger = get_logger(__name__)
@@ -109,6 +110,7 @@ def _study_metadata(study: Study) -> dict[str, Any]:
 _PHASE_GATE_DISPATCH = {
     StudyType.SLR: get_slr_unlocked_phases,
     StudyType.RAPID: get_rr_unlocked_phases,  # feature 008
+    StudyType.TERTIARY: get_tertiary_unlocked_phases,  # feature 009
 }
 
 

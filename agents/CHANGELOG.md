@@ -4,6 +4,17 @@ All notable changes to this subproject are documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased] — feature/009-tertiary-studies-workflow
+
+### Added
+- **`TertiaryExtractionAgent`** (`tertiary_extraction_agent.py`): LLM-powered AI pre-fill of
+  `TertiaryDataExtraction` fields from a secondary study paper's full-text Markdown; returns
+  structured output for `secondary_study_type`, `research_questions_addressed`,
+  `databases_searched`, `study_period_start`/`end`, `primary_study_count`,
+  `synthesis_approach_used`, `key_findings`, and `research_gaps`
+- **Prompt templates** (`prompts/tertiary_extraction/`): Jinja2 `system.md` and `user.md.j2`
+  templates for the tertiary extraction agent
+
 ## [0.8.0] — 2026-03-29 — feature/008-rapid-review-workflow
 
 ### Added

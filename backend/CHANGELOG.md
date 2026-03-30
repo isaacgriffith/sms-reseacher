@@ -4,6 +4,34 @@ All notable changes to this subproject are documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased] — feature/009-tertiary-studies-workflow
+
+### Added
+- **Tertiary API router** (`api/v1/tertiary/`): mounted at `/api/v1/tertiary/`; sub-routers
+  for `protocol`, `seed_imports`, `extractions`, and `report`
+- **`TertiaryProtocolService`** (`services/tertiary_protocol_service.py`): create/read/update
+  Tertiary Study protocol with status transition validation (`draft` → `validated`)
+- **`TertiaryPhaseGate`** (`services/tertiary_phase_gate.py`): `get_tertiary_unlocked_phases()`
+  progressively unlocks 5 phases; wired into `GET /api/v1/studies/{id}/phases` dispatch dict
+  under `StudyType.TERTIARY`
+- **`TertiaryExtractionService`** (`services/tertiary_extraction_service.py`): read/upsert
+  `TertiaryDataExtraction` records; dispatches AI pre-fill ARQ job
+- **`TertiaryQAService`** (`services/tertiary_qa_service.py`): evaluates per-paper QA gate
+  status (`accepted`/`needs_review`/`rejected`) against protocol `quality_threshold`
+- **`TertiaryReportService`** (`services/tertiary_report_service.py`): assembles landscape
+  section (secondary study type distribution, year range, total primary study count),
+  per-RQ synthesis from validated extractions, and cross-cutting recommendations
+- **`NarrativeSynthesisStrategy`** and **`ThematicAnalysisStrategy`**
+  (`services/synthesis_strategies.py`): two new synthesis strategies for Tertiary studies;
+  dispatched via existing ARQ `synthesis_job.py` extended for `StudyType.TERTIARY`
+- **`tertiary_extraction_job.py`** ARQ background job: triggers `TertiaryExtractionAgent`
+  to pre-fill extraction fields from paper full-text Markdown; updates `extraction_status`
+  to `ai_complete` on success
+- **Seed import endpoints** (`GET/POST /api/v1/tertiary/studies/{id}/seed-imports`):
+  creates `SecondaryStudySeedImport` records; imports `CandidatePaper` rows from the source
+  study, stamping `source_seed_import_id`; returns `records_added` and `records_skipped`
+- **Tertiary study type** registered in `NewStudyWizard` step and `StudyType` dispatch
+
 ## [0.8.0] — 2026-03-29 — feature/008-rapid-review-workflow
 
 ### Added

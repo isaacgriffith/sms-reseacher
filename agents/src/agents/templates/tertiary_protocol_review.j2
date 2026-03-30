@@ -1,0 +1,78 @@
+## Tertiary Study Protocol Under Review
+
+Please evaluate the following tertiary study protocol for methodological soundness,
+completeness, and suitability for reviewing secondary literature (SLRs, SMSs, Rapid Reviews).
+
+---
+
+### Study Title
+
+{{ study_title if study_title else "(not provided)" }}
+
+---
+
+### Research Questions
+
+{% if research_questions %}
+{% for rq in research_questions %}
+- {{ rq }}
+{% endfor %}
+{% else %}
+(not provided)
+{% endif %}
+
+---
+
+### Accepted Secondary Study Types
+
+{% if secondary_study_types %}
+{% for stype in secondary_study_types %}
+- {{ stype }}
+{% endfor %}
+{% else %}
+(not provided)
+{% endif %}
+
+---
+
+### Inclusion Criteria
+
+{% if inclusion_criteria %}
+{% for criterion in inclusion_criteria %}
+- {{ criterion }}
+{% endfor %}
+{% else %}
+(not provided)
+{% endif %}
+
+---
+
+### Exclusion Criteria
+
+{% if exclusion_criteria %}
+{% for criterion in exclusion_criteria %}
+- {{ criterion }}
+{% endfor %}
+{% else %}
+(not provided)
+{% endif %}
+
+---
+
+### Recency Cutoff Year
+
+{{ recency_cutoff_year if recency_cutoff_year else "(not specified)" }}
+
+---
+
+### Quality Threshold
+
+{{ quality_threshold if quality_threshold else "(not specified)" }}
+
+---
+
+Based on the tertiary protocol above, provide your structured JSON review assessing:
+1. Whether the research questions are appropriate for a tertiary study.
+2. Whether the inclusion/exclusion criteria adequately distinguish secondary from primary studies.
+3. Whether the quality threshold is set appropriately for the chosen secondary study types.
+4. Any gaps or methodological concerns specific to tertiary-level synthesis.

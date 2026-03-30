@@ -16,6 +16,8 @@ This is a research project by Isaac Griffith, PhD, licensed under the MIT Licens
 - PostgreSQL 16 (production); SQLite + aiosqlite (tests); Alembic migration `0015_slr_workflow` (007-slr-workflow)
 - Python 3.14 (backend, db, agents); TypeScript 5.4 / Node 20 LTS (frontend) + FastAPI + Pydantic v2, SQLAlchemy 2.0+ async, Alembic, ARQ, LiteLLM, weasyprint, Jinja2 (008-rapid-review-workflow)
 - PostgreSQL 16 (production); SQLite + aiosqlite (tests); Alembic migration `0016_rapid_review_workflow` (008-rapid-review-workflow)
+- Python 3.14 (backend, db, agents); TypeScript 5.4 / Node 20 LTS (frontend) + FastAPI, Pydantic v2, SQLAlchemy 2.0+ async, Alembic, ARQ, LiteLLM, React 18, MUI v5, TanStack Query v5, react-hook-form + Zod (009-tertiary-studies-workflow)
+- PostgreSQL 16 (production); SQLite + aiosqlite (tests); Alembic migration `0017_tertiary_studies_workflow` (009-tertiary-studies-workflow)
 
 ### Runtime & Language
 - Python 3.14 (backend, agents, db, agent-eval, researcher-mcp); TypeScript 5.4 / Node 20 LTS (frontend)
@@ -95,6 +97,15 @@ This is a research project by Isaac Griffith, PhD, licensed under the MIT Licens
 - **New env vars**: `SLR_KAPPA_THRESHOLD` (default `0.6`), `SLR_MIN_SYNTHESIS_PAPERS` (default `2`)
 - **Alembic migration `0015_slr_workflow`**: creates 7 new tables for the full SLR workflow
 
+### Tertiary Studies Workflow (009-tertiary-studies-workflow)
+- **Tertiary Study Protocol**: `TertiaryStudyProtocol` ORM + `GET/PUT /api/v1/tertiary/studies/{id}/protocol`; secondary-study scope fields (background, research_questions, secondary_study_types, inclusion_criteria, exclusion_criteria, recency_cutoff_year, search_strategy, quality_threshold, synthesis_approach, dissemination_strategy), status lifecycle (`draft` → `validated`); `TertiaryProtocolForm` frontend component
+- **Tertiary Phase Gate** (`tertiary_phase_gate.py`): 5-phase progressive unlocking for Tertiary studies; dispatch dict in `GET /api/v1/studies/{id}/phases`
+- **Seed Import**: `SecondaryStudySeedImport` ORM; `TertiaryExtractionService.import_seed_study()` imports included papers from existing platform studies; `GET /api/v1/tertiary/studies/{id}/seed-imports`, `POST /api/v1/tertiary/studies/{id}/seed-imports/{source_id}`; `SeedImportPanel` frontend component
+- **Data Extraction**: `TertiaryDataExtraction` ORM with nine secondary-study-specific fields; `GET/PUT /api/v1/tertiary/studies/{id}/extractions`; AI-assist endpoint (`POST .../extractions/ai-assist`) queues ARQ job `tertiary_extraction_job`; `TertiaryExtractionForm` + `TertiaryQAGuidancePanel` frontend components
+- **Tertiary Report**: `TertiaryReportService` generates structured report with landscape-of-secondary-studies section (timeline, RQ evolution, synthesis method shifts); `GET /api/v1/tertiary/studies/{id}/report?format={json|csv|markdown}`; `TertiaryReportPage` + `LandscapeSummarySection` frontend components
+- **Synthesis**: `NarrativeSynthesisStrategy` and `ThematicAnalysisStrategy` added to synthesis strategy dispatch; `Phase5Panel` in `TertiaryStudyPage` triggers synthesis and polls for completion
+- **Alembic migration `0017_tertiary_studies_workflow`**: creates enums `tertiary_protocol_status_enum`, `secondary_study_type_enum`; creates tables `tertiary_study_protocol`, `secondary_study_seed_import`, `tertiary_data_extraction`; adds `source_seed_import_id` FK to `candidate_paper`; full `downgrade()` path
+
 ## Recent Changes
 - 001-repo-setup: Added Python 3.12 (backend, agents, db); TypeScript 5.4 / Node 20 LTS (frontend)
 - 002-sms-workflow: Finalised library choices — ARQ, matplotlib, networkx, plotly/kaleido, rapidfuzz, D3.js
@@ -104,6 +115,7 @@ This is a research project by Isaac Griffith, PhD, licensed under the MIT Licens
 - 006-database-search-and-retrieval: multi-database fan-out search (9 sources), `StudyDatabaseSelection`/`SearchIntegrationCredential` DB tables, `CredentialService`, full-text PDF retrieval (Unpaywall/Sci-Hub), Markdown conversion (`markitdown`), admin Search Integrations panel, study database-selection UI
 - 007-slr-workflow: SLR protocol editor with AI review, SLR phase gate, quality assessment checklists, inter-rater reliability (Cohen's κ), meta-analysis/descriptive/qualitative synthesis, Forest/Funnel plots, grey literature tracking, structured SLR report export; new libs: scipy, scikit-learn, numpy
 - 008-rapid-review-workflow: Rapid Review protocol, phase gate, practitioner stakeholders, search config, QA appraisal config, threats to validity, narrative synthesis with AI draft (NarrativeSynthesiserAgent), Evidence Briefing (versioned, PDF via WeasyPrint, share tokens for unauthenticated practitioner access); migration 0016
+- 009-tertiary-studies-workflow: Tertiary Study type (meta-reviews of secondary literature), 5-phase gate, protocol editor, seed import from platform studies, secondary-study data extraction with AI-assist, landscape-of-secondary-studies report section (timeline, RQ evolution, synthesis method shifts), narrative/thematic synthesis; migration 0017
 
 ---
 

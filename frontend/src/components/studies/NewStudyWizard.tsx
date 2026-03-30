@@ -131,6 +131,7 @@ export default function NewStudyWizard({ groupId, onClose, onCreated }: Props) {
 
   // Principle IX: useWatch replaces watch() for form-field subscriptions
   const selectedPicoVariant = useWatch({ control, name: 'pico_variant' });
+  const selectedStudyType = useWatch({ control, name: 'study_type' });
 
   const addAiReviewer = () => {
     if (!newAgentName.trim()) return;
@@ -257,6 +258,23 @@ export default function NewStudyWizard({ groupId, onClose, onCreated }: Props) {
                 <select style={inputStyle} {...register('study_type')}>
                   {STUDY_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
                 </select>
+                {selectedStudyType === 'Tertiary' && (
+                  <Box
+                    sx={{
+                      mt: 1,
+                      p: 1.25,
+                      borderRadius: 1,
+                      background: '#eff6ff',
+                      border: '1px solid #bfdbfe',
+                      fontSize: '0.8125rem',
+                      color: '#1e40af',
+                    }}
+                  >
+                    <strong>Tertiary Study</strong> — reviews secondary literature (SLRs, SMSs,
+                    Rapid Reviews) rather than empirical papers. Use this type to synthesise and
+                    compare findings across multiple existing systematic reviews in a research area.
+                  </Box>
+                )}
               </Box>
               <Box sx={{ marginBottom: '1rem' }}>
                 <label style={{ display: 'block', marginBottom: '0.25rem', fontWeight: 500, fontSize: '0.9rem' }}>Snowball threshold</label>

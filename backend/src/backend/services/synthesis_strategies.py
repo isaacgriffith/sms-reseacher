@@ -380,8 +380,202 @@ class QualitativeSynthesizer:
 
 
 # ---------------------------------------------------------------------------
+# Tertiary narrative synthesizer
+# ---------------------------------------------------------------------------
+
+
+class NarrativeSynthesisStrategy:
+    """Narrative synthesis strategy for Tertiary Studies.
+
+    Accepts a list of extraction dicts in ``parameters["extractions"]``,
+    each representing a validated :class:`TertiaryDataExtraction` record for
+    an included secondary study.  Uses the configured LLM to produce a
+    narrative summary identifying convergent findings, divergent conclusions,
+    and research gaps across the secondary studies.
+
+    Example ``parameters`` structure::
+
+        {
+            "extractions": [
+                {
+                    "secondary_study_type": "SLR",
+                    "research_questions_addressed": ["RQ1", "RQ2"],
+                    "key_findings": "...",
+                    "research_gaps": "...",
+                    "synthesis_approach_used": "meta-analysis",
+                    "study_period_start": 2015,
+                    "study_period_end": 2022,
+                },
+                ...
+            ]
+        }
+    """
+
+    async def run(
+        self,
+        study_id: int,
+        parameters: dict[str, Any],
+        db: AsyncSession,
+    ) -> SynthesisOutput:
+        """Run LLM-assisted narrative synthesis over secondary-study extractions.
+
+        Formats the extraction records as structured JSON for the LLM, requests a
+        narrative paragraph identifying convergent findings, divergent conclusions,
+        and research gaps, then returns the result in ``qualitative_themes``.
+
+        Args:
+            study_id: FK of the study being synthesised.
+            parameters: Dict with ``"extractions"`` key containing extraction
+                records as a list of dicts.
+            db: Active async database session (unused by this strategy).
+
+        Returns:
+            A :class:`SynthesisOutput` with ``qualitative_themes`` populated
+            as ``{"narrative": "<LLM-generated text>"}``.
+
+        Raises:
+            ValueError: If fewer than 2 extraction records are provided.
+
+        """
+        import json as _json
+
+        extractions: list[dict[str, Any]] = parameters.get("extractions", [])
+        if len(extractions) < 2:
+            raise ValueError(
+                "Narrative synthesis requires at least 2 extraction records; "
+                f"got {len(extractions)}"
+            )
+
+        system_prompt = (
+            "You are a systematic review expert performing a tertiary study narrative synthesis. "
+            "Given a list of secondary study extraction records in JSON, write a concise "
+            "narrative (3–5 paragraphs) that: "
+            "(1) identifies convergent findings across the studies, "
+            "(2) highlights divergent conclusions, "
+            "(3) summarises key research gaps. "
+            "Return only the narrative text — no JSON, no markdown fences."
+        )
+        user_content = _json.dumps(extractions, default=str)
+
+        narrative_text = await _call_llm(system_prompt, user_content)
+
+        return SynthesisOutput(
+            qualitative_themes={"narrative": narrative_text},
+        )
+
+
+# ---------------------------------------------------------------------------
+# Tertiary thematic analysis synthesizer
+# ---------------------------------------------------------------------------
+
+
+class ThematicAnalysisStrategy:
+    """Thematic analysis synthesis strategy for Tertiary Studies.
+
+    Accepts a list of extraction dicts in ``parameters["extractions"]`` and
+    uses LLM-assisted clustering to group key findings and research gaps by
+    theme.  Returns a theme-to-paper mapping in ``qualitative_themes``.
+
+    Example ``parameters`` structure::
+
+        {
+            "extractions": [
+                {
+                    "secondary_study_type": "SMS",
+                    "key_findings": "...",
+                    "research_gaps": "...",
+                },
+                ...
+            ]
+        }
+    """
+
+    async def run(
+        self,
+        study_id: int,
+        parameters: dict[str, Any],
+        db: AsyncSession,
+    ) -> SynthesisOutput:
+        """Run LLM-assisted thematic clustering over secondary-study extractions.
+
+        Formats the extraction records for the LLM and requests a JSON object
+        mapping theme names to lists of zero-based extraction indices.
+
+        Args:
+            study_id: FK of the study being synthesised.
+            parameters: Dict with ``"extractions"`` key containing extraction
+                records as a list of dicts.
+            db: Active async database session (unused by this strategy).
+
+        Returns:
+            A :class:`SynthesisOutput` with ``qualitative_themes`` populated
+            as ``{"themes": {"<theme>": [<extraction_index>, ...], ...}}``.
+
+        Raises:
+            ValueError: If fewer than 2 extraction records are provided.
+
+        """
+        import json as _json
+
+        extractions: list[dict[str, Any]] = parameters.get("extractions", [])
+        if len(extractions) < 2:
+            raise ValueError(
+                f"Thematic analysis requires at least 2 extraction records; got {len(extractions)}"
+            )
+
+        system_prompt = (
+            "You are a systematic review expert performing thematic analysis on tertiary "
+            "study data. Given a JSON list of secondary study extraction records (each with "
+            "key_findings and research_gaps), identify 3–7 recurring themes across the "
+            "studies and return a JSON object where each key is a theme name and each value "
+            "is a list of zero-based indices into the input list. "
+            'Example: {"Theme A": [0, 2], "Theme B": [1, 3]}. '
+            "Return only valid JSON — no prose, no markdown fences."
+        )
+        user_content = _json.dumps(extractions, default=str)
+
+        raw_text = await _call_llm(system_prompt, user_content)
+
+        # Strip optional markdown fences.
+        raw_text = raw_text.strip()
+        if raw_text.startswith("```"):
+            raw_text = raw_text.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
+
+        try:
+            theme_map: dict[str, Any] = _json.loads(raw_text)
+        except _json.JSONDecodeError:
+            # Fallback: return the raw text as an unparsed result.
+            theme_map = {"raw": raw_text}
+
+        return SynthesisOutput(
+            qualitative_themes={"themes": theme_map},
+        )
+
+
+# ---------------------------------------------------------------------------
 # Private helpers
 # ---------------------------------------------------------------------------
+
+
+async def _call_llm(system_prompt: str, user_content: str) -> str:
+    """Call the configured LLM and return the response text.
+
+    Args:
+        system_prompt: System role message text.
+        user_content: User role message text.
+
+    Returns:
+        Raw text produced by the LLM.
+
+    """
+    from agents.core.llm_client import LLMClient  # local import to avoid circular
+
+    client = LLMClient()
+    messages = [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": user_content},
+    ]
+    return await client.complete(messages, max_tokens=1024)
 
 
 def _build_plot_data(papers: list[dict[str, Any]]) -> list[StudyPlotData]:
