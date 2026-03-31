@@ -11,34 +11,30 @@ Covers:
 from __future__ import annotations
 
 import uuid
-from unittest.mock import MagicMock, patch
-
-import pytest
-import pytest_asyncio
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-from sqlalchemy.pool import StaticPool
+from unittest.mock import MagicMock
 
 import db.models  # noqa: F401
 import db.models.agents  # noqa: F401
 import db.models.study  # noqa: F401
 import db.models.users  # noqa: F401
+import pytest
+import pytest_asyncio
 from db.base import Base
 from db.models.agents import Agent, AgentTaskType, AvailableModel, Provider, ProviderType
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.pool import StaticPool
 
 from backend.services.agent_service import (
     AgentCreate,
-    AgentHasDependentsError,
     AgentNotFoundError,
     AgentService,
     AgentUpdate,
     NoUndoBufferError,
-    StudyContext,
     TemplateRenderError,
     TemplateValidationError,
     build_study_context,
     render_system_message,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures

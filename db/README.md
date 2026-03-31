@@ -142,6 +142,24 @@ Defined in `db/src/db/models/tertiary.py`:
 
 **`CandidatePaper` addition**: nullable `source_seed_import_id` FK column pointing to `secondary_study_seed_import.id`.
 
+### Research Protocol Models (added in migration 0018)
+
+Defined in `db/src/db/models/protocols.py`:
+
+| Model | Description |
+|-------|-------------|
+| `ResearchProtocol` | Reusable protocol graph; `name`, `study_type`, `is_default_template`, nullable `owner_user_id`, optimistic-lock `version_id`, `description` |
+| `ProtocolNode` | Task node; `task_id` (slug), `ProtocolTaskType` enum (23 values), `label`, `description`, `is_required`, optional `position_x`/`position_y` for layout |
+| `ProtocolNodeInput` | Typed input slot per node; `name`, `NodeDataType` enum, `is_required`; UNIQUE on `(node_id, name)` |
+| `ProtocolNodeOutput` | Typed output slot per node; `name`, `NodeDataType` enum; UNIQUE on `(node_id, name)` |
+| `QualityGate` | Gate rule per node; `QualityGateType` enum (`min_kappa`, `min_papers`, `completion_ratio`, `human_sign_off`), `config` JSONB |
+| `NodeAssignee` | Assignee per node; `NodeAssigneeType` enum (`human`/`ai_agent`), nullable `role` and `agent_id` |
+| `ProtocolEdge` | Directed edge; `source_task_id`, `source_output_name`, `target_task_id`, `target_input_name`; optional condition triple (`condition_output_name`, `EdgeConditionOperator`, `condition_value`) |
+| `StudyProtocolAssignment` | Assignment of a protocol to a study; `study_id` UNIQUE FK, `protocol_id` FK, `assigned_at`, `assigned_by_user_id` |
+| `TaskExecutionState` | Runtime state per node per study; `TaskNodeStatus` enum (`pending`/`active`/`completed`/`failed`/`skipped`), `activated_at`, `completed_at`, `gate_failure_detail` JSONB; UNIQUE on `(study_id, node_id)` |
+
+**Enums**: `ProtocolTaskType` (23 task type values), `QualityGateType`, `EdgeConditionOperator` (`gt`/`gte`/`lt`/`lte`/`eq`/`neq`), `TaskNodeStatus`, `NodeAssigneeType`, `NodeDataType`.
+
 ### Rapid Review Models (added in migration 0016)
 
 Defined in `db/src/db/models/rapid_review.py`:
@@ -211,6 +229,7 @@ Migrations live in `db/alembic/versions/`.
 | `0015_slr_workflow.py` | Creates 7 SLR workflow tables |
 | `0016_rapid_review_workflow.py` | Creates 6 Rapid Review workflow tables (`rr_protocol`, `practitioner_stakeholder`, `rr_threat_to_validity`, `rr_narrative_section`, `evidence_briefing`, `evidence_briefing_share_token`) |
 | `0017_tertiary_studies_workflow.py` | Creates `tertiary_study_protocol`, `secondary_study_seed_import`, `tertiary_data_extraction` tables; adds `source_seed_import_id` column to `candidate_paper` |
+| `0018_research_protocol_definition.py` | Creates 8 PostgreSQL enums and 8 tables: `research_protocol`, `protocol_node`, `protocol_node_input`, `protocol_node_output`, `quality_gate`, `node_assignee`, `protocol_edge`, `study_protocol_assignment`, `task_execution_state`; seeds 4 default templates (SMS, SLR, Rapid, Tertiary); full `downgrade()` path |
 
 ## Importing from backend
 

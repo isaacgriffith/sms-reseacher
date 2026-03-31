@@ -1,5 +1,22 @@
 """ORM models package: Study, Paper, StudyPaper and all submodels.
 
+Feature 010 additions — re-exported here for single stable import path:
+- :class:`~db.models.protocols.ProtocolTaskType`
+- :class:`~db.models.protocols.QualityGateType`
+- :class:`~db.models.protocols.EdgeConditionOperator`
+- :class:`~db.models.protocols.TaskNodeStatus`
+- :class:`~db.models.protocols.NodeAssigneeType`
+- :class:`~db.models.protocols.NodeDataType`
+- :class:`~db.models.protocols.ResearchProtocol`
+- :class:`~db.models.protocols.ProtocolNode`
+- :class:`~db.models.protocols.ProtocolNodeInput`
+- :class:`~db.models.protocols.ProtocolNodeOutput`
+- :class:`~db.models.protocols.QualityGate`
+- :class:`~db.models.protocols.NodeAssignee`
+- :class:`~db.models.protocols.ProtocolEdge`
+- :class:`~db.models.protocols.StudyProtocolAssignment`
+- :class:`~db.models.protocols.TaskExecutionState`
+
 Feature 009 additions — re-exported here for single stable import path:
 - :class:`~db.models.tertiary.TertiaryProtocolStatus`
 - :class:`~db.models.tertiary.SecondaryStudyType`
@@ -91,6 +108,23 @@ from db.models.agents import AvailableModel as AvailableModel  # noqa: F401
 from db.models.agents import Provider as Provider  # noqa: F401
 from db.models.agents import ProviderType as ProviderType  # noqa: F401
 from db.models.backup_codes import BackupCode as BackupCode  # noqa: F401
+
+# Feature 010: Research Protocol Definition models and enums.
+from db.models.protocols import EdgeConditionOperator as EdgeConditionOperator  # noqa: F401
+from db.models.protocols import NodeAssignee as NodeAssignee  # noqa: F401
+from db.models.protocols import NodeAssigneeType as NodeAssigneeType  # noqa: F401
+from db.models.protocols import NodeDataType as NodeDataType  # noqa: F401
+from db.models.protocols import ProtocolEdge as ProtocolEdge  # noqa: F401
+from db.models.protocols import ProtocolNode as ProtocolNode  # noqa: F401
+from db.models.protocols import ProtocolNodeInput as ProtocolNodeInput  # noqa: F401
+from db.models.protocols import ProtocolNodeOutput as ProtocolNodeOutput  # noqa: F401
+from db.models.protocols import ProtocolTaskType as ProtocolTaskType  # noqa: F401
+from db.models.protocols import QualityGate as QualityGate  # noqa: F401
+from db.models.protocols import QualityGateType as QualityGateType  # noqa: F401
+from db.models.protocols import ResearchProtocol as ResearchProtocol  # noqa: F401
+from db.models.protocols import StudyProtocolAssignment as StudyProtocolAssignment  # noqa: F401
+from db.models.protocols import TaskExecutionState as TaskExecutionState  # noqa: F401
+from db.models.protocols import TaskNodeStatus as TaskNodeStatus  # noqa: F401
 
 # Feature 008: Rapid Review workflow models and enums.
 from db.models.rapid_review import BriefingStatus as BriefingStatus  # noqa: F401

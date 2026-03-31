@@ -4,6 +4,46 @@ All notable changes to this subproject are documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.10.0] — 2026-03-31 — feature/010-research-protocol-definition
+
+### Added
+- **Protocol REST API** (`api/v1/protocols/`): three sub-modules —
+  - `library.py`: `GET/POST /protocols`, `GET/PUT/DELETE /protocols/{id}`,
+    `GET /protocols/{id}/export` (YAML download), `POST /protocols/import` (multipart upload)
+  - `assignment.py`: `GET/PUT /studies/{id}/protocol-assignment`,
+    `DELETE /studies/{id}/protocol-assignment` (reset to default),
+    `GET /studies/{id}/execution-state`
+  - `execution_state.py`: `POST /studies/{id}/execution-state/{task_id}/complete`,
+    `POST /studies/{id}/execution-state/{task_id}/approve`
+- **`ProtocolService`** (`services/protocol_service.py`): `list_protocols` (owner + default
+  templates, optional `study_type` filter), `get_protocol`, `get_protocol_assignment`,
+  `create_protocol` (copy-from or full graph), `update_protocol` (optimistic lock),
+  `delete_protocol` (blocked if assigned); graph validation — cycle detection (DFS), edge
+  referential integrity, input slot satisfaction
+- **`ProtocolAssignmentService`** (`services/protocol_executor.py`): `assign_protocol`
+  (validates study-type match, blocks while ACTIVE tasks exist, seeds `TaskExecutionState`
+  rows, activates eligible tasks), `reset_to_default` (finds default template by study type,
+  clears old states, reseeds); `activate_eligible_tasks` traverses edges to find newly
+  unblocked tasks
+- **`CompleteTaskService` / `ApproveTaskService`** (`services/protocol_executor.py`):
+  mark tasks complete; evaluate quality gate conditions via `_METRIC_READERS` dispatch dict
+  (metric functions: `kappa_coefficient`, `paper_count`, `paper_screened_ratio`,
+  `qa_completeness`); on pass, activate downstream tasks; on `human_sign_off` failure, store
+  detail in `gate_failure_detail` JSONB; `approve_task` clears failure and propagates
+- **`ProtocolYamlService`** (`services/protocol_yaml.py`): `export(protocol)` → YAML string
+  via `PyYAML` with `ProtocolExportSchema` (Pydantic, `protocol_schema_version: "1.0"`);
+  `import_yaml(yaml_str, user_id, db)` → validates schema version, maps to
+  `CreateProtocolPayload`, delegates to `ProtocolService.create_protocol()`
+- **Pydantic schemas** (`api/v1/protocols/schemas.py`): request schemas
+  (`ProtocolCopyRequest`, `ProtocolCreateRequest`, `ProtocolUpdateRequest`,
+  `AssignProtocolRequest`, `ResetProtocolRequest`); response schemas
+  (`ProtocolListItemResponse`, `ProtocolNodeDetailResponse`, `ProtocolDetailResponse`,
+  `ProtocolAssignmentResponse`, `ExecutionStateResponse`, `CompleteTaskResponse`,
+  `TaskStateItemResponse`)
+- **Protocol router registered** in `api/v1/protocols/__init__.py` and included in
+  `api/v1/router.py` under `/api/v1` prefix
+- **`types-pyyaml`** dev dependency added to root `pyproject.toml` for mypy stub coverage
+
 ## [0.9.0] — 2026-03-30 — feature/009-tertiary-studies-workflow
 
 ### Added

@@ -83,6 +83,44 @@ message review) with state managed via `useReducer`. `SystemMessageEditor` is a
 
 All API responses are parsed through Zod schemas before being returned from hooks.
 
+## Research Protocol Definition (010-research-protocol-definition)
+
+Reusable protocol graph editor, library management, and real-time execution tracking for all study types.
+
+### Protocol Components (`src/components/protocols/`)
+
+| Component | Description |
+|-----------|-------------|
+| `ProtocolGraph` | D3 force-directed SVG — read-only in StudyPage; drag-to-reposition + click-to-select in editor; `useProtocolD3.ts` extracts all D3 imperative setup |
+| `ProtocolNodePanel` | MUI Drawer showing selected node detail (label, task type, inputs, outputs, quality gates, assignees); edit mode adds react-hook-form fields |
+| `ProtocolTextEditor` | Monospace `<textarea>` YAML editor; displays parse errors inline; 300 ms debounced sync with graph state |
+| `ProtocolList` | MUI List of `ProtocolListItem`s with Copy / Assign / Export / Delete action buttons |
+| `QualityGateEditor` | `gate_type` MUI Select with conditional config fields per gate type; Zod-validated |
+| `EdgeConditionBuilder` | `output_name` / operator / value triple; null condition = unconditional edge |
+| `ExecutionStateView` | Task status table (pending/active/completed); Mark Complete and Approve buttons; reads from `useExecutionState` |
+
+### Protocol Pages (`src/pages/protocols/`)
+
+| Page | Route | Description |
+|------|-------|-------------|
+| `ProtocolLibraryPage` | `/protocols` | Browse and filter all visible protocols; copy to custom; import YAML; export YAML; assign to a study |
+| `ProtocolEditorPage` | `/protocols/:id` | Dual-pane editor: left — ProtocolGraph (edit mode), right — ProtocolTextEditor; Save calls `PUT /protocols/{id}` with `version_id`; conflict dialog on 409 |
+
+### Protocol Hooks (`src/hooks/protocols/`)
+
+| Hook file | Exports |
+|-----------|---------|
+| `useProtocol.ts` | `useProtocolList`, `useProtocolDetail`, `useProtocolAssignment`, `useCopyProtocol`, `useCreateProtocol`, `useUpdateProtocol`, `useDeleteProtocol`, `useImportProtocol`, `useResetProtocol`, `useAssignProtocol` |
+| `useExecutionState.ts` | `useExecutionState` (5 s poll while ACTIVE), `useCompleteTask`, `useApproveTask` |
+| `useProtocolEditor.ts` | `useProtocolEditor` — `useReducer` with `graphToYaml` / `yamlToGraph` sync; actions: `SET_GRAPH`, `ADD_NODE`, `REMOVE_NODE`, `UPDATE_NODE`, `ADD_EDGE`, `REMOVE_EDGE`, `SET_YAML`, `SELECT_NODE` |
+| `useProtocolD3.ts` | D3 force simulation + drag behaviour; returns SVG container ref and render function |
+
+### Protocol Services (`src/services/protocols/`)
+
+| File | Description |
+|------|-------------|
+| `protocolsApi.ts` | Zod-validated wrappers for all Protocol REST endpoints; types: `ProtocolListItem`, `ProtocolDetail`, `ProtocolAssignment`, `ExecutionStateResponse`, `CompleteTaskResponse`; raw-`fetch` used for multipart import, YAML export (blob download), and DELETE-with-body reset |
+
 ## Tertiary Study Components (009-tertiary-studies-workflow)
 
 New components, hooks, and services supporting the Tertiary Study workflow (aggregation of secondary studies):

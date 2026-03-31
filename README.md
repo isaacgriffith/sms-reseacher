@@ -52,6 +52,8 @@ See [quickstart.md](specs/001-repo-setup/quickstart.md#docker-local-deployment) 
 | **Rapid** | Rapid Review — accelerated protocol with stakeholder involvement, narrative synthesis, and Evidence Briefing export |
 | **Tertiary** | Tertiary Study — aggregates secondary studies (SLRs, SMSs, Rapid Reviews); seed import, structured data extraction, landscape synthesis, and tertiary report export |
 
+All study types share the **Protocol** tab (Phase 0) — a reusable, versioned research protocol graph visualised with D3.js. Researchers can view the default template, copy and customise it in the dual-pane editor (visual graph + YAML), assign it to a study, and track task execution state in real time.
+
 ## Frontend Routes
 
 | Route | Description | Auth required |
@@ -74,6 +76,8 @@ See [quickstart.md](specs/001-repo-setup/quickstart.md#docker-local-deployment) 
 | `/public/briefings/:token` | Public Evidence Briefing view (unauthenticated, share token) | No |
 | `/studies/:id/tertiary` | Tertiary Study workspace (5-phase tab layout) | Yes |
 | `/studies/:id/tertiary/report` | Tertiary report — landscape section, synthesis, recommendations | Yes |
+| `/protocols` | Protocol Library — browse, copy, import, assign, and export research protocols | Yes |
+| `/protocols/:id` | Protocol detail / editor — dual-pane D3 graph + YAML editor with Save | Yes |
 | `/preferences` | Password change, theme selector, 2FA management | Yes |
 | `/api-docs` | Interactive Swagger UI (auto-generated from backend) | Yes |
 

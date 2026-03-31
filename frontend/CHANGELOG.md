@@ -4,6 +4,73 @@ All notable changes to this subproject are documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.10.0] — 2026-03-31 — feature/010-research-protocol-definition
+
+### Added
+- **`ProtocolGraph` component** (`src/components/protocols/ProtocolGraph.tsx`):
+  D3 force-directed SVG; read-only mode in StudyPage (click-to-select node); edit mode in
+  `ProtocolEditorPage` adds drag-to-reposition (updates `position_x`/`position_y` in reducer)
+  and click-to-select-edge; imperative D3 setup extracted to `useProtocolD3.ts`
+- **`ProtocolNodePanel` component** (`src/components/protocols/ProtocolNodePanel.tsx`):
+  MUI Drawer showing `label`, `task_type`, `description`, `inputs`, `outputs`, `quality_gates`,
+  `assignees` in read-only mode; edit mode adds react-hook-form fields and delegates save to
+  `onSave` callback dispatching `UPDATE_NODE` to the editor reducer
+- **`ProtocolTextEditor` component** (`src/components/protocols/ProtocolTextEditor.tsx`):
+  monospace `<textarea>` YAML editor; inline parse-error display; `onChange` triggers
+  `dispatchYamlDebounced` from `useProtocolEditor`
+- **`ProtocolList` component** (`src/components/protocols/ProtocolList.tsx`):
+  MUI List of `ProtocolListItem`s; per-row Copy, Assign, Export, and Delete action buttons;
+  `is_default_template` badge; `study_type` chip
+- **`QualityGateEditor` component** (`src/components/protocols/QualityGateEditor.tsx`):
+  `gate_type` MUI Select with conditional config fields per type; Zod-validated; dispatches
+  gate config to editor reducer
+- **`EdgeConditionBuilder` component** (`src/components/protocols/EdgeConditionBuilder.tsx`):
+  `output_name` selector, operator MUI Select (`gt`/`gte`/`lt`/`lte`/`eq`/`neq`), numeric
+  `value` input; null condition = unconditional edge
+- **`ExecutionStateView` component** (`src/components/protocols/ExecutionStateView.tsx`):
+  task status table showing `label`, `task_type`, `status`, `activated_at`, `completed_at`;
+  Mark Complete button (calls `useCompleteTask`); Approve button for `human_sign_off` failures
+  (calls `useApproveTask`); reads from `useExecutionState` 5 s polling hook
+- **`ProtocolLibraryPage`** (`src/pages/protocols/ProtocolLibraryPage.tsx`):
+  registered at `/protocols`; `useProtocolList` query with `study_type` MUI Select filter;
+  renders `ProtocolList`; Copy dialog (name input → `useCopyProtocol`, redirects to editor);
+  Assign dialog (study ID input → `useAssignProtocol`); Import YAML button (hidden
+  `<input type="file">` → `useImportProtocol`); per-row Export calls `exportProtocol` (blob
+  download via anchor)
+- **`ProtocolEditorPage`** (`src/pages/protocols/ProtocolEditorPage.tsx`):
+  registered at `/protocols/:id`; loads protocol via `useProtocolDetail`; initialises
+  `useProtocolEditor` reducer; dual-pane layout (left: `ProtocolGraph` edit mode, right:
+  `ProtocolTextEditor`); Save calls `useUpdateProtocol` with `version_id`; conflict dialog
+  on 409; Discard navigates back
+- **`useProtocol.ts`** hooks (`src/hooks/protocols/useProtocol.ts`):
+  `useProtocolList`, `useProtocolDetail`, `useProtocolAssignment` queries;
+  `useCopyProtocol`, `useCreateProtocol`, `useUpdateProtocol`, `useDeleteProtocol`,
+  `useImportProtocol`, `useResetProtocol`, `useAssignProtocol` mutations;
+  all with appropriate `queryKey` invalidations on success
+- **`useExecutionState.ts`** hooks (`src/hooks/protocols/useExecutionState.ts`):
+  `useExecutionState` — polls every 5 s while any task status is `active`, stops when all
+  terminal (satisfies SC-005); `useCompleteTask`, `useApproveTask` mutations invalidate the
+  execution-state query on success
+- **`useProtocolEditor.ts`** (`src/hooks/protocols/useProtocolEditor.ts`):
+  `useProtocolEditor` — `useReducer` with `graphReducer`; actions: `SET_GRAPH`, `ADD_NODE`,
+  `REMOVE_NODE`, `UPDATE_NODE`, `ADD_EDGE`, `REMOVE_EDGE`, `UPDATE_EDGE`, `SELECT_NODE`,
+  `SET_YAML`; `graphToYaml` / `yamlToGraph` serialisation utilities using `js-yaml`;
+  `dispatchYamlDebounced` with 300 ms debounce
+- **`useProtocolD3.ts`** (`src/hooks/protocols/useProtocolD3.ts`):
+  extracts all D3 `forceSimulation`, drag behaviour, and SVG rendering from `ProtocolGraph`;
+  returns `svgRef` and `render` function; simulation cleanup on unmount
+- **`protocolsApi.ts`** (`src/services/protocols/protocolsApi.ts`):
+  Zod-validated wrappers for all Protocol REST endpoints; `exportProtocol` uses raw `fetch`
+  + blob anchor download; `importProtocol` uses raw `fetch` with `FormData` (bypasses
+  `api.post` JSON-encoding); `resetProtocol` uses raw `fetch` DELETE with JSON body;
+  `assignProtocol` uses `api.put`; `getExecutionState`, `completeTask`, `approveTask` use `api`
+- **Protocol tab added to `StudyPage`** (`src/pages/StudyPage.tsx`): Phase 0 always unlocked;
+  Graph sub-tab shows `ProtocolGraph` + `ProtocolNodePanel`; Execution sub-tab shows
+  `ExecutionStateView`; Reset to Default button opens MUI Dialog
+- **`/protocols` and `/protocols/:id` routes** registered in `src/App.tsx`
+- **Playwright e2e tests** (`e2e/protocols.spec.ts`): 5 tests — graph view + node detail,
+  protocol library copy, editor save, assign to study, execution state, YAML export/import
+
 ## [0.9.0] — 2026-03-30 — feature/009-tertiary-studies-workflow
 
 ### Added

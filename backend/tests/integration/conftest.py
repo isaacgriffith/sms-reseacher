@@ -30,6 +30,8 @@ import db.models.security_audit  # noqa: F401
 import db.models.search_integrations  # noqa: F401
 import db.models.slr  # noqa: F401
 import db.models.rapid_review  # noqa: F401
+import db.models.tertiary  # noqa: F401
+import db.models.protocols  # noqa: F401
 
 from db.models.users import GroupMembership, GroupRole, ResearchGroup, User
 

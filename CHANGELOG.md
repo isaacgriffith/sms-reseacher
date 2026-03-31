@@ -4,6 +4,56 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.10.0] — 2026-03-31 — feature/010-research-protocol-definition
+
+### Added
+- **Reusable protocol graph model**: `ResearchProtocol` with versioned directed acyclic graphs
+  of `ProtocolNode` tasks (23 `ProtocolTaskType` values), typed I/O slots, `QualityGate`
+  (JSONB config supporting `min_kappa`, `min_papers`, `completion_ratio`, `human_sign_off`
+  gate types), `NodeAssignee`, and conditional `ProtocolEdge` triples
+  (`output_name` / `operator` / `value`)
+- **4 default protocol templates** seeded at migration time for all study types: SMS, SLR,
+  Rapid Review, and Tertiary; each template encodes the canonical task sequence for that
+  workflow; templates are immutable (`is_default_template = True`, no owner)
+- **Protocol Library** (`GET/POST /api/v1/protocols`, `GET/PUT/DELETE /protocols/{id}`):
+  authenticated CRUD with ownership checks; copy-from-existing shorthand; optimistic locking
+  via `version_id`; filter by `study_type`
+- **YAML export/import** (`GET /protocols/{id}/export`, `POST /protocols/import`):
+  `ProtocolYamlService` serialises the full graph to schema-versioned YAML; import validates
+  schema version `"1.0"` via Pydantic `@field_validator` and creates a new owned protocol
+- **Study protocol assignment** (`GET/PUT/DELETE /studies/{id}/protocol-assignment`): assign
+  any compatible protocol to a study; reset to default template (clears execution state;
+  blocked while any task is `ACTIVE`); assignment tracked in `StudyProtocolAssignment`
+- **Protocol execution engine** (`ProtocolAssignmentService`, `CompleteTaskService`,
+  `ApproveTaskService`): seeds `TaskExecutionState` rows on assignment; activates eligible
+  tasks (all required inputs satisfied); evaluates quality gates on task completion; unlocks
+  downstream tasks; `human_sign_off` gate failures require explicit approval
+- **Quality gate evaluators**: `kappa_coefficient` (reads Cohen's κ from SLR inter-rater
+  service), `paper_count`, `paper_screened_ratio`, `qa_completeness` metric readers wired
+  into a `_METRIC_READERS` dispatch dict
+- **Execution state API** (`GET /studies/{id}/execution-state`,
+  `POST /studies/{id}/execution-state/{task_id}/complete`,
+  `POST /studies/{id}/execution-state/{task_id}/approve`): full task status list with
+  `activated_at`, `completed_at`, `gate_failure_detail`
+- **Frontend Protocol Library page** (`/protocols`): MUI list with study-type filter, Copy /
+  Assign / Export / Import YAML actions; navigates to editor on copy or select
+- **Frontend Protocol editor** (`/protocols/:id`): dual-pane layout — left: D3 force-directed
+  graph with drag-to-reposition (edit mode); right: YAML `<textarea>` with 300 ms debounced
+  bidirectional sync; Save calls `PUT /protocols/{id}` with `version_id`; conflict dialog on
+  409; registered at `/protocols` and `/protocols/:id` in `App.tsx`
+- **Protocol tab in StudyPage (Phase 0)**: always-unlocked tab showing ProtocolGraph (read
+  only) + ProtocolNodePanel detail drawer; Execution sub-tab with task table, Mark Complete
+  / Approve buttons; Reset to Default button with confirmation dialog
+- **Real-time execution polling**: `useExecutionState` hook polls every 5 s while any task
+  is `ACTIVE` (satisfies SC-005); stops polling when all tasks are terminal
+- **Playwright e2e tests** (`frontend/e2e/protocols.spec.ts`): 5 tests covering graph view,
+  node detail, protocol library copy, editor save, execution state, and YAML export/import
+- **Alembic migration `0018_research_protocol_definition`**: creates 8 PostgreSQL enums and
+  8 tables (`research_protocol`, `protocol_node`, `protocol_node_input`,
+  `protocol_node_output`, `quality_gate`, `node_assignee`, `protocol_edge`,
+  `study_protocol_assignment`, `task_execution_state`); seeds 4 default templates;
+  full `downgrade()` path
+
 ## [0.9.0] — 2026-03-30 — feature/009-tertiary-studies-workflow
 
 ### Added

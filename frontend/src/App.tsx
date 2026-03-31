@@ -10,6 +10,8 @@ import AdminPage from './pages/AdminPage';
 import UserPreferencesPage from './components/preferences/UserPreferencesPage';
 import APIDocsPage from './components/api-docs/APIDocsPage';
 import PublicBriefingPage from './pages/rapid/PublicBriefingPage';
+import ProtocolLibraryPage from './pages/protocols/ProtocolLibraryPage';
+import ProtocolEditorPage from './pages/protocols/ProtocolEditorPage';
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const token = useAuthStore((s) => s.token);
@@ -39,6 +41,9 @@ function App() {
         <Route path="admin" element={<AdminPage />} />
         <Route path="preferences" element={<UserPreferencesPage />} />
         <Route path="api-docs" element={<APIDocsPage />} />
+        <Route path="protocols" element={<ProtocolLibraryPage />} />
+        <Route path="protocols/:id" element={<ProtocolEditorPage />} />
+        <Route path="protocols/:id/edit" element={<ProtocolEditorPage />} />
       </Route>
     </Routes>
   );

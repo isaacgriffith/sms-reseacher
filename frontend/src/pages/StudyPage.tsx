@@ -15,8 +15,12 @@ import JobProgressPanel from '../components/jobs/JobProgressPanel';
 import PaperQueue from '../components/phase2/PaperQueue';
 import DatabaseSelectionPanel from '../components/studies/DatabaseSelectionPanel';
 import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogTitle from '@mui/material/DialogTitle';
+import Typography from '@mui/material/Typography';
 import ProtocolEditorPage from './slr/ProtocolEditorPage';
 import QualityAssessmentPage from './slr/QualityAssessmentPage';
 import SynthesisPage from './slr/SynthesisPage';
@@ -31,6 +35,11 @@ import RRSearchConfigPage from './rapid/SearchConfigPage';
 import RRQualityConfigPage from './rapid/QualityConfigPage';
 import RRNarrativeSynthesisPage from './rapid/NarrativeSynthesisPage';
 import RREvidenceBriefingPage from './rapid/EvidenceBriefingPage';
+import ProtocolGraph from '../components/protocols/ProtocolGraph';
+import ProtocolNodePanel from '../components/protocols/ProtocolNodePanel';
+import ExecutionStateView from '../components/protocols/ExecutionStateView';
+import { useProtocolAssignment, useProtocolDetail, useResetProtocol } from '../hooks/protocols/useProtocol';
+import type { ProtocolNode } from '../services/protocols/protocolsApi';
 
 // ---------------------------------------------------------------------------
 // SLR Screening View (Phase 3 for SLR studies)
@@ -88,6 +97,7 @@ interface StudyDetail {
 }
 
 const PHASE_META = [
+  { phase: 0, label: 'Protocol', icon: '🔗' },
   { phase: 1, label: 'Scoping', icon: '🎯' },
   { phase: 2, label: 'Search', icon: '🔍' },
   { phase: 3, label: 'Screening', icon: '📋' },
@@ -101,6 +111,10 @@ export default function StudyPage() {
   const { studyId } = useParams<{ studyId: string }>();
   const [activePhase, setActivePhase] = useState(1);
   const [activeJobId, setActiveJobId] = useState<string | null>(null);
+  const [selectedNode, setSelectedNode] = useState<ProtocolNode | null>(null);
+  const [protocolTab, setProtocolTab] = useState<'graph' | 'execution'>('graph');
+  const [resetDialogOpen, setResetDialogOpen] = useState(false);
+  const resetMutation = useResetProtocol();
 
   const {
     data: study,
@@ -117,14 +131,19 @@ export default function StudyPage() {
   const isRapid = study?.study_type === 'Rapid';
   const { data: slrPhases } = usePhases(isSLR && study?.id ? study.id : 0);
 
+  // Protocol tab data (always available)
+  const { data: assignment } = useProtocolAssignment(study?.id ?? 0);
+  const { data: protocol } = useProtocolDetail(assignment?.protocol_id ?? 0);
+
   if (isLoading) return <Typography>Loading study…</Typography>;
   if (error || !study) return <Typography sx={{ color: 'red' }}>Failed to load study.</Typography>;
 
   // SLR studies use the SLR phase gate; SMS studies use the study's unlocked_phases
   // Phases 6 (Report) and 7 (Grey Literature) are always unlocked for SLR studies
+  // Phase 0 (Protocol) is always unlocked for all study types
   const unlockedPhaseList =
     isSLR && slrPhases ? [...slrPhases.unlocked_phases, 6, 7] : study.unlocked_phases;
-  const unlocked = new Set(unlockedPhaseList);
+  const unlocked = new Set([0, ...unlockedPhaseList]);
 
   return (
     <Box>
@@ -202,7 +221,85 @@ export default function StudyPage() {
         })}
       </Box>
 
+      {/* Reset to Default confirmation dialog */}
+      <Dialog open={resetDialogOpen} onClose={() => setResetDialogOpen(false)}>
+        <DialogTitle>Reset Protocol to Default?</DialogTitle>
+        <DialogContent>
+          <Typography>
+            This will replace the current protocol with the default template for this study type
+            and clear all execution state. This cannot be undone while the study is executing.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setResetDialogOpen(false)}>Cancel</Button>
+          <Button
+            color="error"
+            variant="contained"
+            disabled={resetMutation.isPending}
+            onClick={() => {
+              if (!study.id) return;
+              resetMutation.mutate(study.id, {
+                onSuccess: () => setResetDialogOpen(false),
+              });
+            }}
+          >
+            {resetMutation.isPending ? 'Resetting…' : 'Reset'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       {/* Phase content */}
+      {activePhase === 0 && study.id && (
+        <Box>
+          <Box sx={{ display: 'flex', gap: 1, mb: 2, justifyContent: 'space-between', alignItems: 'center' }}>
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <Button
+                size="small"
+                variant={protocolTab === 'graph' ? 'contained' : 'outlined'}
+                onClick={() => setProtocolTab('graph')}
+              >
+                Graph
+              </Button>
+              <Button
+                size="small"
+                variant={protocolTab === 'execution' ? 'contained' : 'outlined'}
+                onClick={() => setProtocolTab('execution')}
+              >
+                Execution
+              </Button>
+            </Box>
+            <Button
+              size="small"
+              color="warning"
+              variant="outlined"
+              onClick={() => setResetDialogOpen(true)}
+            >
+              Reset to Default
+            </Button>
+          </Box>
+          {protocolTab === 'graph' && (
+            <>
+              {protocol ? (
+                <>
+                  <ProtocolGraph
+                    protocol={protocol}
+                    onNodeClick={(node) => setSelectedNode(node)}
+                    width={860}
+                    height={500}
+                  />
+                  <ProtocolNodePanel node={selectedNode} onClose={() => setSelectedNode(null)} />
+                </>
+              ) : (
+                <Typography sx={{ color: 'text.secondary' }}>Loading protocol graph…</Typography>
+              )}
+            </>
+          )}
+          {protocolTab === 'execution' && (
+            <ExecutionStateView studyId={study.id} isAdmin={false} />
+          )}
+        </Box>
+      )}
+
       {activePhase === 1 && study.id && isSLR && <ProtocolEditorPage studyId={study.id} />}
 
       {activePhase === 1 && study.id && isRapid && <RRProtocolEditorPage studyId={study.id} />}

@@ -4,6 +4,46 @@ All notable changes to this subproject are documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.10.0] — 2026-03-31 — feature/010-research-protocol-definition
+
+### Added
+- **Enums** (`db/src/db/models/protocols.py`):
+  `ProtocolTaskType` (23 values: `define_pico`, `define_search_string`, `test_retest`,
+  `screen_titles`, `screen_abstracts`, `screen_full_text`, `extract_data`,
+  `quality_assessment`, `compute_kappa`, `synthesise_results`, `write_report`,
+  `define_scope`, `define_criteria`, `fetch_papers`, `review_protocol`, `validate_protocol`,
+  `stakeholder_review`, `narrative_synthesis`, `evidence_briefing`, `define_rqs`,
+  `seed_import`, `tertiary_extraction`, `landscape_synthesis`);
+  `QualityGateType` (`min_kappa`/`min_papers`/`completion_ratio`/`human_sign_off`);
+  `EdgeConditionOperator` (`gt`/`gte`/`lt`/`lte`/`eq`/`neq`);
+  `TaskNodeStatus` (`pending`/`active`/`completed`/`failed`/`skipped`);
+  `NodeAssigneeType` (`human`/`ai_agent`);
+  `NodeDataType` (12 data type values including `papers`, `kappa_score`, `qa_report`, etc.)
+- **`ResearchProtocol`** ORM: `name`, `study_type` (plain `str`, not FK), `is_default_template`,
+  nullable `owner_user_id` FK, optimistic-lock `version_id`, `description`; relationships to
+  `ProtocolNode` and `ProtocolEdge`
+- **`ProtocolNode`** ORM: `task_id` slug UNIQUE per protocol, `ProtocolTaskType` enum,
+  `label`, `description`, `is_required`, nullable `position_x`/`position_y`; relationships to
+  inputs, outputs, gates, assignees
+- **`ProtocolNodeInput` / `ProtocolNodeOutput`** ORM: `name`, `NodeDataType` enum,
+  `is_required` (inputs only); UNIQUE on `(node_id, name)`
+- **`QualityGate`** ORM: `QualityGateType` enum, `config` JSONB; FK to `ProtocolNode`
+- **`NodeAssignee`** ORM: `NodeAssigneeType` enum, nullable `role` and `agent_id`; FK to `ProtocolNode`
+- **`ProtocolEdge`** ORM: `edge_id` slug, `source_task_id`, `source_output_name`,
+  `target_task_id`, `target_input_name`; optional condition columns
+  (`condition_output_name`, `EdgeConditionOperator`, `condition_value` Float); UNIQUE on
+  `(protocol_id, edge_id)`
+- **`StudyProtocolAssignment`** ORM: `study_id` UNIQUE FK, `protocol_id` FK,
+  `assigned_at` (default `utcnow`), nullable `assigned_by_user_id`; `selectinload` relationship
+  to `ResearchProtocol`
+- **`TaskExecutionState`** ORM: `study_id` + `node_id` composite UNIQUE, `TaskNodeStatus`
+  enum (default `pending`), `gate_failure_detail` JSONB, `activated_at`, `completed_at`;
+  audit columns `created_at`/`updated_at`
+- **Alembic migration `0018_research_protocol_definition`**: creates all enums in dependency
+  order; creates 9 tables in FK-safe order; seeds 4 default protocol templates (SMS 10-node,
+  SLR 12-node, Rapid 8-node, Tertiary 7-node) with representative edges; full `downgrade()`
+  path in reverse order
+
 ## [0.9.0] — 2026-03-30 — feature/009-tertiary-studies-workflow
 
 ### Added

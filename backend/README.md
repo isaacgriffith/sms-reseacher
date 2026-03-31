@@ -111,6 +111,24 @@ uv run mypy backend/src
 | `GET` | `/public/briefings/{token}` | Retrieve published briefing via share token (no auth) |
 | `GET` | `/public/briefings/{token}/export` | Download briefing PDF via share token (no auth) |
 
+### Protocol Endpoints (`/api/v1/protocols/` and `/api/v1/studies/`)
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/protocols` | List protocols visible to the authenticated user (own + default templates); optional `study_type` filter |
+| `POST` | `/protocols` | Create a new protocol (full graph) or copy from an existing one (`copy_from_protocol_id`) |
+| `GET` | `/protocols/{id}` | Full protocol detail including all nodes, edges, gates, assignees |
+| `PUT` | `/protocols/{id}` | Replace a custom protocol graph (optimistic lock via `version_id`) |
+| `DELETE` | `/protocols/{id}` | Delete a custom protocol (blocked if assigned to any study) |
+| `GET` | `/protocols/{id}/export` | Download protocol as schema-versioned YAML file |
+| `POST` | `/protocols/import` | Upload a YAML file and create a new owned protocol |
+| `GET` | `/studies/{id}/protocol-assignment` | Retrieve the protocol currently assigned to a study |
+| `PUT` | `/studies/{id}/protocol-assignment` | Assign a protocol to a study (resets execution state) |
+| `DELETE` | `/studies/{id}/protocol-assignment` | Reset study protocol to the default template (`confirm_reset: true` required) |
+| `GET` | `/studies/{id}/execution-state` | Full task execution state for all nodes in the assigned protocol |
+| `POST` | `/studies/{id}/execution-state/{task_id}/complete` | Mark a task complete; evaluates quality gates and activates downstream tasks |
+| `POST` | `/studies/{id}/execution-state/{task_id}/approve` | Approve a `human_sign_off` gate failure |
+
 ### Tertiary Endpoints (`/api/v1/tertiary/`)
 
 | Method | Path | Description |
@@ -158,6 +176,9 @@ backend/
 │   ├── services/
 │   │   ├── provider_service.py   # Provider CRUD + model-list fetch (Anthropic/OpenAI/Ollama)
 │   │   ├── agent_service.py      # Agent CRUD + system-message generation + study-context rendering
+│   │   ├── protocol_service.py   # ProtocolService — list/get/create/update/delete protocols; graph validation; default template seeding
+│   │   ├── protocol_executor.py  # ProtocolAssignmentService — assign, reset, activate tasks; gate evaluation dispatch; CompleteTaskService/ApproveTaskService
+│   │   ├── protocol_yaml.py      # ProtocolYamlService — export to schema-versioned YAML; import from YAML via ProtocolExportSchema
 │   │   └── ...                   # Other business logic services
 │   ├── utils/
 │   │   └── encryption.py         # Fernet encrypt_secret / decrypt_secret
