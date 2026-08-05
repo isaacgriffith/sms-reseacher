@@ -43,7 +43,14 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_security_audit_event_user_id'), 'security_audit_event', ['user_id'], unique=False)
-    op.add_column('user', sa.Column('theme_preference', sa.Enum('LIGHT', 'DARK', 'SYSTEM', name='theme_preference_enum'), server_default='system', nullable=False))
+    # op.add_column() does not emit CREATE TYPE the way op.create_table() does,
+    # so the enum must be created explicitly before the column references it.
+    # No-op on backends without native enums (SQLite renders VARCHAR + CHECK).
+    # Labels are the member NAMES because Enum(ThemePreference) in
+    # db.models.users persists names, not values.
+    theme_preference_enum = sa.Enum('LIGHT', 'DARK', 'SYSTEM', name='theme_preference_enum')
+    theme_preference_enum.create(op.get_bind(), checkfirst=True)
+    op.add_column('user', sa.Column('theme_preference', theme_preference_enum, server_default='SYSTEM', nullable=False))
     op.add_column('user', sa.Column('token_version', sa.Integer(), server_default='0', nullable=False))
     op.add_column('user', sa.Column('totp_enabled', sa.Boolean(), server_default='0', nullable=False))
     op.add_column('user', sa.Column('totp_secret_encrypted', sa.Text(), nullable=True))
@@ -65,6 +72,7 @@ def downgrade() -> None:
     op.drop_column('user', 'totp_enabled')
     op.drop_column('user', 'token_version')
     op.drop_column('user', 'theme_preference')
+    sa.Enum(name='theme_preference_enum').drop(op.get_bind(), checkfirst=True)
     op.drop_index(op.f('ix_security_audit_event_user_id'), table_name='security_audit_event')
     op.drop_table('security_audit_event')
     op.drop_index(op.f('ix_backup_code_user_id'), table_name='backup_code')

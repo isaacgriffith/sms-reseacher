@@ -25,7 +25,7 @@ import uuid as _uuid
 from collections.abc import Sequence
 
 import sqlalchemy as sa
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import ENUM, UUID
 
 from alembic import op
 
@@ -128,10 +128,14 @@ depends_on: str | Sequence[str] | None = None
 def upgrade() -> None:
     """Apply migration: create provider, available_model, agent tables and reviewer FK."""
     # --- Enums -----------------------------------------------------------
-    providertype = sa.Enum(
-        "anthropic", "openai", "ollama", name="providertype", create_type=True
+    # create_type is a postgresql.ENUM argument — generic sa.Enum ignores it, so
+    # create_table would re-emit CREATE TYPE after the explicit create() below
+    # and fail with DuplicateObjectError. These objects are reused by the
+    # columns further down so the type is emitted exactly once.
+    providertype = ENUM(
+        "anthropic", "openai", "ollama", name="providertype", create_type=False
     )
-    agenttasktype = sa.Enum(
+    agenttasktype = ENUM(
         "screener",
         "extractor",
         "librarian",
@@ -142,7 +146,7 @@ def upgrade() -> None:
         "synthesiser",
         "validity_assessor",
         name="agenttasktype",
-        create_type=True,
+        create_type=False,
     )
     providertype.create(op.get_bind(), checkfirst=True)
     agenttasktype.create(op.get_bind(), checkfirst=True)
@@ -153,7 +157,7 @@ def upgrade() -> None:
         sa.Column("id", UUID(as_uuid=True), primary_key=True),
         sa.Column(
             "provider_type",
-            sa.Enum("anthropic", "openai", "ollama", name="providertype", create_type=False),
+            providertype,
             nullable=False,
         ),
         sa.Column("display_name", sa.String(100), nullable=False, unique=True),
@@ -231,19 +235,7 @@ def upgrade() -> None:
         sa.Column("id", UUID(as_uuid=True), primary_key=True),
         sa.Column(
             "task_type",
-            sa.Enum(
-                "screener",
-                "extractor",
-                "librarian",
-                "expert",
-                "quality_judge",
-                "agent_generator",
-                "domain_modeler",
-                "synthesiser",
-                "validity_assessor",
-                name="agenttasktype",
-                create_type=False,
-            ),
+            agenttasktype,
             nullable=False,
         ),
         sa.Column("role_name", sa.String(100), nullable=False),

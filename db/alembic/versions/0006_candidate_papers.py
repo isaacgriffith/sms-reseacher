@@ -187,8 +187,14 @@ def downgrade() -> None:
     op.drop_table("candidate_paper")
     op.drop_index("ix_search_execution_study_id", table_name="search_execution")
     op.drop_table("search_execution")
-    op.drop_constraint(None, "search_execution_status_enum", type_="enum")
-    op.drop_constraint(None, "candidate_paper_status_enum", type_="enum")
-    op.drop_constraint(None, "paper_decision_type_enum", type_="enum")
-    op.drop_constraint(None, "background_job_type_enum", type_="enum")
-    op.drop_constraint(None, "background_job_status_enum", type_="enum")
+    # Enum types are dropped with Enum.drop(), not drop_constraint() — the
+    # latter accepts only check/foreignkey/primary/unique and raises TypeError
+    # on "enum". (Autogenerate artifact.)
+    for _enum_name in (
+        "search_execution_status_enum",
+        "candidate_paper_status_enum",
+        "paper_decision_type_enum",
+        "background_job_type_enum",
+        "background_job_status_enum",
+    ):
+        sa.Enum(name=_enum_name).drop(op.get_bind(), checkfirst=True)

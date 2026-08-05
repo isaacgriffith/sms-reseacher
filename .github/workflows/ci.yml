@@ -211,7 +211,9 @@ jobs:
         working-directory: frontend
 
       - name: Apply database migrations
+        # alembic.ini lives in db/ and resolves script_location relative to it.
         run: uv run alembic upgrade head
+        working-directory: db
 
       - name: Run Playwright e2e tests
         run: npx playwright test
