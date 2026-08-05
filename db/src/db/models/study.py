@@ -9,7 +9,6 @@ from sqlalchemy import (
     Enum,
     ForeignKey,
     Integer,
-    String,
     UniqueConstraint,
     func,
 )
@@ -17,7 +16,7 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.types import JSON
 
-from db.base import Base
+from db.base import Base, enum_values
 
 
 class StudyMemberRole(str, enum.Enum):
@@ -47,7 +46,7 @@ class StudyMember(Base):
         Integer, ForeignKey("user.id", ondelete="CASCADE"), primary_key=True
     )
     role: Mapped[StudyMemberRole] = mapped_column(
-        Enum(StudyMemberRole, name="study_member_role_enum"),
+        Enum(StudyMemberRole, values_callable=enum_values, name="study_member_role_enum"),
         nullable=False,
         default=StudyMemberRole.MEMBER,
     )
@@ -69,16 +68,16 @@ class Reviewer(Base):
         Integer, ForeignKey("study.id", ondelete="CASCADE"), nullable=False, index=True
     )
     reviewer_type: Mapped[ReviewerType] = mapped_column(
-        Enum(ReviewerType, name="reviewer_type_enum"), nullable=False
+        Enum(ReviewerType, values_callable=enum_values, name="reviewer_type_enum"), nullable=False
     )
     user_id: Mapped[int | None] = mapped_column(
         Integer, ForeignKey("user.id", ondelete="SET NULL"), nullable=True
     )
-    agent_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    # NOTE: the legacy ``agent_name`` column was dropped by migration
+    # 0013_remove_reviewer_agent_name. Callers that still carry a name put it in
+    # ``agent_config["agent_name"]``; ``agent_id`` is the supported reference.
     agent_config: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     # Feature 005: reference to the new Agent abstraction.
-    # Nullable during the transition period while agent_name is still populated.
-    # Will be made non-nullable (for ai_agent rows) once all rows are migrated.
     agent_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("agent.id", ondelete="SET NULL"),
@@ -92,5 +91,5 @@ class Reviewer(Base):
     def __repr__(self) -> str:
         return (
             f"<Reviewer id={self.id} study={self.study_id}"
-            f" type={self.reviewer_type} user={self.user_id} agent={self.agent_name!r}>"
+            f" type={self.reviewer_type} user={self.user_id} agent={self.agent_id!r}>"
         )

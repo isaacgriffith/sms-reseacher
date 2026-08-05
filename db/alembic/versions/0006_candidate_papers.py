@@ -127,7 +127,15 @@ def upgrade() -> None:
         sa.Column(
             "job_type",
             sa.Enum(
-                "full_search", "snowball_search", "batch_extraction", "quality_eval",
+                "full_search",
+                "snowball_search",
+                "batch_extraction",
+                "generate_results",
+                "export",
+                "quality_eval",
+                "validity_prefill",
+                "expert_seed",
+                "test_search",
                 name="background_job_type_enum",
             ),
             nullable=False,

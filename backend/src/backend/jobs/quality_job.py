@@ -140,7 +140,7 @@ async def _build_study_snapshot(db: AsyncSession, study_id: int) -> dict[str, An
             "reviewer_type": r.reviewer_type.value
             if hasattr(r.reviewer_type, "value")
             else str(r.reviewer_type),
-            "agent_name": r.agent_name,
+            "agent_name": (r.agent_config or {}).get("agent_name"),
             "user_id": r.user_id,
         }
         for r in reviewers_rows

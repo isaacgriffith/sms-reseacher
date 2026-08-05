@@ -262,7 +262,7 @@ async def test_deactivate_raises_when_reviewer_references_agent(
         study_id=1,
         reviewer_type=ReviewerType.AI_AGENT,
         agent_id=agent.id,
-        agent_name="TestAgent",
+        agent_config={"agent_name": "TestAgent"},
     )
     db_session.add(reviewer)
     await db_session.flush()

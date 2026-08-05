@@ -33,7 +33,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.types import JSON
 
-from db.base import Base
+from db.base import Base, enum_values
 
 # ---------------------------------------------------------------------------
 # Enums
@@ -124,7 +124,7 @@ class RapidReviewProtocol(Base):
         index=True,
     )
     status: Mapped[RRProtocolStatus] = mapped_column(
-        Enum(RRProtocolStatus, name="rr_protocol_status_enum"),
+        Enum(RRProtocolStatus, values_callable=enum_values, name="rr_protocol_status_enum"),
         nullable=False,
         default=RRProtocolStatus.DRAFT,
         server_default=RRProtocolStatus.DRAFT.value,
@@ -152,7 +152,11 @@ class RapidReviewProtocol(Base):
         comment="Set True when a SINGLE_SOURCE threat has been acknowledged",
     )
     quality_appraisal_mode: Mapped[RRQualityAppraisalMode] = mapped_column(
-        Enum(RRQualityAppraisalMode, name="rr_quality_appraisal_mode_enum"),
+        Enum(
+            RRQualityAppraisalMode,
+            values_callable=enum_values,
+            name="rr_quality_appraisal_mode_enum",
+        ),
         nullable=False,
         default=RRQualityAppraisalMode.FULL,
         server_default=RRQualityAppraisalMode.FULL.value,
@@ -203,7 +207,7 @@ class PractitionerStakeholder(Base):
     role_title: Mapped[str] = mapped_column(String(255), nullable=False)
     organisation: Mapped[str] = mapped_column(String(255), nullable=False)
     involvement_type: Mapped[RRInvolvementType] = mapped_column(
-        Enum(RRInvolvementType, name="rr_involvement_type_enum"),
+        Enum(RRInvolvementType, values_callable=enum_values, name="rr_involvement_type_enum"),
         nullable=False,
     )
     created_at: Mapped[datetime] = mapped_column(
@@ -239,7 +243,7 @@ class RRThreatToValidity(Base):
         index=True,
     )
     threat_type: Mapped[RRThreatType] = mapped_column(
-        Enum(RRThreatType, name="rr_threat_type_enum"),
+        Enum(RRThreatType, values_callable=enum_values, name="rr_threat_type_enum"),
         nullable=False,
     )
     description: Mapped[str] = mapped_column(Text, nullable=False)
@@ -346,7 +350,7 @@ class EvidenceBriefing(Base):
         Integer, nullable=False, comment="Auto-incremented per study (1, 2, 3…)"
     )
     status: Mapped[BriefingStatus] = mapped_column(
-        Enum(BriefingStatus, name="briefing_status_enum"),
+        Enum(BriefingStatus, values_callable=enum_values, name="briefing_status_enum"),
         nullable=False,
         default=BriefingStatus.DRAFT,
         server_default=BriefingStatus.DRAFT.value,

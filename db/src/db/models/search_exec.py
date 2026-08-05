@@ -15,7 +15,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column
 
-from db.base import Base
+from db.base import Base, enum_values
 
 
 class SearchExecutionStatus(str, enum.Enum):
@@ -40,7 +40,9 @@ class SearchExecution(Base):
         ForeignKey("search_string.id", ondelete="CASCADE"), nullable=False
     )
     status: Mapped[SearchExecutionStatus] = mapped_column(
-        Enum(SearchExecutionStatus, name="search_execution_status_enum"),
+        Enum(
+            SearchExecutionStatus, values_callable=enum_values, name="search_execution_status_enum"
+        ),
         nullable=False,
         default=SearchExecutionStatus.PENDING,
         server_default=SearchExecutionStatus.PENDING.value,

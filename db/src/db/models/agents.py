@@ -27,7 +27,7 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from db.base import Base
+from db.base import Base, enum_values
 
 
 class ProviderType(str, enum.Enum):
@@ -75,7 +75,7 @@ class Provider(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     provider_type: Mapped[ProviderType] = mapped_column(
-        Enum(ProviderType, name="providertype"), nullable=False
+        Enum(ProviderType, values_callable=enum_values, name="providertype"), nullable=False
     )
     display_name: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
     api_key_encrypted: Mapped[bytes | None] = mapped_column(LargeBinary, nullable=True)
@@ -170,7 +170,7 @@ class Agent(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     task_type: Mapped[AgentTaskType] = mapped_column(
-        Enum(AgentTaskType, name="agenttasktype"), nullable=False
+        Enum(AgentTaskType, values_callable=enum_values, name="agenttasktype"), nullable=False
     )
     role_name: Mapped[str] = mapped_column(String(100), nullable=False)
     role_description: Mapped[str] = mapped_column(Text, nullable=False)

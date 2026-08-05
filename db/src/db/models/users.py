@@ -16,7 +16,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from db.base import Base
+from db.base import Base, enum_values
 
 
 class GroupRole(str, enum.Enum):
@@ -73,7 +73,7 @@ class User(Base):
 
     # --- Display preference ---
     theme_preference: Mapped[ThemePreference] = mapped_column(
-        Enum(ThemePreference, name="theme_preference_enum"),
+        Enum(ThemePreference, values_callable=enum_values, name="theme_preference_enum"),
         nullable=False,
         default=ThemePreference.SYSTEM,
         server_default=ThemePreference.SYSTEM.value,
@@ -140,7 +140,9 @@ class GroupMembership(Base):
         Integer, ForeignKey("user.id", ondelete="CASCADE"), primary_key=True
     )
     role: Mapped[GroupRole] = mapped_column(
-        Enum(GroupRole, name="group_role_enum"), nullable=False, default=GroupRole.MEMBER
+        Enum(GroupRole, values_callable=enum_values, name="group_role_enum"),
+        nullable=False,
+        default=GroupRole.MEMBER,
     )
     joined_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()

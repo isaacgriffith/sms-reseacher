@@ -36,7 +36,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.types import JSON
 
-from db.base import Base
+from db.base import Base, enum_values
 
 
 class ReviewProtocolStatus(str, enum.Enum):
@@ -116,7 +116,7 @@ class ReviewProtocol(Base):
         index=True,
     )
     status: Mapped[ReviewProtocolStatus] = mapped_column(
-        Enum(ReviewProtocolStatus, name="review_protocol_status_enum"),
+        Enum(ReviewProtocolStatus, values_callable=enum_values, name="review_protocol_status_enum"),
         nullable=False,
         default=ReviewProtocolStatus.DRAFT,
         server_default=ReviewProtocolStatus.DRAFT.value,
@@ -134,7 +134,7 @@ class ReviewProtocol(Base):
     exclusion_criteria: Mapped[list | None] = mapped_column(JSON, nullable=True)
     data_extraction_strategy: Mapped[str | None] = mapped_column(Text, nullable=True)
     synthesis_approach: Mapped[SynthesisApproach | None] = mapped_column(
-        Enum(SynthesisApproach, name="synthesis_approach_enum"),
+        Enum(SynthesisApproach, values_callable=enum_values, name="synthesis_approach_enum"),
         nullable=True,
     )
     dissemination_strategy: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -222,7 +222,11 @@ class QualityChecklistItem(Base):
     order: Mapped[int] = mapped_column(Integer, nullable=False)
     question: Mapped[str] = mapped_column(Text, nullable=False)
     scoring_method: Mapped[ChecklistScoringMethod] = mapped_column(
-        Enum(ChecklistScoringMethod, name="checklist_scoring_method_enum"),
+        Enum(
+            ChecklistScoringMethod,
+            values_callable=enum_values,
+            name="checklist_scoring_method_enum",
+        ),
         nullable=False,
     )
     weight: Mapped[float] = mapped_column(Float, nullable=False, default=1.0, server_default="1.0")
@@ -340,7 +344,7 @@ class InterRaterAgreementRecord(Base):
         nullable=False,
     )
     round_type: Mapped[AgreementRoundType] = mapped_column(
-        Enum(AgreementRoundType, name="agreement_round_type_enum"),
+        Enum(AgreementRoundType, values_callable=enum_values, name="agreement_round_type_enum"),
         nullable=False,
     )
     phase: Mapped[str] = mapped_column(
@@ -385,11 +389,11 @@ class SynthesisResult(Base):
         index=True,
     )
     approach: Mapped[SynthesisApproach] = mapped_column(
-        Enum(SynthesisApproach, name="synthesis_approach_enum"),
+        Enum(SynthesisApproach, values_callable=enum_values, name="synthesis_approach_enum"),
         nullable=False,
     )
     status: Mapped[SynthesisStatus] = mapped_column(
-        Enum(SynthesisStatus, name="synthesis_status_enum"),
+        Enum(SynthesisStatus, values_callable=enum_values, name="synthesis_status_enum"),
         nullable=False,
         default=SynthesisStatus.PENDING,
         server_default=SynthesisStatus.PENDING.value,
@@ -457,7 +461,7 @@ class GreyLiteratureSource(Base):
         index=True,
     )
     source_type: Mapped[GreyLiteratureType] = mapped_column(
-        Enum(GreyLiteratureType, name="grey_literature_type_enum"),
+        Enum(GreyLiteratureType, values_callable=enum_values, name="grey_literature_type_enum"),
         nullable=False,
     )
     title: Mapped[str] = mapped_column(String(1024), nullable=False)

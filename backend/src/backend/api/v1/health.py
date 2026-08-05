@@ -1,9 +1,8 @@
 """Health-check endpoint."""
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter
 from pydantic import BaseModel
 
-from backend.core.auth import CurrentUser, get_current_user
 from backend.core.config import get_logger, get_settings
 
 router = APIRouter(tags=["health"])
@@ -18,13 +17,16 @@ class HealthResponse(BaseModel):
 
 
 @router.get("/health", response_model=HealthResponse, summary="Health check")
-async def health(
-    _current_user: CurrentUser = Depends(get_current_user),
-) -> HealthResponse:
+async def health() -> HealthResponse:
     """Return application health status.
 
-    Args:
-        _current_user: Injected via auth stub (unused in MVP).
+    Deliberately unauthenticated: this endpoint is polled by infrastructure
+    that has no credentials — the Docker Compose healthcheck, container
+    orchestrators, load balancers, and CI readiness probes. Requiring a JWT
+    made every one of those report the service as permanently unhealthy.
+
+    It exposes only liveness and the application version, no user or
+    system data.
 
     Returns:
         A :class:`HealthResponse` with ``status="ok"`` and the

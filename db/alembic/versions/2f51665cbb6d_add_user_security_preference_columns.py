@@ -35,7 +35,9 @@ def upgrade() -> None:
     op.create_table('security_audit_event',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('user_id', sa.Integer(), nullable=False),
-    sa.Column('event_type', sa.Enum('PASSWORD_CHANGED', 'TOTP_ENABLED', 'TOTP_DISABLED', 'BACKUP_CODES_REGENERATED', 'TOTP_LOCKED', name='security_event_type_enum'), nullable=False),
+    # Labels are the member VALUES — the ORM persists values via
+    # db.base.enum_values (see SecurityEventType).
+    sa.Column('event_type', sa.Enum('password_changed', 'totp_enabled', 'totp_disabled', 'backup_codes_regenerated', 'totp_locked', name='security_event_type_enum'), nullable=False),
     sa.Column('ip_address', sa.String(length=45), nullable=True),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=False),
@@ -46,11 +48,11 @@ def upgrade() -> None:
     # op.add_column() does not emit CREATE TYPE the way op.create_table() does,
     # so the enum must be created explicitly before the column references it.
     # No-op on backends without native enums (SQLite renders VARCHAR + CHECK).
-    # Labels are the member NAMES because Enum(ThemePreference) in
-    # db.models.users persists names, not values.
-    theme_preference_enum = sa.Enum('LIGHT', 'DARK', 'SYSTEM', name='theme_preference_enum')
+    # Labels are the member VALUES — the ORM persists values via
+    # db.base.enum_values, and the REST API serialises .value too.
+    theme_preference_enum = sa.Enum('light', 'dark', 'system', name='theme_preference_enum')
     theme_preference_enum.create(op.get_bind(), checkfirst=True)
-    op.add_column('user', sa.Column('theme_preference', theme_preference_enum, server_default='SYSTEM', nullable=False))
+    op.add_column('user', sa.Column('theme_preference', theme_preference_enum, server_default='system', nullable=False))
     op.add_column('user', sa.Column('token_version', sa.Integer(), server_default='0', nullable=False))
     op.add_column('user', sa.Column('totp_enabled', sa.Boolean(), server_default='0', nullable=False))
     op.add_column('user', sa.Column('totp_secret_encrypted', sa.Text(), nullable=True))

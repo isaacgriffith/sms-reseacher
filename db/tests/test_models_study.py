@@ -177,19 +177,20 @@ class TestReviewerModel:
         r = Reviewer(study_id=1, reviewer_type=ReviewerType.HUMAN, user_id=5)
         assert r.reviewer_type == ReviewerType.HUMAN
         assert r.user_id == 5
-        assert r.agent_name is None
+        assert r.agent_config is None
 
     def test_instantiates_as_ai_agent(self) -> None:
         """Reviewer can be constructed as an AI agent reviewer."""
         r = Reviewer(
             study_id=1,
             reviewer_type=ReviewerType.AI_AGENT,
-            agent_name="ScreenerAgent",
-            agent_config={"model": "claude-sonnet-4-6"},
+            agent_config={"agent_name": "ScreenerAgent", "model": "claude-sonnet-4-6"},
         )
         assert r.reviewer_type == ReviewerType.AI_AGENT
-        assert r.agent_name == "ScreenerAgent"
-        assert r.agent_config == {"model": "claude-sonnet-4-6"}
+        assert r.agent_config == {
+            "agent_name": "ScreenerAgent",
+            "model": "claude-sonnet-4-6",
+        }
         assert r.user_id is None
 
     def test_repr_contains_study_and_type(self) -> None:
@@ -217,7 +218,7 @@ class TestReviewerModel:
 
     @pytest.mark.asyncio
     async def test_persists_ai_reviewer(self, session) -> None:
-        """AI agent Reviewer row is persisted with agent_name and agent_config."""
+        """AI agent Reviewer row is persisted with agent_config."""
         study = Study(name="AI Study", study_type=StudyType.SMS)
         session.add(study)
         await session.flush()
@@ -225,14 +226,13 @@ class TestReviewerModel:
         reviewer = Reviewer(
             study_id=study.id,
             reviewer_type=ReviewerType.AI_AGENT,
-            agent_name="Screener",
-            agent_config={"threshold": 0.8},
+            agent_config={"agent_name": "Screener", "threshold": 0.8},
         )
         session.add(reviewer)
         await session.commit()
         await session.refresh(reviewer)
         assert reviewer.id is not None
-        assert reviewer.agent_name == "Screener"
+        assert reviewer.agent_config == {"agent_name": "Screener", "threshold": 0.8}
 
     @pytest.mark.asyncio
     async def test_created_at_is_set_on_persist(self, session) -> None:
@@ -244,7 +244,7 @@ class TestReviewerModel:
         reviewer = Reviewer(
             study_id=study.id,
             reviewer_type=ReviewerType.AI_AGENT,
-            agent_name="TS Agent",
+            agent_config={"agent_name": "TS Agent"},
         )
         session.add(reviewer)
         await session.commit()

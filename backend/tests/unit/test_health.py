@@ -66,12 +66,18 @@ class TestHealthEndpoint:
         response = await client.get("/api/v1/health")
         assert "application/json" in response.headers["content-type"]
 
-    async def test_health_unauthenticated_returns_401(self) -> None:
-        """Health endpoint returns 401 without a valid token."""
+    async def test_health_unauthenticated_returns_200(self) -> None:
+        """Health endpoint is public — infrastructure probes carry no token.
+
+        The Docker Compose healthcheck, orchestrator probes and CI readiness
+        checks all call this without credentials; requiring a JWT reported the
+        service as permanently unhealthy.
+        """
         app = create_app()
         async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
             response = await c.get("/api/v1/health")
-        assert response.status_code == 401
+        assert response.status_code == 200
+        assert response.json()["status"] == "ok"
 
     async def test_health_with_auth_override_returns_200(self) -> None:
         """Health endpoint returns 200 when auth dependency is satisfied.

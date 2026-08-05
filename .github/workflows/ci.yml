@@ -262,8 +262,11 @@ jobs:
         run: |
           uv run uvicorn backend.main:app --host 127.0.0.1 --port 8000 \
             > "${RUNNER_TEMP}/backend.log" 2>&1 &
+          # /api/v1/health requires auth and answers 401, so this is a
+          # liveness probe: any HTTP response means uvicorn is accepting
+          # connections. `curl -f` would reject the 401 and never succeed.
           for i in $(seq 1 60); do
-            if curl -fsS http://127.0.0.1:8000/api/v1/health > /dev/null; then
+            if curl -s -o /dev/null --max-time 2 http://127.0.0.1:8000/api/v1/health; then
               echo "backend ready after ${i}s"; exit 0
             fi
             sleep 1

@@ -27,7 +27,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.types import JSON
 
-from db.base import Base
+from db.base import Base, enum_values
 
 
 class TertiaryProtocolStatus(str, enum.Enum):
@@ -73,7 +73,11 @@ class TertiaryStudyProtocol(Base):
 
     # Lifecycle
     status: Mapped[TertiaryProtocolStatus] = mapped_column(
-        Enum(TertiaryProtocolStatus, name="tertiary_protocol_status_enum"),
+        Enum(
+            TertiaryProtocolStatus,
+            values_callable=enum_values,
+            name="tertiary_protocol_status_enum",
+        ),
         nullable=False,
         default=TertiaryProtocolStatus.DRAFT,
         server_default=TertiaryProtocolStatus.DRAFT.value,
@@ -193,7 +197,7 @@ class TertiaryDataExtraction(Base):
 
     # Secondary-study-specific extraction fields
     secondary_study_type: Mapped[SecondaryStudyType | None] = mapped_column(
-        Enum(SecondaryStudyType, name="secondary_study_type_enum"),
+        Enum(SecondaryStudyType, values_callable=enum_values, name="secondary_study_type_enum"),
         nullable=True,
     )
     research_questions_addressed: Mapped[list | None] = mapped_column(JSON, nullable=True)

@@ -45,7 +45,7 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.types import JSON
 
-from db.base import Base
+from db.base import Base, enum_values
 
 # ---------------------------------------------------------------------------
 # Enumerations
@@ -255,7 +255,8 @@ class ProtocolNode(Base):
     )
     task_id: Mapped[str] = mapped_column(String(100), nullable=False)
     task_type: Mapped[ProtocolTaskType] = mapped_column(
-        Enum(ProtocolTaskType, name="protocol_task_type_enum"), nullable=False
+        Enum(ProtocolTaskType, values_callable=enum_values, name="protocol_task_type_enum"),
+        nullable=False,
     )
     label: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -315,7 +316,7 @@ class ProtocolNodeInput(Base):
     )
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     data_type: Mapped[NodeDataType] = mapped_column(
-        Enum(NodeDataType, name="node_data_type_enum"), nullable=False
+        Enum(NodeDataType, values_callable=enum_values, name="node_data_type_enum"), nullable=False
     )
     is_required: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=True, server_default="true"
@@ -343,7 +344,7 @@ class ProtocolNodeOutput(Base):
     )
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     data_type: Mapped[NodeDataType] = mapped_column(
-        Enum(NodeDataType, name="node_data_type_enum"), nullable=False
+        Enum(NodeDataType, values_callable=enum_values, name="node_data_type_enum"), nullable=False
     )
 
     node: Mapped[ProtocolNode] = relationship("ProtocolNode", back_populates="outputs")
@@ -374,7 +375,8 @@ class QualityGate(Base):
         index=True,
     )
     gate_type: Mapped[QualityGateType] = mapped_column(
-        Enum(QualityGateType, name="quality_gate_type_enum"), nullable=False
+        Enum(QualityGateType, values_callable=enum_values, name="quality_gate_type_enum"),
+        nullable=False,
     )
     config: Mapped[dict] = mapped_column(JSON, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
@@ -406,7 +408,8 @@ class NodeAssignee(Base):
         index=True,
     )
     assignee_type: Mapped[NodeAssigneeType] = mapped_column(
-        Enum(NodeAssigneeType, name="node_assignee_type_enum"), nullable=False
+        Enum(NodeAssigneeType, values_callable=enum_values, name="node_assignee_type_enum"),
+        nullable=False,
     )
     role: Mapped[str | None] = mapped_column(String(100), nullable=True)
     agent_id: Mapped[uuid.UUID | None] = mapped_column(
@@ -460,7 +463,10 @@ class ProtocolEdge(Base):
     target_input_name: Mapped[str] = mapped_column(String(100), nullable=False)
     condition_output_name: Mapped[str | None] = mapped_column(String(100), nullable=True)
     condition_operator: Mapped[EdgeConditionOperator | None] = mapped_column(
-        Enum(EdgeConditionOperator, name="edge_condition_operator_enum"), nullable=True
+        Enum(
+            EdgeConditionOperator, values_callable=enum_values, name="edge_condition_operator_enum"
+        ),
+        nullable=True,
     )
     condition_value: Mapped[float | None] = mapped_column(Float, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
@@ -548,7 +554,7 @@ class TaskExecutionState(Base):
         nullable=False,
     )
     status: Mapped[TaskNodeStatus] = mapped_column(
-        Enum(TaskNodeStatus, name="task_node_status_enum"),
+        Enum(TaskNodeStatus, values_callable=enum_values, name="task_node_status_enum"),
         nullable=False,
         default=TaskNodeStatus.PENDING,
         server_default=TaskNodeStatus.PENDING.value,

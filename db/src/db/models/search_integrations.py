@@ -28,7 +28,7 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from db.base import Base
+from db.base import Base, enum_values
 
 
 class DatabaseIndex(str, enum.Enum):
@@ -124,7 +124,7 @@ class StudyDatabaseSelection(Base):
         index=True,
     )
     database_index: Mapped[DatabaseIndex] = mapped_column(
-        Enum(DatabaseIndex, name="databaseindex"),
+        Enum(DatabaseIndex, values_callable=enum_values, name="databaseindex"),
         nullable=False,
     )
     is_enabled: Mapped[bool] = mapped_column(
@@ -165,7 +165,7 @@ class SearchIntegrationCredential(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     integration_type: Mapped[IntegrationType] = mapped_column(
-        Enum(IntegrationType, name="integrationtype"),
+        Enum(IntegrationType, values_callable=enum_values, name="integrationtype"),
         nullable=False,
         unique=True,
     )
@@ -186,7 +186,7 @@ class SearchIntegrationCredential(Base):
     )
     last_tested_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     last_test_status: Mapped[TestStatus | None] = mapped_column(
-        Enum(TestStatus, name="teststatus"),
+        Enum(TestStatus, values_callable=enum_values, name="teststatus"),
         nullable=True,
         default=TestStatus.UNTESTED,
     )

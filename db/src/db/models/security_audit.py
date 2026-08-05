@@ -6,7 +6,7 @@ from datetime import datetime
 from sqlalchemy import DateTime, Enum, ForeignKey, Integer, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from db.base import Base
+from db.base import Base, enum_values
 
 
 class SecurityEventType(str, enum.Enum):
@@ -34,7 +34,8 @@ class SecurityAuditEvent(Base):
         Integer, ForeignKey("user.id", ondelete="CASCADE"), nullable=False, index=True
     )
     event_type: Mapped[SecurityEventType] = mapped_column(
-        Enum(SecurityEventType, name="security_event_type_enum"), nullable=False
+        Enum(SecurityEventType, values_callable=enum_values, name="security_event_type_enum"),
+        nullable=False,
     )
     ip_address: Mapped[str | None] = mapped_column(String(45), nullable=True)
     created_at: Mapped[datetime] = mapped_column(

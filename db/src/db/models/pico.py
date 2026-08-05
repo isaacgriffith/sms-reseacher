@@ -7,7 +7,7 @@ from sqlalchemy import DateTime, Enum, ForeignKey, Integer, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.types import JSON
 
-from db.base import Base
+from db.base import Base, enum_values
 
 
 class PICOVariant(str, enum.Enum):
@@ -30,7 +30,7 @@ class PICOComponent(Base):
         Integer, ForeignKey("study.id", ondelete="CASCADE"), nullable=False, unique=True, index=True
     )
     variant: Mapped[PICOVariant] = mapped_column(
-        Enum(PICOVariant, name="pico_variant_enum"), nullable=False
+        Enum(PICOVariant, values_callable=enum_values, name="pico_variant_enum"), nullable=False
     )
     population: Mapped[str | None] = mapped_column(Text, nullable=True)
     intervention: Mapped[str | None] = mapped_column(Text, nullable=True)

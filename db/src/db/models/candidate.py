@@ -6,7 +6,7 @@ from datetime import datetime
 from sqlalchemy import JSON, DateTime, Enum, ForeignKey, Integer, String, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column
 
-from db.base import Base
+from db.base import Base, enum_values
 
 
 class CandidatePaperStatus(str, enum.Enum):
@@ -49,7 +49,7 @@ class CandidatePaper(Base):
     )
     phase_tag: Mapped[str] = mapped_column(String(64), nullable=False)
     current_status: Mapped[CandidatePaperStatus] = mapped_column(
-        Enum(CandidatePaperStatus, name="candidate_paper_status_enum"),
+        Enum(CandidatePaperStatus, values_callable=enum_values, name="candidate_paper_status_enum"),
         nullable=False,
         default=CandidatePaperStatus.PENDING,
         server_default=CandidatePaperStatus.PENDING.value,
@@ -100,7 +100,8 @@ class PaperDecision(Base):
         ForeignKey("reviewer.id", ondelete="CASCADE"), nullable=False
     )
     decision: Mapped[PaperDecisionType] = mapped_column(
-        Enum(PaperDecisionType, name="paper_decision_type_enum"), nullable=False
+        Enum(PaperDecisionType, values_callable=enum_values, name="paper_decision_type_enum"),
+        nullable=False,
     )
     reasons: Mapped[list | None] = mapped_column(JSON, nullable=True)
     is_override: Mapped[bool] = mapped_column(

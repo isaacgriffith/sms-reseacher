@@ -283,8 +283,13 @@ async def create_study(
                 study_id=study.id,
                 reviewer_type=rv_type,
                 user_id=rev.user_id,
-                agent_name=rev.agent_name,
-                agent_config=rev.agent_config,
+                # agent_name has no column since migration 0013 — preserve the
+                # caller's value inside agent_config instead of dropping it.
+                agent_config=(
+                    rev.agent_config
+                    if rev.agent_config is not None
+                    else ({"agent_name": rev.agent_name} if rev.agent_name else None)
+                ),
             )
         )
 

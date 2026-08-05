@@ -1,5 +1,6 @@
 """Declarative base and async engine factory for SMS Researcher."""
 
+import enum
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
@@ -10,6 +11,26 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 from sqlalchemy.orm import DeclarativeBase
+
+
+def enum_values(enum_cls: type[enum.Enum]) -> list[str]:
+    """Return the *values* of ``enum_cls`` for SQLAlchemy's ``values_callable``.
+
+    By default ``sqlalchemy.Enum(SomePyEnum)`` persists member **names**
+    (``ADMIN``), but every Alembic migration creates the PostgreSQL type from
+    member **values** (``admin``) — and the REST API serialises ``.value`` too.
+    Without this, any insert touching an enum column fails on PostgreSQL with
+    ``invalid input value for enum ...``. SQLite hides the mismatch because it
+    renders enums as VARCHAR + CHECK built from the same names it sends.
+
+    Args:
+        enum_cls: The Python enumeration backing the column.
+
+    Returns:
+        The member values, in declaration order.
+
+    """
+    return [member.value for member in enum_cls]
 
 
 class Base(DeclarativeBase):

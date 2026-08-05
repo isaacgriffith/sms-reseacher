@@ -6,7 +6,7 @@ from datetime import datetime
 from sqlalchemy import JSON, DateTime, Enum, ForeignKey, Integer, SmallInteger, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
 
-from db.base import Base
+from db.base import Base, enum_values
 
 
 class ChartType(str, enum.Enum):
@@ -70,7 +70,7 @@ class ClassificationScheme(Base):
         ForeignKey("study.id", ondelete="CASCADE"), nullable=False, index=True
     )
     chart_type: Mapped[ChartType] = mapped_column(
-        Enum(ChartType, name="chart_type_enum"), nullable=False
+        Enum(ChartType, values_callable=enum_values, name="chart_type_enum"), nullable=False
     )
     version: Mapped[int] = mapped_column(
         SmallInteger, nullable=False, default=1, server_default="1"

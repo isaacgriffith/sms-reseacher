@@ -7,7 +7,7 @@ from sqlalchemy import DateTime, Enum, ForeignKey, Index, Integer, String, func
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.types import JSON
 
-from db.base import Base
+from db.base import Base, enum_values
 
 
 class AuditAction(str, enum.Enum):
@@ -54,7 +54,7 @@ class AuditRecord(Base):
     entity_type: Mapped[str] = mapped_column(String(64), nullable=False)
     entity_id: Mapped[int] = mapped_column(Integer, nullable=False)
     action: Mapped[AuditAction] = mapped_column(
-        Enum(AuditAction, name="audit_action_enum"), nullable=False
+        Enum(AuditAction, values_callable=enum_values, name="audit_action_enum"), nullable=False
     )
     field_name: Mapped[str | None] = mapped_column(String(128), nullable=True)
     before_value: Mapped[dict | None] = mapped_column(JSON, nullable=True)

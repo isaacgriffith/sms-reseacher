@@ -6,7 +6,7 @@ from datetime import datetime
 from sqlalchemy import JSON, DateTime, Enum, ForeignKey, SmallInteger, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
 
-from db.base import Base
+from db.base import Base, enum_values
 
 
 class JobType(str, enum.Enum):
@@ -42,10 +42,10 @@ class BackgroundJob(Base):
         ForeignKey("study.id", ondelete="CASCADE"), nullable=False, index=True
     )
     job_type: Mapped[JobType] = mapped_column(
-        Enum(JobType, name="background_job_type_enum"), nullable=False
+        Enum(JobType, values_callable=enum_values, name="background_job_type_enum"), nullable=False
     )
     status: Mapped[JobStatus] = mapped_column(
-        Enum(JobStatus, name="background_job_status_enum"),
+        Enum(JobStatus, values_callable=enum_values, name="background_job_status_enum"),
         nullable=False,
         default=JobStatus.QUEUED,
         server_default=JobStatus.QUEUED.value,

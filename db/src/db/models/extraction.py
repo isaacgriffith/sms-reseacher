@@ -17,7 +17,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column
 
-from db.base import Base
+from db.base import Base, enum_values
 
 
 class ResearchType(str, enum.Enum):
@@ -58,7 +58,7 @@ class DataExtraction(Base):
         ForeignKey("candidate_paper.id", ondelete="CASCADE"), nullable=False, index=True
     )
     research_type: Mapped[ResearchType] = mapped_column(
-        Enum(ResearchType, name="research_type_enum"),
+        Enum(ResearchType, values_callable=enum_values, name="research_type_enum"),
         nullable=False,
         default=ResearchType.UNKNOWN,
         server_default=ResearchType.UNKNOWN.value,
@@ -73,7 +73,7 @@ class DataExtraction(Base):
     keywords: Mapped[list | None] = mapped_column(JSON, nullable=True)
     question_data: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     extraction_status: Mapped[ExtractionStatus] = mapped_column(
-        Enum(ExtractionStatus, name="extraction_status_enum"),
+        Enum(ExtractionStatus, values_callable=enum_values, name="extraction_status_enum"),
         nullable=False,
         default=ExtractionStatus.PENDING,
         server_default=ExtractionStatus.PENDING.value,

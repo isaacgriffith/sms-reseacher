@@ -536,7 +536,11 @@ async def _get_or_create_ai_reviewer(db: AsyncSession, study_id: int) -> Any:
     )
     reviewer = result.scalars().first()
     if reviewer is None:
-        reviewer = Reviewer(study_id=study_id, reviewer_type="ai_agent", agent_name="screener")
+        reviewer = Reviewer(
+            study_id=study_id,
+            reviewer_type="ai_agent",
+            agent_config={"agent_name": "screener"},
+        )
         db.add(reviewer)
         await db.flush()
     return reviewer

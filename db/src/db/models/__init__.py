@@ -99,7 +99,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.types import JSON
 
-from db.base import Base
+from db.base import Base, enum_values
 
 # Feature 005: provider/model/agent models.
 from db.models.agents import Agent as Agent  # noqa: F401
@@ -239,10 +239,10 @@ class Study(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     study_type: Mapped[StudyType] = mapped_column(
-        Enum(StudyType, name="study_type_enum"), nullable=False
+        Enum(StudyType, values_callable=enum_values, name="study_type_enum"), nullable=False
     )
     status: Mapped[StudyStatus] = mapped_column(
-        Enum(StudyStatus, name="study_status_enum"),
+        Enum(StudyStatus, values_callable=enum_values, name="study_status_enum"),
         nullable=False,
         default=StudyStatus.DRAFT,
         server_default=StudyStatus.DRAFT.value,
@@ -353,7 +353,7 @@ class StudyPaper(Base):
         Integer, ForeignKey("paper.id", ondelete="CASCADE"), nullable=False, primary_key=True
     )
     inclusion_status: Mapped[InclusionStatus | None] = mapped_column(
-        Enum(InclusionStatus, name="inclusion_status_enum"),
+        Enum(InclusionStatus, values_callable=enum_values, name="inclusion_status_enum"),
         nullable=True,
         default=InclusionStatus.PENDING,
     )
