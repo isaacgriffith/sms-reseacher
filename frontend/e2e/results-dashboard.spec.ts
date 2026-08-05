@@ -59,7 +59,7 @@ test.describe('Results dashboard', () => {
 
   test('clicking Charts tab shows chart gallery', async ({ page }) => {
     const chartsTab = page.getByRole('button', { name: /charts/i });
-    if (await chartsTab.isVisible({ timeout: 5_000 }).catch(() => false)) {
+    if (await chartsTab.isEnabled({ timeout: 5_000 }).catch(() => false)) {
       await chartsTab.click();
       // Chart gallery should render — look for SVG, canvas, or chart labels
       await expect(
@@ -76,7 +76,7 @@ test.describe('Results dashboard', () => {
 
   test('clicking Domain Model tab shows graph or empty state', async ({ page }) => {
     const domainTab = page.getByRole('button', { name: /domain model/i });
-    if (await domainTab.isVisible({ timeout: 5_000 }).catch(() => false)) {
+    if (await domainTab.isEnabled({ timeout: 5_000 }).catch(() => false)) {
       await domainTab.click();
       await expect(
         page
@@ -92,7 +92,7 @@ test.describe('Results dashboard', () => {
 
   test('clicking Export tab shows export panel', async ({ page }) => {
     const exportTab = page.getByRole('button', { name: /export/i });
-    if (await exportTab.isVisible({ timeout: 5_000 }).catch(() => false)) {
+    if (await exportTab.isEnabled({ timeout: 5_000 }).catch(() => false)) {
       await exportTab.click();
       await expect(page.getByText(/export|download|format/i).first()).toBeVisible({
         timeout: 8_000,
@@ -104,11 +104,11 @@ test.describe('Results dashboard', () => {
 
   test('export button triggers download or job', async ({ page }) => {
     const exportTab = page.getByRole('button', { name: /export/i });
-    if (await exportTab.isVisible({ timeout: 5_000 }).catch(() => false)) {
+    if (await exportTab.isEnabled({ timeout: 5_000 }).catch(() => false)) {
       await exportTab.click();
 
       const generateBtn = page.getByRole('button', { name: /generate|export now|start export/i });
-      if (await generateBtn.isVisible({ timeout: 3_000 }).catch(() => false)) {
+      if (await generateBtn.isEnabled({ timeout: 3_000 }).catch(() => false)) {
         // Listen for download or job queued indicator
         const [downloadOrJobPromise] = await Promise.allSettled([
           page.waitForEvent('download', { timeout: 5_000 }),

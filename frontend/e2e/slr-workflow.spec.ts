@@ -37,10 +37,15 @@ async function createSLRStudy(page: import('@playwright/test').Page): Promise<st
     await topicField.fill('Systematic literature review e2e test');
   }
 
-  // Select SLR study type if the wizard exposes a type selector
-  const slrOption = page.getByRole('radio', { name: /slr|systematic literature review/i });
-  if (await slrOption.isVisible()) {
-    await slrOption.click();
+  // Study type is a native <select> in NewStudyWizard (defaults to SMS), not a
+  // radio group — without this the study is created as SMS and no SLR
+  // Protocol tab is ever rendered.
+  const typeSelect = page
+    .getByLabel(/study type/i)
+    .or(page.locator('select'))
+    .first();
+  if (await typeSelect.isEnabled({ timeout: 5_000 }).catch(() => false)) {
+    await typeSelect.selectOption('SLR');
   }
 
   // Step through wizard
@@ -82,8 +87,11 @@ test.describe('SLR workflow — happy path', () => {
 
     // Protocol tab should be visible for SLR studies
     const protocolTab = page
-      .getByRole('tab', { name: /protocol/i })
-      .or(page.getByRole('button', { name: /protocol/i }))
+      // The SLR review-protocol form renders at activePhase === 1
+      // ("Phase 1: Scoping"). "Phase 0: Protocol" is the feature-010 protocol
+      // *graph* editor, which is a different screen.
+      .getByRole('tab', { name: /scoping/i })
+      .or(page.getByRole('button', { name: /phase 1: scoping/i }))
       .first();
     await expect(protocolTab).toBeVisible({ timeout: 8_000 });
   });
@@ -95,10 +103,13 @@ test.describe('SLR workflow — happy path', () => {
 
     // Navigate to Protocol tab
     const protocolTab = page
-      .getByRole('tab', { name: /protocol/i })
-      .or(page.getByRole('button', { name: /protocol/i }))
+      // The SLR review-protocol form renders at activePhase === 1
+      // ("Phase 1: Scoping"). "Phase 0: Protocol" is the feature-010 protocol
+      // *graph* editor, which is a different screen.
+      .getByRole('tab', { name: /scoping/i })
+      .or(page.getByRole('button', { name: /phase 1: scoping/i }))
       .first();
-    if (await protocolTab.isVisible({ timeout: 5_000 }).catch(() => false)) {
+    if (await protocolTab.isEnabled({ timeout: 5_000 }).catch(() => false)) {
       await protocolTab.click();
     }
 
@@ -123,10 +134,13 @@ test.describe('SLR workflow — happy path', () => {
     await page.waitForURL('**/studies/**');
 
     const protocolTab = page
-      .getByRole('tab', { name: /protocol/i })
-      .or(page.getByRole('button', { name: /protocol/i }))
+      // The SLR review-protocol form renders at activePhase === 1
+      // ("Phase 1: Scoping"). "Phase 0: Protocol" is the feature-010 protocol
+      // *graph* editor, which is a different screen.
+      .getByRole('tab', { name: /scoping/i })
+      .or(page.getByRole('button', { name: /phase 1: scoping/i }))
       .first();
-    if (await protocolTab.isVisible({ timeout: 5_000 }).catch(() => false)) {
+    if (await protocolTab.isEnabled({ timeout: 5_000 }).catch(() => false)) {
       await protocolTab.click();
     }
 
@@ -149,7 +163,7 @@ test.describe('SLR workflow — happy path', () => {
       .or(page.getByRole('button', { name: /search databases/i }))
       .first();
 
-    if (await searchTab.isVisible({ timeout: 5_000 }).catch(() => false)) {
+    if (await searchTab.isEnabled({ timeout: 5_000 }).catch(() => false)) {
       // If visible, it should be disabled
       await expect(searchTab).toBeDisabled();
     }
@@ -170,7 +184,7 @@ test.describe('SLR workflow — happy path', () => {
       .or(page.getByRole('button', { name: /screening/i }))
       .first();
 
-    if (await screenTab.isVisible({ timeout: 5_000 }).catch(() => false)) {
+    if (await screenTab.isEnabled({ timeout: 5_000 }).catch(() => false)) {
       await expect(screenTab).toBeDisabled();
     }
   });
@@ -189,7 +203,7 @@ test.describe('SLR workflow — happy path', () => {
       .or(page.getByRole('button', { name: /quality assessment/i }))
       .first();
 
-    if (await qaTab.isVisible({ timeout: 5_000 }).catch(() => false)) {
+    if (await qaTab.isEnabled({ timeout: 5_000 }).catch(() => false)) {
       await expect(qaTab).toBeDisabled();
     }
   });
@@ -208,7 +222,7 @@ test.describe('SLR workflow — happy path', () => {
       .or(page.getByRole('button', { name: /synthesis/i }))
       .first();
 
-    if (await synthTab.isVisible({ timeout: 5_000 }).catch(() => false)) {
+    if (await synthTab.isEnabled({ timeout: 5_000 }).catch(() => false)) {
       await expect(synthTab).toBeDisabled();
     }
   });
@@ -227,7 +241,7 @@ test.describe('SLR workflow — happy path', () => {
       .or(page.getByRole('button', { name: /export report|report/i }))
       .first();
 
-    if (await reportTab.isVisible({ timeout: 5_000 }).catch(() => false)) {
+    if (await reportTab.isEnabled({ timeout: 5_000 }).catch(() => false)) {
       await reportTab.click();
       // Should show format selector and download button
       const downloadBtn = page.getByRole('button', { name: /download report/i }).first();
@@ -249,7 +263,7 @@ test.describe('SLR workflow — happy path', () => {
       .or(page.getByRole('button', { name: /grey literature/i }))
       .first();
 
-    if (await greyLitTab.isVisible({ timeout: 5_000 }).catch(() => false)) {
+    if (await greyLitTab.isEnabled({ timeout: 5_000 }).catch(() => false)) {
       await greyLitTab.click();
       const addBtn = page.getByRole('button', { name: /add source/i }).first();
       await expect(addBtn).toBeVisible({ timeout: 8_000 });

@@ -196,6 +196,10 @@ export default function StudyPage() {
           return (
             <Button
               key={phase}
+              // Locked phases were only styled as unavailable (cursor + 🔒),
+              // leaving them focusable and announcing nothing to assistive
+              // technology. disabled gives them real semantics.
+              disabled={!isUnlocked}
               onClick={() => isUnlocked && setActivePhase(phase)}
               sx={{
                 padding: '0.625rem 1rem',

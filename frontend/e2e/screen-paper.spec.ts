@@ -51,7 +51,7 @@ test.describe('Screen paper (Phase 3)', () => {
   test('accept button is present when papers are queued', async ({ page }) => {
     // If there are papers, accept/reject buttons should be present
     const acceptBtn = page.getByRole('button', { name: /accept/i }).first();
-    if (await acceptBtn.isVisible({ timeout: 5_000 }).catch(() => false)) {
+    if (await acceptBtn.isEnabled({ timeout: 5_000 }).catch(() => false)) {
       await expect(acceptBtn).toBeEnabled();
     } else {
       // No papers in queue — verify empty state message
@@ -63,7 +63,7 @@ test.describe('Screen paper (Phase 3)', () => {
 
   test('reject button is present when papers are queued', async ({ page }) => {
     const rejectBtn = page.getByRole('button', { name: /reject/i }).first();
-    if (await rejectBtn.isVisible({ timeout: 5_000 }).catch(() => false)) {
+    if (await rejectBtn.isEnabled({ timeout: 5_000 }).catch(() => false)) {
       await expect(rejectBtn).toBeEnabled();
     } else {
       // Acceptable — no papers to reject
@@ -74,7 +74,7 @@ test.describe('Screen paper (Phase 3)', () => {
   test('job progress panel is visible during a screening run', async ({ page }) => {
     // Trigger a screening job if a "Run" button is available
     const runBtn = page.getByRole('button', { name: /run screening|start screen/i }).first();
-    if (await runBtn.isVisible({ timeout: 3_000 }).catch(() => false)) {
+    if (await runBtn.isEnabled({ timeout: 3_000 }).catch(() => false)) {
       await runBtn.click();
       await expect(page.getByText(/running|queued|progress/i).first()).toBeVisible({
         timeout: 10_000,
@@ -82,7 +82,7 @@ test.describe('Screen paper (Phase 3)', () => {
     } else {
       // The job progress panel may already be showing
       const progressPanel = page.getByText(/progress|running/i).first();
-      if (await progressPanel.isVisible({ timeout: 3_000 }).catch(() => false)) {
+      if (await progressPanel.isEnabled({ timeout: 3_000 }).catch(() => false)) {
         await expect(progressPanel).toBeVisible();
       } else {
         test.skip();
