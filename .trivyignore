@@ -13,3 +13,44 @@
 #   CVE-2024-XXXXX  # python:3.14-slim: No fix available upstream; only exploitable
 #                   # via direct filesystem access not possible in our runtime config.
 #                   # Review by: 2026-06-08
+
+# ---------------------------------------------------------------------------
+# Accepted 2026-08-05 — PENDING SECOND-ENGINEER REVIEW (see Policy above).
+#
+# Every CVE below reports FixedVersion: none, so no dependency bump or base
+# image rebuild clears it. All Python-package CVEs that DID have fixes were
+# resolved by upgrading instead (uv.lock), not suppressed here.
+#
+# Affects: sms-backend and sms-researcher-mcp (both FROM python:3.14-slim,
+# Debian trixie). sms-frontend (nginx:alpine) scans clean.
+# ---------------------------------------------------------------------------
+
+# perl-base 5.40.1-6 — 4 CRITICAL, 4 HIGH. No patched Debian trixie package as
+# of 2026-08-05. perl is present only as a base-image dependency; neither
+# service invokes perl at runtime, and both run as non-root (UID 10001).
+CVE-2026-13221  # python:3.14-slim: perl-base, CRITICAL, no upstream fix | Review by: 2026-11-03
+CVE-2026-42496  # python:3.14-slim: perl-base, CRITICAL, no upstream fix | Review by: 2026-11-03
+CVE-2026-57433  # python:3.14-slim: perl-base, CRITICAL, no upstream fix | Review by: 2026-11-03
+CVE-2026-8376   # python:3.14-slim: perl-base, CRITICAL, no upstream fix | Review by: 2026-11-03
+CVE-2026-42497  # python:3.14-slim: perl-base, HIGH, no upstream fix | Review by: 2026-11-03
+CVE-2026-48962  # python:3.14-slim: perl-base, HIGH, no upstream fix | Review by: 2026-11-03
+CVE-2026-57432  # python:3.14-slim: perl-base, HIGH, no upstream fix | Review by: 2026-11-03
+CVE-2026-9538   # python:3.14-slim: perl-base, HIGH, no upstream fix | Review by: 2026-11-03
+
+# util-linux 2.41-5 family (bsdutils, libblkid1, liblastlog2-2, libmount1,
+# libsmartcols1, libuuid1, login, mount, util-linux). Base-image only; the
+# services do not shell out to these utilities.
+CVE-2026-53615  # python:3.14-slim: util-linux family, HIGH, no upstream fix | Review by: 2026-11-03
+
+# ncurses 6.5+20250216-2 (libncursesw6, libtinfo6, ncurses-base, ncurses-bin).
+# Terminal library, unused by either service at runtime.
+CVE-2025-69720  # python:3.14-slim: ncurses family, HIGH, no upstream fix | Review by: 2026-11-03
+
+# Remaining base-image packages with no patched version available.
+CVE-2026-41992  # python:3.14-slim: gzip, HIGH, no upstream fix | Review by: 2026-11-03
+CVE-2026-54369  # python:3.14-slim: libacl1, HIGH, no upstream fix | Review by: 2026-11-03
+
+# ecdsa 0.19.2 — Minerva timing attack. Upstream has declared this wontfix;
+# no released version addresses it. Reaches us transitively via
+# python-jose[cryptography]. Migrating off python-jose would remove it.
+CVE-2024-23342  # sms-backend: ecdsa via python-jose, HIGH, upstream wontfix | Review by: 2026-11-03
