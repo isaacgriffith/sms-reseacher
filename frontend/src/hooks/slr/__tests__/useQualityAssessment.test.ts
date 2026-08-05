@@ -54,7 +54,7 @@ describe('useUpsertChecklist', () => {
   it('executes mutation', async () => {
     const { result } = renderHook(() => useUpsertChecklist(42), { wrapper: makeWrapper() });
     await act(async () => {
-      result.current.mutate({ items: [] });
+      result.current.mutate({ name: 'Quality checklist', items: [] });
     });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
   });
@@ -64,7 +64,7 @@ describe('useSubmitScores', () => {
   it('executes mutation', async () => {
     const { result } = renderHook(() => useSubmitScores(7), { wrapper: makeWrapper() });
     await act(async () => {
-      result.current.mutate([]);
+      result.current.mutate({ reviewer_id: 1, scores: [] });
     });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
   });

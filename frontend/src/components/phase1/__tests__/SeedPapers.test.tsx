@@ -23,7 +23,7 @@ vi.mock('../../../services/jobs', () => ({
 import { api } from '../../../services/api';
 import SeedPapers from '../SeedPapers';
 
-const mockApi = api as {
+const mockApi = api as unknown as {
   get: ReturnType<typeof vi.fn>;
   post: ReturnType<typeof vi.fn>;
   delete: ReturnType<typeof vi.fn>;
@@ -245,7 +245,14 @@ describe('SeedPapers', () => {
       mockApi.get.mockResolvedValueOnce([]);
       mockApi.post.mockResolvedValueOnce({
         id: 4,
-        paper: { id: 40, title: 'Enter Paper', doi: '10.1/enter', authors: [], year: null, venue: null },
+        paper: {
+          id: 40,
+          title: 'Enter Paper',
+          doi: '10.1/enter',
+          authors: [],
+          year: null,
+          venue: null,
+        },
         added_by: 'user',
       });
       renderWithQuery(<SeedPapers studyId={1} />);

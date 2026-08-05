@@ -21,6 +21,7 @@ const MODEL = {
   display_name: 'GPT-4',
   is_enabled: true,
   provider_id: PROVIDER_ID,
+  version_id: 1,
 };
 
 const mockMutate = vi.fn();

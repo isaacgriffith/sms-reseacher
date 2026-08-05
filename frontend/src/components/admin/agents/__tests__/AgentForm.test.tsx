@@ -39,7 +39,9 @@ const mockAgent = {
 };
 
 describe('AgentForm', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('renders agent details in form', () => {
     render(

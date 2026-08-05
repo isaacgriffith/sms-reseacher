@@ -27,7 +27,9 @@ const SECTION_FIXTURE = {
 };
 
 describe('listSections', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
   it('calls GET and returns sections', async () => {
     mockApi.get.mockResolvedValue([SECTION_FIXTURE]);
     const result = await listSections(42);
@@ -37,17 +39,23 @@ describe('listSections', () => {
 });
 
 describe('updateSection', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
   it('calls PUT with data', async () => {
     mockApi.put.mockResolvedValue({ ...SECTION_FIXTURE, narrative_text: 'text' });
     const result = await updateSection(42, 1, { narrative_text: 'text' });
-    expect(mockApi.put).toHaveBeenCalledWith('/api/v1/rapid/studies/42/synthesis/1', { narrative_text: 'text' });
+    expect(mockApi.put).toHaveBeenCalledWith('/api/v1/rapid/studies/42/synthesis/1', {
+      narrative_text: 'text',
+    });
     expect(result.narrative_text).toBe('text');
   });
 });
 
 describe('requestAIDraft', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
   it('calls POST and returns job info', async () => {
     mockApi.post.mockResolvedValue({ job_id: 'j1', section_id: 1, status: 'enqueued' });
     const result = await requestAIDraft(42, 1);
@@ -57,7 +65,9 @@ describe('requestAIDraft', () => {
 });
 
 describe('completeSynthesis', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
   it('calls POST and returns completion status', async () => {
     mockApi.post.mockResolvedValue({ synthesis_complete: true });
     const result = await completeSynthesis(42);

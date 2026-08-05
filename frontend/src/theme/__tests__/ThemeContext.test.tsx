@@ -8,9 +8,7 @@ vi.mock('../../hooks/useColorMode', () => ({
 }));
 
 vi.mock('../../services/auth', () => ({
-  useAuthStore: vi.fn((selector: (s: { user: null }) => unknown) =>
-    selector({ user: null }),
-  ),
+  useAuthStore: vi.fn((selector: (s: { user: null }) => unknown) => selector({ user: null })),
   updateUserFields: vi.fn(),
 }));
 
@@ -34,9 +32,10 @@ function Consumer() {
 describe('ThemeProvider', () => {
   it('provides mode and preference', () => {
     render(
-      React.createElement(ThemeProvider, { initialPreference: 'light' },
-        React.createElement(Consumer),
-      ),
+      React.createElement(ThemeProvider, {
+        initialPreference: 'light',
+        children: React.createElement(Consumer),
+      }),
     );
     expect(screen.getByTestId('mode').textContent).toBe('light');
     expect(screen.getByTestId('pref').textContent).toBe('light');
@@ -44,9 +43,7 @@ describe('ThemeProvider', () => {
 
   it('calls setThemePreference', async () => {
     const { updateUserFields } = await import('../../services/auth');
-    render(
-      React.createElement(ThemeProvider, null, React.createElement(Consumer)),
-    );
+    render(React.createElement(ThemeProvider, null, React.createElement(Consumer)));
     act(() => {
       screen.getByText('Switch').click();
     });

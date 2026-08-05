@@ -7,7 +7,7 @@
  * @module SynthesisPage
  */
 
-import React, { useReducer } from 'react';
+import { useReducer } from 'react';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';

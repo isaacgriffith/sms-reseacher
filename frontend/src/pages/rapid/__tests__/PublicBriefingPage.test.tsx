@@ -5,7 +5,6 @@
  * download PDF/HTML buttons.
  */
 
-import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
@@ -73,7 +72,9 @@ const PUBLIC_BRIEFING = {
 // ---------------------------------------------------------------------------
 
 describe('PublicBriefingPage', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   describe('loading state', () => {
     it('shows loading indicator while fetching', () => {

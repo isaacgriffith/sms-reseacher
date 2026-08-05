@@ -1,6 +1,10 @@
 node_modules/
 dist/
 coverage/
+coverage-temp/
+reports/
+test-results/
+playwright-report/
 package-lock.json
 yarn.lock
 pnpm-lock.yaml

@@ -95,24 +95,30 @@ describe('EvidenceBriefingPage', () => {
     vi.mocked(useGenerateBriefing).mockReturnValue({
       mutate: vi.fn(),
       isPending: false,
-    } as ReturnType<typeof useGenerateBriefing>);
+    } as unknown as ReturnType<typeof useGenerateBriefing>);
   });
 
   describe('page header', () => {
     it('renders the Evidence Briefing heading', () => {
-      vi.mocked(useBriefings).mockReturnValue({ data: [] } as ReturnType<typeof useBriefings>);
+      vi.mocked(useBriefings).mockReturnValue({ data: [] } as unknown as ReturnType<
+        typeof useBriefings
+      >);
       renderWithQuery(<EvidenceBriefingPage studyId={42} />);
       expect(screen.getByText('Evidence Briefing')).toBeTruthy();
     });
 
     it('renders the Generate New Version button', () => {
-      vi.mocked(useBriefings).mockReturnValue({ data: [] } as ReturnType<typeof useBriefings>);
+      vi.mocked(useBriefings).mockReturnValue({ data: [] } as unknown as ReturnType<
+        typeof useBriefings
+      >);
       renderWithQuery(<EvidenceBriefingPage studyId={42} />);
       expect(screen.getByRole('button', { name: /generate new version/i })).toBeTruthy();
     });
 
     it('renders the phase description text', () => {
-      vi.mocked(useBriefings).mockReturnValue({ data: [] } as ReturnType<typeof useBriefings>);
+      vi.mocked(useBriefings).mockReturnValue({ data: [] } as unknown as ReturnType<
+        typeof useBriefings
+      >);
       renderWithQuery(<EvidenceBriefingPage studyId={42} />);
       expect(screen.getByText(/phase 6/i)).toBeTruthy();
     });
@@ -120,7 +126,9 @@ describe('EvidenceBriefingPage', () => {
 
   describe('empty state', () => {
     it('shows info alert when no briefings exist', () => {
-      vi.mocked(useBriefings).mockReturnValue({ data: [] } as ReturnType<typeof useBriefings>);
+      vi.mocked(useBriefings).mockReturnValue({ data: [] } as unknown as ReturnType<
+        typeof useBriefings
+      >);
       renderWithQuery(<EvidenceBriefingPage studyId={42} />);
       expect(screen.getByText(/no briefings yet/i)).toBeTruthy();
     });
@@ -134,11 +142,13 @@ describe('EvidenceBriefingPage', () => {
     });
 
     it('does not show empty state when generation is pending', () => {
-      vi.mocked(useBriefings).mockReturnValue({ data: [] } as ReturnType<typeof useBriefings>);
+      vi.mocked(useBriefings).mockReturnValue({ data: [] } as unknown as ReturnType<
+        typeof useBriefings
+      >);
       vi.mocked(useGenerateBriefing).mockReturnValue({
         mutate: vi.fn(),
         isPending: true,
-      } as ReturnType<typeof useGenerateBriefing>);
+      } as unknown as ReturnType<typeof useGenerateBriefing>);
       renderWithQuery(<EvidenceBriefingPage studyId={42} />);
       expect(screen.queryByText(/no briefings yet/i)).toBeNull();
     });
@@ -154,7 +164,9 @@ describe('EvidenceBriefingPage', () => {
     });
 
     it('does not render BriefingVersionPanel when no briefings', () => {
-      vi.mocked(useBriefings).mockReturnValue({ data: [] } as ReturnType<typeof useBriefings>);
+      vi.mocked(useBriefings).mockReturnValue({ data: [] } as unknown as ReturnType<
+        typeof useBriefings
+      >);
       renderWithQuery(<EvidenceBriefingPage studyId={42} />);
       expect(screen.queryByTestId('briefing-version-panel')).toBeNull();
     });
@@ -162,12 +174,14 @@ describe('EvidenceBriefingPage', () => {
 
   describe('generate button', () => {
     it('calls generateMutation.mutate when button is clicked', () => {
-      vi.mocked(useBriefings).mockReturnValue({ data: [] } as ReturnType<typeof useBriefings>);
+      vi.mocked(useBriefings).mockReturnValue({ data: [] } as unknown as ReturnType<
+        typeof useBriefings
+      >);
       const mutate = vi.fn();
       vi.mocked(useGenerateBriefing).mockReturnValue({
         mutate,
         isPending: false,
-      } as ReturnType<typeof useGenerateBriefing>);
+      } as unknown as ReturnType<typeof useGenerateBriefing>);
 
       renderWithQuery(<EvidenceBriefingPage studyId={42} />);
       fireEvent.click(screen.getByRole('button', { name: /generate new version/i }));
@@ -175,11 +189,13 @@ describe('EvidenceBriefingPage', () => {
     });
 
     it('disables the button when generation is pending', () => {
-      vi.mocked(useBriefings).mockReturnValue({ data: [] } as ReturnType<typeof useBriefings>);
+      vi.mocked(useBriefings).mockReturnValue({ data: [] } as unknown as ReturnType<
+        typeof useBriefings
+      >);
       vi.mocked(useGenerateBriefing).mockReturnValue({
         mutate: vi.fn(),
         isPending: true,
-      } as ReturnType<typeof useGenerateBriefing>);
+      } as unknown as ReturnType<typeof useGenerateBriefing>);
 
       renderWithQuery(<EvidenceBriefingPage studyId={42} />);
       const btn = screen.getByRole('button', { name: /queuing/i }) as HTMLButtonElement;
@@ -202,7 +218,9 @@ describe('EvidenceBriefingPage', () => {
 
   describe('generate error handling', () => {
     it('shows 422 error message when synthesis is not complete', async () => {
-      vi.mocked(useBriefings).mockReturnValue({ data: [] } as ReturnType<typeof useBriefings>);
+      vi.mocked(useBriefings).mockReturnValue({ data: [] } as unknown as ReturnType<
+        typeof useBriefings
+      >);
 
       let capturedOnError: ((err: Error) => void) | undefined;
       vi.mocked(useGenerateBriefing).mockReturnValue({
@@ -225,7 +243,9 @@ describe('EvidenceBriefingPage', () => {
     });
 
     it('shows generic error message for non-422 errors', async () => {
-      vi.mocked(useBriefings).mockReturnValue({ data: [] } as ReturnType<typeof useBriefings>);
+      vi.mocked(useBriefings).mockReturnValue({ data: [] } as unknown as ReturnType<
+        typeof useBriefings
+      >);
 
       let capturedOnError: ((err: Error) => void) | undefined;
       vi.mocked(useGenerateBriefing).mockReturnValue({
@@ -247,7 +267,9 @@ describe('EvidenceBriefingPage', () => {
     });
 
     it('dismisses error when close button on Alert is clicked', async () => {
-      vi.mocked(useBriefings).mockReturnValue({ data: [] } as ReturnType<typeof useBriefings>);
+      vi.mocked(useBriefings).mockReturnValue({ data: [] } as unknown as ReturnType<
+        typeof useBriefings
+      >);
 
       let capturedOnError: ((err: Error) => void) | undefined;
       vi.mocked(useGenerateBriefing).mockReturnValue({

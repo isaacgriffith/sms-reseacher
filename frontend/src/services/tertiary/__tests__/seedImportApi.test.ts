@@ -38,7 +38,9 @@ const STUDY_FIXTURE = {
 };
 
 describe('listSeedImports', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('calls GET and parses the seed import list', async () => {
     mockApi.get.mockResolvedValue([IMPORT_FIXTURE]);
@@ -50,7 +52,9 @@ describe('listSeedImports', () => {
 });
 
 describe('createSeedImport', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('calls POST with source_study_id and parses the response', async () => {
     mockApi.post.mockResolvedValue({
@@ -68,7 +72,9 @@ describe('createSeedImport', () => {
 });
 
 describe('listGroupStudies', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('calls GET /api/v1/groups/{id}/studies and parses studies', async () => {
     mockApi.get.mockResolvedValue([STUDY_FIXTURE]);

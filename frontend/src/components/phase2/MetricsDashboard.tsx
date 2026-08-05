@@ -20,7 +20,7 @@ interface PhaseMetrics {
   duplicates: number;
 }
 
-interface StudyMetricsResponse {
+export interface StudyMetricsResponse {
   study_id: number;
   phases: PhaseMetrics[];
   totals: PhaseMetrics;

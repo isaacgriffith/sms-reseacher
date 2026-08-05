@@ -48,7 +48,9 @@ const STAKEHOLDER = {
 // ---------------------------------------------------------------------------
 
 describe('StakeholderPanel', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   describe('loading state', () => {
     it('shows loading indicator when isLoading', () => {
@@ -62,9 +64,10 @@ describe('StakeholderPanel', () => {
 
   describe('empty state', () => {
     it('shows required error when stakeholders is empty', () => {
-      vi.mocked(useStakeholders).mockReturnValue({ data: [], isLoading: false } as ReturnType<
-        typeof useStakeholders
-      >);
+      vi.mocked(useStakeholders).mockReturnValue({
+        data: [],
+        isLoading: false,
+      } as unknown as ReturnType<typeof useStakeholders>);
       renderWithQuery(<StakeholderPanel studyId={42} />);
       expect(screen.getByText(/at least one practitioner stakeholder/i)).toBeTruthy();
     });
@@ -92,17 +95,19 @@ describe('StakeholderPanel', () => {
 
   describe('add form', () => {
     it('renders Add Stakeholder button', () => {
-      vi.mocked(useStakeholders).mockReturnValue({ data: [], isLoading: false } as ReturnType<
-        typeof useStakeholders
-      >);
+      vi.mocked(useStakeholders).mockReturnValue({
+        data: [],
+        isLoading: false,
+      } as unknown as ReturnType<typeof useStakeholders>);
       renderWithQuery(<StakeholderPanel studyId={42} />);
       expect(screen.getByRole('button', { name: /add stakeholder/i })).toBeTruthy();
     });
 
     it('shows form fields when Add Stakeholder button is clicked', () => {
-      vi.mocked(useStakeholders).mockReturnValue({ data: [], isLoading: false } as ReturnType<
-        typeof useStakeholders
-      >);
+      vi.mocked(useStakeholders).mockReturnValue({
+        data: [],
+        isLoading: false,
+      } as unknown as ReturnType<typeof useStakeholders>);
       renderWithQuery(<StakeholderPanel studyId={42} />);
       fireEvent.click(screen.getByRole('button', { name: /add stakeholder/i }));
       // Form should now be visible with text inputs
@@ -111,9 +116,10 @@ describe('StakeholderPanel', () => {
     });
 
     it('shows Add button label when no editTarget', () => {
-      vi.mocked(useStakeholders).mockReturnValue({ data: [], isLoading: false } as ReturnType<
-        typeof useStakeholders
-      >);
+      vi.mocked(useStakeholders).mockReturnValue({
+        data: [],
+        isLoading: false,
+      } as unknown as ReturnType<typeof useStakeholders>);
       renderWithQuery(<StakeholderPanel studyId={42} />);
       fireEvent.click(screen.getByRole('button', { name: /add stakeholder/i }));
       expect(screen.getByRole('button', { name: /^add$/i })).toBeTruthy();

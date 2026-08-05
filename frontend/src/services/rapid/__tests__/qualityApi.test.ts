@@ -18,7 +18,9 @@ const CONFIG_FIXTURE = {
 };
 
 describe('getQualityConfig', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
   it('calls GET and returns parsed config', async () => {
     mockApi.get.mockResolvedValue(CONFIG_FIXTURE);
     const result = await getQualityConfig(42);
@@ -28,7 +30,9 @@ describe('getQualityConfig', () => {
 });
 
 describe('setQualityConfig', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
   it('calls PUT with mode payload', async () => {
     mockApi.put.mockResolvedValue({ ...CONFIG_FIXTURE, quality_appraisal_mode: 'skipped' });
     const result = await setQualityConfig(42, 'skipped');

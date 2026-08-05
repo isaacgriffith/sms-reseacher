@@ -12,10 +12,14 @@ import { setSession } from '../../../services/auth';
 
 vi.mock('../../../services/api', () => ({
   loginUser: vi.fn(),
+  // Mirrors the real ApiError signature: (status, detail).
   ApiError: class ApiError extends Error {
+    status: number;
     detail: string;
-    constructor(detail: string) {
+    constructor(status: number, detail: string) {
       super(detail);
+      this.name = 'ApiError';
+      this.status = status;
       this.detail = detail;
     }
   },
@@ -37,7 +41,9 @@ function renderLogin() {
 }
 
 describe('LoginPage', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('renders sign-in form', () => {
     renderLogin();
@@ -52,7 +58,7 @@ describe('LoginPage', () => {
       access_token: 'tok',
       user_id: 1,
       display_name: 'Alice',
-    } as Awaited<ReturnType<typeof loginUser>>);
+    } as unknown as Awaited<ReturnType<typeof loginUser>>);
     renderLogin();
     fireEvent.change(screen.getByLabelText(/email/i), { target: { value: 'a@b.com' } });
     fireEvent.change(screen.getByLabelText(/password/i), { target: { value: 'pass' } });
@@ -63,7 +69,7 @@ describe('LoginPage', () => {
 
   it('shows error message on failed login', async () => {
     const ApiErrorClass = (await import('../../../services/api')).ApiError as typeof ApiError;
-    vi.mocked(loginUser).mockRejectedValue(new ApiErrorClass('Invalid credentials'));
+    vi.mocked(loginUser).mockRejectedValue(new ApiErrorClass(401, 'Invalid credentials'));
     renderLogin();
     fireEvent.change(screen.getByLabelText(/email/i), { target: { value: 'a@b.com' } });
     fireEvent.change(screen.getByLabelText(/password/i), { target: { value: 'wrong' } });

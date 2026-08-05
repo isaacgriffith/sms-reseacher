@@ -65,7 +65,9 @@ function renderPanel(studyId = 42, computeBody?: object) {
 describe('InterRaterPanel', () => {
   describe('Loading state', () => {
     it('shows loading spinner when data is loading', () => {
-      vi.mocked(useInterRaterRecords).mockReturnValue({ isLoading: true });
+      vi.mocked(useInterRaterRecords).mockReturnValue({ isLoading: true } as unknown as ReturnType<
+        typeof useInterRaterRecords
+      >);
       renderPanel();
       expect(screen.getByLabelText(/loading inter-rater/i)).toBeInTheDocument();
     });
@@ -76,7 +78,7 @@ describe('InterRaterPanel', () => {
       vi.mocked(useInterRaterRecords).mockReturnValue({
         isLoading: false,
         error: new Error('Network error'),
-      });
+      } as unknown as ReturnType<typeof useInterRaterRecords>);
       renderPanel();
       expect(screen.getByTestId('irr-error')).toBeInTheDocument();
     });
@@ -88,7 +90,7 @@ describe('InterRaterPanel', () => {
         isLoading: false,
         error: null,
         data: { records: [] },
-      });
+      } as unknown as ReturnType<typeof useInterRaterRecords>);
       renderPanel();
       expect(screen.getByTestId('irr-empty')).toBeInTheDocument();
     });
@@ -100,7 +102,7 @@ describe('InterRaterPanel', () => {
         isLoading: false,
         error: null,
         data: { records: [makeRecord({ kappa_value: 0.75 })] },
-      });
+      } as unknown as ReturnType<typeof useInterRaterRecords>);
       renderPanel();
       expect(screen.getByText('0.750')).toBeInTheDocument();
     });
@@ -110,7 +112,7 @@ describe('InterRaterPanel', () => {
         isLoading: false,
         error: null,
         data: { records: [makeRecord({ threshold_met: true })] },
-      });
+      } as unknown as ReturnType<typeof useInterRaterRecords>);
       renderPanel();
       expect(screen.getByText(/threshold met/i)).toBeInTheDocument();
     });
@@ -120,7 +122,7 @@ describe('InterRaterPanel', () => {
         isLoading: false,
         error: null,
         data: { records: [makeRecord({ threshold_met: false })] },
-      });
+      } as unknown as ReturnType<typeof useInterRaterRecords>);
       renderPanel();
       expect(screen.getByText(/below threshold/i)).toBeInTheDocument();
     });
@@ -134,7 +136,7 @@ describe('InterRaterPanel', () => {
             makeRecord({ kappa_value: null, kappa_undefined_reason: 'Zero-variance decisions' }),
           ],
         },
-      });
+      } as unknown as ReturnType<typeof useInterRaterRecords>);
       renderPanel();
       expect(screen.getByText('Zero-variance decisions')).toBeInTheDocument();
     });
@@ -144,7 +146,7 @@ describe('InterRaterPanel', () => {
         isLoading: false,
         error: null,
         data: { records: [makeRecord({ n_papers: 42 })] },
-      });
+      } as unknown as ReturnType<typeof useInterRaterRecords>);
       renderPanel();
       expect(screen.getByText('42')).toBeInTheDocument();
     });
@@ -156,7 +158,7 @@ describe('InterRaterPanel', () => {
         isLoading: false,
         error: null,
         data: { records: [] },
-      });
+      } as unknown as ReturnType<typeof useInterRaterRecords>);
     });
 
     it('shows Compute Kappa button when computeBody is provided', () => {

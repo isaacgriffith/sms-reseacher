@@ -38,7 +38,9 @@ function renderWithQuery(ui: React.ReactElement) {
 // ---------------------------------------------------------------------------
 
 describe('SingleReviewerWarningBanner', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   describe('single-reviewer mode OFF', () => {
     it('renders info alert when mode is off', () => {
@@ -53,9 +55,10 @@ describe('SingleReviewerWarningBanner', () => {
 
     it('calls mutate with single_reviewer_mode=true when Enable is clicked', () => {
       const mutate = vi.fn();
-      vi.mocked(useUpdateSearchConfig).mockReturnValue({ mutate, isPending: false } as ReturnType<
-        typeof useUpdateSearchConfig
-      >);
+      vi.mocked(useUpdateSearchConfig).mockReturnValue({
+        mutate,
+        isPending: false,
+      } as unknown as ReturnType<typeof useUpdateSearchConfig>);
       renderWithQuery(<SingleReviewerWarningBanner studyId={42} singleReviewerMode={false} />);
       fireEvent.click(screen.getByRole('button', { name: /enable/i }));
       expect(mutate).toHaveBeenCalledWith(expect.objectContaining({ single_reviewer_mode: true }));
@@ -81,9 +84,10 @@ describe('SingleReviewerWarningBanner', () => {
 
     it('calls mutate with single_reviewer_mode=false when dialog Disable is confirmed', () => {
       const mutate = vi.fn();
-      vi.mocked(useUpdateSearchConfig).mockReturnValue({ mutate, isPending: false } as ReturnType<
-        typeof useUpdateSearchConfig
-      >);
+      vi.mocked(useUpdateSearchConfig).mockReturnValue({
+        mutate,
+        isPending: false,
+      } as unknown as ReturnType<typeof useUpdateSearchConfig>);
       renderWithQuery(<SingleReviewerWarningBanner studyId={42} singleReviewerMode={true} />);
       // Open dialog
       fireEvent.click(screen.getByRole('button', { name: /disable/i }));
@@ -96,9 +100,10 @@ describe('SingleReviewerWarningBanner', () => {
 
     it('does not call mutate when Cancel is clicked in dialog', () => {
       const mutate = vi.fn();
-      vi.mocked(useUpdateSearchConfig).mockReturnValue({ mutate, isPending: false } as ReturnType<
-        typeof useUpdateSearchConfig
-      >);
+      vi.mocked(useUpdateSearchConfig).mockReturnValue({
+        mutate,
+        isPending: false,
+      } as unknown as ReturnType<typeof useUpdateSearchConfig>);
       renderWithQuery(<SingleReviewerWarningBanner studyId={42} singleReviewerMode={true} />);
       // Open dialog
       fireEvent.click(screen.getByRole('button', { name: /disable/i }));

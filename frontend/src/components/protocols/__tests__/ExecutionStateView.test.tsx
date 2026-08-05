@@ -9,8 +9,22 @@ vi.mock('../../../hooks/protocols/useExecutionState', () => ({
   useExecutionState: vi.fn().mockReturnValue({
     data: {
       tasks: [
-        { node_id: 1, task_id: 't1', task_type: 'search', label: 'Search', status: 'active', gate_failure_detail: null },
-        { node_id: 2, task_id: 't2', task_type: 'screening', label: 'Screen', status: 'complete', gate_failure_detail: null },
+        {
+          node_id: 1,
+          task_id: 't1',
+          task_type: 'search',
+          label: 'Search',
+          status: 'active',
+          gate_failure_detail: null,
+        },
+        {
+          node_id: 2,
+          task_id: 't2',
+          task_type: 'screening',
+          label: 'Screen',
+          status: 'complete',
+          gate_failure_detail: null,
+        },
       ],
     },
     isLoading: false,
@@ -37,8 +51,22 @@ describe('ExecutionStateView', () => {
     vi.mocked(useExecutionState).mockReturnValue({
       data: {
         tasks: [
-          { node_id: 1, task_id: 't1', task_type: 'search', label: 'Search', status: 'active', gate_failure_detail: null },
-          { node_id: 2, task_id: 't2', task_type: 'screening', label: 'Screen', status: 'complete', gate_failure_detail: null },
+          {
+            node_id: 1,
+            task_id: 't1',
+            task_type: 'search',
+            label: 'Search',
+            status: 'active',
+            gate_failure_detail: null,
+          },
+          {
+            node_id: 2,
+            task_id: 't2',
+            task_type: 'screening',
+            label: 'Screen',
+            status: 'complete',
+            gate_failure_detail: null,
+          },
         ],
       },
       isLoading: false,
@@ -72,7 +100,7 @@ describe('ExecutionStateView', () => {
       data: { tasks: [] },
       isLoading: false,
       error: null,
-    } as ReturnType<typeof useExecutionState>);
+    } as unknown as ReturnType<typeof useExecutionState>);
     renderView();
     expect(screen.getByText('No tasks found.')).toBeInTheDocument();
   });

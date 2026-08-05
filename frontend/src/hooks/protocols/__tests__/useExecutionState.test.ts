@@ -17,7 +17,9 @@ function makeWrapper() {
 }
 
 describe('useExecutionState hooks', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('useExecutionState fetches data', async () => {
     const { result } = renderHook(() => useExecutionState(1), { wrapper: makeWrapper() });

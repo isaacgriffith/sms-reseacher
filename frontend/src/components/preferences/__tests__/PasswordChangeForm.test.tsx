@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
 import PasswordChangeForm from '../PasswordChangeForm';
 
@@ -7,7 +7,7 @@ vi.mock('../../../services/api', () => ({
   api: { post: vi.fn().mockResolvedValue({}) },
   ApiError: class extends Error {
     detail: string;
-    constructor(s: number, d: string) {
+    constructor(_s: number, d: string) {
       super(d);
       this.detail = d;
     }
@@ -15,7 +15,9 @@ vi.mock('../../../services/api', () => ({
 }));
 
 describe('PasswordChangeForm', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('renders all password fields', () => {
     render(React.createElement(PasswordChangeForm));

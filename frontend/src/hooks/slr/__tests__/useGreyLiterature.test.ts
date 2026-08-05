@@ -2,7 +2,12 @@ import { describe, it, expect, vi } from 'vitest';
 import { renderHook, waitFor, act } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
-import { greyLiteratureKey, useGreyLiterature, useAddSource, useDeleteSource } from '../useGreyLiterature';
+import {
+  greyLiteratureKey,
+  useGreyLiterature,
+  useAddSource,
+  useDeleteSource,
+} from '../useGreyLiterature';
 
 vi.mock('../../../services/slr/greyLiteratureApi', () => ({
   listGreyLiterature: vi.fn().mockResolvedValue([]),

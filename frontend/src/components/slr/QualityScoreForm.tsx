@@ -7,7 +7,6 @@
  * @module QualityScoreForm
  */
 
-import React from 'react';
 import { useForm, useWatch, Controller } from 'react-hook-form';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';

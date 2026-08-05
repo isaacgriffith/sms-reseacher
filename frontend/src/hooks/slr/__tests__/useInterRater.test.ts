@@ -2,7 +2,12 @@ import { describe, it, expect, vi } from 'vitest';
 import { renderHook, waitFor, act } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
-import { interRaterKey, useInterRaterRecords, useComputeKappa, usePostDiscussionKappa } from '../useInterRater';
+import {
+  interRaterKey,
+  useInterRaterRecords,
+  useComputeKappa,
+  usePostDiscussionKappa,
+} from '../useInterRater';
 
 vi.mock('../../../services/slr/interRaterApi', () => ({
   getInterRaterRecords: vi.fn().mockResolvedValue([]),
@@ -33,7 +38,7 @@ describe('useComputeKappa', () => {
   it('executes mutation', async () => {
     const { result } = renderHook(() => useComputeKappa(42), { wrapper: makeWrapper() });
     await act(async () => {
-      result.current.mutate();
+      result.current.mutate({ reviewer_a_id: 1, reviewer_b_id: 2, round_type: 'title_abstract' });
     });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
   });
@@ -43,7 +48,7 @@ describe('usePostDiscussionKappa', () => {
   it('executes mutation', async () => {
     const { result } = renderHook(() => usePostDiscussionKappa(42), { wrapper: makeWrapper() });
     await act(async () => {
-      result.current.mutate({ kappa: 0.9 });
+      result.current.mutate({ reviewer_a_id: 1, reviewer_b_id: 2, round_type: 'full_text' });
     });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
   });

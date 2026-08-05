@@ -44,7 +44,9 @@ function renderWithQuery(ui: React.ReactElement) {
 // ---------------------------------------------------------------------------
 
 describe('QAModeSelector', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('renders the Quality Appraisal Mode label', () => {
     renderWithQuery(<QAModeSelector studyId={42} currentMode="full" />);
@@ -69,7 +71,7 @@ describe('QAModeSelector', () => {
       mutate,
       isPending: false,
       isError: false,
-    } as ReturnType<typeof useSetQAMode>);
+    } as unknown as ReturnType<typeof useSetQAMode>);
 
     renderWithQuery(<QAModeSelector studyId={42} currentMode="full" />);
     fireEvent.click(screen.getByRole('button', { name: /save mode/i }));
@@ -94,7 +96,7 @@ describe('QAModeSelector', () => {
       mutate: vi.fn(),
       isPending: false,
       isError: true,
-    } as ReturnType<typeof useSetQAMode>);
+    } as unknown as ReturnType<typeof useSetQAMode>);
     renderWithQuery(<QAModeSelector studyId={42} currentMode="full" />);
     expect(screen.getByText(/failed to save quality appraisal mode/i)).toBeTruthy();
   });
@@ -136,7 +138,9 @@ describe('QAModeSelector', () => {
   });
 
   it('does not show QA threats list when no qa threats exist', () => {
-    vi.mocked(useRRThreats).mockReturnValue({ data: [] } as ReturnType<typeof useRRThreats>);
+    vi.mocked(useRRThreats).mockReturnValue({ data: [] } as unknown as ReturnType<
+      typeof useRRThreats
+    >);
     renderWithQuery(<QAModeSelector studyId={42} currentMode="skipped" />);
     expect(screen.queryByText(/quality appraisal threats to validity/i)).toBeNull();
   });

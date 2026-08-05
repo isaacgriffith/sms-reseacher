@@ -25,7 +25,9 @@ const RECORD = {
 };
 
 describe('getInterRaterRecords', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('calls GET and returns parsed list', async () => {
     mockApi.get.mockResolvedValue({ records: [RECORD] });
@@ -36,7 +38,9 @@ describe('getInterRaterRecords', () => {
 });
 
 describe('computeKappa', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('calls POST and returns a parsed record', async () => {
     mockApi.post.mockResolvedValue(RECORD);
@@ -55,7 +59,9 @@ describe('computeKappa', () => {
 });
 
 describe('recordPostDiscussionKappa', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('calls POST to post-discussion endpoint', async () => {
     mockApi.post.mockResolvedValue({ ...RECORD, phase: 'post_discussion' });

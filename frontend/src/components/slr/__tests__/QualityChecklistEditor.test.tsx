@@ -29,8 +29,8 @@ const mockUseChecklist = vi.fn(() => ({
 }));
 
 vi.mock('../../../hooks/slr/useQualityAssessment', () => ({
-  useChecklist: (...args: unknown[]) => mockUseChecklist(...args),
-  useUpsertChecklist: (...args: unknown[]) => mockUseUpsertChecklist(...args),
+  useChecklist: () => mockUseChecklist(),
+  useUpsertChecklist: () => mockUseUpsertChecklist(),
 }));
 
 // ---------------------------------------------------------------------------

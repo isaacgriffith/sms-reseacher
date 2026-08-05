@@ -35,7 +35,9 @@ const QUALITY_SCORES = {
 };
 
 describe('getChecklist', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('calls GET and returns parsed checklist', async () => {
     mockApi.get.mockResolvedValue(CHECKLIST);
@@ -46,7 +48,9 @@ describe('getChecklist', () => {
 });
 
 describe('upsertChecklist', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('calls PUT and returns updated checklist', async () => {
     mockApi.put.mockResolvedValue(CHECKLIST);
@@ -64,7 +68,9 @@ describe('upsertChecklist', () => {
 });
 
 describe('getQualityScores', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('calls GET and returns parsed scores', async () => {
     mockApi.get.mockResolvedValue(QUALITY_SCORES);
@@ -75,7 +81,9 @@ describe('getQualityScores', () => {
 });
 
 describe('submitQualityScores', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('calls PUT and returns scores', async () => {
     mockApi.put.mockResolvedValue(QUALITY_SCORES);

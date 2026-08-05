@@ -4,7 +4,9 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-COPY frontend/package.json frontend/package-lock.json* ./
+# .npmrc carries legacy-peer-deps=true, which npm ci needs to resolve the
+# eslint@9 / typescript-eslint@7 peer conflict. Without it the install fails.
+COPY frontend/package.json frontend/package-lock.json* frontend/.npmrc ./
 RUN npm ci
 
 COPY frontend/ .

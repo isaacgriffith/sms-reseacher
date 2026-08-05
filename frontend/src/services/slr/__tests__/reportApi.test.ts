@@ -6,6 +6,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import type { MockInstance } from 'vitest';
 import { downloadSLRReport } from '../reportApi';
 
 // jsdom does not implement URL.createObjectURL / revokeObjectURL — define them
@@ -17,11 +18,16 @@ if (!URL.revokeObjectURL) {
 }
 
 describe('downloadSLRReport', () => {
-  let appendChildSpy: ReturnType<typeof vi.spyOn>;
-  let removeChildSpy: ReturnType<typeof vi.spyOn>;
-  let createObjectURLSpy: ReturnType<typeof vi.spyOn>;
-  let revokeObjectURLSpy: ReturnType<typeof vi.spyOn>;
-  let fetchSpy: ReturnType<typeof vi.spyOn>;
+  // Spy types must match the real signatures — ReturnType<typeof vi.spyOn>
+  // collapses to MockInstance<unknown[], unknown>, which they are not.
+  let appendChildSpy: MockInstance<[node: Node], Node>;
+  let removeChildSpy: MockInstance<[child: Node], Node>;
+  let createObjectURLSpy: MockInstance<[obj: Blob | MediaSource], string>;
+  let revokeObjectURLSpy: MockInstance<[url: string], void>;
+  let fetchSpy: MockInstance<
+    [input: string | URL | Request, init?: RequestInit | undefined],
+    Promise<Response>
+  >;
 
   beforeEach(() => {
     // Mock localStorage

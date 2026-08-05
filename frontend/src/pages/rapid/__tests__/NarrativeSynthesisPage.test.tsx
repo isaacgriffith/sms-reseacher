@@ -74,23 +74,23 @@ function setupDefaultMocks() {
     data: [BASE_SECTION],
     isLoading: false,
     error: null,
-  } as ReturnType<typeof useNarrativeSections>);
+  } as unknown as ReturnType<typeof useNarrativeSections>);
   vi.mocked(useUpdateSection).mockReturnValue({
     mutate: vi.fn(),
     isPending: false,
     variables: undefined,
-  } as ReturnType<typeof useUpdateSection>);
+  } as unknown as ReturnType<typeof useUpdateSection>);
   vi.mocked(useRequestAIDraft).mockReturnValue({
     mutate: vi.fn(),
     isPending: false,
     variables: undefined,
     isError: false,
     error: null,
-  } as ReturnType<typeof useRequestAIDraft>);
+  } as unknown as ReturnType<typeof useRequestAIDraft>);
   vi.mocked(useCompleteSynthesis).mockReturnValue({
     mutate: vi.fn(),
     isPending: false,
-  } as ReturnType<typeof useCompleteSynthesis>);
+  } as unknown as ReturnType<typeof useCompleteSynthesis>);
 }
 
 // ---------------------------------------------------------------------------
@@ -143,7 +143,7 @@ describe('NarrativeSynthesisPage', () => {
         data: [],
         isLoading: false,
         error: null,
-      } as ReturnType<typeof useNarrativeSections>);
+      } as unknown as ReturnType<typeof useNarrativeSections>);
       renderWithQuery(<NarrativeSynthesisPage studyId={42} />);
       expect(screen.getByText(/no synthesis sections yet/i)).toBeTruthy();
     });
@@ -171,7 +171,7 @@ describe('NarrativeSynthesisPage', () => {
         data: [completedSection],
         isLoading: false,
         error: null,
-      } as ReturnType<typeof useNarrativeSections>);
+      } as unknown as ReturnType<typeof useNarrativeSections>);
       renderWithQuery(<NarrativeSynthesisPage studyId={42} />);
       expect(screen.queryByRole('button', { name: /mark all sections complete/i })).toBeNull();
     });
@@ -185,9 +185,10 @@ describe('NarrativeSynthesisPage', () => {
   describe('finalize synthesis', () => {
     it('calls completeMutation.mutate when Finalize is clicked', () => {
       const mutate = vi.fn();
-      vi.mocked(useCompleteSynthesis).mockReturnValue({ mutate, isPending: false } as ReturnType<
-        typeof useCompleteSynthesis
-      >);
+      vi.mocked(useCompleteSynthesis).mockReturnValue({
+        mutate,
+        isPending: false,
+      } as unknown as ReturnType<typeof useCompleteSynthesis>);
       renderWithQuery(<NarrativeSynthesisPage studyId={42} />);
       fireEvent.click(screen.getByRole('button', { name: /finalize synthesis/i }));
       expect(mutate).toHaveBeenCalledWith(undefined, expect.any(Object));
@@ -260,7 +261,7 @@ describe('NarrativeSynthesisPage', () => {
         mutate,
         isPending: false,
         variables: undefined,
-      } as ReturnType<typeof useUpdateSection>);
+      } as unknown as ReturnType<typeof useUpdateSection>);
       renderWithQuery(<NarrativeSynthesisPage studyId={42} />);
       fireEvent.click(screen.getByRole('button', { name: /mark all sections complete/i }));
       expect(mutate).toHaveBeenCalledWith(
@@ -274,14 +275,14 @@ describe('NarrativeSynthesisPage', () => {
         mutate,
         isPending: false,
         variables: undefined,
-      } as ReturnType<typeof useUpdateSection>);
+      } as unknown as ReturnType<typeof useUpdateSection>);
       const completeSection = { ...BASE_SECTION, is_complete: true };
       const incompleteSection = { ...BASE_SECTION, id: 2, rq_index: 1, is_complete: false };
       vi.mocked(useNarrativeSections).mockReturnValue({
         data: [completeSection, incompleteSection],
         isLoading: false,
         error: null,
-      } as ReturnType<typeof useNarrativeSections>);
+      } as unknown as ReturnType<typeof useNarrativeSections>);
       renderWithQuery(<NarrativeSynthesisPage studyId={42} />);
       fireEvent.click(screen.getByRole('button', { name: /mark all sections complete/i }));
       // Only called once for the incomplete section
@@ -334,7 +335,7 @@ describe('NarrativeSynthesisPage', () => {
       vi.mocked(useCompleteSynthesis).mockReturnValue({
         mutate: vi.fn(),
         isPending: true,
-      } as ReturnType<typeof useCompleteSynthesis>);
+      } as unknown as ReturnType<typeof useCompleteSynthesis>);
       renderWithQuery(<NarrativeSynthesisPage studyId={42} />);
       expect(screen.getByRole('button', { name: /finalising/i })).toBeTruthy();
     });
@@ -385,7 +386,7 @@ describe('NarrativeSynthesisPage', () => {
         mutate: vi.fn(),
         isPending: true,
         variables: { sectionId: BASE_SECTION.id, data: { is_complete: true } },
-      } as ReturnType<typeof useUpdateSection>);
+      } as unknown as ReturnType<typeof useUpdateSection>);
       renderWithQuery(<NarrativeSynthesisPage studyId={42} />);
       expect(screen.getByTestId('section-editor-0')).toBeTruthy();
     });
@@ -397,7 +398,7 @@ describe('NarrativeSynthesisPage', () => {
         variables: BASE_SECTION.id,
         isError: true,
         error: new Error('Draft request failed'),
-      } as ReturnType<typeof useRequestAIDraft>);
+      } as unknown as ReturnType<typeof useRequestAIDraft>);
       renderWithQuery(<NarrativeSynthesisPage studyId={42} />);
       expect(screen.getByTestId('section-editor-0')).toBeTruthy();
     });

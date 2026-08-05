@@ -13,13 +13,23 @@ vi.mock('../../../services/api', () => ({
     post: vi.fn(),
     patch: vi.fn(),
   },
-  ApiError: class ApiError extends Error {},
+  // Mirrors the real ApiError signature: (status, detail).
+  ApiError: class ApiError extends Error {
+    status: number;
+    detail: string;
+    constructor(status: number, detail: string) {
+      super(detail);
+      this.name = 'ApiError';
+      this.status = status;
+      this.detail = detail;
+    }
+  },
 }));
 
 import { api } from '../../../services/api';
 import TestRetest from '../TestRetest';
 
-const mockApi = api as {
+const mockApi = api as unknown as {
   get: ReturnType<typeof vi.fn>;
   post: ReturnType<typeof vi.fn>;
   patch: ReturnType<typeof vi.fn>;
@@ -251,8 +261,7 @@ describe('TestRetest', () => {
     it('shows error message when run fails', async () => {
       mockApi.get.mockResolvedValueOnce(MOCK_SEARCH_STRINGS);
       const { ApiError: MockApiError } = await import('../../../services/api');
-      const err = new MockApiError('Test search failed due to queue error');
-      (err as { detail?: string }).detail = 'Queue is full';
+      const err = new MockApiError(500, 'Queue is full');
       mockApi.post.mockRejectedValueOnce(err);
 
       renderWithQuery(<TestRetest studyId={1} />);

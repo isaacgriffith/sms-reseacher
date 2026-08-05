@@ -88,7 +88,9 @@ const GENERATE_RESPONSE_FIXTURE = {
 // ---------------------------------------------------------------------------
 
 describe('listBriefings', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('calls GET with the correct endpoint and returns parsed summaries', async () => {
     mockApi.get.mockResolvedValue([SUMMARY_FIXTURE]);
@@ -116,7 +118,9 @@ describe('listBriefings', () => {
 // ---------------------------------------------------------------------------
 
 describe('generateBriefing', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('POSTs to the correct endpoint and returns parsed response', async () => {
     mockApi.post.mockResolvedValue(GENERATE_RESPONSE_FIXTURE);
@@ -132,7 +136,9 @@ describe('generateBriefing', () => {
 // ---------------------------------------------------------------------------
 
 describe('getBriefing', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('calls GET with the correct endpoint and returns full detail', async () => {
     mockApi.get.mockResolvedValue(DETAIL_FIXTURE);
@@ -148,7 +154,9 @@ describe('getBriefing', () => {
 // ---------------------------------------------------------------------------
 
 describe('publishBriefing', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('POSTs to the publish endpoint and returns updated briefing', async () => {
     const published = { ...DETAIL_FIXTURE, status: 'published' as const };
@@ -205,7 +213,9 @@ describe('exportBriefing', () => {
 // ---------------------------------------------------------------------------
 
 describe('createShareToken', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('POSTs to share endpoint and returns parsed token', async () => {
     mockApi.post.mockResolvedValue(SHARE_TOKEN_FIXTURE);
@@ -221,7 +231,9 @@ describe('createShareToken', () => {
 // ---------------------------------------------------------------------------
 
 describe('revokeShareToken', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('calls DELETE on the correct revoke endpoint', async () => {
     mockApi.delete.mockResolvedValue(undefined);

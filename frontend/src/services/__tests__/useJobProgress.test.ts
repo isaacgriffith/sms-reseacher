@@ -7,6 +7,7 @@
 
 import { renderHook, cleanup, act } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { Mock } from 'vitest';
 import { useJobProgress } from '../jobs';
 
 // ---------------------------------------------------------------------------
@@ -16,7 +17,7 @@ import { useJobProgress } from '../jobs';
 interface MockEventSource {
   url: string;
   close: ReturnType<typeof vi.fn>;
-  addEventListener: ReturnType<typeof vi.fn>;
+  addEventListener: Mock<[type: string, fn: (e: MessageEvent) => void], void>;
   removeEventListener: ReturnType<typeof vi.fn>;
   onerror: ((e: Event) => void) | null;
   listeners: Record<string, ((e: MessageEvent) => void)[]>;

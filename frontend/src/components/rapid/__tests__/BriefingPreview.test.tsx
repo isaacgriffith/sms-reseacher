@@ -5,7 +5,6 @@
  * reference to complementary material, and institution logos sections.
  */
 
-import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
 import BriefingPreview from '../BriefingPreview';

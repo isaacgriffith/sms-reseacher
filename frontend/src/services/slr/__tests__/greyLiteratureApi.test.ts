@@ -28,7 +28,9 @@ const SOURCE = {
 };
 
 describe('listGreyLiterature', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('calls GET and parses list', async () => {
     mockApi.get.mockResolvedValue({ sources: [SOURCE] });
@@ -39,7 +41,9 @@ describe('listGreyLiterature', () => {
 });
 
 describe('addGreyLiteratureSource', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('calls POST and returns new source', async () => {
     mockApi.post.mockResolvedValue(SOURCE);
@@ -56,7 +60,9 @@ describe('addGreyLiteratureSource', () => {
 });
 
 describe('deleteGreyLiteratureSource', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('calls DELETE endpoint', async () => {
     mockApi.delete.mockResolvedValue(undefined);

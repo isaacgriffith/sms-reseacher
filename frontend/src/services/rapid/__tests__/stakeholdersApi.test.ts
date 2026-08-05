@@ -29,7 +29,9 @@ const SH_FIXTURE = {
 };
 
 describe('listStakeholders', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
   it('calls GET and returns list', async () => {
     mockApi.get.mockResolvedValue([SH_FIXTURE]);
     const result = await listStakeholders(42);
@@ -39,10 +41,17 @@ describe('listStakeholders', () => {
 });
 
 describe('createStakeholder', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
   it('calls POST with data', async () => {
     mockApi.post.mockResolvedValue(SH_FIXTURE);
-    const data = { name: 'Alice', role_title: 'PM', organisation: 'Acme', involvement_type: 'advisor' as const };
+    const data = {
+      name: 'Alice',
+      role_title: 'PM',
+      organisation: 'Acme',
+      involvement_type: 'advisor' as const,
+    };
     const result = await createStakeholder(42, data);
     expect(mockApi.post).toHaveBeenCalledWith('/api/v1/rapid/studies/42/stakeholders', data);
     expect(result.name).toBe('Alice');
@@ -50,17 +59,23 @@ describe('createStakeholder', () => {
 });
 
 describe('updateStakeholder', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
   it('calls PUT with data', async () => {
     mockApi.put.mockResolvedValue({ ...SH_FIXTURE, name: 'Bob' });
     const result = await updateStakeholder(42, 1, { name: 'Bob' });
-    expect(mockApi.put).toHaveBeenCalledWith('/api/v1/rapid/studies/42/stakeholders/1', { name: 'Bob' });
+    expect(mockApi.put).toHaveBeenCalledWith('/api/v1/rapid/studies/42/stakeholders/1', {
+      name: 'Bob',
+    });
     expect(result.name).toBe('Bob');
   });
 });
 
 describe('deleteStakeholder', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
   it('calls DELETE', async () => {
     mockApi.delete.mockResolvedValue(undefined);
     await deleteStakeholder(42, 1);

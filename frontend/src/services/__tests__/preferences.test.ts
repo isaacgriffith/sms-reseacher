@@ -29,7 +29,9 @@ import {
 } from '../preferences';
 
 describe('preferences service', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('getPreferences parses response', async () => {
     vi.mocked(api.get).mockResolvedValue({ theme_preference: 'dark', totp_enabled: false });

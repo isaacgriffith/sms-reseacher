@@ -39,7 +39,9 @@ const EXTRACTION_FIXTURE = {
 };
 
 describe('listExtractions', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('calls GET /extractions and parses response', async () => {
     mockApi.get.mockResolvedValue([EXTRACTION_FIXTURE]);
@@ -59,7 +61,9 @@ describe('listExtractions', () => {
 });
 
 describe('updateExtraction', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('calls PUT with update data and parses response', async () => {
     mockApi.put.mockResolvedValue({ ...EXTRACTION_FIXTURE, extraction_status: 'human_reviewed' });
@@ -72,7 +76,9 @@ describe('updateExtraction', () => {
 });
 
 describe('triggerAiAssist', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('calls POST /extractions/ai-assist and parses response', async () => {
     mockApi.post.mockResolvedValue({ job_id: 'ai-job-1', status: 'queued', paper_count: 3 });

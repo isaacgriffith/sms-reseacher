@@ -4,7 +4,7 @@
  * @module ForestPlotViewer
  */
 
-import React, { memo } from 'react';
+import { memo } from 'react';
 import Box from '@mui/material/Box';
 import Skeleton from '@mui/material/Skeleton';
 import Typography from '@mui/material/Typography';

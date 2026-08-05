@@ -49,12 +49,15 @@ describe('useQualityConfig', () => {
   });
 
   it('fetches config when studyId > 0', async () => {
-    vi.mocked(qualityApiModule.getQualityConfig).mockResolvedValue({ mode: 'full', threats: [] });
+    vi.mocked(qualityApiModule.getQualityConfig).mockResolvedValue({
+      quality_appraisal_mode: 'full',
+      threats: [],
+    });
     const { result } = renderHook(() => useQualityConfig(42), { wrapper: makeWrapper() });
     await waitFor(() => {
       if (!result.current.isSuccess) throw new Error('not ready');
     });
-    expect(result.current.data?.mode).toBe('full');
+    expect(result.current.data?.quality_appraisal_mode).toBe('full');
   });
 });
 

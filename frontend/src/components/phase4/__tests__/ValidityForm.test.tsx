@@ -24,7 +24,7 @@ import { api } from '../../../services/api';
 import ValidityForm from '../ValidityForm';
 
 const STUDY_ID = 5;
-const mockApi = api as {
+const mockApi = api as unknown as {
   get: ReturnType<typeof vi.fn>;
   post: ReturnType<typeof vi.fn>;
   patch: ReturnType<typeof vi.fn>;

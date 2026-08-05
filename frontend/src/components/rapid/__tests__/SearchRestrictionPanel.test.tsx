@@ -38,7 +38,9 @@ function renderWithQuery(ui: React.ReactElement) {
 // ---------------------------------------------------------------------------
 
 describe('SearchRestrictionPanel', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('renders all four restriction type checkboxes', () => {
     renderWithQuery(<SearchRestrictionPanel studyId={42} />);
@@ -68,7 +70,7 @@ describe('SearchRestrictionPanel', () => {
       mutate,
       isPending: false,
       isError: false,
-    } as ReturnType<typeof useUpdateSearchConfig>);
+    } as unknown as ReturnType<typeof useUpdateSearchConfig>);
     renderWithQuery(<SearchRestrictionPanel studyId={42} />);
     fireEvent.click(screen.getByRole('button', { name: /save restrictions/i }));
     expect(mutate).toHaveBeenCalled();
@@ -79,7 +81,7 @@ describe('SearchRestrictionPanel', () => {
       mutate: vi.fn(),
       isPending: false,
       isError: true,
-    } as ReturnType<typeof useUpdateSearchConfig>);
+    } as unknown as ReturnType<typeof useUpdateSearchConfig>);
     renderWithQuery(<SearchRestrictionPanel studyId={42} />);
     expect(screen.getByText(/failed to save/i)).toBeTruthy();
   });

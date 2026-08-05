@@ -13,7 +13,9 @@ vi.mock('../../api', () => ({
 const mockApi = vi.mocked(api);
 
 describe('updateSearchConfig', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('calls PUT and returns threats', async () => {
     const threats = [

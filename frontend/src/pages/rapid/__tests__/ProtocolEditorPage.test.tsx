@@ -76,19 +76,19 @@ function setupDefaultMocks() {
     data: BASE_PROTOCOL,
     isLoading: false,
     error: null,
-  } as ReturnType<typeof useRRProtocol>);
+  } as unknown as ReturnType<typeof useRRProtocol>);
   vi.mocked(useUpdateRRProtocol).mockReturnValue({
     mutation: { mutate: vi.fn(), isPending: false, isError: false, error: null },
     invalidationPending: null,
     confirmInvalidation: vi.fn(),
     cancelInvalidation: vi.fn(),
-  } as ReturnType<typeof useUpdateRRProtocol>);
+  } as unknown as ReturnType<typeof useUpdateRRProtocol>);
   vi.mocked(useValidateRRProtocol).mockReturnValue({
     mutate: vi.fn(),
     isPending: false,
     isError: false,
     error: null,
-  } as ReturnType<typeof useValidateRRProtocol>);
+  } as unknown as ReturnType<typeof useValidateRRProtocol>);
 }
 
 // ---------------------------------------------------------------------------
@@ -159,7 +159,7 @@ describe('ProtocolEditorPage', () => {
         data: { ...BASE_PROTOCOL, status: 'validated' },
         isLoading: false,
         error: null,
-      } as ReturnType<typeof useRRProtocol>);
+      } as unknown as ReturnType<typeof useRRProtocol>);
       renderWithQuery(<ProtocolEditorPage studyId={42} />);
       expect(screen.getByText(/protocol is validated/i)).toBeTruthy();
     });
@@ -169,7 +169,7 @@ describe('ProtocolEditorPage', () => {
         data: { ...BASE_PROTOCOL, status: 'validated' },
         isLoading: false,
         error: null,
-      } as ReturnType<typeof useRRProtocol>);
+      } as unknown as ReturnType<typeof useRRProtocol>);
       renderWithQuery(<ProtocolEditorPage studyId={42} />);
       expect(screen.queryByRole('button', { name: /validate protocol/i })).toBeNull();
     });
@@ -187,7 +187,7 @@ describe('ProtocolEditorPage', () => {
         invalidationPending: null,
         confirmInvalidation: vi.fn(),
         cancelInvalidation: vi.fn(),
-      } as ReturnType<typeof useUpdateRRProtocol>);
+      } as unknown as ReturnType<typeof useUpdateRRProtocol>);
       renderWithQuery(<ProtocolEditorPage studyId={42} />);
       expect(screen.getByText(/save failed/i)).toBeTruthy();
     });
@@ -198,7 +198,7 @@ describe('ProtocolEditorPage', () => {
         isPending: false,
         isError: true,
         error: new Error('Validation failed'),
-      } as ReturnType<typeof useValidateRRProtocol>);
+      } as unknown as ReturnType<typeof useValidateRRProtocol>);
       renderWithQuery(<ProtocolEditorPage studyId={42} />);
       expect(screen.getByText(/validation failed/i)).toBeTruthy();
     });
@@ -211,7 +211,7 @@ describe('ProtocolEditorPage', () => {
         invalidationPending: { papersAtRisk: 3 },
         confirmInvalidation: vi.fn(),
         cancelInvalidation: vi.fn(),
-      } as ReturnType<typeof useUpdateRRProtocol>);
+      } as unknown as ReturnType<typeof useUpdateRRProtocol>);
       renderWithQuery(<ProtocolEditorPage studyId={42} />);
       expect(screen.getByText(/confirm protocol edit/i)).toBeTruthy();
       expect(screen.getByText(/3 paper\(s\)/i)).toBeTruthy();

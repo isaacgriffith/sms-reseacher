@@ -30,7 +30,7 @@ vi.mock('../../../services/api', () => ({
 import { api } from '../../../services/api';
 import ServiceHealthPanel from '../ServiceHealthPanel';
 
-const mockApi = api as { get: ReturnType<typeof vi.fn> };
+const mockApi = api as unknown as { get: ReturnType<typeof vi.fn> };
 
 function renderWithQuery(ui: React.ReactElement) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });

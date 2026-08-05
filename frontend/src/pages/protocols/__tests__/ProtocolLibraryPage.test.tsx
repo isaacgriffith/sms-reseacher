@@ -3,7 +3,12 @@ import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
 import ProtocolLibraryPage from '../ProtocolLibraryPage';
-import { useProtocolList, useCopyProtocol, useAssignProtocol, useImportProtocol } from '../../../hooks/protocols/useProtocol';
+import {
+  useProtocolList,
+  useCopyProtocol,
+  useAssignProtocol,
+  useImportProtocol,
+} from '../../../hooks/protocols/useProtocol';
 
 const { mockNavigate, mockCopyMutate, mockAssignMutate, mockImportMutate } = vi.hoisted(() => ({
   mockNavigate: vi.fn(),
@@ -19,14 +24,29 @@ vi.mock('react-router-dom', () => ({
 vi.mock('../../../hooks/protocols/useProtocol', () => ({
   useProtocolList: vi.fn().mockReturnValue({
     data: [
-      { id: 1, name: 'SMS Default', study_type: 'sms', is_default_template: true, owner_user_id: null, version_id: 1 },
+      {
+        id: 1,
+        name: 'SMS Default',
+        study_type: 'sms',
+        is_default_template: true,
+        owner_user_id: null,
+        version_id: 1,
+      },
     ],
     isLoading: false,
     error: null,
   }),
-  useCopyProtocol: vi.fn().mockReturnValue({ mutate: (...args: unknown[]) => mockCopyMutate(...args), isPending: false }),
-  useAssignProtocol: vi.fn().mockReturnValue({ mutate: (...args: unknown[]) => mockAssignMutate(...args), isPending: false }),
-  useImportProtocol: vi.fn().mockReturnValue({ mutate: (...args: unknown[]) => mockImportMutate(...args), isPending: false }),
+  useCopyProtocol: vi
+    .fn()
+    .mockReturnValue({ mutate: (...args: unknown[]) => mockCopyMutate(...args), isPending: false }),
+  useAssignProtocol: vi.fn().mockReturnValue({
+    mutate: (...args: unknown[]) => mockAssignMutate(...args),
+    isPending: false,
+  }),
+  useImportProtocol: vi.fn().mockReturnValue({
+    mutate: (...args: unknown[]) => mockImportMutate(...args),
+    isPending: false,
+  }),
 }));
 
 vi.mock('../../../services/protocols/protocolsApi', () => ({
@@ -37,7 +57,10 @@ vi.mock('../../../services/protocols/protocolsApi', () => ({
 let capturedCallbacks: Record<string, (p: unknown) => void> = {};
 vi.mock('../../../components/protocols/ProtocolList', () => ({
   default: ({ protocols, onSelect, onCopy, onAssign, onExport }: Record<string, unknown>) => {
-    capturedCallbacks = { onSelect, onCopy, onAssign, onExport } as Record<string, (p: unknown) => void>;
+    capturedCallbacks = { onSelect, onCopy, onAssign, onExport } as Record<
+      string,
+      (p: unknown) => void
+    >;
     return React.createElement(
       'div',
       { 'data-testid': 'protocol-list' },
@@ -49,7 +72,11 @@ vi.mock('../../../components/protocols/ProtocolList', () => ({
 function renderPage() {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
-    React.createElement(QueryClientProvider, { client: qc }, React.createElement(ProtocolLibraryPage)),
+    React.createElement(
+      QueryClientProvider,
+      { client: qc },
+      React.createElement(ProtocolLibraryPage),
+    ),
   );
 }
 
@@ -61,14 +88,30 @@ describe('ProtocolLibraryPage', () => {
     capturedCallbacks = {};
     vi.mocked(useProtocolList).mockReturnValue({
       data: [
-        { id: 1, name: 'SMS Default', study_type: 'sms', is_default_template: true, owner_user_id: null, version_id: 1 },
+        {
+          id: 1,
+          name: 'SMS Default',
+          study_type: 'sms',
+          is_default_template: true,
+          owner_user_id: null,
+          version_id: 1,
+        },
       ],
       isLoading: false,
       error: null,
     } as ReturnType<typeof useProtocolList>);
-    vi.mocked(useCopyProtocol).mockReturnValue({ mutate: (...args: unknown[]) => mockCopyMutate(...args), isPending: false } as ReturnType<typeof useCopyProtocol>);
-    vi.mocked(useAssignProtocol).mockReturnValue({ mutate: (...args: unknown[]) => mockAssignMutate(...args), isPending: false } as ReturnType<typeof useAssignProtocol>);
-    vi.mocked(useImportProtocol).mockReturnValue({ mutate: (...args: unknown[]) => mockImportMutate(...args), isPending: false } as ReturnType<typeof useImportProtocol>);
+    vi.mocked(useCopyProtocol).mockReturnValue({
+      mutate: (...args: unknown[]) => mockCopyMutate(...args),
+      isPending: false,
+    } as ReturnType<typeof useCopyProtocol>);
+    vi.mocked(useAssignProtocol).mockReturnValue({
+      mutate: (...args: unknown[]) => mockAssignMutate(...args),
+      isPending: false,
+    } as ReturnType<typeof useAssignProtocol>);
+    vi.mocked(useImportProtocol).mockReturnValue({
+      mutate: (...args: unknown[]) => mockImportMutate(...args),
+      isPending: false,
+    } as ReturnType<typeof useImportProtocol>);
   });
 
   it('renders protocol list', async () => {
@@ -97,18 +140,24 @@ describe('ProtocolLibraryPage', () => {
   it('opens copy dialog', async () => {
     renderPage();
     await waitFor(() => expect(capturedCallbacks.onCopy).toBeDefined());
-    act(() => { capturedCallbacks.onCopy(sampleProtocol); });
+    act(() => {
+      capturedCallbacks.onCopy(sampleProtocol);
+    });
     expect(screen.getByText('Copy Protocol')).toBeInTheDocument();
     expect(screen.getByDisplayValue('Copy of SMS Default')).toBeInTheDocument();
   });
 
   it('confirms copy and navigates on success', async () => {
-    mockCopyMutate.mockImplementation((_data: unknown, opts?: { onSuccess?: (r: { id: number }) => void }) => {
-      opts?.onSuccess?.({ id: 99 });
-    });
+    mockCopyMutate.mockImplementation(
+      (_data: unknown, opts?: { onSuccess?: (r: { id: number }) => void }) => {
+        opts?.onSuccess?.({ id: 99 });
+      },
+    );
     renderPage();
     await waitFor(() => expect(capturedCallbacks.onCopy).toBeDefined());
-    act(() => { capturedCallbacks.onCopy(sampleProtocol); });
+    act(() => {
+      capturedCallbacks.onCopy(sampleProtocol);
+    });
     fireEvent.click(screen.getByText('Copy'));
     expect(mockCopyMutate).toHaveBeenCalled();
     expect(mockNavigate).toHaveBeenCalledWith('/protocols/99/edit');
@@ -120,7 +169,9 @@ describe('ProtocolLibraryPage', () => {
     });
     renderPage();
     await waitFor(() => expect(capturedCallbacks.onCopy).toBeDefined());
-    act(() => { capturedCallbacks.onCopy(sampleProtocol); });
+    act(() => {
+      capturedCallbacks.onCopy(sampleProtocol);
+    });
     fireEvent.click(screen.getByText('Copy'));
     expect(screen.getByText(/Failed to copy/)).toBeInTheDocument();
   });
@@ -128,7 +179,9 @@ describe('ProtocolLibraryPage', () => {
   it('opens assign dialog', async () => {
     renderPage();
     await waitFor(() => expect(capturedCallbacks.onAssign).toBeDefined());
-    act(() => { capturedCallbacks.onAssign(sampleProtocol); });
+    act(() => {
+      capturedCallbacks.onAssign(sampleProtocol);
+    });
     expect(screen.getByText('Assign to Study')).toBeInTheDocument();
   });
 
@@ -138,7 +191,9 @@ describe('ProtocolLibraryPage', () => {
     });
     renderPage();
     await waitFor(() => expect(capturedCallbacks.onAssign).toBeDefined());
-    act(() => { capturedCallbacks.onAssign(sampleProtocol); });
+    act(() => {
+      capturedCallbacks.onAssign(sampleProtocol);
+    });
     fireEvent.change(screen.getByLabelText('Study ID'), { target: { value: '42' } });
     fireEvent.click(screen.getByText('Assign'));
     expect(mockAssignMutate).toHaveBeenCalled();
@@ -150,7 +205,9 @@ describe('ProtocolLibraryPage', () => {
     });
     renderPage();
     await waitFor(() => expect(capturedCallbacks.onAssign).toBeDefined());
-    act(() => { capturedCallbacks.onAssign(sampleProtocol); });
+    act(() => {
+      capturedCallbacks.onAssign(sampleProtocol);
+    });
     fireEvent.change(screen.getByLabelText('Study ID'), { target: { value: '42' } });
     fireEvent.click(screen.getByText('Assign'));
     expect(screen.getByText(/Failed to assign/)).toBeInTheDocument();
@@ -159,7 +216,9 @@ describe('ProtocolLibraryPage', () => {
   it('does not assign when study ID is empty', async () => {
     renderPage();
     await waitFor(() => expect(capturedCallbacks.onAssign).toBeDefined());
-    act(() => { capturedCallbacks.onAssign(sampleProtocol); });
+    act(() => {
+      capturedCallbacks.onAssign(sampleProtocol);
+    });
     // Study ID field is empty by default, Assign button should not call mutation
     fireEvent.click(screen.getByText('Assign'));
     expect(mockAssignMutate).not.toHaveBeenCalled();
@@ -181,9 +240,11 @@ describe('ProtocolLibraryPage', () => {
   });
 
   it('handles file input change and calls import mutation', async () => {
-    mockImportMutate.mockImplementation((_file: unknown, opts?: { onSuccess?: (r: { id: number }) => void }) => {
-      opts?.onSuccess?.({ id: 77 });
-    });
+    mockImportMutate.mockImplementation(
+      (_file: unknown, opts?: { onSuccess?: (r: { id: number }) => void }) => {
+        opts?.onSuccess?.({ id: 77 });
+      },
+    );
     renderPage();
     const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
     const file = new File(['yaml: true'], 'protocol.yaml', { type: 'text/yaml' });
@@ -193,9 +254,11 @@ describe('ProtocolLibraryPage', () => {
   });
 
   it('shows import error on failure', async () => {
-    mockImportMutate.mockImplementation((_file: unknown, opts?: { onError?: (err: Error) => void }) => {
-      opts?.onError?.(new Error('Bad YAML'));
-    });
+    mockImportMutate.mockImplementation(
+      (_file: unknown, opts?: { onError?: (err: Error) => void }) => {
+        opts?.onError?.(new Error('Bad YAML'));
+      },
+    );
     renderPage();
     const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
     const file = new File(['invalid'], 'bad.yaml', { type: 'text/yaml' });

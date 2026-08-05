@@ -9,7 +9,7 @@ vi.mock('../../../services/api', () => ({
   api: { get: vi.fn(), post: vi.fn() },
   ApiError: class extends Error {
     detail: string;
-    constructor(s: number, d: string) {
+    constructor(_s: number, d: string) {
       super(d);
       this.detail = d;
     }
@@ -31,7 +31,9 @@ function renderPage() {
 }
 
 describe('GroupsPage', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('shows loading state', () => {
     mockApi.get.mockReturnValue(new Promise(() => {}));
@@ -54,9 +56,7 @@ describe('GroupsPage', () => {
   });
 
   it('shows group cards', async () => {
-    mockApi.get.mockResolvedValue([
-      { id: 1, name: 'Group A', role: 'owner', study_count: 3 },
-    ]);
+    mockApi.get.mockResolvedValue([{ id: 1, name: 'Group A', role: 'owner', study_count: 3 }]);
     renderPage();
     await waitFor(() => expect(screen.getByText('Group A')).toBeInTheDocument());
   });

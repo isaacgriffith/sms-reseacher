@@ -79,7 +79,10 @@ vi.mock('../../components/admin/SearchIntegrationsTable', () => ({
 }));
 
 vi.mock('../../services/providersApi', () => ({
-  useProviders: vi.fn(() => ({ data: [{ id: 'p1', display_name: 'OpenAI', provider_type: 'openai' }], isLoading: false })),
+  useProviders: vi.fn(() => ({
+    data: [{ id: 'p1', display_name: 'OpenAI', provider_type: 'openai' }],
+    isLoading: false,
+  })),
   useDeleteProvider: vi.fn(() => ({ mutate: vi.fn() })),
   useRefreshModels: vi.fn(() => ({ mutate: vi.fn() })),
 }));
@@ -231,7 +234,11 @@ describe('AdminPage', () => {
     // Trigger the captured onEdit callback from ProviderList
     const { act } = await import('@testing-library/react');
     act(() => {
-      capturedProviderCallbacks.onEdit({ id: 'p1', display_name: 'OpenAI', provider_type: 'openai' });
+      capturedProviderCallbacks.onEdit({
+        id: 'p1',
+        display_name: 'OpenAI',
+        provider_type: 'openai',
+      });
     });
     expect(await screen.findByText(/Edit Provider/i)).toBeInTheDocument();
   });
@@ -273,7 +280,9 @@ describe('AdminPage', () => {
 
   it('triggers onEdit from agent list to open edit dialog', async () => {
     const { useAgent } = await import('../../services/agentsApi');
-    vi.mocked(useAgent).mockReturnValue({ data: { id: 'a1', role_name: 'Test' } } as ReturnType<typeof useAgent>);
+    vi.mocked(useAgent).mockReturnValue({ data: { id: 'a1', role_name: 'Test' } } as ReturnType<
+      typeof useAgent
+    >);
     vi.mocked(api.get).mockResolvedValue([]);
     renderAdminPage();
     await screen.findByText(/admin dashboard/i);

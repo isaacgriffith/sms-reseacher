@@ -112,7 +112,11 @@ vi.mock('../../../components/protocols/ProtocolNodePanel', () => ({
 function renderPage() {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
-    React.createElement(QueryClientProvider, { client: qc }, React.createElement(ProtocolEditorPage)),
+    React.createElement(
+      QueryClientProvider,
+      { client: qc },
+      React.createElement(ProtocolEditorPage),
+    ),
   );
 }
 
@@ -124,17 +128,40 @@ describe('ProtocolEditorPage', () => {
     nodePanelCallbacks = {};
     vi.mocked(useProtocolDetail).mockReturnValue({
       data: {
-        id: 1, name: 'Test Protocol', study_type: 'sms', is_default_template: false,
-        owner_user_id: 1, version_id: 1, description: null,
-        nodes: [{ id: 1, task_id: 't1', task_type: 'search', label: 'Search', description: 'Run search', is_required: true, position_x: 100, position_y: 200, inputs: [], outputs: [], quality_gates: [], assignees: [] }],
-        edges: [], created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z',
+        id: 1,
+        name: 'Test Protocol',
+        study_type: 'sms',
+        is_default_template: false,
+        owner_user_id: 1,
+        version_id: 1,
+        description: null,
+        nodes: [
+          {
+            id: 1,
+            task_id: 't1',
+            task_type: 'search',
+            label: 'Search',
+            description: 'Run search',
+            is_required: true,
+            position_x: 100,
+            position_y: 200,
+            inputs: [],
+            outputs: [],
+            quality_gates: [],
+            assignees: [],
+          },
+        ],
+        edges: [],
+        created_at: '2026-01-01T00:00:00Z',
+        updated_at: '2026-01-01T00:00:00Z',
       },
       isLoading: false,
       error: null,
-    } as ReturnType<typeof useProtocolDetail>);
+    } as unknown as ReturnType<typeof useProtocolDetail>);
     vi.mocked(useUpdateProtocol).mockReturnValue({
       mutate: (...args: unknown[]) => mockMutate(...args),
-      isPending: false, isError: false,
+      isPending: false,
+      isError: false,
     } as ReturnType<typeof useUpdateProtocol>);
   });
 
@@ -205,7 +232,10 @@ describe('ProtocolEditorPage', () => {
     renderPage();
     nodePanelCallbacks.onSave({ task_id: 't1', label: 'Updated' });
     expect(mockDispatch).toHaveBeenCalledWith(
-      expect.objectContaining({ type: 'UPDATE_NODE', payload: { task_id: 't1', label: 'Updated' } }),
+      expect.objectContaining({
+        type: 'UPDATE_NODE',
+        payload: { task_id: 't1', label: 'Updated' },
+      }),
     );
   });
 });

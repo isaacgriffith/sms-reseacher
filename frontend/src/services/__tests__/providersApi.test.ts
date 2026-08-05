@@ -50,7 +50,9 @@ function makeWrapper() {
 }
 
 describe('useProviders', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
   it('fetches providers list', async () => {
     mockApi.get.mockResolvedValue([PROVIDER]);
     const { result } = renderHook(() => useProviders(), { wrapper: makeWrapper() });
@@ -60,38 +62,47 @@ describe('useProviders', () => {
 });
 
 describe('useProvider', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
   it('fetches single provider', async () => {
     mockApi.get.mockResolvedValue(PROVIDER);
-    const { result } = renderHook(
-      () => useProvider('00000000-0000-0000-0000-000000000001'),
-      { wrapper: makeWrapper() },
-    );
+    const { result } = renderHook(() => useProvider('00000000-0000-0000-0000-000000000001'), {
+      wrapper: makeWrapper(),
+    });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.data?.display_name).toBe('OpenAI');
   });
 });
 
 describe('useProviderModels', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
   it('fetches models for provider', async () => {
     mockApi.get.mockResolvedValue([MODEL]);
-    const { result } = renderHook(
-      () => useProviderModels('00000000-0000-0000-0000-000000000001'),
-      { wrapper: makeWrapper() },
-    );
+    const { result } = renderHook(() => useProviderModels('00000000-0000-0000-0000-000000000001'), {
+      wrapper: makeWrapper(),
+    });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.data).toHaveLength(1);
   });
 });
 
 describe('useCreateProvider', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
   it('creates provider', async () => {
     mockApi.post.mockResolvedValue(PROVIDER);
     const { result } = renderHook(() => useCreateProvider(), { wrapper: makeWrapper() });
     await act(async () => {
-      result.current.mutate({ display_name: 'OpenAI', provider_type: 'openai', api_key: 'sk-123' });
+      result.current.mutate({
+        display_name: 'OpenAI',
+        provider_type: 'openai',
+        api_key: 'sk-123',
+        is_enabled: true,
+      });
     });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(mockApi.post).toHaveBeenCalled();
@@ -99,19 +110,26 @@ describe('useCreateProvider', () => {
 });
 
 describe('useUpdateProvider', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
   it('updates provider', async () => {
     mockApi.patch.mockResolvedValue(PROVIDER);
     const { result } = renderHook(() => useUpdateProvider(), { wrapper: makeWrapper() });
     await act(async () => {
-      result.current.mutate({ id: '00000000-0000-0000-0000-000000000001', data: { display_name: 'Updated' } });
+      result.current.mutate({
+        id: '00000000-0000-0000-0000-000000000001',
+        data: { display_name: 'Updated' },
+      });
     });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
   });
 });
 
 describe('useDeleteProvider', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
   it('deletes provider', async () => {
     mockApi.delete.mockResolvedValue(undefined);
     const { result } = renderHook(() => useDeleteProvider(), { wrapper: makeWrapper() });
@@ -123,7 +141,9 @@ describe('useDeleteProvider', () => {
 });
 
 describe('useRefreshModels', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
   it('refreshes models', async () => {
     mockApi.post.mockResolvedValue({ models_added: 1, models_removed: 0, models_total: 5 });
     const { result } = renderHook(() => useRefreshModels(), { wrapper: makeWrapper() });
@@ -135,7 +155,9 @@ describe('useRefreshModels', () => {
 });
 
 describe('useToggleModel', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
   it('toggles model', async () => {
     mockApi.patch.mockResolvedValue({ ...MODEL, is_enabled: false });
     const { result } = renderHook(() => useToggleModel(), { wrapper: makeWrapper() });

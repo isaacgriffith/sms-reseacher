@@ -9,7 +9,7 @@
  * - Error state when synthesis list fetch fails.
  */
 
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { vi } from 'vitest';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -40,7 +40,15 @@ vi.mock('../../../components/slr/SynthesisConfigForm', () => ({
       data-testid="synthesis-config-form"
       onSubmit={(e) => {
         e.preventDefault();
-        onSubmit({ approach: 'meta_analysis', model_type: 'auto', heterogeneity_threshold: 0.1, confidence_interval: 0.95, papers: [{ label: 'P1', effect_size: 0.5, se: 0.1, ci_lower: 0.3, ci_upper: 0.7, weight: 1.0 }] });
+        onSubmit({
+          approach: 'meta_analysis',
+          model_type: 'auto',
+          heterogeneity_threshold: 0.1,
+          confidence_interval: 0.95,
+          papers: [
+            { label: 'P1', effect_size: 0.5, se: 0.1, ci_lower: 0.3, ci_upper: 0.7, weight: 1.0 },
+          ],
+        });
       }}
     >
       <button type="submit">Start Synthesis</button>
@@ -199,7 +207,6 @@ describe('SynthesisPage', () => {
         isLoading: false,
       } as never);
       renderPage();
-      const { fireEvent } = require('@testing-library/react');
       fireEvent.click(screen.getByText('pending'));
       expect(screen.getByText(/polling for updates/i)).toBeInTheDocument();
     });
@@ -215,7 +222,6 @@ describe('SynthesisPage', () => {
         isLoading: false,
       } as never);
       renderPage();
-      const { fireEvent } = require('@testing-library/react');
       fireEvent.click(screen.getByText('failed'));
       expect(screen.getByText('Boom')).toBeInTheDocument();
     });
@@ -231,7 +237,6 @@ describe('SynthesisPage', () => {
         isLoading: false,
       } as never);
       renderPage();
-      const { fireEvent } = require('@testing-library/react');
       fireEvent.click(screen.getByText('completed'));
       expect(screen.getByTestId('forest-plot')).toBeInTheDocument();
       expect(screen.getByTestId('funnel-plot')).toBeInTheDocument();
@@ -241,14 +246,25 @@ describe('SynthesisPage', () => {
       vi.mocked(useSynthesisResults).mockReturnValue({
         isLoading: false,
         error: null,
-        data: { results: [makeResult({ id: 5, status: 'completed', qualitative_themes: { themes: { 'Theme A': [1, 2], 'Theme B': [3] } } })] },
+        data: {
+          results: [
+            makeResult({
+              id: 5,
+              status: 'completed',
+              qualitative_themes: { themes: { 'Theme A': [1, 2], 'Theme B': [3] } },
+            }),
+          ],
+        },
       } as never);
       vi.mocked(useSynthesisResult).mockReturnValue({
-        data: makeResult({ id: 5, status: 'completed', qualitative_themes: { themes: { 'Theme A': [1, 2], 'Theme B': [3] } } }),
+        data: makeResult({
+          id: 5,
+          status: 'completed',
+          qualitative_themes: { themes: { 'Theme A': [1, 2], 'Theme B': [3] } },
+        }),
         isLoading: false,
       } as never);
       renderPage();
-      const { fireEvent } = require('@testing-library/react');
       fireEvent.click(screen.getByText('completed'));
       expect(screen.getByText('Theme A')).toBeInTheDocument();
       expect(screen.getByText('1, 2')).toBeInTheDocument();
@@ -258,14 +274,17 @@ describe('SynthesisPage', () => {
       vi.mocked(useSynthesisResults).mockReturnValue({
         isLoading: false,
         error: null,
-        data: { results: [makeResult({ id: 5, status: 'completed', sensitivity_analysis: { key: 'value' } })] },
+        data: {
+          results: [
+            makeResult({ id: 5, status: 'completed', sensitivity_analysis: { key: 'value' } }),
+          ],
+        },
       } as never);
       vi.mocked(useSynthesisResult).mockReturnValue({
         data: makeResult({ id: 5, status: 'completed', sensitivity_analysis: { key: 'value' } }),
         isLoading: false,
       } as never);
       renderPage();
-      const { fireEvent } = require('@testing-library/react');
       fireEvent.click(screen.getByText('completed'));
       expect(screen.getByText(/Sensitivity Analysis/)).toBeInTheDocument();
     });

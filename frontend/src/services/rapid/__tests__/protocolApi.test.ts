@@ -36,7 +36,9 @@ const PROTOCOL_FIXTURE = {
 };
 
 describe('getProtocol', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
   it('calls GET and returns parsed protocol', async () => {
     mockApi.get.mockResolvedValue(PROTOCOL_FIXTURE);
     const result = await getProtocol(42);
@@ -46,7 +48,9 @@ describe('getProtocol', () => {
 });
 
 describe('updateProtocol', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
   it('calls PUT without acknowledge param by default', async () => {
     mockApi.put.mockResolvedValue(PROTOCOL_FIXTURE);
     await updateProtocol(42, { practical_problem: 'up' });
@@ -65,20 +69,21 @@ describe('updateProtocol', () => {
 });
 
 describe('validateProtocol', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
   it('POSTs to validate endpoint', async () => {
     mockApi.post.mockResolvedValue({ ...PROTOCOL_FIXTURE, status: 'validated' });
     const result = await validateProtocol(42);
-    expect(mockApi.post).toHaveBeenCalledWith(
-      '/api/v1/rapid/studies/42/protocol/validate',
-      {},
-    );
+    expect(mockApi.post).toHaveBeenCalledWith('/api/v1/rapid/studies/42/protocol/validate', {});
     expect(result.status).toBe('validated');
   });
 });
 
 describe('getThreats', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
   it('calls GET and returns threats array', async () => {
     const threats = [
       {

@@ -53,7 +53,9 @@ const BASE_SUMMARY = {
 // ---------------------------------------------------------------------------
 
 describe('BriefingVersionPanel', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   describe('loading state', () => {
     it('shows loading indicator when isLoading is true', () => {
@@ -69,9 +71,10 @@ describe('BriefingVersionPanel', () => {
 
   describe('empty state', () => {
     it('renders empty fragment when briefings array is empty', () => {
-      vi.mocked(useBriefings).mockReturnValue({ data: [], isLoading: false } as ReturnType<
-        typeof useBriefings
-      >);
+      vi.mocked(useBriefings).mockReturnValue({
+        data: [],
+        isLoading: false,
+      } as unknown as ReturnType<typeof useBriefings>);
       const { container } = renderWithQuery(
         <BriefingVersionPanel studyId={42} onSelectBriefing={vi.fn()} selectedBriefingId={null} />,
       );
@@ -242,7 +245,7 @@ describe('BriefingVersionPanel', () => {
       vi.mocked(usePublishBriefing).mockReturnValue({
         mutate: publishMutate,
         isPending: false,
-      } as ReturnType<typeof usePublishBriefing>);
+      } as unknown as ReturnType<typeof usePublishBriefing>);
       vi.spyOn(window, 'confirm').mockReturnValue(true);
 
       renderWithQuery(
@@ -263,7 +266,7 @@ describe('BriefingVersionPanel', () => {
       vi.mocked(usePublishBriefing).mockReturnValue({
         mutate: publishMutate,
         isPending: false,
-      } as ReturnType<typeof usePublishBriefing>);
+      } as unknown as ReturnType<typeof usePublishBriefing>);
       vi.spyOn(window, 'confirm').mockReturnValue(false);
 
       renderWithQuery(

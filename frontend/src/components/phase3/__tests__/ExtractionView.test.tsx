@@ -358,7 +358,9 @@ describe('ExtractionView', () => {
         current_version: { version_id: 2, venue_type: 'journal' },
       };
       mockApi.get.mockResolvedValueOnce(MOCK_EXTRACTION);
-      const err = new ApiError(409, conflictDetail);
+      // ExtractionView reads err.detail as a ConflictPayload object at runtime,
+      // though ApiError types detail as string.
+      const err = new ApiError(409, conflictDetail as unknown as string);
       mockApi.patch.mockRejectedValueOnce(err);
 
       renderWithQuery(<ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />);
@@ -476,7 +478,9 @@ describe('ExtractionView', () => {
 
       mockApi.get.mockResolvedValueOnce(MOCK_EXTRACTION);
       // Simulate ApiError with 409 status
-      const err = new ApiError(409, conflictDetail);
+      // ExtractionView reads err.detail as a ConflictPayload object at runtime,
+      // though ApiError types detail as string.
+      const err = new ApiError(409, conflictDetail as unknown as string);
       mockApi.patch.mockRejectedValueOnce(err);
 
       renderWithQuery(<ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />);

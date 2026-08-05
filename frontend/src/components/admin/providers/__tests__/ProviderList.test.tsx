@@ -98,7 +98,7 @@ describe('ProviderList', () => {
   it('uses default color for unknown provider type', () => {
     render(
       <ProviderList
-        providers={[{ ...PROVIDER, provider_type: 'custom' }]}
+        providers={[{ ...PROVIDER, provider_type: 'custom' as (typeof PROVIDER)['provider_type'] }]}
         onEdit={vi.fn()}
         onDelete={vi.fn()}
         onRefresh={vi.fn()}

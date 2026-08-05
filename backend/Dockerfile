@@ -22,8 +22,9 @@ FROM python:3.14-slim AS runtime
 
 WORKDIR /app
 
-# Non-root user
-RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
+# Non-root user — UID/GID pinned so the identity is resolvable without /etc/passwd
+RUN addgroup --system --gid 10001 appgroup \
+    && adduser --system --uid 10001 --ingroup appgroup appuser
 
 # Copy virtual environment and source
 COPY --from=builder /workspace/.venv /app/.venv
@@ -36,7 +37,7 @@ ENV PATH="/app/.venv/bin:$PATH" \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
-USER appuser
+USER 10001:10001
 
 EXPOSE 8000
 

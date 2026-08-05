@@ -24,7 +24,9 @@ function wrapper({ children }: { children: React.ReactNode }) {
 }
 
 describe('APIDocsPage', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('shows loading state initially', () => {
     mockApi.get.mockReturnValue(new Promise(() => {}));

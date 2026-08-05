@@ -4,8 +4,12 @@ import React from 'react';
 import ProviderForm from '../ProviderForm';
 
 vi.mock('../../../../services/providersApi', () => ({
-  useCreateProvider: vi.fn().mockReturnValue({ mutateAsync: vi.fn(), isPending: false, error: null }),
-  useUpdateProvider: vi.fn().mockReturnValue({ mutateAsync: vi.fn(), isPending: false, error: null }),
+  useCreateProvider: vi
+    .fn()
+    .mockReturnValue({ mutateAsync: vi.fn(), isPending: false, error: null }),
+  useUpdateProvider: vi
+    .fn()
+    .mockReturnValue({ mutateAsync: vi.fn(), isPending: false, error: null }),
 }));
 
 const mockProvider = {
@@ -19,7 +23,9 @@ const mockProvider = {
 };
 
 describe('ProviderForm', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('renders create mode when no provider', () => {
     render(React.createElement(ProviderForm, { onSuccess: vi.fn(), onCancel: vi.fn() }));

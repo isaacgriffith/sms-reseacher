@@ -46,7 +46,9 @@ function makeWrapper() {
 }
 
 describe('useAgents', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('fetches agents without params', async () => {
     mockApi.get.mockResolvedValue([AGENT_SUMMARY]);
@@ -76,7 +78,9 @@ describe('useAgents', () => {
 });
 
 describe('useAgent', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('fetches agent when id is provided', async () => {
     mockApi.get.mockResolvedValue(AGENT_FULL);
@@ -95,7 +99,9 @@ describe('useAgent', () => {
 });
 
 describe('useAgentTaskTypes', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('fetches task types', async () => {
     mockApi.get.mockResolvedValue(['screener', 'extractor']);
@@ -116,7 +122,9 @@ import {
 } from '../agentsApi';
 
 describe('useCreateAgent', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
   it('creates agent', async () => {
     mockApi.post.mockResolvedValue(AGENT_FULL);
     const { result } = renderHook(() => useCreateAgent(), { wrapper: makeWrapper() });
@@ -137,7 +145,9 @@ describe('useCreateAgent', () => {
 });
 
 describe('useUpdateAgent', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
   it('updates agent', async () => {
     mockApi.patch.mockResolvedValue(AGENT_FULL);
     const { result } = renderHook(() => useUpdateAgent(), { wrapper: makeWrapper() });
@@ -152,7 +162,9 @@ describe('useUpdateAgent', () => {
 });
 
 describe('useDeleteAgent', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
   it('deletes agent', async () => {
     mockApi.delete.mockResolvedValue(undefined);
     const { result } = renderHook(() => useDeleteAgent(), { wrapper: makeWrapper() });
@@ -164,7 +176,9 @@ describe('useDeleteAgent', () => {
 });
 
 describe('useGenerateSystemMessage', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
   it('generates system message', async () => {
     mockApi.post.mockResolvedValue({
       system_message_template: 'Generated.',
@@ -179,7 +193,9 @@ describe('useGenerateSystemMessage', () => {
 });
 
 describe('useUndoSystemMessage', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
   it('undoes system message', async () => {
     mockApi.post.mockResolvedValue(AGENT_FULL);
     const { result } = renderHook(() => useUndoSystemMessage(), { wrapper: makeWrapper() });
@@ -191,7 +207,9 @@ describe('useUndoSystemMessage', () => {
 });
 
 describe('useGeneratePersonaSvg', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
   it('generates persona SVG', async () => {
     mockApi.post.mockResolvedValue({ svg: '<svg/>' });
     const { result } = renderHook(() => useGeneratePersonaSvg(), { wrapper: makeWrapper() });

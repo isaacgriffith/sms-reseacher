@@ -77,12 +77,18 @@ describe('useCreateStakeholder', () => {
 
   it('calls createStakeholder with studyId and data', async () => {
     const { result } = renderHook(() => useCreateStakeholder(42), { wrapper: makeWrapper() });
-    result.current.mutate({ name: 'Alice', role: 'Reviewer', email: null });
+    result.current.mutate({
+      name: 'Alice',
+      role_title: 'Reviewer',
+      organisation: 'Acme',
+      involvement_type: 'advisor',
+    });
     await waitFor(() => result.current.isSuccess);
     expect(stakeholdersApiModule.createStakeholder).toHaveBeenCalledWith(42, {
       name: 'Alice',
-      role: 'Reviewer',
-      email: null,
+      role_title: 'Reviewer',
+      organisation: 'Acme',
+      involvement_type: 'advisor',
     });
   });
 });

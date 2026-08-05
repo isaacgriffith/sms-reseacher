@@ -41,7 +41,17 @@ vi.mock('../../../../services/providersApi', () => ({
 }));
 
 vi.mock('../SystemMessageEditor', () => ({
-  default: ({ value, onChange, onUndo, canUndo }: { value: string; onChange: (v: string) => void; onUndo: () => void; canUndo: boolean }) =>
+  default: ({
+    value,
+    onChange,
+    onUndo,
+    canUndo,
+  }: {
+    value: string;
+    onChange: (v: string) => void;
+    onUndo: () => void;
+    canUndo: boolean;
+  }) =>
     React.createElement('div', { 'data-testid': 'sys-msg-editor' }, [
       React.createElement('textarea', {
         key: 'ta',
@@ -98,7 +108,9 @@ async function advanceToStep(stepIndex: number) {
 }
 
 describe('AgentWizard', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('renders step 0 with task type selection', () => {
     renderWizard();

@@ -28,7 +28,9 @@ const RESULT = {
 };
 
 describe('listSynthesisResults', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('calls GET and parses list response', async () => {
     mockApi.get.mockResolvedValue({ results: [RESULT] });
@@ -39,7 +41,9 @@ describe('listSynthesisResults', () => {
 });
 
 describe('startSynthesis', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('calls POST and returns a synthesis result', async () => {
     mockApi.post.mockResolvedValue({ ...RESULT, status: 'pending' });
@@ -53,7 +57,9 @@ describe('startSynthesis', () => {
 });
 
 describe('getSynthesisResult', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('calls GET and parses individual result', async () => {
     mockApi.get.mockResolvedValue(RESULT);

@@ -6,8 +6,20 @@ import { databaseSelectionKey, useStudyDatabaseSelection } from '../useStudyData
 
 vi.mock('../../services/api', () => ({
   api: {
-    get: vi.fn().mockResolvedValue({ study_id: 1, selections: [], snowball_enabled: false, scihub_enabled: false, scihub_acknowledged: false }),
-    put: vi.fn().mockResolvedValue({ study_id: 1, selections: [], snowball_enabled: true, scihub_enabled: false, scihub_acknowledged: false }),
+    get: vi.fn().mockResolvedValue({
+      study_id: 1,
+      selections: [],
+      snowball_enabled: false,
+      scihub_enabled: false,
+      scihub_acknowledged: false,
+    }),
+    put: vi.fn().mockResolvedValue({
+      study_id: 1,
+      selections: [],
+      snowball_enabled: true,
+      scihub_enabled: false,
+      scihub_acknowledged: false,
+    }),
   },
 }));
 

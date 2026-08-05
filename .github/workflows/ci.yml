@@ -276,12 +276,12 @@ jobs:
           tags: sms-frontend:ci
           load: true
 
-      - name: Install Trivy
+      - name: Trivy scan — backend
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: "image"
           image-ref: "sms-backend:ci"
-          trivy-config: .trivyignore
+          trivyignores: .trivyignore
           exit-code: "1"
           severity: "CRITICAL,HIGH"
 
@@ -290,7 +290,7 @@ jobs:
         with:
           scan-type: "image"
           image-ref: "sms-researcher-mcp:ci"
-          trivy-config: .trivyignore
+          trivyignores: .trivyignore
           exit-code: "1"
           severity: "CRITICAL,HIGH"
 
@@ -299,7 +299,7 @@ jobs:
         with:
           scan-type: "image"
           image-ref: "sms-frontend:ci"
-          trivy-config: .trivyignore
+          trivyignores: .trivyignore
           exit-code: "1"
           severity: "CRITICAL,HIGH"
 

@@ -36,7 +36,9 @@ const PROTOCOL_FIXTURE = {
 };
 
 describe('getProtocol', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('calls GET /api/v1/tertiary/studies/{id}/protocol', async () => {
     mockApi.get.mockResolvedValue(PROTOCOL_FIXTURE);
@@ -48,7 +50,9 @@ describe('getProtocol', () => {
 });
 
 describe('updateProtocol', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('calls PUT /api/v1/tertiary/studies/{id}/protocol with data', async () => {
     mockApi.put.mockResolvedValue({ ...PROTOCOL_FIXTURE, background: 'updated' });
@@ -61,7 +65,9 @@ describe('updateProtocol', () => {
 });
 
 describe('validateProtocol', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('calls POST /api/v1/tertiary/studies/{id}/protocol/validate', async () => {
     mockApi.post.mockResolvedValue({ job_id: 'job-abc', status: 'queued' });

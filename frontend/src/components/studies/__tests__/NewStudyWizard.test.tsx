@@ -17,7 +17,7 @@ vi.mock('../../../services/api', () => ({
 
 import { api } from '../../../services/api';
 
-const mockApi = api as { post: ReturnType<typeof vi.fn> };
+const mockApi = api as unknown as { post: ReturnType<typeof vi.fn> };
 
 const defaultProps = {
   groupId: 1,

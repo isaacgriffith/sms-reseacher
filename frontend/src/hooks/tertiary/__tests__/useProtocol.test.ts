@@ -43,7 +43,7 @@ describe('useUpdateTertiaryProtocol', () => {
   it('executes mutation', async () => {
     const { result } = renderHook(() => useUpdateTertiaryProtocol(42), { wrapper: makeWrapper() });
     await act(async () => {
-      result.current.mutate({ status: 'draft' });
+      result.current.mutate({ background: 'Updated background' });
     });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
   });
@@ -51,7 +51,9 @@ describe('useUpdateTertiaryProtocol', () => {
 
 describe('useValidateTertiaryProtocol', () => {
   it('executes mutation', async () => {
-    const { result } = renderHook(() => useValidateTertiaryProtocol(42), { wrapper: makeWrapper() });
+    const { result } = renderHook(() => useValidateTertiaryProtocol(42), {
+      wrapper: makeWrapper(),
+    });
     await act(async () => {
       result.current.mutate();
     });

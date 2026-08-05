@@ -54,7 +54,7 @@ describe('useUpsertProtocol', () => {
   it('executes mutation', async () => {
     const { result } = renderHook(() => useUpsertProtocol(42), { wrapper: makeWrapper() });
     await act(async () => {
-      result.current.mutate({ status: 'draft' });
+      result.current.mutate({ background: 'Updated background' });
     });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
   });

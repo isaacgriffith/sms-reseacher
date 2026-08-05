@@ -12,13 +12,23 @@ vi.mock('../../../services/api', () => ({
     get: vi.fn(),
     post: vi.fn(),
   },
-  ApiError: class ApiError extends Error {},
+  // Mirrors the real ApiError signature: (status, detail).
+  ApiError: class ApiError extends Error {
+    status: number;
+    detail: string;
+    constructor(status: number, detail: string) {
+      super(detail);
+      this.name = 'ApiError';
+      this.status = status;
+      this.detail = detail;
+    }
+  },
 }));
 
 import { api, ApiError } from '../../../services/api';
 import SearchStringEditor from '../SearchStringEditor';
 
-const mockApi = api as {
+const mockApi = api as unknown as {
   get: ReturnType<typeof vi.fn>;
   post: ReturnType<typeof vi.fn>;
 };
@@ -255,8 +265,7 @@ describe('SearchStringEditor', () => {
 
     it('shows error message when generate fails', async () => {
       mockApi.get.mockResolvedValueOnce([]);
-      const apiErr = new ApiError('Agent unavailable');
-      (apiErr as { detail?: string }).detail = 'Search string builder agent unavailable';
+      const apiErr = new ApiError(503, 'Search string builder agent unavailable');
       mockApi.post.mockRejectedValueOnce(apiErr);
 
       renderWithQuery(<SearchStringEditor studyId={1} />);

@@ -195,7 +195,9 @@ describe('StudyPage', () => {
     renderStudyPage();
     await screen.findByText('Agile Mapping Study');
     // Click Phase 2: Search
-    const searchTab = screen.getAllByText(/Search/).find(el => el.textContent?.includes('Phase 2'));
+    const searchTab = screen
+      .getAllByText(/Search/)
+      .find((el) => el.textContent?.includes('Phase 2'));
     if (searchTab) fireEvent.click(searchTab);
     expect(screen.getByTestId('criteria-form')).toBeInTheDocument();
     expect(screen.getByTestId('search-editor')).toBeInTheDocument();
@@ -218,7 +220,9 @@ describe('StudyPage', () => {
     renderStudyPage();
     await screen.findByText('Agile Mapping Study');
     // Click Phase 0: Protocol
-    const protocolTab = screen.getAllByText(/Protocol/).find(el => el.textContent?.includes('Phase 0'));
+    const protocolTab = screen
+      .getAllByText(/Protocol/)
+      .find((el) => el.textContent?.includes('Phase 0'));
     if (protocolTab) fireEvent.click(protocolTab);
     // Should show Graph/Execution toggle buttons
     expect(screen.getByRole('button', { name: /Graph/ })).toBeInTheDocument();
@@ -234,7 +238,9 @@ describe('StudyPage', () => {
 
   it('renders SLR protocol editor for SLR study phase 1', async () => {
     const { usePhases } = await import('../../hooks/slr/useProtocol');
-    vi.mocked(usePhases).mockReturnValue({ data: { unlocked_phases: [1, 2, 3, 4, 5] } } as ReturnType<typeof usePhases>);
+    vi.mocked(usePhases).mockReturnValue({
+      data: { unlocked_phases: [1, 2, 3, 4, 5] },
+    } as ReturnType<typeof usePhases>);
     vi.mocked(api.get).mockResolvedValue({
       ...TEST_STUDY,
       study_type: 'SLR',
@@ -264,16 +270,22 @@ describe('StudyPage', () => {
     const { fireEvent } = await import('@testing-library/react');
     renderStudyPage();
     await screen.findByText('Agile Mapping Study');
-    const screeningTab = screen.getAllByText(/Screening/).find(el => el.textContent?.includes('Phase 3'));
+    const screeningTab = screen
+      .getAllByText(/Screening/)
+      .find((el) => el.textContent?.includes('Phase 3'));
     if (screeningTab) fireEvent.click(screeningTab);
     expect(screen.getByTestId('paper-queue')).toBeInTheDocument();
   });
 
   it('renders SLR screening view with IRR panel for SLR phase 3', async () => {
     const { usePhases } = await import('../../hooks/slr/useProtocol');
-    vi.mocked(usePhases).mockReturnValue({ data: { unlocked_phases: [1, 2, 3, 4, 5] } } as ReturnType<typeof usePhases>);
+    vi.mocked(usePhases).mockReturnValue({
+      data: { unlocked_phases: [1, 2, 3, 4, 5] },
+    } as ReturnType<typeof usePhases>);
     const { useInterRaterRecords } = await import('../../hooks/slr/useInterRater');
-    vi.mocked(useInterRaterRecords).mockReturnValue({ data: { records: [] } } as ReturnType<typeof useInterRaterRecords>);
+    vi.mocked(useInterRaterRecords).mockReturnValue({
+      data: { records: [] },
+    } as unknown as ReturnType<typeof useInterRaterRecords>);
     vi.mocked(api.get).mockResolvedValue({
       ...TEST_STUDY,
       study_type: 'SLR',
@@ -282,7 +294,9 @@ describe('StudyPage', () => {
     const { fireEvent } = await import('@testing-library/react');
     renderStudyPage();
     await screen.findByText('Agile Mapping Study');
-    const screeningTab = screen.getAllByText(/Screening/).find(el => el.textContent?.includes('Phase 3'));
+    const screeningTab = screen
+      .getAllByText(/Screening/)
+      .find((el) => el.textContent?.includes('Phase 3'));
     if (screeningTab) fireEvent.click(screeningTab);
     expect(screen.getByTestId('paper-queue')).toBeInTheDocument();
     expect(screen.getByTestId('irr-panel')).toBeInTheDocument();
@@ -290,7 +304,9 @@ describe('StudyPage', () => {
 
   it('renders SLR synthesis for phase 5', async () => {
     const { usePhases } = await import('../../hooks/slr/useProtocol');
-    vi.mocked(usePhases).mockReturnValue({ data: { unlocked_phases: [1, 2, 3, 4, 5] } } as ReturnType<typeof usePhases>);
+    vi.mocked(usePhases).mockReturnValue({
+      data: { unlocked_phases: [1, 2, 3, 4, 5] },
+    } as ReturnType<typeof usePhases>);
     vi.mocked(api.get).mockResolvedValue({
       ...TEST_STUDY,
       study_type: 'SLR',
@@ -299,7 +315,9 @@ describe('StudyPage', () => {
     const { fireEvent } = await import('@testing-library/react');
     renderStudyPage();
     await screen.findByText('Agile Mapping Study');
-    const synthesisTab = screen.getAllByText(/Reporting/).find(el => el.textContent?.includes('Phase 5'));
+    const synthesisTab = screen
+      .getAllByText(/Reporting/)
+      .find((el) => el.textContent?.includes('Phase 5'));
     if (synthesisTab) fireEvent.click(synthesisTab);
     expect(screen.getByTestId('slr-synthesis')).toBeInTheDocument();
   });
@@ -313,14 +331,18 @@ describe('StudyPage', () => {
     const { fireEvent } = await import('@testing-library/react');
     renderStudyPage();
     await screen.findByText('Agile Mapping Study');
-    const searchTab = screen.getAllByText(/Search/).find(el => el.textContent?.includes('Phase 2'));
+    const searchTab = screen
+      .getAllByText(/Search/)
+      .find((el) => el.textContent?.includes('Phase 2'));
     if (searchTab) fireEvent.click(searchTab);
     expect(screen.getByTestId('rr-search-config')).toBeInTheDocument();
   });
 
   it('renders SLR QA for phase 4', async () => {
     const { usePhases } = await import('../../hooks/slr/useProtocol');
-    vi.mocked(usePhases).mockReturnValue({ data: { unlocked_phases: [1, 2, 3, 4, 5] } } as ReturnType<typeof usePhases>);
+    vi.mocked(usePhases).mockReturnValue({
+      data: { unlocked_phases: [1, 2, 3, 4, 5] },
+    } as ReturnType<typeof usePhases>);
     vi.mocked(api.get).mockResolvedValue({
       ...TEST_STUDY,
       study_type: 'SLR',
@@ -329,7 +351,9 @@ describe('StudyPage', () => {
     const { fireEvent } = await import('@testing-library/react');
     renderStudyPage();
     await screen.findByText('Agile Mapping Study');
-    const qaTab = screen.getAllByText(/Extraction/).find(el => el.textContent?.includes('Phase 4'));
+    const qaTab = screen
+      .getAllByText(/Extraction/)
+      .find((el) => el.textContent?.includes('Phase 4'));
     if (qaTab) fireEvent.click(qaTab);
     expect(screen.getByTestId('slr-qa')).toBeInTheDocument();
   });
@@ -343,7 +367,9 @@ describe('StudyPage', () => {
     const { fireEvent } = await import('@testing-library/react');
     renderStudyPage();
     await screen.findByText('Agile Mapping Study');
-    const qaTab = screen.getAllByText(/Extraction/).find(el => el.textContent?.includes('Phase 4'));
+    const qaTab = screen
+      .getAllByText(/Extraction/)
+      .find((el) => el.textContent?.includes('Phase 4'));
     if (qaTab) fireEvent.click(qaTab);
     expect(screen.getByTestId('rr-qa-config')).toBeInTheDocument();
   });
@@ -357,17 +383,22 @@ describe('StudyPage', () => {
     const { fireEvent } = await import('@testing-library/react');
     renderStudyPage();
     await screen.findByText('Agile Mapping Study');
-    const reportingTab = screen.getAllByText(/Reporting/).find(el => el.textContent?.includes('Phase 5'));
+    const reportingTab = screen
+      .getAllByText(/Reporting/)
+      .find((el) => el.textContent?.includes('Phase 5'));
     if (reportingTab) fireEvent.click(reportingTab);
     expect(screen.getByTestId('rr-narrative')).toBeInTheDocument();
   });
 
   it('shows protocol graph when assignment exists', async () => {
-    const { useProtocolAssignment, useProtocolDetail } = await import('../../hooks/protocols/useProtocol');
-    vi.mocked(useProtocolAssignment).mockReturnValue({ data: { protocol_id: 1 } } as ReturnType<typeof useProtocolAssignment>);
+    const { useProtocolAssignment, useProtocolDetail } =
+      await import('../../hooks/protocols/useProtocol');
+    vi.mocked(useProtocolAssignment).mockReturnValue({ data: { protocol_id: 1 } } as ReturnType<
+      typeof useProtocolAssignment
+    >);
     vi.mocked(useProtocolDetail).mockReturnValue({
       data: { id: 1, name: 'Test', nodes: [], edges: [] },
-    } as ReturnType<typeof useProtocolDetail>);
+    } as unknown as ReturnType<typeof useProtocolDetail>);
     vi.mocked(api.get).mockResolvedValue({
       ...TEST_STUDY,
       unlocked_phases: [0, 1, 2],
@@ -375,7 +406,9 @@ describe('StudyPage', () => {
     const { fireEvent } = await import('@testing-library/react');
     renderStudyPage();
     await screen.findByText('Agile Mapping Study');
-    const protocolTab = screen.getAllByText(/Protocol/).find(el => el.textContent?.includes('Phase 0'));
+    const protocolTab = screen
+      .getAllByText(/Protocol/)
+      .find((el) => el.textContent?.includes('Phase 0'));
     if (protocolTab) fireEvent.click(protocolTab);
     expect(screen.getByTestId('protocol-graph')).toBeInTheDocument();
   });

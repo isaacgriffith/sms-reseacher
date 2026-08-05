@@ -73,7 +73,9 @@ const SEED_IMPORT_FIXTURE = {
 // ---------------------------------------------------------------------------
 
 describe('SeedImportPanel', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   describe('loading state', () => {
     it('shows a loading indicator while fetching', () => {
@@ -108,7 +110,7 @@ describe('SeedImportPanel', () => {
         data: [],
         isLoading: false,
         error: null,
-      } as ReturnType<typeof useSeedImports>);
+      } as unknown as ReturnType<typeof useSeedImports>);
 
       renderWithQuery(<SeedImportPanel studyId={10} groupId={1} />);
       expect(screen.getByText(/no seed imports yet/i)).toBeInTheDocument();
@@ -157,7 +159,7 @@ describe('SeedImportPanel', () => {
         data: [],
         isLoading: false,
         error: null,
-      } as ReturnType<typeof useSeedImports>);
+      } as unknown as ReturnType<typeof useSeedImports>);
     });
 
     it('renders "Import from Platform Study" button', () => {

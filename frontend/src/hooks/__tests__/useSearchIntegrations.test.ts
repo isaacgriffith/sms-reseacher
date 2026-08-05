@@ -14,7 +14,12 @@ vi.mock('../../services/api', () => ({
   api: {
     get: vi.fn().mockResolvedValue([]),
     put: vi.fn().mockResolvedValue({ integration_type: 'ieee', status: 'ok' }),
-    post: vi.fn().mockResolvedValue({ integration_type: 'ieee', status: 'ok', message: 'ok', tested_at: '2026-01-01' }),
+    post: vi.fn().mockResolvedValue({
+      integration_type: 'ieee',
+      status: 'ok',
+      message: 'ok',
+      tested_at: '2026-01-01',
+    }),
   },
 }));
 
@@ -25,7 +30,9 @@ function makeWrapper() {
 }
 
 describe('useSearchIntegrations hooks', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('searchIntegrationKey returns correct key', () => {
     expect(searchIntegrationKey('ieee_xplore')).toEqual(['search-integration', 'ieee_xplore']);

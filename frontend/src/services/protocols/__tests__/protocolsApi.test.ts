@@ -110,7 +110,9 @@ const COMPLETE_RESP = {
 };
 
 describe('listProtocols', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
   it('calls GET without filter', async () => {
     mockApi.get.mockResolvedValue([LIST_ITEM]);
     const result = await listProtocols();
@@ -125,7 +127,9 @@ describe('listProtocols', () => {
 });
 
 describe('getProtocol', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
   it('fetches and parses detail', async () => {
     mockApi.get.mockResolvedValue(DETAIL);
     const result = await getProtocol(1);
@@ -134,7 +138,9 @@ describe('getProtocol', () => {
 });
 
 describe('getProtocolAssignment', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
   it('fetches assignment', async () => {
     mockApi.get.mockResolvedValue(ASSIGNMENT);
     const result = await getProtocolAssignment(42);
@@ -143,7 +149,9 @@ describe('getProtocolAssignment', () => {
 });
 
 describe('copyProtocol', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
   it('posts copy request', async () => {
     mockApi.post.mockResolvedValue(DETAIL);
     await copyProtocol({ name: 'Copy', copy_from_protocol_id: 1 });
@@ -155,7 +163,9 @@ describe('copyProtocol', () => {
 });
 
 describe('createProtocol', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
   it('posts create request', async () => {
     mockApi.post.mockResolvedValue(DETAIL);
     await createProtocol({ name: 'New', study_type: 'sms', nodes: [], edges: [] });
@@ -164,7 +174,9 @@ describe('createProtocol', () => {
 });
 
 describe('updateProtocol', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
   it('puts update request', async () => {
     mockApi.put.mockResolvedValue(DETAIL);
     await updateProtocol({ id: 1, version_id: 1, name: 'Updated', nodes: [], edges: [] });
@@ -178,7 +190,9 @@ describe('updateProtocol', () => {
 });
 
 describe('deleteProtocol', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
   it('deletes protocol', async () => {
     mockApi.delete.mockResolvedValue(undefined);
     await deleteProtocol(1);
@@ -187,7 +201,9 @@ describe('deleteProtocol', () => {
 });
 
 describe('assignProtocol', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
   it('assigns protocol to study', async () => {
     mockApi.put.mockResolvedValue(ASSIGNMENT);
     const result = await assignProtocol(42, 1);
@@ -196,7 +212,9 @@ describe('assignProtocol', () => {
 });
 
 describe('getExecutionState', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
   it('fetches execution state', async () => {
     mockApi.get.mockResolvedValue(EXEC_STATE);
     const result = await getExecutionState(42);
@@ -205,7 +223,9 @@ describe('getExecutionState', () => {
 });
 
 describe('completeTask', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
   it('posts complete request', async () => {
     mockApi.post.mockResolvedValue(COMPLETE_RESP);
     const result = await completeTask(42, 't1');
@@ -214,7 +234,9 @@ describe('completeTask', () => {
 });
 
 describe('approveTask', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
   it('posts approve request', async () => {
     mockApi.post.mockResolvedValue(COMPLETE_RESP);
     const result = await approveTask(42, 't1');
@@ -223,7 +245,9 @@ describe('approveTask', () => {
 });
 
 describe('resetProtocol', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
   it('sends DELETE with confirm_reset body', async () => {
     const mockFetch = vi.fn().mockResolvedValue({
       ok: true,
@@ -265,7 +289,9 @@ describe('resetProtocol', () => {
 });
 
 describe('exportProtocol', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
   it('downloads blob as file', async () => {
     const mockBlob = new Blob(['yaml']);
     const mockClick = vi.fn();
@@ -276,7 +302,10 @@ describe('exportProtocol', () => {
     } as unknown as HTMLAnchorElement);
     const mockCreateObjectURL = vi.fn().mockReturnValue('blob:url');
     const mockRevokeObjectURL = vi.fn();
-    vi.stubGlobal('URL', { createObjectURL: mockCreateObjectURL, revokeObjectURL: mockRevokeObjectURL });
+    vi.stubGlobal('URL', {
+      createObjectURL: mockCreateObjectURL,
+      revokeObjectURL: mockRevokeObjectURL,
+    });
 
     const mockFetch = vi.fn().mockResolvedValue({
       ok: true,
@@ -299,7 +328,9 @@ describe('exportProtocol', () => {
 });
 
 describe('importProtocol', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
   it('uploads file and returns protocol', async () => {
     const mockFetch = vi.fn().mockResolvedValue({
       ok: true,

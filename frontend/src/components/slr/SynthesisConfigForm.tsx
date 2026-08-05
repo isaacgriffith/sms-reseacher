@@ -5,7 +5,6 @@
  * @module SynthesisConfigForm
  */
 
-import React from 'react';
 import { useForm, useWatch, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -74,9 +73,9 @@ interface SynthesisConfigFormProps {
 interface MetaAnalysisFieldsProps {
   control: ReturnType<typeof useForm<SynthesisFormData>>['control'];
   register: ReturnType<typeof useForm<SynthesisFormData>>['register'];
-  fields: ReturnType<typeof useFieldArray>['fields'];
-  append: ReturnType<typeof useFieldArray>['append'];
-  remove: ReturnType<typeof useFieldArray>['remove'];
+  fields: ReturnType<typeof useFieldArray<SynthesisFormData, 'papers'>>['fields'];
+  append: ReturnType<typeof useFieldArray<SynthesisFormData, 'papers'>>['append'];
+  remove: ReturnType<typeof useFieldArray<SynthesisFormData, 'papers'>>['remove'];
 }
 
 /**
@@ -131,9 +130,9 @@ function MetaAnalysisFields({
 
 interface DescriptiveFieldsProps {
   register: ReturnType<typeof useForm<SynthesisFormData>>['register'];
-  fields: ReturnType<typeof useFieldArray>['fields'];
-  append: ReturnType<typeof useFieldArray>['append'];
-  remove: ReturnType<typeof useFieldArray>['remove'];
+  fields: ReturnType<typeof useFieldArray<SynthesisFormData, 'papers'>>['fields'];
+  append: ReturnType<typeof useFieldArray<SynthesisFormData, 'papers'>>['append'];
+  remove: ReturnType<typeof useFieldArray<SynthesisFormData, 'papers'>>['remove'];
 }
 
 /**
@@ -146,10 +145,10 @@ function DescriptiveFields({ register, fields, append, remove }: DescriptiveFiel
 }
 
 interface PaperRowsProps {
-  fields: ReturnType<typeof useFieldArray>['fields'];
+  fields: ReturnType<typeof useFieldArray<SynthesisFormData, 'papers'>>['fields'];
   register: ReturnType<typeof useForm<SynthesisFormData>>['register'];
-  append: ReturnType<typeof useFieldArray>['append'];
-  remove: ReturnType<typeof useFieldArray>['remove'];
+  append: ReturnType<typeof useFieldArray<SynthesisFormData, 'papers'>>['append'];
+  remove: ReturnType<typeof useFieldArray<SynthesisFormData, 'papers'>>['remove'];
   showSe: boolean;
 }
 
@@ -233,9 +232,9 @@ function PaperRows({ fields, register, append, remove, showSe }: PaperRowsProps)
 
 interface QualitativeFieldsProps {
   register: ReturnType<typeof useForm<SynthesisFormData>>['register'];
-  themeFields: ReturnType<typeof useFieldArray>['fields'];
-  appendTheme: ReturnType<typeof useFieldArray>['append'];
-  removeTheme: ReturnType<typeof useFieldArray>['remove'];
+  themeFields: ReturnType<typeof useFieldArray<SynthesisFormData, 'themes'>>['fields'];
+  appendTheme: ReturnType<typeof useFieldArray<SynthesisFormData, 'themes'>>['append'];
+  removeTheme: ReturnType<typeof useFieldArray<SynthesisFormData, 'themes'>>['remove'];
 }
 
 /**

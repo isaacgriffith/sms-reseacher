@@ -38,7 +38,9 @@ function makeWrapper() {
 }
 
 describe('useProtocol hooks', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('protocolListKey returns correct key', () => {
     expect(protocolListKey()).toEqual(['protocols', undefined]);

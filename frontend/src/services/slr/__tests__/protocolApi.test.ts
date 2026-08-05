@@ -55,7 +55,9 @@ const PHASES_FIXTURE = {
 };
 
 describe('getProtocol', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('calls GET and parses the response', async () => {
     mockApi.get.mockResolvedValue(PROTOCOL_FIXTURE);
@@ -66,7 +68,9 @@ describe('getProtocol', () => {
 });
 
 describe('upsertProtocol', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('calls PUT and parses the response', async () => {
     mockApi.put.mockResolvedValue(PROTOCOL_FIXTURE);
@@ -80,7 +84,9 @@ describe('upsertProtocol', () => {
 });
 
 describe('submitForReview', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('calls POST and returns job info', async () => {
     mockApi.post.mockResolvedValue({ job_id: 'job-1', status: 'queued' });
@@ -94,7 +100,9 @@ describe('submitForReview', () => {
 });
 
 describe('validateProtocol', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('calls POST and returns status', async () => {
     mockApi.post.mockResolvedValue({ status: 'validated' });
@@ -105,7 +113,9 @@ describe('validateProtocol', () => {
 });
 
 describe('getPhases', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('calls GET and parses phases response', async () => {
     mockApi.get.mockResolvedValue(PHASES_FIXTURE);

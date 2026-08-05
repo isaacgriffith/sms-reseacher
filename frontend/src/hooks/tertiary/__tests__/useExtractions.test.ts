@@ -43,7 +43,7 @@ describe('useUpdateExtraction', () => {
   it('executes mutation', async () => {
     const { result } = renderHook(() => useUpdateExtraction(10), { wrapper: makeWrapper() });
     await act(async () => {
-      result.current.mutate({ paperId: 1, updates: { extraction_status: 'human_reviewed' } });
+      result.current.mutate({ extractionId: 1, data: { extraction_status: 'human_reviewed' } });
     });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
   });
