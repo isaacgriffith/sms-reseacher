@@ -41,4 +41,8 @@ dev-dependencies = [
     "pytest-cov>=5",
     "cosmic-ray>=8.3",
     "types-pyyaml>=6.0.12.20250915",
+    # Sync PostgreSQL driver — the Alembic migration integration tests build a
+    # synchronous engine from DATABASE_URL, which resolves to psycopg2. Runtime
+    # code uses asyncpg; this is test-only.
+    "psycopg2-binary>=2.9",
 ]

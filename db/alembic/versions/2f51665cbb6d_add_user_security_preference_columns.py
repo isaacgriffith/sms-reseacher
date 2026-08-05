@@ -75,6 +75,8 @@ def downgrade() -> None:
     sa.Enum(name='theme_preference_enum').drop(op.get_bind(), checkfirst=True)
     op.drop_index(op.f('ix_security_audit_event_user_id'), table_name='security_audit_event')
     op.drop_table('security_audit_event')
+    # drop_table() does not drop the enum type the column referenced.
+    sa.Enum(name='security_event_type_enum').drop(op.get_bind(), checkfirst=True)
     op.drop_index(op.f('ix_backup_code_user_id'), table_name='backup_code')
     op.drop_table('backup_code')
     # ### end Alembic commands ###

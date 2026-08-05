@@ -169,6 +169,10 @@ def downgrade() -> None:
     op.drop_index("ix_audit_record_entity", table_name="audit_record")
     op.drop_index("ix_audit_record_study_created", table_name="audit_record")
     op.drop_table("audit_record")
+    # drop_table() does not drop the enum type the column referenced, which
+    # made a downgrade-then-upgrade round-trip fail with
+    # 'type "audit_action_enum" already exists'.
+    sa.Enum(name="audit_action_enum").drop(op.get_bind(), checkfirst=True)
 
     # Drop added columns in reverse order
     op.drop_column("background_job", "updated_at")
