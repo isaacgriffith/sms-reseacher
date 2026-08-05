@@ -1,7 +1,7 @@
 # Feature Gap Analysis
 
 **Assessed**: 2026-08-05
-**Last updated**: 2026-08-05 — G13d resolved; G7 SMS-protocol claim corrected; G14 added (MLR modelled as a flag on `Study`)
+**Last updated**: 2026-08-05 — G13d resolved; G7 SMS-protocol claim corrected; G14 added (MLR modelled as a flag on `Study`); G15 added (vLLM + LM Studio providers)
 **Baseline**: `docs/base-features.md` (27 features, F1-SF01 – F3-SF04)
 **Evidence**: working tree of branch `011-improve-testing-and-fix-ci` (301 modified files uncommitted; base commit `32aeffb`)
 **Method**: traced each feature to implementing code — ORM models, API routes, services, agents, source adapters, and UI components — not to `specs/` intent
@@ -25,7 +25,7 @@
 | F1-SF01  | Simple install/setup     | ◐      | Compose path works; manual path is 5 steps across 2 stacks |
 | F1-SF02  | Installation guide       | ◐      | README Quick Start only; no standalone guide               |
 | F1-SF03  | Tutorial                 | ✗      | None                                                       |
-| F1-SF04  | Self-contained           | ◐      | Requires 8 external API keys + an LLM provider             |
+| F1-SF04  | Self-contained           | ◐      | Requires 8 external API keys + an LLM provider; G15 — only Ollama is self-hostable |
 | F2-SF01  | Protocol development     | ●      | Guideline grounding is thin (see G7)                       |
 | F2-SF02  | Protocol validation      | ◐      | AI review is SLR-only                                      |
 | F2-SF03  | Automated searches       | ◐      | G1, G2, G3, G13 — the largest cluster                      |
@@ -335,6 +335,41 @@ Three things block it:
 
 ---
 
+### G15 — vLLM and LM Studio providers (F1-SF04) — **low, additive**
+
+**Required.** The platform must support two additional LLM providers beyond the current three: **vLLM** and **LM Studio**.
+
+**Current.** `ProviderType` (`db/src/db/models/agents.py:42`) has exactly three members — `ANTHROPIC`, `OPENAI`, `OLLAMA`. Ollama is the only self-hostable option, which is why F1-SF04 ("self-contained") is still `◐`: a user who wants local inference has exactly one engine available, and it is the weakest of the three for serving throughput.
+
+Both requested providers are **OpenAI-API-compatible**, which is what makes this cheap rather than structural:
+
+- **vLLM** serves an OpenAI-compatible endpoint (`/v1/models`, `/v1/chat/completions`). LiteLLM addresses it as `hosted_vllm/<model>` with an `api_base`. Usually keyless, but can be started with `--api-key`, so the key must be *optional*, not absent.
+- **LM Studio** serves the same OpenAI-compatible surface, by default on `http://localhost:1234/v1`. LiteLLM addresses it as `lm_studio/<model>`. Keyless.
+
+The existing abstractions already fit. `ProviderConfig` (`agents/src/agents/core/provider_config.py`) is a `Protocol` of exactly `model_string`, `api_base`, and `api_key` — precisely the three fields both engines need, and `api_base` was already introduced for Ollama. No new interface is required.
+
+Three places hard-code the three-way enum:
+
+1. **Model fetch dispatch** — `backend/src/backend/services/provider_service.py:491` branches Anthropic / OpenAI / `else: OLLAMA`. Note the `else` is a silent catch-all: a new enum member added without touching this function would be routed to `fetch_models_ollama` rather than failing loudly.
+2. **LiteLLM prefix map** — `backend/src/backend/services/agent_service.py:885` maps each `ProviderType` to its prefix string.
+3. **Frontend union** — `frontend/src/types/provider.ts:12` and `ProviderForm.tsx:25` both declare the literal union, and `ProviderForm.tsx:88` decides key-required via `providerType === 'anthropic' || providerType === 'openai'`.
+
+**Remediation sketch.**
+
+| Step | Change                                                                                                          | Size              |
+| ---- | ----------------------------------------------------------------------------------------------------------------- | ----------------- |
+| 1    | Add `VLLM = "vllm"` and `LM_STUDIO = "lm_studio"` to `ProviderType`; Alembic `ALTER TYPE ... ADD VALUE` (not reversible in a single migration — the downgrade needs a type rebuild) | Small + migration |
+| 2    | Give `fetch_models_openai` a `base_url` parameter and reuse it for both — both expose OpenAI's `/v1/models`. Replace the `else: OLLAMA` catch-all with explicit branches so an unhandled provider raises instead of silently fetching from Ollama | Small             |
+| 3    | Extend the LiteLLM prefix map with `hosted_vllm` and `lm_studio`                                                  | Trivial           |
+| 4    | Widen both frontend unions; make `base_url` required and `api_key` optional for both; add them to the form's select | Small             |
+| 5    | Document default endpoints (`:8000/v1` vLLM, `:1234/v1` LM Studio) in the install guide (F1-SF02)                  | Trivial           |
+
+**Cost.** Low — this is the cheapest open gap. Steps 2–4 are mechanical because the OpenAI-compatible surface is already implemented; the only real work is the enum migration.
+
+**Interaction.** Directly improves **F1-SF04** — with vLLM available, the platform can run fully locally with a serving engine suitable for batch agent workloads, which matters for the high-volume screening and extraction phases. Also worth pairing with the connectivity-test pattern already built for search integrations (`CredentialService.run_connectivity_test`), since a mistyped `base_url` is the most likely failure mode for both.
+
+---
+
 ## Recommended sequence
 
 | Order | Item                                   | Rationale                                                                                     |
@@ -350,6 +385,7 @@ Three things block it:
 | 7     | **G3** remaining search modalities     | EI Compendex adapter and manual search; independent of the above                               |
 | 8     | **G8** qualitative synthesis           | Large, but unblocked once G6 lands                                                             |
 | 9     | **G7**, **G9**, **G12**, F1 docs       | Additive, low coupling                                                                         |
+| —     | **G15** vLLM + LM Studio providers     | Unordered — cheapest item on the list and independent of everything else; land whenever local inference is wanted |
 
 ---
 
