@@ -49,7 +49,12 @@ function CriterionList({
 
   return (
     <Box sx={{ marginBottom: '1.5rem' }}>
-      <Typography variant="subtitle2" sx={{ margin: '0 0 0.75rem', fontSize: '0.9375rem', color: '#374151' }}>{title}</Typography>
+      <Typography
+        variant="subtitle2"
+        sx={{ margin: '0 0 0.75rem', fontSize: '0.9375rem', color: '#374151' }}
+      >
+        {title}
+      </Typography>
 
       <ol style={{ margin: '0 0 0.75rem', paddingLeft: '1.5rem' }}>
         {items.map((item, idx) => (
@@ -62,7 +67,10 @@ function CriterionList({
               gap: '0.5rem',
             }}
           >
-            <Typography component="span" sx={{ flex: 1, fontSize: '0.875rem', color: '#374151', paddingTop: '2px' }}>
+            <Typography
+              component="span"
+              sx={{ flex: 1, fontSize: '0.875rem', color: '#374151', paddingTop: '2px' }}
+            >
               {item.description}
             </Typography>
             <Box sx={{ display: 'flex', gap: '0.25rem', flexShrink: 0 }}>
@@ -100,7 +108,14 @@ function CriterionList({
           </li>
         ))}
         {items.length === 0 && (
-          <li style={{ fontSize: '0.875rem', color: '#9ca3af', listStyle: 'none', marginLeft: '-1.5rem' }}>
+          <li
+            style={{
+              fontSize: '0.875rem',
+              color: '#9ca3af',
+              listStyle: 'none',
+              marginLeft: '-1.5rem',
+            }}
+          >
             No criteria added yet.
           </li>
         )}
@@ -217,7 +232,10 @@ export default function CriteriaForm({ studyId }: CriteriaFormProps) {
 
   return (
     <Box>
-      <Typography variant="subtitle1" sx={{ margin: '0 0 1rem', fontSize: '1rem', color: '#111827' }}>
+      <Typography
+        variant="subtitle1"
+        sx={{ margin: '0 0 1rem', fontSize: '1rem', color: '#111827' }}
+      >
         Inclusion / Exclusion Criteria
       </Typography>
 

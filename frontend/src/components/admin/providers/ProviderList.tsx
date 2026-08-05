@@ -45,7 +45,12 @@ const TYPE_COLORS: Record<string, 'default' | 'primary' | 'secondary'> = {
  * @param props - {@link ProviderListProps}
  * @returns MUI Table element.
  */
-export default function ProviderList({ providers, onEdit, onDelete, onRefresh }: ProviderListProps) {
+export default function ProviderList({
+  providers,
+  onEdit,
+  onDelete,
+  onRefresh,
+}: ProviderListProps) {
   return (
     <TableContainer component={Paper} variant="outlined">
       <Table size="small" aria-label="providers table">
@@ -85,7 +90,11 @@ export default function ProviderList({ providers, onEdit, onDelete, onRefresh }:
               </TableCell>
               <TableCell align="right">
                 <Tooltip title="Refresh models">
-                  <IconButton size="small" onClick={() => onRefresh(p.id)} aria-label="refresh models">
+                  <IconButton
+                    size="small"
+                    onClick={() => onRefresh(p.id)}
+                    aria-label="refresh models"
+                  >
                     <RefreshIcon fontSize="small" />
                   </IconButton>
                 </Tooltip>
@@ -95,7 +104,12 @@ export default function ProviderList({ providers, onEdit, onDelete, onRefresh }:
                   </IconButton>
                 </Tooltip>
                 <Tooltip title="Delete">
-                  <IconButton size="small" onClick={() => onDelete(p.id)} aria-label="delete provider" color="error">
+                  <IconButton
+                    size="small"
+                    onClick={() => onDelete(p.id)}
+                    aria-label="delete provider"
+                    color="error"
+                  >
                     <DeleteIcon fontSize="small" />
                   </IconButton>
                 </Tooltip>

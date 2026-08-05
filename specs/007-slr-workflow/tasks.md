@@ -21,8 +21,8 @@
 - [x] T003 [P] Register the SLR router in `backend/src/backend/api/v1/router.py` (`include_router(slr_router, ...)`)
 - [x] T004 [P] Create package stubs: `frontend/src/pages/slr/.gitkeep`, `frontend/src/components/slr/.gitkeep`, `frontend/src/services/slr/.gitkeep`, `frontend/src/hooks/slr/.gitkeep`
 - [x] T005 [P] Create `agents/src/agents/prompts/protocol_reviewer/` directory with empty `system.md` and `user.md.j2` placeholder files
-+
----
+
+* ---
 
 ## Phase 2: Foundational (Blocking Prerequisites)
 
@@ -53,7 +53,7 @@
 ### Implementation for User Story 1
 
 - [x] T015 [P] [US1] Write `agents/src/agents/prompts/protocol_reviewer/system.md`: agent persona (expert SLR methodologist); evaluation criteria (RQ-PICO alignment, completeness of all mandatory sections, feasibility of search strategy, checklist-to-RQ traceability); output format instruction (structured JSON with a list of issues)
-- [x] T016 [P] [US1] Write `agents/src/agents/prompts/protocol_reviewer/user.md.j2`: Jinja2 template rendering all protocol fields (background, rationale, research_questions, pico_*, search_strategy, inclusion_criteria, exclusion_criteria, data_extraction_strategy, synthesis_approach, dissemination_strategy, timetable) into the prompt context
+- [x] T016 [P] [US1] Write `agents/src/agents/prompts/protocol_reviewer/user.md.j2`: Jinja2 template rendering all protocol fields (background, rationale, research*questions, pico*\*, search_strategy, inclusion_criteria, exclusion_criteria, data_extraction_strategy, synthesis_approach, dissemination_strategy, timetable) into the prompt context
 - [x] T017 [US1] Implement `agents/src/agents/services/protocol_reviewer.py`: `ProtocolIssue(BaseModel)` with `section: str`, `severity: str`, `description: str`, `suggestion: str`; `ProtocolReviewResult(BaseModel)` with `issues: list[ProtocolIssue]`, `overall_assessment: str`; `ProtocolReviewerAgent.__init__` accepting `llm_client`, `provider_config`, `system_message_override`; `async def review(self, protocol_data: dict[str, Any]) -> ProtocolReviewResult` rendering the user template and parsing JSON response; Google-style docstrings throughout
 - [x] T018 [US1] Write unit tests for `ProtocolReviewerAgent` in `agents/tests/test_protocol_reviewer.py`: mock `LLMClient`; assert well-formed JSON is parsed into `ProtocolReviewResult`; assert malformed JSON response raises a handled exception; ≥ 85% coverage
 - [x] T019 [US1] Write metamorphic tests for `ProtocolReviewerAgent` in `agents/tests/metamorphic/test_protocol_reviewer_meta.py` using `hypothesis`: define metamorphic relation — paraphrased protocol with same content should produce the same set of issue sections (not necessarily same wording); verify the agent does not raise on arbitrarily long inputs
@@ -208,26 +208,26 @@
 
 **Purpose**: E2e tests, agent evaluation pipeline, coverage and lint gates, SLR phase gate wired into the existing study phase endpoint.
 
-- [X] T097 Wire `slr_phase_gate.get_slr_unlocked_phases` into the existing `GET /api/v1/studies/{study_id}/phases` endpoint in `backend/src/backend/api/v1/studies/__init__.py` — dispatch to SLR gate when `study.study_type == "systematic_literature_review"`, existing SMS gate otherwise (no if-chain: use a dispatch dict keyed on study type)
-- [X] T098 Write Playwright e2e test in `frontend/e2e/slr-workflow.spec.ts`: end-to-end happy path covering protocol creation → AI review → approval → search → screening → Kappa computation → QA → synthesis (descriptive) → Forest plot visible → report download
-- [X] T099 [P] Run `uv run ruff check backend/src agents/src db/src` and `uv run ruff format --check` — fix all violations introduced by this feature
-- [X] T100 [P] Run `uv run mypy backend/src agents/src db/src` with `strict = true` — resolve all new type errors
-- [X] T101 [P] Run `cd frontend && npm run lint && npm run format:check` — resolve all ESLint and Prettier violations
-- [X] T102 [P] Run full coverage check: `uv run pytest backend/tests/ --cov=src/backend --cov-fail-under=85` + `uv run pytest agents/tests/ --cov=src/agents --cov-fail-under=85` + `uv run pytest db/tests/ --cov=src/db --cov-fail-under=85` + `cd frontend && npm run test:coverage` — add `# pragma: no cover` annotations with justifications for any intentionally uncovered lines
+- [x] T097 Wire `slr_phase_gate.get_slr_unlocked_phases` into the existing `GET /api/v1/studies/{study_id}/phases` endpoint in `backend/src/backend/api/v1/studies/__init__.py` — dispatch to SLR gate when `study.study_type == "systematic_literature_review"`, existing SMS gate otherwise (no if-chain: use a dispatch dict keyed on study type)
+- [x] T098 Write Playwright e2e test in `frontend/e2e/slr-workflow.spec.ts`: end-to-end happy path covering protocol creation → AI review → approval → search → screening → Kappa computation → QA → synthesis (descriptive) → Forest plot visible → report download
+- [x] T099 [P] Run `uv run ruff check backend/src agents/src db/src` and `uv run ruff format --check` — fix all violations introduced by this feature
+- [x] T100 [P] Run `uv run mypy backend/src agents/src db/src` with `strict = true` — resolve all new type errors
+- [x] T101 [P] Run `cd frontend && npm run lint && npm run format:check` — resolve all ESLint and Prettier violations
+- [x] T102 [P] Run full coverage check: `uv run pytest backend/tests/ --cov=src/backend --cov-fail-under=85` + `uv run pytest agents/tests/ --cov=src/agents --cov-fail-under=85` + `uv run pytest db/tests/ --cov=src/db --cov-fail-under=85` + `cd frontend && npm run test:coverage` — add `# pragma: no cover` annotations with justifications for any intentionally uncovered lines
 
 ---
 
-## Phase 10: Feature Completion Documentation *(mandatory — Constitution Principle X)*
+## Phase 10: Feature Completion Documentation _(mandatory — Constitution Principle X)_
 
 **Purpose**: Update all required documentation before the feature branch is merged.
 
 > **These tasks MUST be completed before the feature is marked done. Omitting them is a blocking violation of Constitution Principle X.**
 
-- [X] TDOC1 [P] Update `CLAUDE.md` at repository root: add `007-slr-workflow` entry to **Active Technologies** (already partially done by agent context script); add `scipy`, `scikit-learn`, `numpy` to Python Libraries section; add `SLR_KAPPA_THRESHOLD`, `SLR_MIN_SYNTHESIS_PAPERS` to environment variable documentation
-- [X] TDOC2 [P] Update `README.md` at repository root to reflect SLR support: add SLR as a supported study type; note the three synthesis approaches; note grey literature tracking
-- [X] TDOC3 [P] Update root `CHANGELOG.md` with a new entry for `007-slr-workflow`: added SLR protocol editor with AI review, multi-reviewer Kappa computation, quality assessment checklists, meta-analysis/descriptive/qualitative synthesis, Forest/Funnel plots, grey literature tracking, structured SLR report export
-- [X] TDOC4 [P] Update `README.md` in `backend/`, `agents/`, `db/`, and `frontend/` with the new modules, models, agents, and components introduced by this feature
-- [X] TDOC5 [P] Update `CHANGELOG.md` in `backend/`, `agents/`, `db/`, and `frontend/` with the same level of detail as the root changelog entry
+- [x] TDOC1 [P] Update `CLAUDE.md` at repository root: add `007-slr-workflow` entry to **Active Technologies** (already partially done by agent context script); add `scipy`, `scikit-learn`, `numpy` to Python Libraries section; add `SLR_KAPPA_THRESHOLD`, `SLR_MIN_SYNTHESIS_PAPERS` to environment variable documentation
+- [x] TDOC2 [P] Update `README.md` at repository root to reflect SLR support: add SLR as a supported study type; note the three synthesis approaches; note grey literature tracking
+- [x] TDOC3 [P] Update root `CHANGELOG.md` with a new entry for `007-slr-workflow`: added SLR protocol editor with AI review, multi-reviewer Kappa computation, quality assessment checklists, meta-analysis/descriptive/qualitative synthesis, Forest/Funnel plots, grey literature tracking, structured SLR report export
+- [x] TDOC4 [P] Update `README.md` in `backend/`, `agents/`, `db/`, and `frontend/` with the new modules, models, agents, and components introduced by this feature
+- [x] TDOC5 [P] Update `CHANGELOG.md` in `backend/`, `agents/`, `db/`, and `frontend/` with the same level of detail as the root changelog entry
 
 ---
 
@@ -248,14 +248,14 @@
 
 ### User Story Dependencies
 
-| Story | Can Start After | Depends On |
-|-------|----------------|------------|
-| US1 (Protocol) | Phase 2 | None |
-| US2 (Kappa) | Phase 2 | `statistics.py` (Phase 2) |
-| US3 (QA) | Phase 2 | US2 (`inter_rater_service`) |
-| US4 (Synthesis) | Phase 2 | US3 (QA phase gate) |
-| US5 (Report) | Phase 2 | US4 (`synthesis_service`) |
-| US6 (Grey Lit) | Phase 2 | None — fully independent |
+| Story           | Can Start After | Depends On                  |
+| --------------- | --------------- | --------------------------- |
+| US1 (Protocol)  | Phase 2         | None                        |
+| US2 (Kappa)     | Phase 2         | `statistics.py` (Phase 2)   |
+| US3 (QA)        | Phase 2         | US2 (`inter_rater_service`) |
+| US4 (Synthesis) | Phase 2         | US3 (QA phase gate)         |
+| US5 (Report)    | Phase 2         | US4 (`synthesis_service`)   |
+| US6 (Grey Lit)  | Phase 2         | None — fully independent    |
 
 ### Parallel Opportunities Within Each Phase
 
@@ -327,6 +327,7 @@ Task T020: deepeval pipeline                 Task T033: Implement ProtocolReview
 ### Parallel Team Strategy
 
 With three developers:
+
 - **Developer A**: US1 (Protocol Editor)
 - **Developer B**: US6 (Grey Literature) → US2 (Kappa) in sequence
 - **Developer C**: Phase 2 foundational (statistics + visualization) → US3 (QA) after US2 complete

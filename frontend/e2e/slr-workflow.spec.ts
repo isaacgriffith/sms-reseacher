@@ -48,7 +48,13 @@ async function createSLRStudy(page: import('@playwright/test').Page): Promise<st
     const nextBtn = page.getByRole('button', { name: /next|create study|finish/i });
     if (await nextBtn.isVisible()) {
       await nextBtn.click();
-      if (await page.getByText(studyName).isVisible().catch(() => false)) break;
+      if (
+        await page
+          .getByText(studyName)
+          .isVisible()
+          .catch(() => false)
+      )
+        break;
     } else {
       break;
     }
@@ -124,9 +130,7 @@ test.describe('SLR workflow — happy path', () => {
       await protocolTab.click();
     }
 
-    const submitBtn = page
-      .getByRole('button', { name: /submit.*review|review protocol/i })
-      .first();
+    const submitBtn = page.getByRole('button', { name: /submit.*review|review protocol/i }).first();
     await expect(submitBtn).toBeVisible({ timeout: 8_000 });
   });
 

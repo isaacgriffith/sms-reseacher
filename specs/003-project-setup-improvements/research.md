@@ -30,6 +30,7 @@ command = "uv run --package sms-backend pytest backend/tests/unit -x -q"
 ```
 
 **Run command**:
+
 ```bash
 uv run cosmic-ray run backend/cosmic-ray.toml
 uv run cosmic-ray results backend/cosmic-ray.toml  # show kill rate
@@ -37,6 +38,7 @@ uv run cosmic-ray html-report backend/cosmic-ray.toml > /tmp/mutation-report.htm
 ```
 
 **Kill-rate check** (for CI):
+
 ```bash
 SCORE=$(uv run cosmic-ray results backend/cosmic-ray.toml \
   | grep -oP 'score: \K[\d.]+')
@@ -47,6 +49,7 @@ incompatibilities with 3.14. The `timeout` field guards against infinite loops c
 async mutations.
 
 **Alternatives considered**:
+
 - `mutmut`: Incompatible approach (per-file rather than per-operator); harder to parallelise;
   already present but being superseded per spec clarification.
 
@@ -85,6 +88,7 @@ collapsible coverage table on the PR with line/branch percentages.
 comment is informational even when the build fails.
 
 **Alternatives considered**:
+
 - `codecov/codecov-action`: Requires a Codecov account; adds external dependency.
 - `actions/github-script` custom comment: More code to maintain.
 
@@ -142,6 +146,7 @@ test: {
 coverage is below 85% — CI fails before the comment step.
 
 **Alternatives considered**:
+
 - Istanbul provider: More complex setup; v8 is simpler and sufficient.
 - Manual `node -e` threshold check: Already in `ci.yml` but fragile; replaced by vitest
   native thresholds.
@@ -188,6 +193,7 @@ def pytest_collection_finish(session: pytest.Session) -> None:
 ```
 
 **Alternatives considered**:
+
 - `pytest-enforce-skip-reason` PyPI plugin: Does the same thing; prefer zero extra deps.
 - Ruff rule: No standard ruff rule exists for this today; a custom plugin would be needed.
 - `pytest --strict-markers` + CI check: Catches undefined markers, not missing `reason=`.
@@ -208,37 +214,35 @@ orchestration tools.
 **`playwright.config.ts`**:
 
 ```typescript
-import { defineConfig, devices } from '@playwright/test';
+import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
-  testDir: './e2e',
+  testDir: "./e2e",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
-  reporter: process.env.CI ? 'github' : 'html',
+  reporter: process.env.CI ? "github" : "html",
   use: {
-    baseURL: 'http://localhost:5173',
-    trace: 'on-first-retry',
-    screenshot: 'only-on-failure',
+    baseURL: "http://localhost:5173",
+    trace: "on-first-retry",
+    screenshot: "only-on-failure",
   },
-  projects: [
-    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
-  ],
+  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: [
     {
       // Vite dev server (frontend)
-      command: 'npm run dev',
-      url: 'http://localhost:5173',
+      command: "npm run dev",
+      url: "http://localhost:5173",
       reuseExistingServer: !process.env.CI,
-      cwd: '.',
+      cwd: ".",
     },
     {
       // FastAPI backend
-      command: 'uv run uvicorn backend.main:app --port 8000',
-      url: 'http://localhost:8000/api/v1/health',
+      command: "uv run uvicorn backend.main:app --port 8000",
+      url: "http://localhost:8000/api/v1/health",
       reuseExistingServer: !process.env.CI,
-      cwd: '..',
+      cwd: "..",
     },
   ],
 });
@@ -277,8 +281,12 @@ e2e-tests:
     - run: uv python install 3.14
     - run: uv sync --all-packages
     - uses: actions/setup-node@v4
-      with: { node-version: "20", cache: "npm",
-              cache-dependency-path: "frontend/package-lock.json" }
+      with:
+        {
+          node-version: "20",
+          cache: "npm",
+          cache-dependency-path: "frontend/package-lock.json",
+        }
     - run: npm ci
       working-directory: frontend
     - run: npx playwright install --with-deps chromium
@@ -294,6 +302,7 @@ e2e-tests:
 ```
 
 **E2e test scope** (primary user journeys per service):
+
 - Create a study (backend → db)
 - Search for papers (backend → researcher-mcp → Semantic Scholar mock)
 - Screen a paper (backend → agents → LLM stub)
@@ -304,6 +313,7 @@ e2e-tests:
 avoid real API costs in CI.
 
 **Alternatives considered**:
+
 - Full Docker Compose in CI: More faithful to production but ~3× slower to build.
 - API-only e2e with `pytest + httpx`: Excluded per spec clarification (Playwright chosen).
 
@@ -320,6 +330,7 @@ every PR would block contributor feedback loops. `workflow_dispatch` enables man
 triggering; `workflow_call` enables the speckit end-of-feature trigger mechanism.
 
 **`mutation-python.yml` trigger block**:
+
 ```yaml
 on:
   workflow_dispatch:
@@ -337,6 +348,7 @@ on:
 ```
 
 **Alternatives considered**:
+
 - Scheduled nightly workflow: Would run even when no code changed; `workflow_dispatch` is
   more intentional.
 - Keep in `ci.yml` with `if: github.event_name == 'workflow_dispatch'`: Clutters the

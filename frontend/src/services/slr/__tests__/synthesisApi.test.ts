@@ -44,7 +44,10 @@ describe('startSynthesis', () => {
   it('calls POST and returns a synthesis result', async () => {
     mockApi.post.mockResolvedValue({ ...RESULT, status: 'pending' });
     const result = await startSynthesis(42, { approach: 'descriptive', parameters: {} });
-    expect(mockApi.post).toHaveBeenCalledWith('/api/v1/slr/studies/42/synthesis', expect.any(Object));
+    expect(mockApi.post).toHaveBeenCalledWith(
+      '/api/v1/slr/studies/42/synthesis',
+      expect.any(Object),
+    );
     expect(result.status).toBe('pending');
   });
 });

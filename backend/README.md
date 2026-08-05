@@ -28,131 +28,131 @@ uv run mypy backend/src
 
 ## Environment Variables
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `DATABASE_URL` | `sqlite+aiosqlite:///./dev.db` | Async database URL |
-| `SECRET_KEY` | (required in production) | JWT signing key |
-| `LLM_PROVIDER` | `anthropic` | LLM provider: `anthropic` or `ollama` |
-| `LLM_MODEL` | `claude-sonnet-4-6` | Model identifier |
-| `ANTHROPIC_API_KEY` | — | Required when `LLM_PROVIDER=anthropic` |
-| `OLLAMA_BASE_URL` | `http://localhost:11434` | Ollama server URL |
-| `RESEARCHER_MCP_URL` | `http://localhost:8002/sse` | MCP server URL used by agents |
-| `IEEE_XPLORE_API_KEY` | — | IEEE Xplore API key for search integrations |
-| `ELSEVIER_API_KEY` | — | Elsevier API key (Scopus, Inspec, ScienceDirect) |
-| `ELSEVIER_INST_TOKEN` | — | Elsevier institutional token (optional) |
-| `WOS_API_KEY` | — | Web of Science API key |
-| `SPRINGER_API_KEY` | — | SpringerNature API key |
-| `SLR_KAPPA_THRESHOLD` | `0.6` | Minimum Cohen's κ required to unlock QA phase for SLR studies |
-| `SLR_MIN_SYNTHESIS_PAPERS` | `2` | Minimum included papers required to start synthesis |
+| Variable                   | Default                        | Description                                                   |
+| -------------------------- | ------------------------------ | ------------------------------------------------------------- |
+| `DATABASE_URL`             | `sqlite+aiosqlite:///./dev.db` | Async database URL                                            |
+| `SECRET_KEY`               | (required in production)       | JWT signing key                                               |
+| `LLM_PROVIDER`             | `anthropic`                    | LLM provider: `anthropic` or `ollama`                         |
+| `LLM_MODEL`                | `claude-sonnet-4-6`            | Model identifier                                              |
+| `ANTHROPIC_API_KEY`        | —                              | Required when `LLM_PROVIDER=anthropic`                        |
+| `OLLAMA_BASE_URL`          | `http://localhost:11434`       | Ollama server URL                                             |
+| `RESEARCHER_MCP_URL`       | `http://localhost:8002/sse`    | MCP server URL used by agents                                 |
+| `IEEE_XPLORE_API_KEY`      | —                              | IEEE Xplore API key for search integrations                   |
+| `ELSEVIER_API_KEY`         | —                              | Elsevier API key (Scopus, Inspec, ScienceDirect)              |
+| `ELSEVIER_INST_TOKEN`      | —                              | Elsevier institutional token (optional)                       |
+| `WOS_API_KEY`              | —                              | Web of Science API key                                        |
+| `SPRINGER_API_KEY`         | —                              | SpringerNature API key                                        |
+| `SLR_KAPPA_THRESHOLD`      | `0.6`                          | Minimum Cohen's κ required to unlock QA phase for SLR studies |
+| `SLR_MIN_SYNTHESIS_PAPERS` | `2`                            | Minimum included papers required to start synthesis           |
 
 ## API Endpoints
 
-| Method | Path | Description |
-|--------|------|-------------|
-| `GET` | `/api/v1/health` | Health check |
-| Various | `/api/v1/studies/*` | Study CRUD and status transitions |
-| Various | `/api/v1/papers/*` | Paper management and search |
-| Various | `/api/v1/criteria/*` | Inclusion/exclusion criteria |
-| Various | `/api/v1/pico/*` | PICO element management |
+| Method  | Path                       | Description                             |
+| ------- | -------------------------- | --------------------------------------- |
+| `GET`   | `/api/v1/health`           | Health check                            |
+| Various | `/api/v1/studies/*`        | Study CRUD and status transitions       |
+| Various | `/api/v1/papers/*`         | Paper management and search             |
+| Various | `/api/v1/criteria/*`       | Inclusion/exclusion criteria            |
+| Various | `/api/v1/pico/*`           | PICO element management                 |
 | Various | `/api/v1/search-strings/*` | Search string generation and versioning |
-| Various | `/api/v1/quality/*` | Quality assessment criteria and scoring |
-| Various | `/api/v1/results/*` | Result aggregation and export |
-| Various | `/api/v1/jobs/*` | Background job status |
+| Various | `/api/v1/quality/*`        | Quality assessment criteria and scoring |
+| Various | `/api/v1/results/*`        | Result aggregation and export           |
+| Various | `/api/v1/jobs/*`           | Background job status                   |
 
 ### Admin Endpoints (`/api/v1/admin/`)
 
-| Method | Path | Description |
-|--------|------|-------------|
-| `GET/POST` | `/admin/providers` | List / create LLM providers |
-| `GET/PATCH/DELETE` | `/admin/providers/{id}` | Get / update / delete a provider |
-| `POST` | `/admin/providers/{id}/refresh-models` | Fetch models from provider API and upsert |
-| `GET` | `/admin/providers/{id}/models` | List models for a provider |
-| `PATCH` | `/admin/providers/{id}/models/{model_id}` | Enable or disable a model |
-| `GET/POST` | `/admin/agents` | List / create agents |
-| `GET/PATCH/DELETE` | `/admin/agents/{id}` | Get / update / deactivate an agent |
-| `POST` | `/admin/agents/{id}/generate-system-message` | Generate system message via AgentGeneratorAgent |
-| `POST` | `/admin/agents/{id}/undo-system-message` | Restore previous system message from undo buffer |
-| `POST` | `/admin/agents/generate-persona-svg` | Generate persona SVG illustration via LLM |
-| `GET` | `/admin/agent-task-types` | List all supported AgentTaskType values |
-| `GET/PUT` | `/admin/search-integrations` | List all integration types / upsert credential |
-| `POST` | `/admin/search-integrations/{type}/test` | Trigger connectivity test for an integration |
+| Method             | Path                                         | Description                                      |
+| ------------------ | -------------------------------------------- | ------------------------------------------------ |
+| `GET/POST`         | `/admin/providers`                           | List / create LLM providers                      |
+| `GET/PATCH/DELETE` | `/admin/providers/{id}`                      | Get / update / delete a provider                 |
+| `POST`             | `/admin/providers/{id}/refresh-models`       | Fetch models from provider API and upsert        |
+| `GET`              | `/admin/providers/{id}/models`               | List models for a provider                       |
+| `PATCH`            | `/admin/providers/{id}/models/{model_id}`    | Enable or disable a model                        |
+| `GET/POST`         | `/admin/agents`                              | List / create agents                             |
+| `GET/PATCH/DELETE` | `/admin/agents/{id}`                         | Get / update / deactivate an agent               |
+| `POST`             | `/admin/agents/{id}/generate-system-message` | Generate system message via AgentGeneratorAgent  |
+| `POST`             | `/admin/agents/{id}/undo-system-message`     | Restore previous system message from undo buffer |
+| `POST`             | `/admin/agents/generate-persona-svg`         | Generate persona SVG illustration via LLM        |
+| `GET`              | `/admin/agent-task-types`                    | List all supported AgentTaskType values          |
+| `GET/PUT`          | `/admin/search-integrations`                 | List all integration types / upsert credential   |
+| `POST`             | `/admin/search-integrations/{type}/test`     | Trigger connectivity test for an integration     |
 
 ### Study Endpoints (additions)
 
-| Method | Path | Description |
-|--------|------|-------------|
+| Method    | Path                                      | Description                                    |
+| --------- | ----------------------------------------- | ---------------------------------------------- |
 | `GET/PUT` | `/api/v1/studies/{id}/database-selection` | Read/write active database indices for a study |
-| `GET` | `/api/v1/papers/{id}/markdown` | Retrieve stored full-text Markdown for a paper |
+| `GET`     | `/api/v1/papers/{id}/markdown`            | Retrieve stored full-text Markdown for a paper |
 
 ### Rapid Review Endpoints (`/api/v1/rapid/`)
 
-| Method | Path | Description |
-|--------|------|-------------|
-| `GET/PUT` | `/rapid/studies/{id}/protocol` | Read / upsert Rapid Review protocol |
-| `GET/PUT` | `/rapid/studies/{id}/search-config` | Read / upsert search restriction config |
-| `GET/PUT` | `/rapid/studies/{id}/qa-config` | Read / upsert quality appraisal config |
-| `GET/POST` | `/rapid/studies/{id}/stakeholders` | List / add practitioner stakeholders |
-| `GET/PATCH/DELETE` | `/rapid/studies/{id}/stakeholders/{sid}` | Get / update / delete a stakeholder |
-| `GET` | `/rapid/studies/{id}/narrative-synthesis` | List narrative synthesis sections |
-| `PATCH` | `/rapid/studies/{id}/narrative-synthesis/{section_id}` | Update narrative text / is_complete flag |
-| `POST` | `/rapid/studies/{id}/narrative-synthesis/{section_id}/ai-draft` | Trigger AI draft ARQ job |
-| `POST` | `/rapid/studies/{id}/narrative-synthesis/complete` | Finalise synthesis (validates all sections complete) |
-| `GET/POST` | `/rapid/studies/{id}/briefings` | List / create new Evidence Briefing version |
-| `GET` | `/rapid/studies/{id}/briefings/{bid}` | Get specific briefing version |
-| `POST` | `/rapid/studies/{id}/briefings/{bid}/publish` | Publish briefing version (demotes prior published) |
-| `GET` | `/rapid/studies/{id}/briefings/{bid}/export` | Download PDF (FileResponse) |
-| `POST` | `/rapid/studies/{id}/briefings/{bid}/share-token` | Create share token for unauthenticated access |
-| `DELETE` | `/rapid/briefings/share-token/{token}` | Revoke a share token |
+| Method             | Path                                                            | Description                                          |
+| ------------------ | --------------------------------------------------------------- | ---------------------------------------------------- |
+| `GET/PUT`          | `/rapid/studies/{id}/protocol`                                  | Read / upsert Rapid Review protocol                  |
+| `GET/PUT`          | `/rapid/studies/{id}/search-config`                             | Read / upsert search restriction config              |
+| `GET/PUT`          | `/rapid/studies/{id}/qa-config`                                 | Read / upsert quality appraisal config               |
+| `GET/POST`         | `/rapid/studies/{id}/stakeholders`                              | List / add practitioner stakeholders                 |
+| `GET/PATCH/DELETE` | `/rapid/studies/{id}/stakeholders/{sid}`                        | Get / update / delete a stakeholder                  |
+| `GET`              | `/rapid/studies/{id}/narrative-synthesis`                       | List narrative synthesis sections                    |
+| `PATCH`            | `/rapid/studies/{id}/narrative-synthesis/{section_id}`          | Update narrative text / is_complete flag             |
+| `POST`             | `/rapid/studies/{id}/narrative-synthesis/{section_id}/ai-draft` | Trigger AI draft ARQ job                             |
+| `POST`             | `/rapid/studies/{id}/narrative-synthesis/complete`              | Finalise synthesis (validates all sections complete) |
+| `GET/POST`         | `/rapid/studies/{id}/briefings`                                 | List / create new Evidence Briefing version          |
+| `GET`              | `/rapid/studies/{id}/briefings/{bid}`                           | Get specific briefing version                        |
+| `POST`             | `/rapid/studies/{id}/briefings/{bid}/publish`                   | Publish briefing version (demotes prior published)   |
+| `GET`              | `/rapid/studies/{id}/briefings/{bid}/export`                    | Download PDF (FileResponse)                          |
+| `POST`             | `/rapid/studies/{id}/briefings/{bid}/share-token`               | Create share token for unauthenticated access        |
+| `DELETE`           | `/rapid/briefings/share-token/{token}`                          | Revoke a share token                                 |
 
 ### Public Endpoints (`/api/v1/public/`)
 
-| Method | Path | Description |
-|--------|------|-------------|
-| `GET` | `/public/briefings/{token}` | Retrieve published briefing via share token (no auth) |
-| `GET` | `/public/briefings/{token}/export` | Download briefing PDF via share token (no auth) |
+| Method | Path                               | Description                                           |
+| ------ | ---------------------------------- | ----------------------------------------------------- |
+| `GET`  | `/public/briefings/{token}`        | Retrieve published briefing via share token (no auth) |
+| `GET`  | `/public/briefings/{token}/export` | Download briefing PDF via share token (no auth)       |
 
 ### Protocol Endpoints (`/api/v1/protocols/` and `/api/v1/studies/`)
 
-| Method | Path | Description |
-|--------|------|-------------|
-| `GET` | `/protocols` | List protocols visible to the authenticated user (own + default templates); optional `study_type` filter |
-| `POST` | `/protocols` | Create a new protocol (full graph) or copy from an existing one (`copy_from_protocol_id`) |
-| `GET` | `/protocols/{id}` | Full protocol detail including all nodes, edges, gates, assignees |
-| `PUT` | `/protocols/{id}` | Replace a custom protocol graph (optimistic lock via `version_id`) |
-| `DELETE` | `/protocols/{id}` | Delete a custom protocol (blocked if assigned to any study) |
-| `GET` | `/protocols/{id}/export` | Download protocol as schema-versioned YAML file |
-| `POST` | `/protocols/import` | Upload a YAML file and create a new owned protocol |
-| `GET` | `/studies/{id}/protocol-assignment` | Retrieve the protocol currently assigned to a study |
-| `PUT` | `/studies/{id}/protocol-assignment` | Assign a protocol to a study (resets execution state) |
-| `DELETE` | `/studies/{id}/protocol-assignment` | Reset study protocol to the default template (`confirm_reset: true` required) |
-| `GET` | `/studies/{id}/execution-state` | Full task execution state for all nodes in the assigned protocol |
-| `POST` | `/studies/{id}/execution-state/{task_id}/complete` | Mark a task complete; evaluates quality gates and activates downstream tasks |
-| `POST` | `/studies/{id}/execution-state/{task_id}/approve` | Approve a `human_sign_off` gate failure |
+| Method   | Path                                               | Description                                                                                              |
+| -------- | -------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `GET`    | `/protocols`                                       | List protocols visible to the authenticated user (own + default templates); optional `study_type` filter |
+| `POST`   | `/protocols`                                       | Create a new protocol (full graph) or copy from an existing one (`copy_from_protocol_id`)                |
+| `GET`    | `/protocols/{id}`                                  | Full protocol detail including all nodes, edges, gates, assignees                                        |
+| `PUT`    | `/protocols/{id}`                                  | Replace a custom protocol graph (optimistic lock via `version_id`)                                       |
+| `DELETE` | `/protocols/{id}`                                  | Delete a custom protocol (blocked if assigned to any study)                                              |
+| `GET`    | `/protocols/{id}/export`                           | Download protocol as schema-versioned YAML file                                                          |
+| `POST`   | `/protocols/import`                                | Upload a YAML file and create a new owned protocol                                                       |
+| `GET`    | `/studies/{id}/protocol-assignment`                | Retrieve the protocol currently assigned to a study                                                      |
+| `PUT`    | `/studies/{id}/protocol-assignment`                | Assign a protocol to a study (resets execution state)                                                    |
+| `DELETE` | `/studies/{id}/protocol-assignment`                | Reset study protocol to the default template (`confirm_reset: true` required)                            |
+| `GET`    | `/studies/{id}/execution-state`                    | Full task execution state for all nodes in the assigned protocol                                         |
+| `POST`   | `/studies/{id}/execution-state/{task_id}/complete` | Mark a task complete; evaluates quality gates and activates downstream tasks                             |
+| `POST`   | `/studies/{id}/execution-state/{task_id}/approve`  | Approve a `human_sign_off` gate failure                                                                  |
 
 ### Tertiary Endpoints (`/api/v1/tertiary/`)
 
-| Method | Path | Description |
-|--------|------|-------------|
-| `GET/PUT` | `/tertiary/studies/{id}/protocol` | Read / upsert Tertiary Study protocol |
-| `GET/POST` | `/tertiary/studies/{id}/seed-imports` | List / create seed imports from other platform studies |
-| `GET/PUT` | `/tertiary/papers/{id}/extraction` | Read / upsert secondary-study data extraction |
-| `POST` | `/tertiary/papers/{id}/extraction/ai-assist` | Trigger AI pre-fill ARQ job for extraction |
-| `GET` | `/tertiary/studies/{id}/report` | Generate tertiary report (landscape + synthesis + recommendations) |
+| Method     | Path                                         | Description                                                        |
+| ---------- | -------------------------------------------- | ------------------------------------------------------------------ |
+| `GET/PUT`  | `/tertiary/studies/{id}/protocol`            | Read / upsert Tertiary Study protocol                              |
+| `GET/POST` | `/tertiary/studies/{id}/seed-imports`        | List / create seed imports from other platform studies             |
+| `GET/PUT`  | `/tertiary/papers/{id}/extraction`           | Read / upsert secondary-study data extraction                      |
+| `POST`     | `/tertiary/papers/{id}/extraction/ai-assist` | Trigger AI pre-fill ARQ job for extraction                         |
+| `GET`      | `/tertiary/studies/{id}/report`              | Generate tertiary report (landscape + synthesis + recommendations) |
 
 ### SLR Endpoints (`/api/v1/slr/`)
 
-| Method | Path | Description |
-|--------|------|-------------|
-| `GET/PUT` | `/slr/studies/{id}/protocol` | Read / upsert SLR review protocol |
-| `POST` | `/slr/studies/{id}/protocol/review` | Trigger AI protocol review (ARQ job) |
-| `GET` | `/slr/studies/{id}/inter-rater-reliability` | Compute Cohen's κ for screened papers |
-| `GET/PUT` | `/slr/studies/{id}/quality-checklist` | Read / upsert quality assessment checklist |
-| `GET/PUT` | `/slr/papers/{id}/quality-scores` | Read / submit quality scores for a paper |
-| `GET/POST` | `/slr/studies/{id}/synthesis` | List synthesis results / start new synthesis job |
-| `GET` | `/slr/synthesis/{id}` | Get individual synthesis result |
-| `GET/POST` | `/slr/studies/{id}/grey-literature` | List / add grey literature sources |
-| `DELETE` | `/slr/studies/{id}/grey-literature/{source_id}` | Delete a grey literature source |
-| `GET` | `/slr/studies/{id}/report` | Generate and download structured SLR report |
+| Method     | Path                                            | Description                                      |
+| ---------- | ----------------------------------------------- | ------------------------------------------------ |
+| `GET/PUT`  | `/slr/studies/{id}/protocol`                    | Read / upsert SLR review protocol                |
+| `POST`     | `/slr/studies/{id}/protocol/review`             | Trigger AI protocol review (ARQ job)             |
+| `GET`      | `/slr/studies/{id}/inter-rater-reliability`     | Compute Cohen's κ for screened papers            |
+| `GET/PUT`  | `/slr/studies/{id}/quality-checklist`           | Read / upsert quality assessment checklist       |
+| `GET/PUT`  | `/slr/papers/{id}/quality-scores`               | Read / submit quality scores for a paper         |
+| `GET/POST` | `/slr/studies/{id}/synthesis`                   | List synthesis results / start new synthesis job |
+| `GET`      | `/slr/synthesis/{id}`                           | Get individual synthesis result                  |
+| `GET/POST` | `/slr/studies/{id}/grey-literature`             | List / add grey literature sources               |
+| `DELETE`   | `/slr/studies/{id}/grey-literature/{source_id}` | Delete a grey literature source                  |
+| `GET`      | `/slr/studies/{id}/report`                      | Generate and download structured SLR report      |
 
 Full interactive API documentation is available at `http://localhost:8000/docs` when the server is running.
 

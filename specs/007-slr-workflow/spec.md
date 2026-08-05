@@ -11,7 +11,7 @@ Extend the existing research platform to support Systematic Literature Reviews (
 
 ---
 
-## User Scenarios & Testing *(mandatory)*
+## User Scenarios & Testing _(mandatory)_
 
 ### User Story 1 — Define and Validate an SLR Protocol (Priority: P1)
 
@@ -124,7 +124,7 @@ The researcher can register and track grey literature sources — technical repo
 
 ---
 
-## Requirements *(mandatory)*
+## Requirements _(mandatory)_
 
 ### Functional Requirements
 
@@ -175,7 +175,7 @@ The researcher can register and track grey literature sources — technical repo
 
 ---
 
-## Success Criteria *(mandatory)*
+## Success Criteria _(mandatory)_
 
 ### Measurable Outcomes
 

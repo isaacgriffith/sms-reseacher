@@ -38,8 +38,14 @@ QUALITY_JUDGE_TEST_INPUTS: list[dict[str, Any]] = [
         "current_phase": 5,
         "pico_saved": True,
         "search_strategies": [
-            {"query_string": "(TDD OR test-driven) AND (software OR engineering)", "result_count": 312},
-            {"query_string": "(TDD OR test-driven development) AND (defect OR quality OR productivity)", "result_count": 287},
+            {
+                "query_string": "(TDD OR test-driven) AND (software OR engineering)",
+                "result_count": 312,
+            },
+            {
+                "query_string": "(TDD OR test-driven development) AND (defect OR quality OR productivity)",
+                "result_count": 287,
+            },
         ],
         "test_retest_done": True,
         "reviewers": [
@@ -92,7 +98,10 @@ QUALITY_JUDGE_TEST_INPUTS: list[dict[str, Any]] = [
         "current_phase": 3,
         "pico_saved": True,
         "search_strategies": [
-            {"query_string": "(fairness OR bias) AND (ML OR hiring OR recruitment)", "result_count": 178},
+            {
+                "query_string": "(fairness OR bias) AND (ML OR hiring OR recruitment)",
+                "result_count": 178,
+            },
         ],
         "test_retest_done": False,
         "reviewers": [
@@ -161,9 +170,7 @@ def _assert_scores_within_valid_ranges(output: str) -> None:
         if rubric not in scores:
             continue
         score = scores[rubric]
-        assert 0 <= score <= max_val, (
-            f"Score for '{rubric}' is {score}, expected 0–{max_val}."
-        )
+        assert 0 <= score <= max_val, f"Score for '{rubric}' is {score}, expected 0–{max_val}."
 
 
 def _assert_rubric_details_complete(output: str) -> None:
@@ -200,13 +207,10 @@ def _assert_recommendations_non_empty_for_low_scores(output: str) -> None:
     data: dict[str, Any] = json.loads(output)
     scores = data.get("scores", {})
     recommendations = data.get("recommendations", [])
-    any_below_max = any(
-        scores.get(r, 0) < _RUBRIC_MAX[r] for r in _RUBRIC_NAMES
-    )
+    any_below_max = any(scores.get(r, 0) < _RUBRIC_MAX[r] for r in _RUBRIC_NAMES)
     if any_below_max:
         assert len(recommendations) >= 1, (
-            f"Expected ≥1 recommendation when rubrics are below max, got 0. "
-            f"Scores: {scores}"
+            f"Expected ≥1 recommendation when rubrics are below max, got 0. Scores: {scores}"
         )
 
 
@@ -237,35 +241,39 @@ def build_test_cases(run_agent: bool = False) -> list[LLMTestCase]:
         else:
             # Structurally valid stub — skips LLM call
             stub_scores = dict.fromkeys(_RUBRIC_NAMES, 1)
-            actual_output = json.dumps({
-                "scores": stub_scores,
-                "rubric_details": {
-                    r: {
-                        "score": stub_scores[r],
-                        "justification": f"[Stub] Justification for {r} in study '{inp['study_name']}'.",
-                    }
-                    for r in _RUBRIC_NAMES
-                },
-                "recommendations": [
-                    {
-                        "priority": 1,
-                        "action": f"[Stub] Improve {_RUBRIC_NAMES[0]} score.",
-                        "target_rubric": _RUBRIC_NAMES[0],
-                    }
-                ],
-            })
+            actual_output = json.dumps(
+                {
+                    "scores": stub_scores,
+                    "rubric_details": {
+                        r: {
+                            "score": stub_scores[r],
+                            "justification": f"[Stub] Justification for {r} in study '{inp['study_name']}'.",
+                        }
+                        for r in _RUBRIC_NAMES
+                    },
+                    "recommendations": [
+                        {
+                            "priority": 1,
+                            "action": f"[Stub] Improve {_RUBRIC_NAMES[0]} score.",
+                            "target_rubric": _RUBRIC_NAMES[0],
+                        }
+                    ],
+                }
+            )
 
-        input_text = json.dumps({
-            "study_name": inp["study_name"],
-            "study_type": inp["study_type"],
-            "current_phase": inp["current_phase"],
-            "pico_saved": inp["pico_saved"],
-            "search_strategies_count": len(inp.get("search_strategies") or []),
-            "test_retest_done": inp.get("test_retest_done", False),
-            "reviewers_count": len(inp.get("reviewers") or []),
-            "extractions_done": inp.get("extractions_done", False),
-            "validity_filled": inp.get("validity_filled", False),
-        })
+        input_text = json.dumps(
+            {
+                "study_name": inp["study_name"],
+                "study_type": inp["study_type"],
+                "current_phase": inp["current_phase"],
+                "pico_saved": inp["pico_saved"],
+                "search_strategies_count": len(inp.get("search_strategies") or []),
+                "test_retest_done": inp.get("test_retest_done", False),
+                "reviewers_count": len(inp.get("reviewers") or []),
+                "extractions_done": inp.get("extractions_done", False),
+                "validity_filled": inp.get("validity_filled", False),
+            }
+        )
 
         cases.append(
             LLMTestCase(
@@ -313,17 +321,19 @@ async def _invoke_quality_judge(inp: dict[str, Any]) -> str:
         validity_filled=inp.get("validity_filled", False),
         validity_dimensions=inp.get("validity_dimensions") or {},
     )
-    return json.dumps({
-        "scores": result.scores,
-        "rubric_details": {
-            rubric: {"score": detail.score, "justification": detail.justification}
-            for rubric, detail in result.rubric_details.items()
-        },
-        "recommendations": [
-            {"priority": rec.priority, "action": rec.action, "target_rubric": rec.target_rubric}
-            for rec in result.recommendations
-        ],
-    })
+    return json.dumps(
+        {
+            "scores": result.scores,
+            "rubric_details": {
+                rubric: {"score": detail.score, "justification": detail.justification}
+                for rubric, detail in result.rubric_details.items()
+            },
+            "recommendations": [
+                {"priority": rec.priority, "action": rec.action, "target_rubric": rec.target_rubric}
+                for rec in result.recommendations
+            ],
+        }
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -331,7 +341,9 @@ async def _invoke_quality_judge(inp: dict[str, Any]) -> str:
 # ---------------------------------------------------------------------------
 
 
-def run_quality_judge_eval(run_agent: bool = False, threshold: float = PASS_THRESHOLD) -> dict[str, Any]:
+def run_quality_judge_eval(
+    run_agent: bool = False, threshold: float = PASS_THRESHOLD
+) -> dict[str, Any]:
     """Execute the QualityJudgeAgent deepeval pipeline.
 
     Validates per-test-case:

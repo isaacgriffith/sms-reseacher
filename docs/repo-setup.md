@@ -1,6 +1,7 @@
 # Project Setup
 
 This project is to be a mono-repo for a tool that will allow researchers to conduct four key types of studies using an AI enhanced process:
+
 1. Systematic Mapping Studies
 2. Systematic Literature Reviews
 3. Tertiary Studies which combine multiple SLRs

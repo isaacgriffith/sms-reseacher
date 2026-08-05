@@ -202,7 +202,7 @@
 
 ---
 
-## Phase 10: Feature Completion Documentation *(mandatory — Constitution Principle X)*
+## Phase 10: Feature Completion Documentation _(mandatory — Constitution Principle X)_
 
 **Purpose**: Update all required documentation before the feature branch is merged.
 
@@ -316,6 +316,7 @@ Task T033: DatabaseSelectionPanel component
 ### Parallel Team Strategy
 
 With multiple developers, after Phase 2 completes:
+
 - Developer A: US1 (database search + UI)
 - Developer B: US2 + US3 (full-text + citations) → US4 (conversion)
 - Developer C: US5 (admin credentials)

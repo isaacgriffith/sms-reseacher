@@ -121,10 +121,7 @@ describe('generateBriefing', () => {
   it('POSTs to the correct endpoint and returns parsed response', async () => {
     mockApi.post.mockResolvedValue(GENERATE_RESPONSE_FIXTURE);
     const result = await generateBriefing(42);
-    expect(mockApi.post).toHaveBeenCalledWith(
-      '/api/v1/rapid/studies/42/briefings/generate',
-      {},
-    );
+    expect(mockApi.post).toHaveBeenCalledWith('/api/v1/rapid/studies/42/briefings/generate', {});
     expect(result.job_id).toBe('job-abc');
     expect(result.estimated_version_number).toBe(2);
   });
@@ -157,10 +154,7 @@ describe('publishBriefing', () => {
     const published = { ...DETAIL_FIXTURE, status: 'published' as const };
     mockApi.post.mockResolvedValue(published);
     const result = await publishBriefing(42, 1);
-    expect(mockApi.post).toHaveBeenCalledWith(
-      '/api/v1/rapid/studies/42/briefings/1/publish',
-      {},
-    );
+    expect(mockApi.post).toHaveBeenCalledWith('/api/v1/rapid/studies/42/briefings/1/publish', {});
     expect(result.status).toBe('published');
   });
 });
@@ -185,7 +179,9 @@ describe('exportBriefing', () => {
     const result = await exportBriefing(42, 1, 'pdf');
     expect(fakeFetch).toHaveBeenCalledWith(
       expect.stringContaining('/api/v1/rapid/studies/42/briefings/1/export?format=pdf'),
-      expect.objectContaining({ headers: expect.objectContaining({ Authorization: expect.stringMatching(/^Bearer /) }) }),
+      expect.objectContaining({
+        headers: expect.objectContaining({ Authorization: expect.stringMatching(/^Bearer /) }),
+      }),
     );
     expect(result).toBe(fakeBlob);
     vi.unstubAllGlobals();
@@ -214,10 +210,7 @@ describe('createShareToken', () => {
   it('POSTs to share endpoint and returns parsed token', async () => {
     mockApi.post.mockResolvedValue(SHARE_TOKEN_FIXTURE);
     const result = await createShareToken(42, 1);
-    expect(mockApi.post).toHaveBeenCalledWith(
-      '/api/v1/rapid/studies/42/briefings/1/share',
-      {},
-    );
+    expect(mockApi.post).toHaveBeenCalledWith('/api/v1/rapid/studies/42/briefings/1/share', {});
     expect(result.token).toBe('abc123');
     expect(result.share_url).toBe('https://example.com/briefings/abc123');
   });

@@ -33,10 +33,22 @@ Return a single valid JSON object matching this schema exactly:
   "research_type": "<evaluation|solution_proposal|validation|philosophical|opinion|personal_experience|unknown>",
   "venue_type": "<journal|conference|workshop|symposium|preprint|thesis|report|other>",
   "venue_name": "<string or null>",
-  "author_details": [{"name": "<string>", "institution": "<string or null>", "locale": "<string or null>"}],
+  "author_details": [
+    {
+      "name": "<string>",
+      "institution": "<string or null>",
+      "locale": "<string or null>"
+    }
+  ],
   "summary": "<2–4 sentence structured summary or null>",
-  "open_codings": [{"code": "<label>", "definition": "<brief definition>", "evidence_quote": "<verbatim quote from paper>"}],
+  "open_codings": [
+    {
+      "code": "<label>",
+      "definition": "<brief definition>",
+      "evidence_quote": "<verbatim quote from paper>"
+    }
+  ],
   "keywords": ["<keyword>"],
-  "question_data": {"<question_id>": "<extracted answer or null>"}
+  "question_data": { "<question_id>": "<extracted answer or null>" }
 }
 ```

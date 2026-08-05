@@ -279,6 +279,184 @@ class TestValidityEval:
 
 
 # ---------------------------------------------------------------------------
+# protocol_reviewer_eval
+# ---------------------------------------------------------------------------
+
+
+class TestProtocolReviewerEval:
+    """Tests for agent_eval.evals.protocol_reviewer_eval."""
+
+    def test_build_test_cases_returns_nonempty_list(self) -> None:
+        """build_test_cases returns a non-empty list of LLMTestCase."""
+        from agent_eval.evals.protocol_reviewer_eval import build_test_cases
+
+        cases = build_test_cases(run_agent=False)
+        assert isinstance(cases, list)
+        assert len(cases) > 0
+
+    def test_build_test_cases_have_input_and_output(self) -> None:
+        """Each test case has non-empty input and actual_output."""
+        from agent_eval.evals.protocol_reviewer_eval import build_test_cases
+
+        for case in build_test_cases(run_agent=False):
+            assert case.input
+            assert case.actual_output
+
+    def test_run_protocol_reviewer_eval_returns_correct_keys(self) -> None:
+        """run_protocol_reviewer_eval returns a dict with expected keys."""
+        from agent_eval.evals.protocol_reviewer_eval import run_protocol_reviewer_eval
+
+        result = run_protocol_reviewer_eval(run_agent=False)
+        assert set(result.keys()) >= {
+            "passed",
+            "failed",
+            "total",
+            "errors",
+            "pass_rate",
+            "threshold",
+            "threshold_met",
+        }
+
+    def test_run_protocol_reviewer_eval_stub_all_pass(self) -> None:
+        """Stub mode should produce all passed cases."""
+        from agent_eval.evals.protocol_reviewer_eval import run_protocol_reviewer_eval
+
+        result = run_protocol_reviewer_eval(run_agent=False)
+        assert result["failed"] == 0
+        assert result["passed"] == result["total"]
+        assert result["total"] > 0
+        assert result["threshold_met"] is True
+
+    def test_assert_valid_structure_accepts_valid(self) -> None:
+        """_assert_valid_structure accepts valid JSON."""
+        import json
+
+        from agent_eval.evals.protocol_reviewer_eval import _assert_valid_structure
+
+        valid = json.dumps(
+            {
+                "issues": [
+                    {
+                        "section": "search_strategy",
+                        "severity": "critical",
+                        "description": "Missing.",
+                        "suggestion": "Add it.",
+                    }
+                ],
+                "overall_assessment": "Needs work.",
+            }
+        )
+        _assert_valid_structure(valid)
+
+    def test_assert_valid_structure_raises_on_missing_issues(self) -> None:
+        """_assert_valid_structure raises when 'issues' is missing."""
+        import json
+
+        from agent_eval.evals.protocol_reviewer_eval import _assert_valid_structure
+
+        with pytest.raises(AssertionError, match="Missing 'issues'"):
+            _assert_valid_structure(json.dumps({"overall_assessment": "ok"}))
+
+    def test_assert_valid_structure_raises_on_missing_assessment(self) -> None:
+        """_assert_valid_structure raises when 'overall_assessment' is missing."""
+        import json
+
+        from agent_eval.evals.protocol_reviewer_eval import _assert_valid_structure
+
+        with pytest.raises(AssertionError, match="Missing 'overall_assessment'"):
+            _assert_valid_structure(json.dumps({"issues": []}))
+
+    def test_assert_valid_structure_raises_on_bad_severity(self) -> None:
+        """_assert_valid_structure raises when severity is invalid."""
+        import json
+
+        from agent_eval.evals.protocol_reviewer_eval import _assert_valid_structure
+
+        bad = json.dumps(
+            {
+                "issues": [
+                    {
+                        "section": "x",
+                        "severity": "low",
+                        "description": "d",
+                        "suggestion": "s",
+                    }
+                ],
+                "overall_assessment": "ok",
+            }
+        )
+        with pytest.raises(AssertionError, match="severity must be"):
+            _assert_valid_structure(bad)
+
+    def test_assert_valid_structure_raises_on_empty_assessment(self) -> None:
+        """_assert_valid_structure raises when overall_assessment is empty string."""
+        import json
+
+        from agent_eval.evals.protocol_reviewer_eval import _assert_valid_structure
+
+        with pytest.raises(AssertionError, match="non-empty"):
+            _assert_valid_structure(
+                json.dumps({"issues": [], "overall_assessment": ""})
+            )
+
+    def test_assert_faithfulness_passes_no_known_issues(self) -> None:
+        """_assert_faithfulness passes when no known issues."""
+        import json
+
+        from agent_eval.evals.protocol_reviewer_eval import _assert_faithfulness
+
+        _assert_faithfulness(
+            json.dumps({"issues": [], "overall_assessment": "ok"}),
+            {"known_issues": []},
+        )
+
+    def test_assert_faithfulness_passes_when_known_flagged(self) -> None:
+        """_assert_faithfulness passes when known sections are flagged."""
+        import json
+
+        from agent_eval.evals.protocol_reviewer_eval import _assert_faithfulness
+
+        output = json.dumps(
+            {
+                "issues": [
+                    {
+                        "section": "search_strategy",
+                        "severity": "critical",
+                        "description": "d",
+                        "suggestion": "s",
+                    }
+                ],
+                "overall_assessment": "ok",
+            }
+        )
+        _assert_faithfulness(output, {"known_issues": ["search_strategy"]})
+
+    def test_assert_faithfulness_raises_when_known_not_flagged(self) -> None:
+        """_assert_faithfulness raises when known section missing from output."""
+        import json
+
+        from agent_eval.evals.protocol_reviewer_eval import _assert_faithfulness
+
+        output = json.dumps({"issues": [], "overall_assessment": "ok"})
+        with pytest.raises(AssertionError, match="Expected issue in section"):
+            _assert_faithfulness(output, {"known_issues": ["search_strategy"]})
+
+    def test_protocol_test_inputs_length(self) -> None:
+        """PROTOCOL_TEST_INPUTS has the expected 6 entries."""
+        from agent_eval.evals.protocol_reviewer_eval import PROTOCOL_TEST_INPUTS
+
+        assert len(PROTOCOL_TEST_INPUTS) == 6
+
+    def test_run_protocol_reviewer_eval_custom_threshold(self) -> None:
+        """Custom threshold is reflected in the result."""
+        from agent_eval.evals.protocol_reviewer_eval import run_protocol_reviewer_eval
+
+        result = run_protocol_reviewer_eval(run_agent=False, threshold=1.0)
+        assert result["threshold"] == 1.0
+        assert result["threshold_met"] is True
+
+
+# ---------------------------------------------------------------------------
 # eval_all._run_pipeline
 # ---------------------------------------------------------------------------
 

@@ -28,7 +28,9 @@ vi.mock('d3', () => ({
     on: vi.fn().mockReturnThis(),
   }),
   forceManyBody: vi.fn().mockReturnValue({ strength: vi.fn().mockReturnThis() }),
-  forceLink: vi.fn().mockReturnValue({ id: vi.fn().mockReturnThis(), distance: vi.fn().mockReturnThis() }),
+  forceLink: vi
+    .fn()
+    .mockReturnValue({ id: vi.fn().mockReturnThis(), distance: vi.fn().mockReturnThis() }),
   forceCenter: vi.fn().mockReturnValue({}),
   forceCollide: vi.fn().mockReturnValue({}),
   zoom: vi.fn().mockReturnValue({

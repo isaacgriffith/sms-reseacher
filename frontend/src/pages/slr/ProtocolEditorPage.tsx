@@ -169,9 +169,7 @@ function ActionButtons({
 }: ActionButtonsProps) {
   if (isValidated) {
     return (
-      <Alert severity="success">
-        Protocol validated. Proceed to Phase 2: Database Search.
-      </Alert>
+      <Alert severity="success">Protocol validated. Proceed to Phase 2: Database Search.</Alert>
     );
   }
 

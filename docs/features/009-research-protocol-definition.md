@@ -22,30 +22,30 @@ A research protocol is represented as a directed acyclic graph (DAG) where:
 
 Each node represents a task in the research process. Nodes have:
 
-| Property | Description |
-|---|---|
-| `taskId` | Unique identifier |
-| `taskType` | The task category — must be one of the defined task types for the supported study types (e.g., `DefinePICO`, `BuildSearchString`, `ExecuteSearch`, `ScreenPapers`, `ExtractData`, `SynthesizeData`, `GenerateReport`, etc.) |
-| `label` | Human-readable name |
-| `description` | Description of what this task accomplishes |
-| `inputs` | Named inputs flowing into the task (typed: e.g., `CandidatePaperList`, `SearchString`, `PICOComponents`) |
-| `outputs` | Named outputs produced by the task |
-| `assignees` | One or more Human Agents (study members) and/or AI Agents assigned to complete the task |
-| `qualityGates` | Zero or more quality gate conditions that must be satisfied for the task to be considered complete (e.g., "Kappa ≥ 0.6", "Coverage recall ≥ 80%", "At least 5 accepted papers") |
-| `isRequired` | Whether this task is mandatory or optional |
+| Property       | Description                                                                                                                                                                                                                 |
+| -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `taskId`       | Unique identifier                                                                                                                                                                                                           |
+| `taskType`     | The task category — must be one of the defined task types for the supported study types (e.g., `DefinePICO`, `BuildSearchString`, `ExecuteSearch`, `ScreenPapers`, `ExtractData`, `SynthesizeData`, `GenerateReport`, etc.) |
+| `label`        | Human-readable name                                                                                                                                                                                                         |
+| `description`  | Description of what this task accomplishes                                                                                                                                                                                  |
+| `inputs`       | Named inputs flowing into the task (typed: e.g., `CandidatePaperList`, `SearchString`, `PICOComponents`)                                                                                                                    |
+| `outputs`      | Named outputs produced by the task                                                                                                                                                                                          |
+| `assignees`    | One or more Human Agents (study members) and/or AI Agents assigned to complete the task                                                                                                                                     |
+| `qualityGates` | Zero or more quality gate conditions that must be satisfied for the task to be considered complete (e.g., "Kappa ≥ 0.6", "Coverage recall ≥ 80%", "At least 5 accepted papers")                                             |
+| `isRequired`   | Whether this task is mandatory or optional                                                                                                                                                                                  |
 
 #### Edges (Information Flow)
 
 Each edge represents the flow of information from one task's output to another task's input:
 
-| Property | Description |
-| --- | --- |
-| `edgeId` | Unique identifier |
-| `sourceNodeId` | The task producing the data |
-| `sourceOutput` | The named output from the source task |
-| `targetNodeId` | The task consuming the data |
-| `targetInput` | The named input on the target task |
-| `condition` | Optional: a boolean expression on the source task's outputs that must be true for data to flow (enables conditional branching) |
+| Property       | Description                                                                                                                    |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `edgeId`       | Unique identifier                                                                                                              |
+| `sourceNodeId` | The task producing the data                                                                                                    |
+| `sourceOutput` | The named output from the source task                                                                                          |
+| `targetNodeId` | The task consuming the data                                                                                                    |
+| `targetInput`  | The named input on the target task                                                                                             |
+| `condition`    | Optional: a boolean expression on the source task's outputs that must be true for data to flow (enables conditional branching) |
 
 ### Protocol Editing
 
@@ -74,6 +74,7 @@ Protocols can be defined and edited through two complementary interfaces:
 Quality gates are conditions attached to task nodes that gate progression. The system evaluates quality gates automatically where possible (for measurable metrics) and flags them for human confirmation where evaluation requires judgement.
 
 Examples of supported quality gate types:
+
 - **Metric threshold**: "Kappa coefficient ≥ 0.6", "Test set recall ≥ 80%", "Accepted papers ≥ N"
 - **Completion check**: "All candidate papers have been reviewed", "Protocol document is complete"
 - **Human sign-off**: "Study admin has approved this phase"

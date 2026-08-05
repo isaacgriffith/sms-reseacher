@@ -33,9 +33,7 @@ function renderWithQuery(ui: React.ReactElement) {
 const MOCK_INCLUSION = [
   { id: 1, study_id: 1, description: 'Must be peer-reviewed', order_index: 0 },
 ];
-const MOCK_EXCLUSION = [
-  { id: 2, study_id: 1, description: 'No grey literature', order_index: 0 },
-];
+const MOCK_EXCLUSION = [{ id: 2, study_id: 1, description: 'No grey literature', order_index: 0 }];
 
 describe('CriteriaForm', () => {
   beforeEach(() => {
@@ -57,9 +55,7 @@ describe('CriteriaForm', () => {
     });
 
     it('displays inclusion criteria items from API', async () => {
-      mockApi.get
-        .mockResolvedValueOnce(MOCK_INCLUSION)
-        .mockResolvedValueOnce(MOCK_EXCLUSION);
+      mockApi.get.mockResolvedValueOnce(MOCK_INCLUSION).mockResolvedValueOnce(MOCK_EXCLUSION);
       renderWithQuery(<CriteriaForm studyId={1} />);
       await waitFor(() => {
         expect(screen.getByText('Must be peer-reviewed')).toBeTruthy();
@@ -67,9 +63,7 @@ describe('CriteriaForm', () => {
     });
 
     it('displays exclusion criteria items from API', async () => {
-      mockApi.get
-        .mockResolvedValueOnce(MOCK_INCLUSION)
-        .mockResolvedValueOnce(MOCK_EXCLUSION);
+      mockApi.get.mockResolvedValueOnce(MOCK_INCLUSION).mockResolvedValueOnce(MOCK_EXCLUSION);
       renderWithQuery(<CriteriaForm studyId={1} />);
       await waitFor(() => {
         expect(screen.getByText('No grey literature')).toBeTruthy();
@@ -90,7 +84,10 @@ describe('CriteriaForm', () => {
     it('calls api.post with correct URL and payload on Add', async () => {
       mockApi.get.mockResolvedValue([]);
       mockApi.post.mockResolvedValueOnce({
-        id: 10, study_id: 1, description: 'Empirical studies only', order_index: 0,
+        id: 10,
+        study_id: 1,
+        description: 'Empirical studies only',
+        order_index: 0,
       });
 
       renderWithQuery(<CriteriaForm studyId={1} />);
@@ -124,7 +121,10 @@ describe('CriteriaForm', () => {
     it('calls api.post for exclusion with correct URL', async () => {
       mockApi.get.mockResolvedValue([]);
       mockApi.post.mockResolvedValueOnce({
-        id: 11, study_id: 1, description: 'No duplicates', order_index: 0,
+        id: 11,
+        study_id: 1,
+        description: 'No duplicates',
+        order_index: 0,
       });
 
       renderWithQuery(<CriteriaForm studyId={1} />);
@@ -147,9 +147,7 @@ describe('CriteriaForm', () => {
 
   describe('Remove criterion', () => {
     it('calls api.delete with correct URL when remove button is clicked', async () => {
-      mockApi.get
-        .mockResolvedValueOnce(MOCK_INCLUSION)
-        .mockResolvedValueOnce([]);
+      mockApi.get.mockResolvedValueOnce(MOCK_INCLUSION).mockResolvedValueOnce([]);
       mockApi.delete.mockResolvedValueOnce(undefined);
 
       renderWithQuery(<CriteriaForm studyId={1} />);
@@ -161,9 +159,7 @@ describe('CriteriaForm', () => {
       fireEvent.click(removeButton);
 
       await waitFor(() => {
-        expect(mockApi.delete).toHaveBeenCalledWith(
-          '/api/v1/studies/1/criteria/inclusion/1',
-        );
+        expect(mockApi.delete).toHaveBeenCalledWith('/api/v1/studies/1/criteria/inclusion/1');
       });
     });
   });
@@ -171,10 +167,13 @@ describe('CriteriaForm', () => {
   describe('Order index in POST body', () => {
     it('sends order_index equal to current inclusion list length', async () => {
       mockApi.get
-        .mockResolvedValueOnce(MOCK_INCLUSION)  // inclusion list has 1 item
+        .mockResolvedValueOnce(MOCK_INCLUSION) // inclusion list has 1 item
         .mockResolvedValueOnce([]);
       mockApi.post.mockResolvedValueOnce({
-        id: 20, study_id: 1, description: 'New item', order_index: 1,
+        id: 20,
+        study_id: 1,
+        description: 'New item',
+        order_index: 1,
       });
 
       renderWithQuery(<CriteriaForm studyId={1} />);
@@ -196,7 +195,10 @@ describe('CriteriaForm', () => {
     it('sends order_index=0 when inclusion list is empty', async () => {
       mockApi.get.mockResolvedValue([]);
       mockApi.post.mockResolvedValueOnce({
-        id: 21, study_id: 1, description: 'First item', order_index: 0,
+        id: 21,
+        study_id: 1,
+        description: 'First item',
+        order_index: 0,
       });
 
       renderWithQuery(<CriteriaForm studyId={1} />);
@@ -220,7 +222,10 @@ describe('CriteriaForm', () => {
     it('pressing Enter in inclusion input triggers add', async () => {
       mockApi.get.mockResolvedValue([]);
       mockApi.post.mockResolvedValueOnce({
-        id: 30, study_id: 1, description: 'Enter key test', order_index: 0,
+        id: 30,
+        study_id: 1,
+        description: 'Enter key test',
+        order_index: 0,
       });
 
       renderWithQuery(<CriteriaForm studyId={1} />);
@@ -272,7 +277,10 @@ describe('CriteriaForm', () => {
     it('sends trimmed text when input has surrounding whitespace', async () => {
       mockApi.get.mockResolvedValue([]);
       mockApi.post.mockResolvedValueOnce({
-        id: 31, study_id: 1, description: 'trimmed text', order_index: 0,
+        id: 31,
+        study_id: 1,
+        description: 'trimmed text',
+        order_index: 0,
       });
 
       renderWithQuery(<CriteriaForm studyId={1} />);
@@ -299,9 +307,7 @@ describe('CriteriaForm', () => {
     ];
 
     it('Move Up button is disabled for first item', async () => {
-      mockApi.get
-        .mockResolvedValueOnce(TWO_ITEMS)
-        .mockResolvedValueOnce([]);
+      mockApi.get.mockResolvedValueOnce(TWO_ITEMS).mockResolvedValueOnce([]);
 
       renderWithQuery(<CriteriaForm studyId={1} />);
       await waitFor(() => screen.getByText('First'));
@@ -311,9 +317,7 @@ describe('CriteriaForm', () => {
     });
 
     it('Move Down button is disabled for last item', async () => {
-      mockApi.get
-        .mockResolvedValueOnce(TWO_ITEMS)
-        .mockResolvedValueOnce([]);
+      mockApi.get.mockResolvedValueOnce(TWO_ITEMS).mockResolvedValueOnce([]);
 
       renderWithQuery(<CriteriaForm studyId={1} />);
       await waitFor(() => screen.getByText('Second'));
@@ -323,9 +327,7 @@ describe('CriteriaForm', () => {
     });
 
     it('Move Up is enabled for second item', async () => {
-      mockApi.get
-        .mockResolvedValueOnce(TWO_ITEMS)
-        .mockResolvedValueOnce([]);
+      mockApi.get.mockResolvedValueOnce(TWO_ITEMS).mockResolvedValueOnce([]);
 
       renderWithQuery(<CriteriaForm studyId={1} />);
       await waitFor(() => screen.getByText('First'));
@@ -335,9 +337,7 @@ describe('CriteriaForm', () => {
     });
 
     it('Move Down is enabled for first item', async () => {
-      mockApi.get
-        .mockResolvedValueOnce(TWO_ITEMS)
-        .mockResolvedValueOnce([]);
+      mockApi.get.mockResolvedValueOnce(TWO_ITEMS).mockResolvedValueOnce([]);
 
       renderWithQuery(<CriteriaForm studyId={1} />);
       await waitFor(() => screen.getByText('Second'));
@@ -347,17 +347,15 @@ describe('CriteriaForm', () => {
     });
 
     it('clicking Move Down on first item swaps positions', async () => {
-      mockApi.get
-        .mockResolvedValueOnce(TWO_ITEMS)
-        .mockResolvedValueOnce([]);
+      mockApi.get.mockResolvedValueOnce(TWO_ITEMS).mockResolvedValueOnce([]);
 
       const { container } = renderWithQuery(<CriteriaForm studyId={1} />);
       await waitFor(() => screen.getByText('First'));
 
       // Items should be First, Second in order
       const items = container.querySelectorAll('li span');
-      const firstSpanBefore = Array.from(items).find(el => el.textContent === 'First');
-      const secondSpanBefore = Array.from(items).find(el => el.textContent === 'Second');
+      const firstSpanBefore = Array.from(items).find((el) => el.textContent === 'First');
+      const secondSpanBefore = Array.from(items).find((el) => el.textContent === 'Second');
       expect(firstSpanBefore).toBeTruthy();
       expect(secondSpanBefore).toBeTruthy();
 
@@ -368,17 +366,15 @@ describe('CriteriaForm', () => {
       await waitFor(() => {
         const orderedItems = container.querySelectorAll('li span');
         const texts = Array.from(orderedItems)
-          .map(el => el.textContent)
-          .filter(t => t === 'First' || t === 'Second');
+          .map((el) => el.textContent)
+          .filter((t) => t === 'First' || t === 'Second');
         expect(texts[0]).toBe('Second');
         expect(texts[1]).toBe('First');
       });
     });
 
     it('clicking Move Up on second item swaps positions', async () => {
-      mockApi.get
-        .mockResolvedValueOnce(TWO_ITEMS)
-        .mockResolvedValueOnce([]);
+      mockApi.get.mockResolvedValueOnce(TWO_ITEMS).mockResolvedValueOnce([]);
 
       const { container } = renderWithQuery(<CriteriaForm studyId={1} />);
       await waitFor(() => screen.getByText('Second'));
@@ -389,8 +385,8 @@ describe('CriteriaForm', () => {
       await waitFor(() => {
         const orderedItems = container.querySelectorAll('li span');
         const texts = Array.from(orderedItems)
-          .map(el => el.textContent)
-          .filter(t => t === 'First' || t === 'Second');
+          .map((el) => el.textContent)
+          .filter((t) => t === 'First' || t === 'Second');
         expect(texts[0]).toBe('Second');
         expect(texts[1]).toBe('First');
       });
@@ -404,9 +400,7 @@ describe('CriteriaForm', () => {
     ];
 
     it('Move Up button is disabled for first exclusion item', async () => {
-      mockApi.get
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce(TWO_EXC);
+      mockApi.get.mockResolvedValueOnce([]).mockResolvedValueOnce(TWO_EXC);
 
       renderWithQuery(<CriteriaForm studyId={1} />);
       await waitFor(() => screen.getByText('ExcFirst'));
@@ -417,9 +411,7 @@ describe('CriteriaForm', () => {
     });
 
     it('Move Down button is disabled for last exclusion item', async () => {
-      mockApi.get
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce(TWO_EXC);
+      mockApi.get.mockResolvedValueOnce([]).mockResolvedValueOnce(TWO_EXC);
 
       renderWithQuery(<CriteriaForm studyId={1} />);
       await waitFor(() => screen.getByText('ExcSecond'));
@@ -429,9 +421,7 @@ describe('CriteriaForm', () => {
     });
 
     it('clicking Move Down on first exclusion item swaps positions', async () => {
-      mockApi.get
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce(TWO_EXC);
+      mockApi.get.mockResolvedValueOnce([]).mockResolvedValueOnce(TWO_EXC);
 
       const { container } = renderWithQuery(<CriteriaForm studyId={1} />);
       await waitFor(() => screen.getByText('ExcFirst'));
@@ -442,17 +432,15 @@ describe('CriteriaForm', () => {
       await waitFor(() => {
         const orderedItems = container.querySelectorAll('li span');
         const texts = Array.from(orderedItems)
-          .map(el => el.textContent)
-          .filter(t => t === 'ExcFirst' || t === 'ExcSecond');
+          .map((el) => el.textContent)
+          .filter((t) => t === 'ExcFirst' || t === 'ExcSecond');
         expect(texts[0]).toBe('ExcSecond');
         expect(texts[1]).toBe('ExcFirst');
       });
     });
 
     it('clicking Move Up on second exclusion item swaps positions', async () => {
-      mockApi.get
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce(TWO_EXC);
+      mockApi.get.mockResolvedValueOnce([]).mockResolvedValueOnce(TWO_EXC);
 
       const { container } = renderWithQuery(<CriteriaForm studyId={1} />);
       await waitFor(() => screen.getByText('ExcFirst'));
@@ -463,19 +451,20 @@ describe('CriteriaForm', () => {
       await waitFor(() => {
         const orderedItems = container.querySelectorAll('li span');
         const texts = Array.from(orderedItems)
-          .map(el => el.textContent)
-          .filter(t => t === 'ExcFirst' || t === 'ExcSecond');
+          .map((el) => el.textContent)
+          .filter((t) => t === 'ExcFirst' || t === 'ExcSecond');
         expect(texts[0]).toBe('ExcSecond');
         expect(texts[1]).toBe('ExcFirst');
       });
     });
 
     it('calls api.post for exclusion with order_index=current exclusion length', async () => {
-      mockApi.get
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce(TWO_EXC); // exclusion has 2 items
+      mockApi.get.mockResolvedValueOnce([]).mockResolvedValueOnce(TWO_EXC); // exclusion has 2 items
       mockApi.post.mockResolvedValueOnce({
-        id: 50, study_id: 1, description: 'New excl', order_index: 2,
+        id: 50,
+        study_id: 1,
+        description: 'New excl',
+        order_index: 2,
       });
 
       renderWithQuery(<CriteriaForm studyId={1} />);
@@ -497,9 +486,7 @@ describe('CriteriaForm', () => {
 
   describe('Negative state: no criteria message', () => {
     it('"No criteria added yet" NOT shown when inclusion items exist', async () => {
-      mockApi.get
-        .mockResolvedValueOnce(MOCK_INCLUSION)
-        .mockResolvedValueOnce([]);
+      mockApi.get.mockResolvedValueOnce(MOCK_INCLUSION).mockResolvedValueOnce([]);
 
       renderWithQuery(<CriteriaForm studyId={1} />);
       await waitFor(() => screen.getByText('Must be peer-reviewed'));
@@ -510,9 +497,7 @@ describe('CriteriaForm', () => {
     });
 
     it('"No criteria added yet" NOT shown when exclusion items exist', async () => {
-      mockApi.get
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce(MOCK_EXCLUSION);
+      mockApi.get.mockResolvedValueOnce([]).mockResolvedValueOnce(MOCK_EXCLUSION);
 
       renderWithQuery(<CriteriaForm studyId={1} />);
       await waitFor(() => screen.getByText('No grey literature'));
@@ -560,17 +545,15 @@ describe('CriteriaForm', () => {
         { id: 2, study_id: 1, description: 'First', order_index: 0 },
         { id: 3, study_id: 1, description: 'Second', order_index: 1 },
       ];
-      mockApi.get
-        .mockResolvedValueOnce(unordered)
-        .mockResolvedValueOnce([]);
+      mockApi.get.mockResolvedValueOnce(unordered).mockResolvedValueOnce([]);
 
       const { container } = renderWithQuery(<CriteriaForm studyId={1} />);
       await waitFor(() => screen.getByText('Third'));
 
       const items = container.querySelectorAll('li span');
       const texts = Array.from(items)
-        .map(el => el.textContent)
-        .filter(t => ['First', 'Second', 'Third'].includes(t as string));
+        .map((el) => el.textContent)
+        .filter((t) => ['First', 'Second', 'Third'].includes(t as string));
       expect(texts[0]).toBe('First');
       expect(texts[1]).toBe('Second');
       expect(texts[2]).toBe('Third');
@@ -582,17 +565,15 @@ describe('CriteriaForm', () => {
         { id: 11, study_id: 1, description: 'ExcFirst', order_index: 0 },
         { id: 12, study_id: 1, description: 'ExcSecond', order_index: 1 },
       ];
-      mockApi.get
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce(unorderedExclusion);
+      mockApi.get.mockResolvedValueOnce([]).mockResolvedValueOnce(unorderedExclusion);
 
       const { container } = renderWithQuery(<CriteriaForm studyId={1} />);
       await waitFor(() => screen.getByText('ExcThird'));
 
       const items = container.querySelectorAll('li span');
       const texts = Array.from(items)
-        .map(el => el.textContent)
-        .filter(t => ['ExcFirst', 'ExcSecond', 'ExcThird'].includes(t as string));
+        .map((el) => el.textContent)
+        .filter((t) => ['ExcFirst', 'ExcSecond', 'ExcThird'].includes(t as string));
       expect(texts[0]).toBe('ExcFirst');
       expect(texts[1]).toBe('ExcSecond');
       expect(texts[2]).toBe('ExcThird');
@@ -606,46 +587,46 @@ describe('CriteriaForm', () => {
     ];
 
     it('Move Up button has not-allowed cursor for first item (disabled)', async () => {
-      mockApi.get
-        .mockResolvedValueOnce(TWO_ITEMS)
-        .mockResolvedValueOnce([]);
+      mockApi.get.mockResolvedValueOnce(TWO_ITEMS).mockResolvedValueOnce([]);
       const { container } = renderWithQuery(<CriteriaForm studyId={1} />);
       await waitFor(() => screen.getByText('First'));
 
-      const upButtons = container.querySelectorAll('button[title="Move up"]') as NodeListOf<HTMLButtonElement>;
+      const upButtons = container.querySelectorAll(
+        'button[title="Move up"]',
+      ) as NodeListOf<HTMLButtonElement>;
       expect(upButtons[0].style.cursor).toBe('not-allowed');
     });
 
     it('Move Up button has pointer cursor for second item (enabled)', async () => {
-      mockApi.get
-        .mockResolvedValueOnce(TWO_ITEMS)
-        .mockResolvedValueOnce([]);
+      mockApi.get.mockResolvedValueOnce(TWO_ITEMS).mockResolvedValueOnce([]);
       const { container } = renderWithQuery(<CriteriaForm studyId={1} />);
       await waitFor(() => screen.getByText('First'));
 
-      const upButtons = container.querySelectorAll('button[title="Move up"]') as NodeListOf<HTMLButtonElement>;
+      const upButtons = container.querySelectorAll(
+        'button[title="Move up"]',
+      ) as NodeListOf<HTMLButtonElement>;
       expect(upButtons[1].style.cursor).toBe('pointer');
     });
 
     it('Move Down button has pointer cursor for first item (enabled)', async () => {
-      mockApi.get
-        .mockResolvedValueOnce(TWO_ITEMS)
-        .mockResolvedValueOnce([]);
+      mockApi.get.mockResolvedValueOnce(TWO_ITEMS).mockResolvedValueOnce([]);
       const { container } = renderWithQuery(<CriteriaForm studyId={1} />);
       await waitFor(() => screen.getByText('First'));
 
-      const downButtons = container.querySelectorAll('button[title="Move down"]') as NodeListOf<HTMLButtonElement>;
+      const downButtons = container.querySelectorAll(
+        'button[title="Move down"]',
+      ) as NodeListOf<HTMLButtonElement>;
       expect(downButtons[0].style.cursor).toBe('pointer');
     });
 
     it('Move Down button has not-allowed cursor for last item (disabled)', async () => {
-      mockApi.get
-        .mockResolvedValueOnce(TWO_ITEMS)
-        .mockResolvedValueOnce([]);
+      mockApi.get.mockResolvedValueOnce(TWO_ITEMS).mockResolvedValueOnce([]);
       const { container } = renderWithQuery(<CriteriaForm studyId={1} />);
       await waitFor(() => screen.getByText('Second'));
 
-      const downButtons = container.querySelectorAll('button[title="Move down"]') as NodeListOf<HTMLButtonElement>;
+      const downButtons = container.querySelectorAll(
+        'button[title="Move down"]',
+      ) as NodeListOf<HTMLButtonElement>;
       expect(downButtons[downButtons.length - 1].style.cursor).toBe('not-allowed');
     });
 
@@ -655,7 +636,7 @@ describe('CriteriaForm', () => {
       await waitFor(() => screen.getAllByText(/no criteria added yet/i));
 
       const addButtons = container.querySelectorAll('button') as NodeListOf<HTMLButtonElement>;
-      const addBtn = Array.from(addButtons).find(b => b.textContent === 'Add');
+      const addBtn = Array.from(addButtons).find((b) => b.textContent === 'Add');
       expect(addBtn).toBeTruthy();
       expect(addBtn!.style.cursor).toBe('not-allowed');
     });
@@ -678,7 +659,7 @@ describe('CriteriaForm', () => {
       await waitFor(() => screen.getAllByText(/no criteria added yet/i));
 
       const addButtons = container.querySelectorAll('button') as NodeListOf<HTMLButtonElement>;
-      const addBtn = Array.from(addButtons).find(b => b.textContent === 'Add');
+      const addBtn = Array.from(addButtons).find((b) => b.textContent === 'Add');
       expect(addBtn!.style.opacity).toBe('0.6');
     });
 
@@ -697,9 +678,7 @@ describe('CriteriaForm', () => {
 
   describe('Exclusion deletion', () => {
     it('calls api.delete with exclusion URL when remove is clicked on exclusion item', async () => {
-      mockApi.get
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce(MOCK_EXCLUSION);
+      mockApi.get.mockResolvedValueOnce([]).mockResolvedValueOnce(MOCK_EXCLUSION);
       mockApi.delete.mockResolvedValueOnce(undefined);
 
       renderWithQuery(<CriteriaForm studyId={1} />);
@@ -709,9 +688,7 @@ describe('CriteriaForm', () => {
       fireEvent.click(removeButton);
 
       await waitFor(() => {
-        expect(mockApi.delete).toHaveBeenCalledWith(
-          '/api/v1/studies/1/criteria/exclusion/2',
-        );
+        expect(mockApi.delete).toHaveBeenCalledWith('/api/v1/studies/1/criteria/exclusion/2');
       });
     });
   });

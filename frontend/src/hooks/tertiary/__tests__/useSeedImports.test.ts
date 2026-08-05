@@ -7,7 +7,7 @@
  */
 
 import { describe, it, expect, vi } from 'vitest';
-import { renderHook, waitFor } from '@testing-library/react';
+import { renderHook, waitFor, act } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
 import {
@@ -21,7 +21,12 @@ import {
 vi.mock('../../../services/tertiary/seedImportApi', () => ({
   listSeedImports: vi.fn().mockRejectedValue(new Error('not found')),
   listGroupStudies: vi.fn().mockRejectedValue(new Error('not found')),
-  createSeedImport: vi.fn().mockResolvedValue({ id: 1, records_added: 3, records_skipped: 0, imported_at: '2026-01-01T00:00:00Z' }),
+  createSeedImport: vi.fn().mockResolvedValue({
+    id: 1,
+    records_added: 3,
+    records_skipped: 0,
+    imported_at: '2026-01-01T00:00:00Z',
+  }),
 }));
 
 function makeWrapper() {
@@ -69,8 +74,11 @@ describe('useGroupStudies', () => {
 });
 
 describe('useCreateSeedImport', () => {
-  it('returns a mutation with mutate function', () => {
+  it('executes mutation', async () => {
     const { result } = renderHook(() => useCreateSeedImport(10), { wrapper: makeWrapper() });
-    expect(typeof result.current.mutate).toBe('function');
+    await act(async () => {
+      result.current.mutate(99);
+    });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
   });
 });

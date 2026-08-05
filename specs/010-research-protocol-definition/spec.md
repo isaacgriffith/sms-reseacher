@@ -15,7 +15,7 @@
 - Q: Does the platform maintain a version history of custom protocols? → A: No in-platform version history; the version field is an internal optimistic-lock counter only. Export/import is the sole mechanism for rollback and external version control.
 - Q: How do researchers author conditional edge expressions? → A: Point-and-click condition builder only; researcher selects an output name, a comparison operator, and a value from constrained UI controls. No free-form text expression entry.
 
-## User Scenarios & Testing *(mandatory)*
+## User Scenarios & Testing _(mandatory)_
 
 ### User Story 1 - View Default Protocol Graph (Priority: P1)
 
@@ -126,7 +126,7 @@ A researcher who has customized a study's protocol can reset it to the standard 
 - What if a default protocol template is updated by the platform? Existing studies using that template as their protocol should be unaffected; only newly created copies use the updated template.
 - What if two sessions attempt to save a custom protocol simultaneously? The second save is rejected with a conflict error; the user must reload the latest version and re-apply their changes (optimistic locking).
 
-## Requirements *(mandatory)*
+## Requirements _(mandatory)_
 
 ### Functional Requirements
 
@@ -163,7 +163,7 @@ A researcher who has customized a study's protocol can reset it to the standard 
 - **Quality Gate**: A condition attached to a task node that must be satisfied before downstream tasks activate. Supported types: metric threshold (e.g., "Kappa ≥ 0.6"), completion check (e.g., "all papers reviewed"), and human sign-off.
 - **Protocol Execution State**: The runtime record of a study's progress through its assigned protocol, tracking each task's status (pending, active, complete, skipped, gate-failed).
 
-## Success Criteria *(mandatory)*
+## Success Criteria _(mandatory)_
 
 ### Measurable Outcomes
 

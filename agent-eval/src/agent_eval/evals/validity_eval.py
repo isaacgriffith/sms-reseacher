@@ -42,8 +42,14 @@ VALIDITY_TEST_INPUTS: list[dict[str, Any]] = [
             {"type": "outcome", "content": "Code quality, defect rates, developer productivity"},
         ],
         "search_strategies": [
-            {"string_text": "(TDD OR \"test-driven\") AND (software OR engineering OR development)", "version": 1},
-            {"string_text": "(TDD OR \"test-driven development\") AND (software OR engineering) AND (defect OR quality OR productivity)", "version": 2},
+            {
+                "string_text": '(TDD OR "test-driven") AND (software OR engineering OR development)',
+                "version": 1,
+            },
+            {
+                "string_text": '(TDD OR "test-driven development") AND (software OR engineering) AND (defect OR quality OR productivity)',
+                "version": 2,
+            },
         ],
         "databases": "ACM DL, IEEE Xplore, Scopus, Web of Science",
         "test_retest_done": True,
@@ -80,7 +86,10 @@ VALIDITY_TEST_INPUTS: list[dict[str, Any]] = [
             {"type": "outcome", "content": "Deployment frequency, mean time to recovery"},
         ],
         "search_strategies": [
-            {"string_text": "(DevOps OR \"continuous delivery\" OR \"continuous integration\") AND (practice OR adoption OR impact)", "version": 1},
+            {
+                "string_text": '(DevOps OR "continuous delivery" OR "continuous integration") AND (practice OR adoption OR impact)',
+                "version": 1,
+            },
         ],
         "databases": "IEEE Xplore, ACM DL",
         "test_retest_done": False,
@@ -106,7 +115,10 @@ VALIDITY_TEST_INPUTS: list[dict[str, Any]] = [
         "pico_components": [
             {"type": "population", "content": "ML systems used in recruitment and hiring"},
             {"type": "intervention", "content": "Algorithmic fairness constraints and audits"},
-            {"type": "outcome", "content": "Reduction in demographic disparities in hiring outcomes"},
+            {
+                "type": "outcome",
+                "content": "Reduction in demographic disparities in hiring outcomes",
+            },
         ],
         "search_strategies": [],
         "databases": None,
@@ -182,9 +194,7 @@ def _assert_min_dimension_length(output: str) -> None:
     """
     data: dict[str, Any] = json.loads(output)
     too_short = [
-        dim
-        for dim in _VALIDITY_DIMS
-        if len((data.get(dim) or "").strip()) < _MIN_DIM_LENGTH
+        dim for dim in _VALIDITY_DIMS if len((data.get(dim) or "").strip()) < _MIN_DIM_LENGTH
     ]
     assert not too_short, (
         f"Validity dimensions below minimum length ({_MIN_DIM_LENGTH} chars): {too_short}"
@@ -232,25 +242,29 @@ def build_test_cases(run_agent: bool = False) -> list[LLMTestCase]:
             actual_output = asyncio.run(_invoke_validity_agent(inp))
         else:
             # Structurally valid stub — skips LLM call, validates structure only
-            actual_output = json.dumps({
-                dim: (
-                    f"[Stub] {dim.replace('_', ' ').title()} validity discussion "
-                    f"for study '{inp['study_name']}'. "
-                    "This text covers methodological decisions and potential threats to validity "
-                    "for the " + dim + " dimension."
-                )
-                for dim in _VALIDITY_DIMS
-            })
+            actual_output = json.dumps(
+                {
+                    dim: (
+                        f"[Stub] {dim.replace('_', ' ').title()} validity discussion "
+                        f"for study '{inp['study_name']}'. "
+                        "This text covers methodological decisions and potential threats to validity "
+                        "for the " + dim + " dimension."
+                    )
+                    for dim in _VALIDITY_DIMS
+                }
+            )
 
-        input_text = json.dumps({
-            "study_name": inp["study_name"],
-            "study_type": inp["study_type"],
-            "current_phase": inp["current_phase"],
-            "pico_defined": bool(inp.get("pico_components")),
-            "search_strategies_count": len(inp.get("search_strategies") or []),
-            "reviewers_count": len(inp.get("reviewers") or []),
-            "extraction_done": bool(inp.get("extraction_summary")),
-        })
+        input_text = json.dumps(
+            {
+                "study_name": inp["study_name"],
+                "study_type": inp["study_type"],
+                "current_phase": inp["current_phase"],
+                "pico_defined": bool(inp.get("pico_components")),
+                "search_strategies_count": len(inp.get("search_strategies") or []),
+                "reviewers_count": len(inp.get("reviewers") or []),
+                "extraction_done": bool(inp.get("extraction_summary")),
+            }
+        )
 
         cases.append(
             LLMTestCase(

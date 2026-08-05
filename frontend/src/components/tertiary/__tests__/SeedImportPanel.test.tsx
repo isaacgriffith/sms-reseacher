@@ -36,7 +36,11 @@ vi.mock('../../../hooks/tertiary/useSeedImports', () => ({
   })),
 }));
 
-import { useSeedImports, useGroupStudies, useCreateSeedImport } from '../../../hooks/tertiary/useSeedImports';
+import {
+  useSeedImports,
+  useGroupStudies,
+  useCreateSeedImport,
+} from '../../../hooks/tertiary/useSeedImports';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -290,14 +294,19 @@ describe('SeedImportPanel', () => {
       // Click Import button.
       const importBtn = screen.getByRole('button', { name: /^Import$/i });
       fireEvent.click(importBtn);
-      expect(mutate).toHaveBeenCalledWith(5, expect.objectContaining({ onSuccess: expect.any(Function) }));
+      expect(mutate).toHaveBeenCalledWith(
+        5,
+        expect.objectContaining({ onSuccess: expect.any(Function) }),
+      );
     });
 
     it('invokes handleImportSuccess callback (closes dialog, resets mutation) on success', () => {
       const reset = vi.fn();
-      const mutate = vi.fn().mockImplementation((_id: number, options: { onSuccess?: () => void }) => {
-        options?.onSuccess?.();
-      });
+      const mutate = vi
+        .fn()
+        .mockImplementation((_id: number, options: { onSuccess?: () => void }) => {
+          options?.onSuccess?.();
+        });
       vi.mocked(useCreateSeedImport).mockReturnValue({
         mutate,
         isPending: false,

@@ -44,9 +44,7 @@ describe('listExtractions', () => {
   it('calls GET /extractions and parses response', async () => {
     mockApi.get.mockResolvedValue([EXTRACTION_FIXTURE]);
     const result = await listExtractions(10);
-    expect(mockApi.get).toHaveBeenCalledWith(
-      '/api/v1/tertiary/studies/10/extractions',
-    );
+    expect(mockApi.get).toHaveBeenCalledWith('/api/v1/tertiary/studies/10/extractions');
     expect(result).toHaveLength(1);
     expect(result[0].extraction_status).toBe('pending');
   });
@@ -66,10 +64,9 @@ describe('updateExtraction', () => {
   it('calls PUT with update data and parses response', async () => {
     mockApi.put.mockResolvedValue({ ...EXTRACTION_FIXTURE, extraction_status: 'human_reviewed' });
     const result = await updateExtraction(10, 1, { extraction_status: 'human_reviewed' });
-    expect(mockApi.put).toHaveBeenCalledWith(
-      '/api/v1/tertiary/studies/10/extractions/1',
-      { extraction_status: 'human_reviewed' },
-    );
+    expect(mockApi.put).toHaveBeenCalledWith('/api/v1/tertiary/studies/10/extractions/1', {
+      extraction_status: 'human_reviewed',
+    });
     expect(result.extraction_status).toBe('human_reviewed');
   });
 });

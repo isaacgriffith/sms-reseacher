@@ -21,7 +21,9 @@ Return a JSON object with exactly this structure:
     {
       "name": "string — concise concept label",
       "definition": "string — one or two sentence definition grounded in the papers",
-      "attributes": ["string — notable attribute or sub-dimension of this concept"]
+      "attributes": [
+        "string — notable attribute or sub-dimension of this concept"
+      ]
     }
   ],
   "relationships": [

@@ -137,9 +137,7 @@ describe('PaperCard', () => {
     it('renders decision history when decisions are present', async () => {
       mockApi.get.mockResolvedValue([MOCK_DECISIONS[0]]);
       renderWithQuery(<PaperCard {...BASE_PROPS} />);
-      await waitFor(() =>
-        expect(screen.getByText(/audit trail/i)).toBeTruthy()
-      );
+      await waitFor(() => expect(screen.getByText(/audit trail/i)).toBeTruthy());
     });
 
     it('shows decision entries with reviewer IDs', async () => {
@@ -155,9 +153,7 @@ describe('PaperCard', () => {
       const overrideDecision = { ...MOCK_DECISIONS[0], is_override: true };
       mockApi.get.mockResolvedValue([overrideDecision]);
       renderWithQuery(<PaperCard {...BASE_PROPS} />);
-      await waitFor(() =>
-        expect(screen.getByText(/override/i)).toBeTruthy()
-      );
+      await waitFor(() => expect(screen.getByText(/override/i)).toBeTruthy());
     });
   });
 
@@ -165,9 +161,7 @@ describe('PaperCard', () => {
     it('shows "Conflict Resolution Required" when conflictFlag=true and ≥2 decisions', async () => {
       mockApi.get.mockResolvedValue(MOCK_DECISIONS);
       renderWithQuery(<PaperCard {...BASE_PROPS} conflictFlag={true} />);
-      await waitFor(() =>
-        expect(screen.getByText(/conflict resolution required/i)).toBeTruthy()
-      );
+      await waitFor(() => expect(screen.getByText(/conflict resolution required/i)).toBeTruthy());
     });
 
     it('does not show resolution panel when conflictFlag=false', async () => {
@@ -181,17 +175,13 @@ describe('PaperCard', () => {
     it('shows "Resolve as accepted" button in conflict panel', async () => {
       mockApi.get.mockResolvedValue(MOCK_DECISIONS);
       renderWithQuery(<PaperCard {...BASE_PROPS} conflictFlag={true} />);
-      await waitFor(() =>
-        expect(screen.getByText(/resolve as accepted/i)).toBeTruthy()
-      );
+      await waitFor(() => expect(screen.getByText(/resolve as accepted/i)).toBeTruthy());
     });
 
     it('shows "Resolve as rejected" button in conflict panel', async () => {
       mockApi.get.mockResolvedValue(MOCK_DECISIONS);
       renderWithQuery(<PaperCard {...BASE_PROPS} conflictFlag={true} />);
-      await waitFor(() =>
-        expect(screen.getByText(/resolve as rejected/i)).toBeTruthy()
-      );
+      await waitFor(() => expect(screen.getByText(/resolve as rejected/i)).toBeTruthy());
     });
 
     it('calls api.post with correct body when resolve button clicked', async () => {
@@ -199,16 +189,14 @@ describe('PaperCard', () => {
       mockApi.post.mockResolvedValue({ id: 3, decision: 'accepted', is_override: true });
       renderWithQuery(<PaperCard {...BASE_PROPS} conflictFlag={true} />);
 
-      await waitFor(() =>
-        expect(screen.getByText(/resolve as accepted/i)).toBeTruthy()
-      );
+      await waitFor(() => expect(screen.getByText(/resolve as accepted/i)).toBeTruthy());
 
       fireEvent.click(screen.getByText(/resolve as accepted/i));
 
       await waitFor(() => {
         expect(mockApi.post).toHaveBeenCalledWith(
           expect.stringContaining('/resolve-conflict'),
-          expect.objectContaining({ decision: 'accepted' })
+          expect.objectContaining({ decision: 'accepted' }),
         );
       });
     });

@@ -3,8 +3,9 @@
 **Branch**: `001-repo-setup` | **Input**: `specs/001-repo-setup/`  
 **Prerequisites**: plan.md ✓ | spec.md ✓ | data-model.md ✓ | contracts/ ✓ | research.md ✓ | quickstart.md ✓
 
-**Format**: `[ID] [P?] [Story?] Description — file path`  
-- **[P]**: Parallelizable (independent files, no incomplete dependencies)  
+**Format**: `[ID] [P?] [Story?] Description — file path`
+
+- **[P]**: Parallelizable (independent files, no incomplete dependencies)
 - **[USn]**: Maps to User Story n from spec.md
 
 **Total tasks**: 81 | **Phases**: 10
@@ -85,7 +86,7 @@
 
 **Independent Test**: `python -c "from db.models import Study, Paper, StudyPaper"` exits 0 from within the workspace.
 
-*Note*: `db/` implementation tasks are in Phase 2 (Foundational). This phase validates the import contract from `backend`'s perspective.
+_Note_: `db/` implementation tasks are in Phase 2 (Foundational). This phase validates the import contract from `backend`'s perspective.
 
 - [x] T034 [US4] Add integration test in `backend/` verifying `from db.models import Study, Paper, StudyPaper` and `from db.base import engine_factory` complete without `ImportError` — `backend/tests/integration/test_db_import.py`
 - [x] T035 [P] [US4] Update `db/README.md` describing schema entities, Alembic usage (`uv run alembic upgrade head`), and how `backend` imports models — `db/README.md`
@@ -192,7 +193,7 @@
     - `frontend-mutation`: Stryker; fail if score < 85%
     - `docker-build-scan`: build backend, frontend, researcher-mcp images; `hadolint` each Dockerfile; `trivy image` each; fail on CRITICAL/HIGH not in `.trivyignore`
     - `ghcr-push` (only on `main` merge): login to GHCR; push `sms-backend`, `sms-frontend`, `sms-researcher-mcp` tagged `{sha}` + `latest`
-  — `.github/workflows/ci.yml`
+      — `.github/workflows/ci.yml`
 
 ---
 
@@ -239,6 +240,7 @@ Phase 3 + Phase 5 complete                                                   │
 ```
 
 **Parallel opportunities per phase**:
+
 - Phase 3: T012–T016 (backend core files) ‖ T019–T027 (agents core + prompts) ‖ T030–T033 (metamorphic tests)
 - Phase 5: T037–T040 (tsconfig, vite, eslint, prettier) all in parallel
 - Phase 7: T048–T053 (agent-eval commands + judge) in parallel after T047
@@ -250,6 +252,7 @@ Phase 3 + Phase 5 complete                                                   │
 ## Implementation Strategy
 
 **MVP** (deliver first — unblocks all other work):
+
 1. Phase 1 → Phase 2 → Phase 3 (US1)
 2. Validates: `uv sync && uv run --package sms-backend pytest backend/tests/` green
 

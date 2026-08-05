@@ -42,7 +42,10 @@ import {
   type SynthesisResult,
 } from '../services/slr/synthesisApi';
 import type { TertiaryProtocolUpdate } from '../services/tertiary/protocolApi';
-import type { TertiaryExtraction, TertiaryExtractionUpdate } from '../services/tertiary/extractionApi';
+import type {
+  TertiaryExtraction,
+  TertiaryExtractionUpdate,
+} from '../services/tertiary/extractionApi';
 
 // ---------------------------------------------------------------------------
 // Phase metadata
@@ -299,7 +302,8 @@ function Phase4Panel({ studyId }: Phase4PanelProps) {
 
       {aiAssistMutation.isSuccess && (
         <Alert severity="success" sx={{ mb: 2 }}>
-          AI extraction job queued for {aiAssistMutation.data.paper_count} paper(s). Refresh to see results.
+          AI extraction job queued for {aiAssistMutation.data.paper_count} paper(s). Refresh to see
+          results.
         </Alert>
       )}
 
@@ -368,11 +372,7 @@ function ExtractionList({
       </Box>
 
       {selected && (
-        <TertiaryExtractionForm
-          extraction={selected}
-          isSaving={isSaving}
-          onSave={onSave}
-        />
+        <TertiaryExtractionForm extraction={selected} isSaving={isSaving} onSave={onSave} />
       )}
     </Box>
   );
@@ -417,9 +417,7 @@ function Phase5Panel({ studyId }: Phase5PanelProps) {
   const latestResult = pollResult?.results?.find((r: SynthesisResult) => r.id === latestId);
   const isCompleted = latestResult?.status === 'completed';
   const isFailed = latestResult?.status === 'failed';
-  const isRunning =
-    synthesisMutation.isPending ||
-    (latestId !== null && !isCompleted && !isFailed);
+  const isRunning = synthesisMutation.isPending || (latestId !== null && !isCompleted && !isFailed);
 
   if (isCompleted) {
     return (
@@ -537,5 +535,3 @@ function PhaseTabs({ activePhase, unlockedPhases, onSelect }: PhaseTabsProps) {
     </Box>
   );
 }
-
-

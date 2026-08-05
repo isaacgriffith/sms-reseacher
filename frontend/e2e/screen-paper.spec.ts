@@ -44,9 +44,7 @@ test.describe('Screen paper (Phase 3)', () => {
   });
 
   test('paper queue section renders in screening phase', async ({ page }) => {
-    const queue = page
-      .getByText(/paper queue|queue|papers to screen/i)
-      .first();
+    const queue = page.getByText(/paper queue|queue|papers to screen/i).first();
     await expect(queue).toBeVisible({ timeout: 8_000 });
   });
 
@@ -58,7 +56,7 @@ test.describe('Screen paper (Phase 3)', () => {
     } else {
       // No papers in queue — verify empty state message
       await expect(
-        page.getByText(/no papers|queue is empty|nothing to screen/i).first()
+        page.getByText(/no papers|queue is empty|nothing to screen/i).first(),
       ).toBeVisible({ timeout: 8_000 });
     }
   });
@@ -78,9 +76,9 @@ test.describe('Screen paper (Phase 3)', () => {
     const runBtn = page.getByRole('button', { name: /run screening|start screen/i }).first();
     if (await runBtn.isVisible({ timeout: 3_000 }).catch(() => false)) {
       await runBtn.click();
-      await expect(
-        page.getByText(/running|queued|progress/i).first()
-      ).toBeVisible({ timeout: 10_000 });
+      await expect(page.getByText(/running|queued|progress/i).first()).toBeVisible({
+        timeout: 10_000,
+      });
     } else {
       // The job progress panel may already be showing
       const progressPanel = page.getByText(/progress|running/i).first();

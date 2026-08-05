@@ -17,7 +17,11 @@ export default function GroupsPage() {
   const [newGroupName, setNewGroupName] = useState('');
   const [createError, setCreateError] = useState<string | null>(null);
 
-  const { data: groups, isLoading, error } = useQuery<GroupSummary[]>({
+  const {
+    data: groups,
+    isLoading,
+    error,
+  } = useQuery<GroupSummary[]>({
     queryKey: ['groups'],
     queryFn: () => api.get<GroupSummary[]>('/api/v1/groups'),
   });
@@ -48,8 +52,17 @@ export default function GroupsPage() {
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
-        <Typography variant="h5" sx={{ margin: 0 }}>Research Groups</Typography>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: '1.5rem',
+        }}
+      >
+        <Typography variant="h5" sx={{ margin: 0 }}>
+          Research Groups
+        </Typography>
         <Button
           variant="contained"
           onClick={() => setShowCreate((v) => !v)}
@@ -92,12 +105,18 @@ export default function GroupsPage() {
           >
             {createMutation.isPending ? 'Creating…' : 'Create'}
           </Button>
-          {createError && <Typography component="span" sx={{ color: 'red', fontSize: '0.875rem' }}>{createError}</Typography>}
+          {createError && (
+            <Typography component="span" sx={{ color: 'red', fontSize: '0.875rem' }}>
+              {createError}
+            </Typography>
+          )}
         </Box>
       )}
 
       {groups && groups.length === 0 ? (
-        <Typography sx={{ color: '#475569' }}>You are not a member of any research groups yet.</Typography>
+        <Typography sx={{ color: '#475569' }}>
+          You are not a member of any research groups yet.
+        </Typography>
       ) : (
         <Box
           sx={{

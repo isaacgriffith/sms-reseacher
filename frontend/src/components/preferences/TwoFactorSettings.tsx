@@ -57,8 +57,16 @@ function ActionForm({
 
   return (
     <Box component="form" onSubmit={(e) => void handleSubmit(e)} sx={{ mt: 2 }}>
-      {error && <Alert severity="error" sx={{ mb: 1 }}>{error}</Alert>}
-      {success && !error && <Alert severity="success" sx={{ mb: 1 }}>{successMessage}</Alert>}
+      {error && (
+        <Alert severity="error" sx={{ mb: 1 }}>
+          {error}
+        </Alert>
+      )}
+      {success && !error && (
+        <Alert severity="success" sx={{ mb: 1 }}>
+          {successMessage}
+        </Alert>
+      )}
       <TextField
         label="Current password"
         type="password"
@@ -124,7 +132,9 @@ export default function TwoFactorSettings({ totpEnabled, onStatusChange }: TwoFa
 
       {totpEnabled && (
         <>
-          <Typography variant="subtitle2" sx={{ mt: 1 }}>Disable 2FA</Typography>
+          <Typography variant="subtitle2" sx={{ mt: 1 }}>
+            Disable 2FA
+          </Typography>
           <ActionForm
             actionLabel="Disable 2FA"
             pendingLabel="Disabling…"
@@ -134,7 +144,9 @@ export default function TwoFactorSettings({ totpEnabled, onStatusChange }: TwoFa
             error={disableMutation.isError ? (disableMutation.error?.message ?? 'Error') : null}
           />
 
-          <Typography variant="subtitle2" sx={{ mt: 3 }}>Regenerate backup codes</Typography>
+          <Typography variant="subtitle2" sx={{ mt: 3 }}>
+            Regenerate backup codes
+          </Typography>
           <ActionForm
             actionLabel="Regenerate codes"
             pendingLabel="Regenerating…"
@@ -148,7 +160,9 @@ export default function TwoFactorSettings({ totpEnabled, onStatusChange }: TwoFa
                   component="ul"
                   sx={{ listStyle: 'none', p: 0, fontFamily: 'monospace', columns: 2, mb: 1 }}
                 >
-                  {newCodes.map((c) => <li key={c}>{c}</li>)}
+                  {newCodes.map((c) => (
+                    <li key={c}>{c}</li>
+                  ))}
                 </Box>
               )
             }

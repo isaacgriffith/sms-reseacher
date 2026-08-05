@@ -18,16 +18,16 @@ This feature adds three new persistent entities (`BackupCode`, `SecurityAuditEve
 
 ### New Columns
 
-| Column | Type | Nullable | Default | Description |
-|--------|------|----------|---------|-------------|
-| `theme_preference` | `Enum(ThemePreference)` | No | `'system'` | User display mode: light, dark, or system |
-| `totp_enabled` | `Boolean` | No | `False` | Whether TOTP 2FA is active |
-| `totp_secret_encrypted` | `Text` | Yes | `NULL` | Fernet-encrypted TOTP secret; null when 2FA disabled |
-| `totp_failed_attempts` | `Integer` | No | `0` | Consecutive failed TOTP attempts since last success |
-| `totp_locked_until` | `DateTime(tz=True)` | Yes | `NULL` | Lockout expiry; null means not locked |
-| `token_version` | `Integer` | No | `0` | Incremented on password change to invalidate prior JWTs |
-| `password_changed_at` | `DateTime(tz=True)` | No | `func.now()` | Timestamp of last password change (informational) |
-| `updated_at` | `DateTime(tz=True)` | No | `func.now()` | Auto-updated on every row change (constitution requirement) |
+| Column                  | Type                    | Nullable | Default      | Description                                                 |
+| ----------------------- | ----------------------- | -------- | ------------ | ----------------------------------------------------------- |
+| `theme_preference`      | `Enum(ThemePreference)` | No       | `'system'`   | User display mode: light, dark, or system                   |
+| `totp_enabled`          | `Boolean`               | No       | `False`      | Whether TOTP 2FA is active                                  |
+| `totp_secret_encrypted` | `Text`                  | Yes      | `NULL`       | Fernet-encrypted TOTP secret; null when 2FA disabled        |
+| `totp_failed_attempts`  | `Integer`               | No       | `0`          | Consecutive failed TOTP attempts since last success         |
+| `totp_locked_until`     | `DateTime(tz=True)`     | Yes      | `NULL`       | Lockout expiry; null means not locked                       |
+| `token_version`         | `Integer`               | No       | `0`          | Incremented on password change to invalidate prior JWTs     |
+| `password_changed_at`   | `DateTime(tz=True)`     | No       | `func.now()` | Timestamp of last password change (informational)           |
+| `updated_at`            | `DateTime(tz=True)`     | No       | `func.now()` | Auto-updated on every row change (constitution requirement) |
 
 ### New Enum
 
@@ -86,14 +86,14 @@ All JWTs with ver=N are now rejected by get_current_user
 
 ### Columns
 
-| Column | Type | Nullable | Default | Description |
-|--------|------|----------|---------|-------------|
-| `id` | `Integer` PK | No | autoincrement | Primary key |
-| `user_id` | `Integer` FK→`user.id` | No | — | Owner |
-| `hashed_code` | `String(255)` | No | — | bcrypt hash of the one-time backup code |
-| `used_at` | `DateTime(tz=True)` | Yes | `NULL` | Set when code is redeemed; null = unused |
-| `created_at` | `DateTime(tz=True)` | No | `func.now()` | Batch creation timestamp |
-| `updated_at` | `DateTime(tz=True)` | No | `func.now()` | Updated when `used_at` is set |
+| Column        | Type                   | Nullable | Default       | Description                              |
+| ------------- | ---------------------- | -------- | ------------- | ---------------------------------------- |
+| `id`          | `Integer` PK           | No       | autoincrement | Primary key                              |
+| `user_id`     | `Integer` FK→`user.id` | No       | —             | Owner                                    |
+| `hashed_code` | `String(255)`          | No       | —             | bcrypt hash of the one-time backup code  |
+| `used_at`     | `DateTime(tz=True)`    | Yes      | `NULL`        | Set when code is redeemed; null = unused |
+| `created_at`  | `DateTime(tz=True)`    | No       | `func.now()`  | Batch creation timestamp                 |
+| `updated_at`  | `DateTime(tz=True)`    | No       | `func.now()`  | Updated when `used_at` is set            |
 
 ### Relationships
 
@@ -122,14 +122,14 @@ user: Mapped["User"] = relationship("User", back_populates="backup_codes")
 
 ### Columns
 
-| Column | Type | Nullable | Default | Description |
-|--------|------|----------|---------|-------------|
-| `id` | `Integer` PK | No | autoincrement | Primary key |
-| `user_id` | `Integer` FK→`user.id` | No | — | Subject user |
-| `event_type` | `Enum(SecurityEventType)` | No | — | Categorises the event |
-| `ip_address` | `String(45)` | Yes | `NULL` | Requestor IP; IPv4 or IPv6 |
-| `created_at` | `DateTime(tz=True)` | No | `func.now()` | Immutable event timestamp |
-| `updated_at` | `DateTime(tz=True)` | No | `func.now()` | Required by constitution; logically stable |
+| Column       | Type                      | Nullable | Default       | Description                                |
+| ------------ | ------------------------- | -------- | ------------- | ------------------------------------------ |
+| `id`         | `Integer` PK              | No       | autoincrement | Primary key                                |
+| `user_id`    | `Integer` FK→`user.id`    | No       | —             | Subject user                               |
+| `event_type` | `Enum(SecurityEventType)` | No       | —             | Categorises the event                      |
+| `ip_address` | `String(45)`              | Yes      | `NULL`        | Requestor IP; IPv4 or IPv6                 |
+| `created_at` | `DateTime(tz=True)`       | No       | `func.now()`  | Immutable event timestamp                  |
+| `updated_at` | `DateTime(tz=True)`       | No       | `func.now()`  | Required by constitution; logically stable |
 
 ### New Enum
 
@@ -160,11 +160,11 @@ user: Mapped["User"] = relationship("User", back_populates="security_audit_event
 
 ## Alembic Migrations Required
 
-| Migration | Description |
-|-----------|-------------|
+| Migration                              | Description                                                                                                                                   |
+| -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
 | `add_user_security_preference_columns` | Adds `theme_preference`, `totp_*`, `token_version`, `password_changed_at`, `updated_at` to `user` table; creates `theme_preference_enum` type |
-| `create_backup_code_table` | Creates `backup_code` table |
-| `create_security_audit_event_table` | Creates `security_audit_event` table; creates `security_event_type_enum` type |
+| `create_backup_code_table`             | Creates `backup_code` table                                                                                                                   |
+| `create_security_audit_event_table`    | Creates `security_audit_event` table; creates `security_event_type_enum` type                                                                 |
 
 Each migration must have a corresponding `downgrade()` that drops added columns/tables and their enum types in reverse order.
 
@@ -173,6 +173,7 @@ Each migration must have a corresponding `downgrade()` that drops added columns/
 ## Model Export Updates
 
 `db/src/db/models/__init__.py` must export:
+
 - `BackupCode`
 - `SecurityAuditEvent`
 - `ThemePreference` (enum)

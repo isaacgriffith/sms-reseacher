@@ -3,13 +3,15 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook, waitFor } from '@testing-library/react';
+import { renderHook, waitFor, act } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
 import { useAgents, useAgent, useAgentTaskTypes } from '../agentsApi';
 import { api } from '../api';
 
-vi.mock('../api', () => ({ api: { get: vi.fn(), post: vi.fn(), patch: vi.fn(), delete: vi.fn() } }));
+vi.mock('../api', () => ({
+  api: { get: vi.fn(), post: vi.fn(), patch: vi.fn(), delete: vi.fn() },
+}));
 
 const mockApi = vi.mocked(api);
 
@@ -78,10 +80,9 @@ describe('useAgent', () => {
 
   it('fetches agent when id is provided', async () => {
     mockApi.get.mockResolvedValue(AGENT_FULL);
-    const { result } = renderHook(
-      () => useAgent('00000000-0000-0000-0000-000000000001'),
-      { wrapper: makeWrapper() },
-    );
+    const { result } = renderHook(() => useAgent('00000000-0000-0000-0000-000000000001'), {
+      wrapper: makeWrapper(),
+    });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.data?.id).toBe('00000000-0000-0000-0000-000000000001');
   });
@@ -101,5 +102,102 @@ describe('useAgentTaskTypes', () => {
     const { result } = renderHook(() => useAgentTaskTypes(), { wrapper: makeWrapper() });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.data).toEqual(['screener', 'extractor']);
+  });
+});
+
+// Import mutation hooks
+import {
+  useCreateAgent,
+  useUpdateAgent,
+  useDeleteAgent,
+  useGenerateSystemMessage,
+  useUndoSystemMessage,
+  useGeneratePersonaSvg,
+} from '../agentsApi';
+
+describe('useCreateAgent', () => {
+  beforeEach(() => vi.clearAllMocks());
+  it('creates agent', async () => {
+    mockApi.post.mockResolvedValue(AGENT_FULL);
+    const { result } = renderHook(() => useCreateAgent(), { wrapper: makeWrapper() });
+    await act(async () => {
+      result.current.mutate({
+        task_type: 'screener',
+        role_name: 'Reviewer',
+        role_description: 'Reviews papers.',
+        persona_name: 'Alice',
+        persona_description: 'Diligent.',
+        model_id: '00000000-0000-0000-0000-000000000002',
+        provider_id: '00000000-0000-0000-0000-000000000003',
+        system_message_template: 'You are a reviewer.',
+      });
+    });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+  });
+});
+
+describe('useUpdateAgent', () => {
+  beforeEach(() => vi.clearAllMocks());
+  it('updates agent', async () => {
+    mockApi.patch.mockResolvedValue(AGENT_FULL);
+    const { result } = renderHook(() => useUpdateAgent(), { wrapper: makeWrapper() });
+    await act(async () => {
+      result.current.mutate({
+        id: '00000000-0000-0000-0000-000000000001',
+        data: { version_id: 1, role_name: 'Updated' },
+      });
+    });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+  });
+});
+
+describe('useDeleteAgent', () => {
+  beforeEach(() => vi.clearAllMocks());
+  it('deletes agent', async () => {
+    mockApi.delete.mockResolvedValue(undefined);
+    const { result } = renderHook(() => useDeleteAgent(), { wrapper: makeWrapper() });
+    await act(async () => {
+      result.current.mutate('00000000-0000-0000-0000-000000000001');
+    });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+  });
+});
+
+describe('useGenerateSystemMessage', () => {
+  beforeEach(() => vi.clearAllMocks());
+  it('generates system message', async () => {
+    mockApi.post.mockResolvedValue({
+      system_message_template: 'Generated.',
+      previous_message_preserved: true,
+    });
+    const { result } = renderHook(() => useGenerateSystemMessage(), { wrapper: makeWrapper() });
+    await act(async () => {
+      result.current.mutate('00000000-0000-0000-0000-000000000001');
+    });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+  });
+});
+
+describe('useUndoSystemMessage', () => {
+  beforeEach(() => vi.clearAllMocks());
+  it('undoes system message', async () => {
+    mockApi.post.mockResolvedValue(AGENT_FULL);
+    const { result } = renderHook(() => useUndoSystemMessage(), { wrapper: makeWrapper() });
+    await act(async () => {
+      result.current.mutate('00000000-0000-0000-0000-000000000001');
+    });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+  });
+});
+
+describe('useGeneratePersonaSvg', () => {
+  beforeEach(() => vi.clearAllMocks());
+  it('generates persona SVG', async () => {
+    mockApi.post.mockResolvedValue({ svg: '<svg/>' });
+    const { result } = renderHook(() => useGeneratePersonaSvg(), { wrapper: makeWrapper() });
+    await act(async () => {
+      result.current.mutate({ persona_name: 'Alice', persona_description: 'Smart.' });
+    });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
   });
 });

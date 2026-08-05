@@ -75,10 +75,7 @@ export async function computeKappa(
   studyId: number,
   body: ComputeKappaBody,
 ): Promise<InterRaterRecord> {
-  const raw = await api.post<unknown>(
-    `/api/v1/slr/studies/${studyId}/inter-rater/compute`,
-    body,
-  );
+  const raw = await api.post<unknown>(`/api/v1/slr/studies/${studyId}/inter-rater/compute`, body);
   return InterRaterRecordSchema.parse(raw);
 }
 

@@ -58,7 +58,14 @@ export default function SideNav() {
         >
           {initials}
         </Avatar>
-        <Typography sx={{ fontSize: '0.875rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <Typography
+          sx={{
+            fontSize: '0.875rem',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
+        >
           {user?.displayName ?? 'Unknown'}
         </Typography>
       </Box>
@@ -117,7 +124,6 @@ export default function SideNav() {
           </NavLink>
         </ListItem>
       </List>
-
 
       {/* Logout */}
       <Button

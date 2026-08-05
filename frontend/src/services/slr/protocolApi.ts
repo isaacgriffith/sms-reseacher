@@ -120,7 +120,9 @@ export async function upsertProtocol(
  * @param studyId - The study integer ID.
  * @returns An object with `job_id` and `status`.
  */
-export async function submitForReview(studyId: number): Promise<{ job_id: string; status: string }> {
+export async function submitForReview(
+  studyId: number,
+): Promise<{ job_id: string; status: string }> {
   const raw = await api.post<unknown>(
     `/api/v1/slr/studies/${studyId}/protocol/submit-for-review`,
     {},
@@ -135,10 +137,7 @@ export async function submitForReview(studyId: number): Promise<{ job_id: string
  * @returns An object with `status: "validated"`.
  */
 export async function validateProtocol(studyId: number): Promise<{ status: string }> {
-  const raw = await api.post<unknown>(
-    `/api/v1/slr/studies/${studyId}/protocol/validate`,
-    {},
-  );
+  const raw = await api.post<unknown>(`/api/v1/slr/studies/${studyId}/protocol/validate`, {});
   return z.object({ status: z.string() }).parse(raw);
 }
 

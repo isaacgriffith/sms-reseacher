@@ -184,20 +184,20 @@ function IndexRow({ item, enabled, onToggle }: IndexRowProps) {
  *
  * @param props - {@link DatabaseSelectionPanelProps}
  */
-export default function DatabaseSelectionPanel({
-  studyId,
-}: DatabaseSelectionPanelProps) {
+export default function DatabaseSelectionPanel({ studyId }: DatabaseSelectionPanelProps) {
   const { data, isLoading, updateSelection } = useStudyDatabaseSelection(studyId);
 
   const [state, dispatch] = useReducer(
     toggleReducer,
-    data?.selections ? initToggleState(data.selections) : {
-      selections: {},
-      snowball_enabled: false,
-      scihub_enabled: false,
-      scihub_acknowledged: false,
-      scihub_dialog_open: false,
-    }
+    data?.selections
+      ? initToggleState(data.selections)
+      : {
+          selections: {},
+          snowball_enabled: false,
+          scihub_enabled: false,
+          scihub_acknowledged: false,
+          scihub_dialog_open: false,
+        },
   );
 
   // Initialise reducer state when data loads (only once)
@@ -241,17 +241,13 @@ export default function DatabaseSelectionPanel({
 
       {GROUPS.map((group) => {
         const groupItems = (data.selections ?? []).filter(
-          (item) => (INDEX_GROUP[item.database_index] ?? 'Supplementary') === group
+          (item) => (INDEX_GROUP[item.database_index] ?? 'Supplementary') === group,
         );
         if (groupItems.length === 0) return null;
 
         return (
           <Box key={group} component="section" sx={{ mb: 2 }}>
-            <Typography
-              variant="subtitle2"
-              color="text.secondary"
-              sx={{ mb: 0.5 }}
-            >
+            <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 0.5 }}>
               {group}
             </Typography>
             {groupItems.map((item) => (
@@ -259,9 +255,7 @@ export default function DatabaseSelectionPanel({
                 key={item.database_index}
                 item={item}
                 enabled={state.selections[item.database_index] ?? item.is_enabled}
-                onToggle={() =>
-                  dispatch({ type: 'TOGGLE_INDEX', index: item.database_index })
-                }
+                onToggle={() => dispatch({ type: 'TOGGLE_INDEX', index: item.database_index })}
               />
             ))}
           </Box>
@@ -269,11 +263,7 @@ export default function DatabaseSelectionPanel({
       })}
 
       <Box sx={{ mt: 2, display: 'flex', gap: 2, alignItems: 'center' }}>
-        <Button
-          variant="contained"
-          onClick={handleSave}
-          disabled={updateSelection.isPending}
-        >
+        <Button variant="contained" onClick={handleSave} disabled={updateSelection.isPending}>
           {updateSelection.isPending ? 'Saving…' : 'Save'}
         </Button>
       </Box>
@@ -283,20 +273,14 @@ export default function DatabaseSelectionPanel({
         <DialogTitle>Enable SciHub Access?</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            SciHub provides access to papers that may be behind paywalls.
-            Use of SciHub may not be legal in all jurisdictions. By enabling
-            SciHub for this study you acknowledge that you are solely
-            responsible for compliance with applicable copyright law.
+            SciHub provides access to papers that may be behind paywalls. Use of SciHub may not be
+            legal in all jurisdictions. By enabling SciHub for this study you acknowledge that you
+            are solely responsible for compliance with applicable copyright law.
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => dispatch({ type: 'DISMISS_SCIHUB_DIALOG' })}>
-            Cancel
-          </Button>
-          <Button
-            color="warning"
-            onClick={() => dispatch({ type: 'ACKNOWLEDGE_SCIHUB' })}
-          >
+          <Button onClick={() => dispatch({ type: 'DISMISS_SCIHUB_DIALOG' })}>Cancel</Button>
+          <Button color="warning" onClick={() => dispatch({ type: 'ACKNOWLEDGE_SCIHUB' })}>
             I Acknowledge — Enable SciHub
           </Button>
         </DialogActions>

@@ -12,6 +12,18 @@ logger = get_logger(__name__)
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
 
+_HTTP_OK = 200
+_HTTP_MULTIPLE_CHOICES = 300
+
+
+class TestSearchUnavailableError(RuntimeError):
+    """Raised when researcher-mcp cannot serve a test search.
+
+    Distinguishes a search-service failure from a search that legitimately
+    returned no results, so a pilot run is never recorded against fabricated
+    counts.
+    """
+
 
 # ---------------------------------------------------------------------------
 # run_test_search
@@ -126,7 +138,15 @@ async def run_test_search(
 
 
 async def _fetch_test_search_results(query: str, databases: list[str]) -> tuple[set[str], int]:
-    """Call researcher-mcp search_papers and return (doi_set, count)."""
+    """Call researcher-mcp search_papers and return (doi_set, count).
+
+    Raises:
+        TestSearchUnavailableError: If researcher-mcp is unreachable or returns
+            a non-2xx status. A service failure must not be reported as a result
+            set — the caller cannot otherwise distinguish "the search service is
+            down" from "this search string matches nothing".
+
+    """
     import httpx
 
     from backend.core.config import get_settings
@@ -142,13 +162,20 @@ async def _fetch_test_search_results(query: str, databases: list[str]) -> tuple[
                     "max_results": 100,
                 },
             )
-            if not resp.status_code > 200:
-                papers = resp.json().get("papers", [])
-                dois = {p.get("doi", "").lower().strip() for p in papers if p.get("doi")}
-                return dois, len(papers)
     except Exception as exc:
         logger.warning("_fetch_test_search_results: researcher-mcp unavailable", exc=str(exc))
-    return set(), 2
+        raise TestSearchUnavailableError("researcher-mcp is unreachable") from exc
+
+    if not (_HTTP_OK <= resp.status_code < _HTTP_MULTIPLE_CHOICES):
+        logger.warning(
+            "_fetch_test_search_results: researcher-mcp error status",
+            status_code=resp.status_code,
+        )
+        raise TestSearchUnavailableError(f"researcher-mcp returned status {resp.status_code}")
+
+    papers = resp.json().get("papers", [])
+    dois = {p.get("doi", "").lower().strip() for p in papers if p.get("doi")}
+    return dois, len(papers)
 
 
 async def _collect_seed_dois(db: AsyncSession, seed_papers: list) -> set[str]:

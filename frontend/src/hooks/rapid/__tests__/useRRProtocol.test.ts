@@ -94,7 +94,11 @@ describe('useUpdateRRProtocol', () => {
     const { result } = renderHook(() => useUpdateRRProtocol(42), { wrapper: makeWrapper() });
     result.current.mutation.mutate({ practical_problem: 'A problem' });
     await waitFor(() => result.current.mutation.isSuccess);
-    expect(protocolApiModule.updateProtocol).toHaveBeenCalledWith(42, { practical_problem: 'A problem' }, false);
+    expect(protocolApiModule.updateProtocol).toHaveBeenCalledWith(
+      42,
+      { practical_problem: 'A problem' },
+      false,
+    );
   });
 
   it('cancelInvalidation resets invalidationPending to null', () => {

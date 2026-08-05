@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [0.9.0] — 2026-03-30 — feature/009-tertiary-studies-workflow
 
 ### Added
+
 - **`TertiaryExtractionAgent`** (`tertiary_extraction_agent.py`): LLM-powered AI pre-fill of
   `TertiaryDataExtraction` fields from a secondary study paper's full-text Markdown; returns
   structured output for `secondary_study_type`, `research_questions_addressed`,
@@ -18,6 +19,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [0.8.0] — 2026-03-29 — feature/008-rapid-review-workflow
 
 ### Added
+
 - **`NarrativeSynthesiserAgent`** (`narrative_synthesiser_agent.py`): LLM-powered narrative
   draft generation for a single Rapid Review research question; accepts `section_text` (prior
   content, may be empty), `rq_text`, and a list of included paper summaries; returns a
@@ -28,6 +30,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [0.7.0] — 2026-03-21 — feature/007-slr-workflow
 
 ### Added
+
 - **`ProtocolReviewerAgent`** (`services/protocol_reviewer.py`): LLM-powered structured review of
   SLR protocol sections; returns `ProtocolReviewResult` with per-section strengths, weaknesses,
   and actionable recommendations
@@ -37,6 +40,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [0.5.0] — 2026-03-17 — feature/005-models-and-agents
 
 ### Added
+
 - **`ProviderConfig` Protocol** (`core/provider_config.py`): runtime-checkable `typing.Protocol`
   with `model_string: str`, `api_base: str | None`, `api_key: str | None`; used to override
   env-based LLM settings per call without subclassing
@@ -54,6 +58,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Unit tests for `ProviderConfig` Protocol and `LLMClient` override behaviour
 
 ### Changed
+
 - **`LLMClient.complete()`** (`core/llm_client.py`): accepts optional
   `provider_config: ProviderConfig | None = None`; when provided, overrides `model_string`,
   `api_base`, and `api_key`; existing env-based behavior unchanged when `None`
@@ -67,6 +72,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [0.3.0] — 2026-03-16 — feature/003-project-setup-improvements
 
 ### Changed
+
 - Coverage command documented in `CLAUDE.md`: `uv run pytest agents/tests/ --cov=agents`
 - Mutation testing tool updated to `cosmic-ray` (was `mutmut`); run via manual GitHub
   Actions `workflow_dispatch` workflow
@@ -77,6 +83,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [0.2.0] — 2026-03-12 — feature/002-sms-workflow
 
 ### Added
+
 - `ScreenerAgent` — include/exclude decision for paper abstracts given criteria
 - `ExtractorAgent` — extract structured data fields from full paper text
 - `SynthesiserAgent` — synthesise a research answer from multiple paper summaries
@@ -94,5 +101,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [0.1.0] — 2026-03-11 — feature/001-repo-setup
 
 ### Added
+
 - Initial `pyproject.toml` (`sms-agents`) as UV workspace member
 - Ruff, MyPy strict, pytest + pytest-asyncio configuration

@@ -51,7 +51,7 @@ function RecordRow({ record }: RecordRowProps) {
   const kappaDisplay =
     record.kappa_value !== null
       ? record.kappa_value.toFixed(3)
-      : record.kappa_undefined_reason ?? 'Undefined';
+      : (record.kappa_undefined_reason ?? 'Undefined');
 
   return (
     <TableRow>
@@ -156,8 +156,8 @@ function InterRaterPanel({ studyId, computeBody }: InterRaterPanelProps) {
 
       {records.length === 0 && (
         <Typography variant="body2" color="text.secondary" data-testid="irr-empty">
-          No Kappa values computed yet. Use "Compute Kappa" after both reviewers
-          have completed their independent assessments.
+          No Kappa values computed yet. Use "Compute Kappa" after both reviewers have completed
+          their independent assessments.
         </Typography>
       )}
     </Box>

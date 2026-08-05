@@ -73,10 +73,9 @@ export async function createSeedImport(
   studyId: number,
   sourceStudyId: number,
 ): Promise<SeedImportCreated> {
-  const raw = await api.post<unknown>(
-    `/api/v1/tertiary/studies/${studyId}/seed-imports`,
-    { source_study_id: sourceStudyId },
-  );
+  const raw = await api.post<unknown>(`/api/v1/tertiary/studies/${studyId}/seed-imports`, {
+    source_study_id: sourceStudyId,
+  });
   return SeedImportCreatedSchema.parse(raw);
 }
 

@@ -18,7 +18,12 @@ async function fetchOpenApiSpec(): Promise<object> {
 }
 
 export default function APIDocsPage() {
-  const { data: spec, isLoading, isError, error } = useQuery({
+  const {
+    data: spec,
+    isLoading,
+    isError,
+    error,
+  } = useQuery({
     queryKey: ['openapi-spec'],
     queryFn: fetchOpenApiSpec,
     staleTime: 60_000,
@@ -36,9 +41,7 @@ export default function APIDocsPage() {
   if (isError) {
     return (
       <Box sx={{ p: 3 }}>
-        <Alert severity="error">
-          Failed to load API documentation: {(error as Error).message}
-        </Alert>
+        <Alert severity="error">Failed to load API documentation: {(error as Error).message}</Alert>
       </Box>
     );
   }

@@ -193,6 +193,7 @@ def check_template_validity(template: str) -> tuple[bool, str]:
     """Return (valid, error_message) — True when Jinja2 can parse the template."""
     try:
         import jinja2
+
         env = jinja2.Environment(undefined=jinja2.Undefined)
         env.parse(template)
         return True, ""
@@ -283,9 +284,7 @@ async def evaluate_single(
 
     # Criterion 4: Minimum length
     if not check_minimum_length(template):
-        failures.append(
-            f"Template too short: {len(template)} < {MINIMUM_TEMPLATE_LENGTH} chars"
-        )
+        failures.append(f"Template too short: {len(template)} < {MINIMUM_TEMPLATE_LENGTH} chars")
 
     return EvalResult(
         case_id=case.case_id,
@@ -347,8 +346,7 @@ def build_deepeval_test_case(case: AgentGeneratorInput, template: str) -> LLMTes
 
     """
     input_str = (
-        f"task_type={case.task_type}, role_name={case.role_name}, "
-        f"persona_name={case.persona_name}"
+        f"task_type={case.task_type}, role_name={case.role_name}, persona_name={case.persona_name}"
     )
     expected_str = (
         "A Jinja2 template containing all six required variable placeholders: "

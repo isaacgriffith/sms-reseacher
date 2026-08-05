@@ -84,8 +84,20 @@ describe('ExtractionPage', () => {
 
   it('renders extraction list items', async () => {
     vi.mocked(api.get).mockResolvedValue([
-      { id: 1, candidate_paper_id: 10, extraction_status: 'pending', research_type: 'evaluation', version_id: 1 },
-      { id: 2, candidate_paper_id: 11, extraction_status: 'complete', research_type: 'validation', version_id: 2 },
+      {
+        id: 1,
+        candidate_paper_id: 10,
+        extraction_status: 'pending',
+        research_type: 'evaluation',
+        version_id: 1,
+      },
+      {
+        id: 2,
+        candidate_paper_id: 11,
+        extraction_status: 'complete',
+        research_type: 'validation',
+        version_id: 2,
+      },
     ]);
     renderExtractionPage();
     // Should render 2 items — check for extraction status labels

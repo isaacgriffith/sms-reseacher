@@ -149,9 +149,7 @@ describe('SearchIntegrationsTable', () => {
     });
 
     it('calls upsert mutation on Save', async () => {
-      const upsertMutate = vi.fn((_vars, { onSuccess }: { onSuccess: () => void }) =>
-        onSuccess()
-      );
+      const upsertMutate = vi.fn((_vars, { onSuccess }: { onSuccess: () => void }) => onSuccess());
       mockUseUpsertCredential.mockReturnValue({ mutate: upsertMutate, isPending: false });
       renderWithQuery(<SearchIntegrationsTable />);
       const [firstEditBtn] = screen.getAllByRole('button', { name: /edit/i });

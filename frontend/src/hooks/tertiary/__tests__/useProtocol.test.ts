@@ -1,14 +1,5 @@
-/**
- * Unit tests for useProtocol hooks (feature 009).
- *
- * Covers:
- * - Query key stability.
- * - Hook instantiation without throwing.
- * - Hook returns expected TanStack Query shapes.
- */
-
 import { describe, it, expect, vi } from 'vitest';
-import { renderHook, waitFor } from '@testing-library/react';
+import { renderHook, waitFor, act } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
 import {
@@ -19,9 +10,9 @@ import {
 } from '../useProtocol';
 
 vi.mock('../../../services/tertiary/protocolApi', () => ({
-  getProtocol: vi.fn().mockRejectedValue(new Error('not found')),
+  getProtocol: vi.fn().mockResolvedValue({ id: 1, status: 'draft' }),
   updateProtocol: vi.fn().mockResolvedValue({ id: 1, status: 'draft' }),
-  validateProtocol: vi.fn().mockResolvedValue({ job_id: 'j1', status: 'queued' }),
+  validateProtocol: vi.fn().mockResolvedValue({ status: 'validated' }),
 }));
 
 function makeWrapper() {
@@ -31,42 +22,39 @@ function makeWrapper() {
 }
 
 describe('tertiaryProtocolKey', () => {
-  it('returns stable array with study id', () => {
+  it('returns stable array', () => {
     expect(tertiaryProtocolKey(42)).toEqual(['tertiary-protocol', 42]);
   });
 });
 
 describe('useTertiaryProtocol', () => {
-  it('returns a query result with data property', async () => {
-    const { result } = renderHook(() => useTertiaryProtocol(42), {
-      wrapper: makeWrapper(),
-    });
-    await waitFor(() => !result.current.isLoading);
-    expect(result.current).toHaveProperty('data');
+  it('fetches data', async () => {
+    const { result } = renderHook(() => useTertiaryProtocol(42), { wrapper: makeWrapper() });
+    await waitFor(() => expect(result.current.data).toBeDefined());
   });
 
   it('is disabled when studyId is 0', () => {
-    const { result } = renderHook(() => useTertiaryProtocol(0), {
-      wrapper: makeWrapper(),
-    });
+    const { result } = renderHook(() => useTertiaryProtocol(0), { wrapper: makeWrapper() });
     expect(result.current.fetchStatus).toBe('idle');
   });
 });
 
 describe('useUpdateTertiaryProtocol', () => {
-  it('returns a mutation object with mutate function', () => {
-    const { result } = renderHook(() => useUpdateTertiaryProtocol(42), {
-      wrapper: makeWrapper(),
+  it('executes mutation', async () => {
+    const { result } = renderHook(() => useUpdateTertiaryProtocol(42), { wrapper: makeWrapper() });
+    await act(async () => {
+      result.current.mutate({ status: 'draft' });
     });
-    expect(typeof result.current.mutate).toBe('function');
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
   });
 });
 
 describe('useValidateTertiaryProtocol', () => {
-  it('returns a mutation object with mutate function', () => {
-    const { result } = renderHook(() => useValidateTertiaryProtocol(42), {
-      wrapper: makeWrapper(),
+  it('executes mutation', async () => {
+    const { result } = renderHook(() => useValidateTertiaryProtocol(42), { wrapper: makeWrapper() });
+    await act(async () => {
+      result.current.mutate();
     });
-    expect(typeof result.current.mutate).toBe('function');
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
   });
 });

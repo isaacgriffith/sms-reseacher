@@ -4,15 +4,15 @@ This directory contains high-level feature documents (PRDs) for all planned work
 
 ## Feature Index
 
-| ID | Feature | Status | Depends On |
-|---|---|---|---|
-| [003](./003-slr-workflow.md) | Systematic Literature Review (SLR) Workflow | ✅ Implemented | 002 |
-| [004](./004-rapid-review-workflow.md) | Rapid Review Workflow | ✅ Implemented | 002 |
-| [005](./005-tertiary-studies-workflow.md) | Tertiary Studies Workflow | ✅ Implemented | 002, 003 |
-| [006](./006-project-setup-improvements.md) | Project Setup & Quality Improvements | ✅ Implemented | 001, 002 |
-| [007](./007-frontend-improvements.md) | Frontend Improvements (MUI, 2FA, Swagger) | ✅ Implemented | 001, 002 |
-| [008](./008-models-and-agents.md) | Models & Agents Management | ✅ Implemented | 001, 002 |
-| [009](./009-research-protocol-definition.md) | Research Protocol Definition | Planned | 002, 003, 004 |
+| ID                                            | Feature                                       | Status         | Depends On    |
+| --------------------------------------------- | --------------------------------------------- | -------------- | ------------- |
+| [003](./003-slr-workflow.md)                  | Systematic Literature Review (SLR) Workflow   | ✅ Implemented | 002           |
+| [004](./004-rapid-review-workflow.md)         | Rapid Review Workflow                         | ✅ Implemented | 002           |
+| [005](./005-tertiary-studies-workflow.md)     | Tertiary Studies Workflow                     | ✅ Implemented | 002, 003      |
+| [006](./006-project-setup-improvements.md)    | Project Setup & Quality Improvements          | ✅ Implemented | 001, 002      |
+| [007](./007-frontend-improvements.md)         | Frontend Improvements (MUI, 2FA, Swagger)     | ✅ Implemented | 001, 002      |
+| [008](./008-models-and-agents.md)             | Models & Agents Management                    | ✅ Implemented | 001, 002      |
+| [009](./009-research-protocol-definition.md)  | Research Protocol Definition                  | Planned        | 002, 003, 004 |
 | [010](./010-database-search-and-retrieval.md) | Database Search, Retrieval & Paper Processing | ✅ Implemented | 001, 002, 008 |
 
 ## Recommended Implementation Order
@@ -35,6 +35,7 @@ Each feature document in this directory can be provided directly to `speckit.spe
 ```
 
 After specification, use the standard speckit workflow:
+
 1. `/speckit.clarify` — identify and resolve underspecified areas
 2. `/speckit.plan` — generate the implementation plan
 3. `/speckit.tasks` — generate the task list

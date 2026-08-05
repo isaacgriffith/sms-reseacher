@@ -82,7 +82,13 @@ interface MetaAnalysisFieldsProps {
 /**
  * Fields shown for meta_analysis approach: model type, thresholds, paper rows.
  */
-function MetaAnalysisFields({ control, register, fields, append, remove }: MetaAnalysisFieldsProps) {
+function MetaAnalysisFields({
+  control,
+  register,
+  fields,
+  append,
+  remove,
+}: MetaAnalysisFieldsProps) {
   return (
     <Box>
       <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
@@ -93,12 +99,7 @@ function MetaAnalysisFields({ control, register, fields, append, remove }: MetaA
           render={({ field }) => (
             <FormControl size="small" sx={{ minWidth: 120 }}>
               <InputLabel id="model-type-label">Model type</InputLabel>
-              <Select
-                {...field}
-                labelId="model-type-label"
-                label="Model type"
-                size="small"
-              >
+              <Select {...field} labelId="model-type-label" label="Model type" size="small">
                 <MenuItem value="auto">Auto</MenuItem>
                 <MenuItem value="fixed">Fixed</MenuItem>
                 <MenuItem value="random">Random</MenuItem>
@@ -139,7 +140,9 @@ interface DescriptiveFieldsProps {
  * Fields shown for descriptive approach: paper rows with sample size + unit.
  */
 function DescriptiveFields({ register, fields, append, remove }: DescriptiveFieldsProps) {
-  return <PaperRows fields={fields} register={register} append={append} remove={remove} showSe={false} />;
+  return (
+    <PaperRows fields={fields} register={register} append={append} remove={remove} showSe={false} />
+  );
 }
 
 interface PaperRowsProps {
@@ -154,26 +157,76 @@ interface PaperRowsProps {
 function PaperRows({ fields, register, append, remove, showSe }: PaperRowsProps) {
   return (
     <Box>
-      <Typography variant="caption" sx={{ mb: 1, display: 'block' }}>Papers</Typography>
+      <Typography variant="caption" sx={{ mb: 1, display: 'block' }}>
+        Papers
+      </Typography>
       {fields.map((field, index) => (
         <Box key={field.id} sx={{ display: 'flex', gap: 1, mb: 1, alignItems: 'center' }}>
-          <TextField {...register(`papers.${index}.label`)} label="Label" size="small" sx={{ width: 120 }} />
-          <TextField {...register(`papers.${index}.effect_size`)} label="Effect" size="small" type="number" sx={{ width: 80 }} />
+          <TextField
+            {...register(`papers.${index}.label`)}
+            label="Label"
+            size="small"
+            sx={{ width: 120 }}
+          />
+          <TextField
+            {...register(`papers.${index}.effect_size`)}
+            label="Effect"
+            size="small"
+            type="number"
+            sx={{ width: 80 }}
+          />
           {showSe && (
-            <TextField {...register(`papers.${index}.se`)} label="SE" size="small" type="number" sx={{ width: 70 }} />
+            <TextField
+              {...register(`papers.${index}.se`)}
+              label="SE"
+              size="small"
+              type="number"
+              sx={{ width: 70 }}
+            />
           )}
-          <TextField {...register(`papers.${index}.ci_lower`)} label="CI Low" size="small" type="number" sx={{ width: 80 }} />
-          <TextField {...register(`papers.${index}.ci_upper`)} label="CI High" size="small" type="number" sx={{ width: 80 }} />
+          <TextField
+            {...register(`papers.${index}.ci_lower`)}
+            label="CI Low"
+            size="small"
+            type="number"
+            sx={{ width: 80 }}
+          />
+          <TextField
+            {...register(`papers.${index}.ci_upper`)}
+            label="CI High"
+            size="small"
+            type="number"
+            sx={{ width: 80 }}
+          />
           {!showSe && (
             <>
-              <TextField {...register(`papers.${index}.sample_size`)} label="N" size="small" type="number" sx={{ width: 70 }} />
-              <TextField {...register(`papers.${index}.unit`)} label="Unit" size="small" sx={{ width: 80 }} />
+              <TextField
+                {...register(`papers.${index}.sample_size`)}
+                label="N"
+                size="small"
+                type="number"
+                sx={{ width: 70 }}
+              />
+              <TextField
+                {...register(`papers.${index}.unit`)}
+                label="Unit"
+                size="small"
+                sx={{ width: 80 }}
+              />
             </>
           )}
-          <IconButton size="small" onClick={() => remove(index)} aria-label={`Remove paper ${index + 1}`}>✕</IconButton>
+          <IconButton
+            size="small"
+            onClick={() => remove(index)}
+            aria-label={`Remove paper ${index + 1}`}
+          >
+            ✕
+          </IconButton>
         </Box>
       ))}
-      <Button size="small" onClick={() => append({ label: '', effect_size: 0 })}>+ Add paper</Button>
+      <Button size="small" onClick={() => append({ label: '', effect_size: 0 })}>
+        + Add paper
+      </Button>
     </Box>
   );
 }
@@ -188,10 +241,21 @@ interface QualitativeFieldsProps {
 /**
  * Fields shown for qualitative approach: theme builder with paper IDs.
  */
-function QualitativeFields({ register, themeFields, appendTheme, removeTheme }: QualitativeFieldsProps) {
+function QualitativeFields({
+  register,
+  themeFields,
+  appendTheme,
+  removeTheme,
+}: QualitativeFieldsProps) {
   return (
     <Box>
-      <Typography variant="caption" sx={{ mb: 1, display: 'block' }} data-testid="qualitative-themes-label">Themes</Typography>
+      <Typography
+        variant="caption"
+        sx={{ mb: 1, display: 'block' }}
+        data-testid="qualitative-themes-label"
+      >
+        Themes
+      </Typography>
       {themeFields.map((field, index) => (
         <Box key={field.id} sx={{ display: 'flex', gap: 1, mb: 1, alignItems: 'center' }}>
           <TextField
@@ -206,10 +270,18 @@ function QualitativeFields({ register, themeFields, appendTheme, removeTheme }: 
             size="small"
             sx={{ width: 240 }}
           />
-          <IconButton size="small" onClick={() => removeTheme(index)} aria-label={`Remove theme ${index + 1}`}>✕</IconButton>
+          <IconButton
+            size="small"
+            onClick={() => removeTheme(index)}
+            aria-label={`Remove theme ${index + 1}`}
+          >
+            ✕
+          </IconButton>
         </Box>
       ))}
-      <Button size="small" onClick={() => appendTheme({ theme_name: '', paper_ids_text: '' })}>+ Add theme</Button>
+      <Button size="small" onClick={() => appendTheme({ theme_name: '', paper_ids_text: '' })}>
+        + Add theme
+      </Button>
     </Box>
   );
 }
@@ -248,12 +320,20 @@ export default function SynthesisConfigForm({
 
   const approach = useWatch({ control, name: 'approach' });
 
-  const { fields: paperFields, append: appendPaper, remove: removePaper } = useFieldArray({
+  const {
+    fields: paperFields,
+    append: appendPaper,
+    remove: removePaper,
+  } = useFieldArray({
     control,
     name: 'papers',
   });
 
-  const { fields: themeFields, append: appendTheme, remove: removeTheme } = useFieldArray({
+  const {
+    fields: themeFields,
+    append: appendTheme,
+    remove: removeTheme,
+  } = useFieldArray({
     control,
     name: 'themes',
   });
@@ -274,7 +354,9 @@ export default function SynthesisConfigForm({
           )}
         />
         {errors.approach && (
-          <Typography color="error" variant="caption">{errors.approach.message}</Typography>
+          <Typography color="error" variant="caption">
+            {errors.approach.message}
+          </Typography>
         )}
       </FormControl>
 

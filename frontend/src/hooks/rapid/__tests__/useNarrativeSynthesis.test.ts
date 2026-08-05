@@ -52,10 +52,22 @@ describe('useNarrativeSections', () => {
 
   it('succeeds and data is accessible when API resolves', async () => {
     vi.mocked(synthesisApiModule.listSections).mockResolvedValue([
-      { id: 1, study_id: 42, rq_index: 0, rq_text: 'RQ1', narrative_text: null, is_complete: false, ai_draft_job_id: null, created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z' },
+      {
+        id: 1,
+        study_id: 42,
+        rq_index: 0,
+        rq_text: 'RQ1',
+        narrative_text: null,
+        is_complete: false,
+        ai_draft_job_id: null,
+        created_at: '2026-01-01T00:00:00Z',
+        updated_at: '2026-01-01T00:00:00Z',
+      },
     ]);
     const { result } = renderHook(() => useNarrativeSections(42), { wrapper: makeWrapper() });
-    await waitFor(() => { if (!result.current.isSuccess) throw new Error('not ready'); });
+    await waitFor(() => {
+      if (!result.current.isSuccess) throw new Error('not ready');
+    });
     expect(result.current.data?.[0].rq_index).toBe(0);
   });
 });
@@ -70,7 +82,10 @@ describe('useUpdateSection', () => {
     const { result } = renderHook(() => useUpdateSection(42), { wrapper: makeWrapper() });
     result.current.mutate({ sectionId: 1, data: { narrative_text: 'text', is_complete: true } });
     await waitFor(() => result.current.isSuccess);
-    expect(synthesisApiModule.updateSection).toHaveBeenCalledWith(42, 1, { narrative_text: 'text', is_complete: true });
+    expect(synthesisApiModule.updateSection).toHaveBeenCalledWith(42, 1, {
+      narrative_text: 'text',
+      is_complete: true,
+    });
   });
 });
 

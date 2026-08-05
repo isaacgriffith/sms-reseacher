@@ -61,8 +61,8 @@ export default function ReportPage({ studyId, synthesisComplete }: ReportPagePro
         Export SLR Report
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-        Generate and download the full systematic literature review report. Complete the
-        synthesis phase first to enable this feature.
+        Generate and download the full systematic literature review report. Complete the synthesis
+        phase first to enable this feature.
       </Typography>
 
       <FormControl component="fieldset" sx={{ mb: 3 }}>
@@ -90,10 +90,7 @@ export default function ReportPage({ studyId, synthesisComplete }: ReportPagePro
         </Alert>
       )}
 
-      <Tooltip
-        title={synthesisComplete ? '' : 'Complete synthesis first'}
-        placement="right"
-      >
+      <Tooltip title={synthesisComplete ? '' : 'Complete synthesis first'} placement="right">
         <span>
           <Button
             variant="contained"

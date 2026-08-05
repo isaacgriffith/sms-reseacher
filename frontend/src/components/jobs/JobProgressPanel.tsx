@@ -92,25 +92,45 @@ export default function JobProgressPanel({ jobId, onComplete }: JobProgressPanel
       {/* Details */}
       {isRunning && (
         <Box sx={{ fontSize: '0.8125rem', color: '#4b5563', display: 'flex', gap: '1rem' }}>
-          {phase && <Typography component="span" sx={{ fontSize: '0.8125rem', color: '#4b5563' }}>Phase: <strong>{phase}</strong></Typography>}
-          {currentDb && <Typography component="span" sx={{ fontSize: '0.8125rem', color: '#4b5563' }}>Database: <strong>{currentDb}</strong></Typography>}
-          {papersFound > 0 && <Typography component="span" sx={{ fontSize: '0.8125rem', color: '#4b5563' }}>Papers found: <strong>{papersFound}</strong></Typography>}
+          {phase && (
+            <Typography component="span" sx={{ fontSize: '0.8125rem', color: '#4b5563' }}>
+              Phase: <strong>{phase}</strong>
+            </Typography>
+          )}
+          {currentDb && (
+            <Typography component="span" sx={{ fontSize: '0.8125rem', color: '#4b5563' }}>
+              Database: <strong>{currentDb}</strong>
+            </Typography>
+          )}
+          {papersFound > 0 && (
+            <Typography component="span" sx={{ fontSize: '0.8125rem', color: '#4b5563' }}>
+              Papers found: <strong>{papersFound}</strong>
+            </Typography>
+          )}
         </Box>
       )}
 
       {isComplete && detail && (
         <Box sx={{ fontSize: '0.8125rem', color: '#374151', display: 'flex', gap: '1.5rem' }}>
           {typeof (detail as Record<string, number>).total_identified === 'number' && (
-            <Typography component="span" sx={{ fontSize: '0.8125rem' }}>Identified: <strong>{(detail as Record<string, number>).total_identified}</strong></Typography>
+            <Typography component="span" sx={{ fontSize: '0.8125rem' }}>
+              Identified: <strong>{(detail as Record<string, number>).total_identified}</strong>
+            </Typography>
           )}
           {typeof (detail as Record<string, number>).accepted === 'number' && (
-            <Typography component="span" sx={{ fontSize: '0.8125rem', color: '#16a34a' }}>Accepted: <strong>{(detail as Record<string, number>).accepted}</strong></Typography>
+            <Typography component="span" sx={{ fontSize: '0.8125rem', color: '#16a34a' }}>
+              Accepted: <strong>{(detail as Record<string, number>).accepted}</strong>
+            </Typography>
           )}
           {typeof (detail as Record<string, number>).rejected === 'number' && (
-            <Typography component="span" sx={{ fontSize: '0.8125rem', color: '#dc2626' }}>Rejected: <strong>{(detail as Record<string, number>).rejected}</strong></Typography>
+            <Typography component="span" sx={{ fontSize: '0.8125rem', color: '#dc2626' }}>
+              Rejected: <strong>{(detail as Record<string, number>).rejected}</strong>
+            </Typography>
           )}
           {typeof (detail as Record<string, number>).duplicates === 'number' && (
-            <Typography component="span" sx={{ fontSize: '0.8125rem', color: '#d97706' }}>Duplicates: <strong>{(detail as Record<string, number>).duplicates}</strong></Typography>
+            <Typography component="span" sx={{ fontSize: '0.8125rem', color: '#d97706' }}>
+              Duplicates: <strong>{(detail as Record<string, number>).duplicates}</strong>
+            </Typography>
           )}
         </Box>
       )}

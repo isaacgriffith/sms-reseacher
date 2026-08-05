@@ -34,9 +34,7 @@ class LiteLLMJudge(DeepEvalBaseLLM):
         """
         self._provider = provider or os.environ.get("LLM_PROVIDER", "anthropic")
         self._model_name = model or os.environ.get("LLM_MODEL", "claude-sonnet-4-6")
-        self._ollama_url = ollama_url or os.environ.get(
-            "OLLAMA_BASE_URL", "http://localhost:11434"
-        )
+        self._ollama_url = ollama_url or os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
 
     def _build_model_string(self) -> str:
         """Return the litellm model string for the configured provider."""

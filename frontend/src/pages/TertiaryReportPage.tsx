@@ -77,7 +77,11 @@ export interface TertiaryReportPageProps {
  * @param studyId - The study to display the report for.
  */
 export default function TertiaryReportPage({ studyId }: TertiaryReportPageProps) {
-  const { data: report, isLoading, error } = useQuery({
+  const {
+    data: report,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ['tertiary-report', studyId],
     queryFn: () => fetchReport(studyId),
   });
@@ -91,18 +95,16 @@ export default function TertiaryReportPage({ studyId }: TertiaryReportPageProps)
   }
 
   if (error) {
-    return (
-      <Alert severity="error">
-        Failed to load report: {(error as Error).message}
-      </Alert>
-    );
+    return <Alert severity="error">Failed to load report: {(error as Error).message}</Alert>;
   }
 
   if (!report) return null;
 
   return (
     <Box sx={{ maxWidth: 900, mx: 'auto', mt: 2, px: 2 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 3 }}>
+      <Box
+        sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 3 }}
+      >
         <Box>
           <Typography variant="h5" sx={{ fontWeight: 700 }}>
             {report.study_name}

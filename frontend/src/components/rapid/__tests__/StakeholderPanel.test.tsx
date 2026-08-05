@@ -52,7 +52,9 @@ describe('StakeholderPanel', () => {
 
   describe('loading state', () => {
     it('shows loading indicator when isLoading', () => {
-      vi.mocked(useStakeholders).mockReturnValue({ data: undefined, isLoading: true } as ReturnType<typeof useStakeholders>);
+      vi.mocked(useStakeholders).mockReturnValue({ data: undefined, isLoading: true } as ReturnType<
+        typeof useStakeholders
+      >);
       renderWithQuery(<StakeholderPanel studyId={42} />);
       expect(screen.getByText(/loading stakeholders/i)).toBeTruthy();
     });
@@ -60,7 +62,9 @@ describe('StakeholderPanel', () => {
 
   describe('empty state', () => {
     it('shows required error when stakeholders is empty', () => {
-      vi.mocked(useStakeholders).mockReturnValue({ data: [], isLoading: false } as ReturnType<typeof useStakeholders>);
+      vi.mocked(useStakeholders).mockReturnValue({ data: [], isLoading: false } as ReturnType<
+        typeof useStakeholders
+      >);
       renderWithQuery(<StakeholderPanel studyId={42} />);
       expect(screen.getByText(/at least one practitioner stakeholder/i)).toBeTruthy();
     });
@@ -68,13 +72,19 @@ describe('StakeholderPanel', () => {
 
   describe('with stakeholders', () => {
     it('renders stakeholder name in table', () => {
-      vi.mocked(useStakeholders).mockReturnValue({ data: [STAKEHOLDER], isLoading: false } as ReturnType<typeof useStakeholders>);
+      vi.mocked(useStakeholders).mockReturnValue({
+        data: [STAKEHOLDER],
+        isLoading: false,
+      } as ReturnType<typeof useStakeholders>);
       renderWithQuery(<StakeholderPanel studyId={42} />);
       expect(screen.getByText('Alice')).toBeTruthy();
     });
 
     it('renders stakeholder organisation', () => {
-      vi.mocked(useStakeholders).mockReturnValue({ data: [STAKEHOLDER], isLoading: false } as ReturnType<typeof useStakeholders>);
+      vi.mocked(useStakeholders).mockReturnValue({
+        data: [STAKEHOLDER],
+        isLoading: false,
+      } as ReturnType<typeof useStakeholders>);
       renderWithQuery(<StakeholderPanel studyId={42} />);
       expect(screen.getByText('NHS')).toBeTruthy();
     });
@@ -82,13 +92,17 @@ describe('StakeholderPanel', () => {
 
   describe('add form', () => {
     it('renders Add Stakeholder button', () => {
-      vi.mocked(useStakeholders).mockReturnValue({ data: [], isLoading: false } as ReturnType<typeof useStakeholders>);
+      vi.mocked(useStakeholders).mockReturnValue({ data: [], isLoading: false } as ReturnType<
+        typeof useStakeholders
+      >);
       renderWithQuery(<StakeholderPanel studyId={42} />);
       expect(screen.getByRole('button', { name: /add stakeholder/i })).toBeTruthy();
     });
 
     it('shows form fields when Add Stakeholder button is clicked', () => {
-      vi.mocked(useStakeholders).mockReturnValue({ data: [], isLoading: false } as ReturnType<typeof useStakeholders>);
+      vi.mocked(useStakeholders).mockReturnValue({ data: [], isLoading: false } as ReturnType<
+        typeof useStakeholders
+      >);
       renderWithQuery(<StakeholderPanel studyId={42} />);
       fireEvent.click(screen.getByRole('button', { name: /add stakeholder/i }));
       // Form should now be visible with text inputs
@@ -97,7 +111,9 @@ describe('StakeholderPanel', () => {
     });
 
     it('shows Add button label when no editTarget', () => {
-      vi.mocked(useStakeholders).mockReturnValue({ data: [], isLoading: false } as ReturnType<typeof useStakeholders>);
+      vi.mocked(useStakeholders).mockReturnValue({ data: [], isLoading: false } as ReturnType<
+        typeof useStakeholders
+      >);
       renderWithQuery(<StakeholderPanel studyId={42} />);
       fireEvent.click(screen.getByRole('button', { name: /add stakeholder/i }));
       expect(screen.getByRole('button', { name: /^add$/i })).toBeTruthy();
@@ -106,7 +122,10 @@ describe('StakeholderPanel', () => {
 
   describe('edit form', () => {
     it('shows form in edit mode with stakeholder values pre-filled', () => {
-      vi.mocked(useStakeholders).mockReturnValue({ data: [STAKEHOLDER], isLoading: false } as ReturnType<typeof useStakeholders>);
+      vi.mocked(useStakeholders).mockReturnValue({
+        data: [STAKEHOLDER],
+        isLoading: false,
+      } as ReturnType<typeof useStakeholders>);
       renderWithQuery(<StakeholderPanel studyId={42} />);
       fireEvent.click(screen.getByRole('button', { name: /edit/i }));
       // Form should open; name input should be pre-filled
@@ -115,14 +134,20 @@ describe('StakeholderPanel', () => {
     });
 
     it('shows Update button when editing an existing stakeholder', () => {
-      vi.mocked(useStakeholders).mockReturnValue({ data: [STAKEHOLDER], isLoading: false } as ReturnType<typeof useStakeholders>);
+      vi.mocked(useStakeholders).mockReturnValue({
+        data: [STAKEHOLDER],
+        isLoading: false,
+      } as ReturnType<typeof useStakeholders>);
       renderWithQuery(<StakeholderPanel studyId={42} />);
       fireEvent.click(screen.getByRole('button', { name: /edit/i }));
       expect(screen.getByRole('button', { name: /^update$/i })).toBeTruthy();
     });
 
     it('does not show Add/Edit buttons when readOnly', () => {
-      vi.mocked(useStakeholders).mockReturnValue({ data: [STAKEHOLDER], isLoading: false } as ReturnType<typeof useStakeholders>);
+      vi.mocked(useStakeholders).mockReturnValue({
+        data: [STAKEHOLDER],
+        isLoading: false,
+      } as ReturnType<typeof useStakeholders>);
       renderWithQuery(<StakeholderPanel studyId={42} readOnly />);
       expect(screen.queryByRole('button', { name: /add stakeholder/i })).toBeNull();
       expect(screen.queryByRole('button', { name: /edit/i })).toBeNull();

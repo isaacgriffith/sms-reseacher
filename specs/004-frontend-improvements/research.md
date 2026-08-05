@@ -12,6 +12,7 @@
 **Rationale**: The current auth is stateless JWT stored in `localStorage`. A Redis token blocklist (JTI approach) adds an infrastructure dependency. Storing `password_changed_at` and comparing against `iat` is equivalent but requires timestamp arithmetic across timezones. `token_version` is an integer comparison, cleaner, and also enables revocation for other future security events. The DB lookup (PK lookup on User) is required anyway for the 2FA `token_version` check and is a negligible overhead for a research tool.
 
 **Alternatives considered**:
+
 - **JTI blocklist in Redis**: Rejected — requires Redis in all environments including CI; adds infrastructure complexity disproportionate to scale.
 - **`password_changed_at` + `iat` comparison**: Rejected — timezone handling complexity; functionally equivalent to `token_version`.
 - **Short-lived tokens with refresh tokens**: Rejected — out of scope; requires session management infrastructure not present in the codebase.
@@ -27,6 +28,7 @@
 **Rationale**: TOTP secrets in plaintext in the database create a catastrophic breach risk (an attacker with DB access could immediately generate valid codes for all 2FA-enabled users). Fernet is simple, authenticated (AEAD), and already available via the `cryptography` package (a transitive dependency of `bcrypt`). Key derivation from `settings.secret_key` avoids a new secret management requirement.
 
 **Alternatives considered**:
+
 - **Database-level encryption (pgcrypto)**: Rejected — tied to PostgreSQL; breaks SQLite test parity.
 - **Plaintext storage**: Rejected — unacceptable security posture.
 - **Dedicated KMS/HSM**: Rejected — over-engineering for a research tool; out of scope.
@@ -40,6 +42,7 @@
 **Rationale**: Hashing backup codes prevents an attacker with DB read access from using them. 10 codes × 10 chars is consistent with industry conventions (GitHub, Google). bcrypt reuse avoids a new hashing dependency. The `BackupCode` model is a separate entity to allow independent invalidation and clean DB semantics.
 
 **Alternatives considered**:
+
 - **SHA-256 hashed codes**: Rejected — SHA-256 is fast and brute-forceable; bcrypt's cost factor makes offline attacks impractical.
 - **Storing codes inline in User model (JSON array)**: Rejected — violates normalisation; harder to mark individual codes as used without full array rewrite.
 
@@ -52,6 +55,7 @@
 **Rationale**: Avoids server-side session storage for the intermediate state. The partial JWT is short-lived (5 minutes), signed, and explicitly scoped to the 2FA step via the `stage` claim. This pattern is self-contained and requires no infrastructure changes.
 
 **Alternatives considered**:
+
 - **Server-side TOTP challenge (UUID stored in cache)**: Rejected — requires Redis or DB cache table; adds infrastructure for a short-lived state.
 - **Single-step login returning 202 with a challenge ID**: Rejected — requires a new session concept incompatible with the current stateless architecture.
 
@@ -64,6 +68,7 @@
 **Rationale**: FastAPI's default schema endpoint has no auth mechanism. A custom route wraps it behind the existing JWT guard. Using `swagger-ui-react` in the frontend is the cleanest approach: the user's auth token is available in the browser context and can be injected into `swagger-ui`'s `requestInterceptor` for "Try it out" calls.
 
 **Alternatives considered**:
+
 - **HTTP Basic auth on /docs**: Rejected — different auth scheme from the rest of the app; confusing UX.
 - **Middleware-based protection on /docs URL**: Rejected — FastAPI serves Swagger UI as a static HTML file; there is no clean hook to inject bearer auth into it without custom JavaScript injection.
 - **Redoc-only page**: Rejected — Redoc is read-only; `swagger-ui` supports "Try it out" which is valuable for developers.
@@ -77,6 +82,7 @@
 **Rationale**: MUI v5 is the production-stable release. v6 (alpha) introduces breaking changes and is not yet recommended for production. MUI v5 has mature React 18 support, TypeScript types, and extensive component coverage. Emotion is the recommended CSS-in-JS engine for MUI v5.
 
 **Alternatives considered**:
+
 - **MUI v6**: Rejected — alpha stability; breaking changes from v5.
 - **Tailwind CSS**: Rejected — requires a different theming approach; would not satisfy the spec's explicit MUI requirement.
 - **Chakra UI / Ant Design**: Rejected — spec explicitly requires Material UI.
@@ -90,6 +96,7 @@
 **Rationale**: `useSyncExternalStore` would be ideal for `matchMedia` but `useEffect` + cleanup is simpler and well-supported. The resolved mode (light/dark) is the single truth passed to MUI; the three-way preference (light/dark/system) lives in the user's profile.
 
 **Alternatives considered**:
+
 - **CSS custom properties for theming**: Rejected — MUI's theming system supersedes manual CSS variables; maintaining two systems is a DRY violation.
 - **Redux/Zustand for theme state**: Rejected — YAGNI; React context is sufficient for a single scalar value consumed app-wide.
 
@@ -114,11 +121,13 @@
 ## Dependencies to Add
 
 ### Backend (`backend/pyproject.toml`)
+
 - `pyotp>=2.9` — TOTP secret generation and verification
 - `qrcode[pil]>=7.4` — QR code image generation (returns base64 PNG)
 - `cryptography>=42` — Fernet encryption for TOTP secret (likely already transitive)
 
 ### Frontend (`frontend/package.json`)
+
 - `@mui/material@^5.16` — MUI component library
 - `@mui/icons-material@^5.16` — MUI icon set
 - `@emotion/react@^11` — MUI CSS-in-JS engine

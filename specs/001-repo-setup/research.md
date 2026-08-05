@@ -9,18 +9,21 @@
 **Decision**: Use a root-level UV workspace with `pyproject.toml` containing `[tool.uv.workspace]`, with `backend`, `agents`, and `db` as workspace members.
 
 **Rationale**:
+
 - UV workspaces (analogous to Cargo workspaces or npm workspaces) allow multiple packages to share a single lockfile (`uv.lock`) at the repository root while maintaining independent `pyproject.toml` per package.
 - Inter-package dependencies are expressed as path dependencies: e.g., `backend` depends on `agents` and `db` via `agents = { path = "../agents" }`.
 - A single `uv sync` at the root installs all workspace members; `uv sync --package backend` installs only one.
 - Virtual environments are managed per-workspace by UV; `.venv` lives at the workspace root.
 
 **Root `pyproject.toml` snippet**:
+
 ```toml
 [tool.uv.workspace]
 members = ["backend", "agents", "db"]
 ```
 
 **Member inter-dependency** (in `backend/pyproject.toml`):
+
 ```toml
 [project]
 dependencies = [
@@ -36,6 +39,7 @@ db    = { workspace = true }
 ```
 
 **Alternatives considered**:
+
 - Independent venvs per sub-project: simpler but no shared lockfile, requires manual version alignment.
 - Poetry workspaces: mature but slower than UV and requires Poetry installation.
 
@@ -46,11 +50,13 @@ db    = { workspace = true }
 **Decision**: Python 3.14 (minimum), targeting 3.14.
 
 **Rationale**:
+
 - Python 3.14 brings further performance improvements, improved typing features, and continued ecosystem maturation.
 - FastAPI 0.111+, SQLAlchemy 2.x, and all major tooling support 3.14.
 - `pyproject.toml` sets `requires-python = ">=3.14"`.
 
 **Alternatives considered**:
+
 - 3.13: Acceptable fallback if 3.14 is unavailable in a target environment; all dependencies are compatible.
 - 3.12: Not recommended; lacks improvements present in 3.13 and 3.14.
 
@@ -61,12 +67,14 @@ db    = { workspace = true }
 **Decision**: Ruff (linting + formatting), MyPy (type checking), pydocstyle via Ruff (docstring style), pytest (testing). All configured in `pyproject.toml`.
 
 **Rationale**:
+
 - **Ruff** replaces Flake8, isort, pyupgrade, and pydocstyle in a single, extremely fast tool. Configured via `[tool.ruff]` in `pyproject.toml`. Includes `pydocstyle`-equivalent rules under the `D` ruleset.
 - **MyPy** remains the gold standard for Python static type checking. Configured via `[tool.mypy]` in `pyproject.toml`.
 - **pytest** with `pytest-cov` for coverage and `pytest-asyncio` for async FastAPI routes.
 - **UV run** is used to execute all tools: `uv run ruff check .`, `uv run mypy .`, `uv run pytest`.
 
 **pyproject.toml configuration pattern**:
+
 ```toml
 [tool.ruff]
 line-length = 100
@@ -84,6 +92,7 @@ testpaths = ["tests"]
 ```
 
 **Alternatives considered**:
+
 - Flake8 + isort + black: Multiple tools requiring separate configs; Ruff is strictly superior.
 - Pyright: Faster than MyPy but MyPy has broader ecosystem support and is specified in the requirements.
 
@@ -94,11 +103,13 @@ testpaths = ["tests"]
 **Decision**: Use the `pre-commit` framework (`.pre-commit-config.yaml`) at each sub-project root, using `local` hooks that invoke UV.
 
 **Rationale**:
+
 - `pre-commit` is the standard Python-ecosystem hook manager; `.pre-commit-config.yaml` is declarative and version-pinned.
 - For a UV-managed project, hooks use `language: system` or `language: python` with `uv run` as the entry point to avoid a separate pre-commit environment.
 - Alternatively, a root-level `.pre-commit-config.yaml` can cover all sub-projects.
 
 **Root `.pre-commit-config.yaml` pattern**:
+
 ```yaml
 repos:
   - repo: local
@@ -122,6 +133,7 @@ repos:
 ```
 
 **Alternatives considered**:
+
 - Husky (Node-only): Not appropriate for Python sub-projects; only suitable for `frontend`.
 - Per-sub-project `.pre-commit-config.yaml`: More granular but requires `pre-commit install` in each directory.
 
@@ -132,12 +144,14 @@ repos:
 **Decision**: Vite 5.x + React 18.x + TypeScript 5.x template; tested with Vitest.
 
 **Rationale**:
+
 - **Vite** is the current industry standard for React SPA scaffolding (2024-2025): sub-second HMR, native ESM, excellent TypeScript support.
 - **React 18.x** is the current stable LTS (19.x is available but ecosystem stabilisation still ongoing).
 - **TypeScript 5.4+** for best-in-class type safety.
 - **Vitest** replaces Jest for Vite projects: native ES modules, 5-10x faster, Jest-compatible API.
 
 **Alternatives considered**:
+
 - Create React App: Deprecated/unmaintained, not suitable for new projects.
 - Next.js: Adds SSR complexity not needed for a researcher-facing SPA.
 - Jest + ts-jest: Viable but slower; Vitest is preferred when using Vite.
@@ -149,6 +163,7 @@ repos:
 **Decision**: ESLint 9.x flat config (`eslint.config.js`) + `typescript-eslint` + `eslint-plugin-react` + `eslint-plugin-react-hooks` + `eslint-config-prettier`.
 
 **Rationale**:
+
 - ESLint 9 standardises on flat config; `.eslintrc.*` is deprecated.
 - `typescript-eslint` v8 (2024) provides `strictTypeChecked` preset.
 - `eslint-config-prettier` disables all ESLint formatting rules so Prettier owns formatting.
@@ -156,6 +171,7 @@ repos:
 - `lint-staged` with `husky` runs ESLint + Prettier on staged files before each commit.
 
 **Alternatives considered**:
+
 - Legacy `.eslintrc` config: Deprecated; not suitable for new projects.
 - `eslint-plugin-prettier`: Runs Prettier as an ESLint rule; creates slow feedback loop; the separate `eslint-config-prettier` approach is preferred.
 
@@ -166,11 +182,13 @@ repos:
 **Decision**: Layered architecture — `api/` (routers), `services/` (business logic), `models/` (SQLAlchemy ORM models), `schemas/` (Pydantic request/response schemas), `core/` (config, dependencies).
 
 **Rationale**:
+
 - Clearly separates HTTP concerns (routers) from business logic (services) and data access (models).
 - Pydantic v2 (required by FastAPI 0.100+) provides fast validation with `model_config`.
 - FastAPI dependency injection (`Depends`) handles DB sessions, auth, and shared services.
 
 **Directory layout**:
+
 ```
 backend/
 ├── pyproject.toml
@@ -196,6 +214,7 @@ backend/
 ```
 
 **Alternatives considered**:
+
 - Monolithic `main.py`: Only appropriate for trivial APIs.
 - Domain-driven layout (feature folders): Good for very large apps; overkill at this stage.
 
@@ -206,6 +225,7 @@ backend/
 **Decision**: SQLAlchemy 2.x (async) with Alembic migrations; PostgreSQL for production, SQLite for local development.
 
 **Rationale**:
+
 - SQLAlchemy 2.x introduces `mapped_column` / `Mapped` type annotations for fully type-checked models.
 - Alembic is the standard migration tool for SQLAlchemy; integrates well with UV-managed projects.
 - PostgreSQL is appropriate for production (JSONB for flexible metadata, full-text search for paper abstracts).
@@ -213,6 +233,7 @@ backend/
 - `db/` sub-project contains only SQLAlchemy model definitions and Alembic migration scripts; `backend/` imports them.
 
 **Alternatives considered**:
+
 - SQLModel: Merges Pydantic and SQLAlchemy models; reduces boilerplate but adds coupling between layers.
 - Tortoise ORM: Django-style async ORM; less ecosystem support than SQLAlchemy.
 - Prisma (Python client): Excellent DX but Python client is less mature than JS counterpart.
@@ -224,11 +245,13 @@ backend/
 **Decision**: Direct Python import — `agents` is a UV workspace package; `backend` imports it as a library dependency.
 
 **Rationale**:
+
 - For MVP, the simplest approach is direct import: no second process to manage, no network overhead, easy to unit-test in isolation.
 - Clean module boundary is maintained by keeping `agents` in its own package with a well-defined public API (exported from `agents/__init__.py`).
 - HTTP can be introduced in a later phase when agents need to scale independently or become long-running async workers.
 
 **Import pattern** (`backend/pyproject.toml`):
+
 ```toml
 [project]
 dependencies = ["agents", "db", "fastapi>=0.111", ...]
@@ -239,6 +262,7 @@ db     = { workspace = true }
 ```
 
 **Alternatives considered**:
+
 - HTTP microservice: Adds a second process to run locally, complicates development and testing; premature for scaffold.
 - Celery + Redis: Appropriate for production async workloads; deferred to a later feature.
 
@@ -249,11 +273,13 @@ db     = { workspace = true }
 **Decision**: Husky v9 + lint-staged for the `frontend/` sub-project.
 
 **Rationale**:
+
 - Husky v9 uses plain shell scripts in `.husky/`; minimal config.
 - `lint-staged` runs ESLint + Prettier only on staged `.ts/.tsx` files, keeping hook execution fast.
 - Consistent with Node ecosystem conventions.
 
 **Configuration**:
+
 ```json
 // package.json
 "lint-staged": {
@@ -263,6 +289,7 @@ db     = { workspace = true }
 ```
 
 **Alternatives considered**:
+
 - `pre-commit` Python framework: Appropriate for polyglot; for a Node-only project, Husky is lighter.
 
 ---
@@ -272,12 +299,14 @@ db     = { workspace = true }
 **Decision**: 85% line/branch coverage minimum enforced via `pytest-cov` (Python) and Vitest's built-in coverage (via `@vitest/coverage-v8`) for TypeScript. Coverage thresholds configured to fail the test run below 85%.
 
 **Rationale**:
+
 - 85% is a practical threshold that catches most missing tests without requiring trivial coverage of boilerplate.
 - `pytest-cov` with `--cov-fail-under=85` integrates cleanly into the existing pytest workflow.
 - Vitest's `coverage.thresholds` config enforces the same minimum for TypeScript.
 - Coverage is measured at every CI run; pre-commit runs unit tests only so partial coverage is expected locally — the full threshold is enforced in CI against the full suite.
 
 **Python configuration**:
+
 ```toml
 # pyproject.toml
 [tool.pytest.ini_options]
@@ -285,6 +314,7 @@ addopts = "--cov=src --cov-report=term-missing --cov-fail-under=85"
 ```
 
 **TypeScript configuration**:
+
 ```typescript
 // vitest.config.ts
 coverage: {
@@ -294,6 +324,7 @@ coverage: {
 ```
 
 **Alternatives considered**:
+
 - 100% coverage: Expensive to maintain; forces coverage of trivial code; false sense of quality.
 - No threshold (report only): Insufficient — coverage tends to drift downward without enforcement.
 
@@ -304,12 +335,14 @@ coverage: {
 **Decision**: `mutmut` for Python sub-projects; `Stryker` (`@stryker-mutator/core` + `@stryker-mutator/vitest-runner`) for the TypeScript frontend. Mutation testing runs in CI only (too slow for pre-commit or every test run).
 
 **Rationale**:
+
 - AI-generated tests are prone to "test theatre" — tests that pass trivially without actually verifying behaviour. Mutation testing catches this by introducing small code changes (mutants) and checking that at least one test fails for each mutant.
 - **mutmut** is the most widely used Python mutation testing tool; integrates with pytest; HTML reports; supports incremental runs.
 - **Stryker** is the dominant JavaScript/TypeScript mutation testing framework; has first-class Vitest integration via `@stryker-mutator/vitest-runner`.
 - Mutation score target: ≥85% (mutants killed / total mutants), consistent with the coverage threshold.
 
 **Python usage**:
+
 ```bash
 uv run mutmut run
 uv run mutmut results
@@ -317,15 +350,17 @@ uv run mutmut html  # generates html/index.html
 ```
 
 **TypeScript usage** (via `stryker.config.mjs`):
+
 ```js
 export default {
-  testRunner: 'vitest',
-  coverageAnalysis: 'perTest',
-  thresholds: { high: 90, low: 85, break: 85 }
-}
+  testRunner: "vitest",
+  coverageAnalysis: "perTest",
+  thresholds: { high: 90, low: 85, break: 85 },
+};
 ```
 
 **Alternatives considered**:
+
 - `cosmic-ray` (Python): More comprehensive than mutmut but significantly more complex to configure; mutmut is sufficient for this project.
 - `jest-stryker` / manual mutation: Stryker is the clear standard for JS/TS.
 
@@ -336,8 +371,9 @@ export default {
 **Decision**: Implement metamorphic testing for the `agents` sub-project using custom pytest fixtures with `hypothesis` for metamorphic relation (MR) generation. No dedicated metamorphic testing framework — implement MRs as parameterised pytest tests.
 
 **Rationale**:
+
 - The `agents` sub-project will implement AI-assisted research tasks (abstract screening, data extraction, synthesis). These tasks produce outputs that are hard to verify with exact oracle assertions because the "correct" answer depends on nuanced judgement.
-- **Metamorphic testing** addresses the oracle problem by defining *relations* between pairs of related inputs and their outputs, rather than asserting exact output values.
+- **Metamorphic testing** addresses the oracle problem by defining _relations_ between pairs of related inputs and their outputs, rather than asserting exact output values.
 - Example metamorphic relations for an abstract screener:
   - **MR-1 (Permutation invariance)**: Screening a batch of abstracts in a different order should produce the same inclusion/exclusion decisions per abstract.
   - **MR-2 (Addition of irrelevant papers)**: Adding clearly out-of-scope papers to a batch should not change the decision for already-screened in-scope papers.
@@ -345,6 +381,7 @@ export default {
 - `hypothesis` is used to generate varied input combinations for each MR, making the tests property-based rather than example-based.
 
 **Implementation pattern**:
+
 ```python
 # agents/tests/metamorphic/test_screener_mr.py
 import pytest
@@ -360,6 +397,7 @@ def test_mr1_permutation_invariance(abstracts):
 ```
 
 **Test structure**:
+
 ```
 agents/tests/
 ├── unit/              # Standard unit tests; run in pre-commit
@@ -368,6 +406,7 @@ agents/tests/
 ```
 
 **Alternatives considered**:
+
 - Standard assertion testing: Impossible for non-deterministic AI outputs; wrong tool for this use case.
 - `deepeval` / `ragas`: LLM evaluation frameworks; better suited for evaluating output quality than structural correctness; complementary, not a replacement for metamorphic testing.
 - **`GeMTest`** (`https://github.com/tum-i4/gemtest`): A dedicated Python metamorphic testing framework from TU Munich. Provides a declarative `@metamorphic` decorator and built-in support for defining and composing metamorphic relations, reducing boilerplate compared to raw pytest + hypothesis. A strong candidate to adopt instead of the custom pytest approach if the team prefers a framework with first-class MR concepts. Evaluate after the scaffold phase — if the custom approach becomes unwieldy, migrate to GeMTest.
@@ -380,12 +419,14 @@ agents/tests/
 **Decision**: `litellm` as the unified LLM client in both `agents` and `agent-eval`; Ollama served locally and exposed via `OLLAMA_BASE_URL`; provider/model selection fully driven by pydantic-settings environment variables.
 
 **Rationale**:
+
 - `litellm` provides a single `litellm.completion()` interface that transparently routes to Anthropic (`anthropic/claude-*`), Ollama (`ollama/llama3.2`), OpenAI, and 100+ other providers. No provider-specific branching in application code.
 - Ollama runs LLMs locally via a REST API compatible with the OpenAI spec; `litellm` treats it as `ollama/<model>` or via `api_base` override — no separate client needed.
 - All provider configuration lives in `core/config.py` (pydantic-settings); switching from Anthropic to Ollama requires only env var changes, no code changes.
 - `deepeval` supports custom LLM judges via its `DeepEvalBaseLLM` interface; wrapping `litellm` behind this interface makes both local and cloud judges work identically.
 
 **Configuration model** (shared pattern for `agents` and `agent-eval`):
+
 ```python
 # core/config.py
 from pydantic_settings import BaseSettings
@@ -404,6 +445,7 @@ class LLMSettings(BaseSettings):
 ```
 
 **LiteLLM call pattern**:
+
 ```python
 import litellm
 from agents.core.config import settings
@@ -417,6 +459,7 @@ response = litellm.completion(
 ```
 
 **deepeval judge wrapper**:
+
 ```python
 # agent_eval/judge.py
 from deepeval.models.base_model import DeepEvalBaseLLM
@@ -450,13 +493,14 @@ class LiteLLMJudge(DeepEvalBaseLLM):
 
 **Env var matrix**:
 
-| Scenario | `LLM_PROVIDER` | `LLM_MODEL` | `OLLAMA_BASE_URL` | `ANTHROPIC_API_KEY` |
-|----------|---------------|-------------|-------------------|---------------------|
-| Anthropic cloud | `anthropic` | `claude-sonnet-4-6` | (unused) | required |
-| Local Ollama | `ollama` | `llama3.2:3b` | `http://localhost:11434` | (unused) |
-| Remote Ollama | `ollama` | `llama3.2:70b` | `http://gpu-server:11434` | (unused) |
+| Scenario        | `LLM_PROVIDER` | `LLM_MODEL`         | `OLLAMA_BASE_URL`         | `ANTHROPIC_API_KEY` |
+| --------------- | -------------- | ------------------- | ------------------------- | ------------------- |
+| Anthropic cloud | `anthropic`    | `claude-sonnet-4-6` | (unused)                  | required            |
+| Local Ollama    | `ollama`       | `llama3.2:3b`       | `http://localhost:11434`  | (unused)            |
+| Remote Ollama   | `ollama`       | `llama3.2:70b`      | `http://gpu-server:11434` | (unused)            |
 
 **Alternatives considered**:
+
 - Provider-specific clients (`anthropic` SDK + `ollama` Python SDK): Requires branching logic everywhere an LLM is called; breaks open/closed principle.
 - LangChain as abstraction: Heavy dependency; introduces its own abstractions on top; LiteLLM is lighter and more direct.
 - Direct Ollama REST calls via `httpx`: Works but duplicates what LiteLLM already provides.
@@ -468,11 +512,13 @@ class LiteLLMJudge(DeepEvalBaseLLM):
 **Decision**: `typer` with `rich` for terminal output; packaged as `sms-agent-eval` in the UV workspace.
 
 **Rationale**:
+
 - `typer` is the modern standard for Python CLIs: FastAPI-style type annotations, automatic `--help`, shell completion, and Pydantic v2 integration. Minimal boilerplate.
 - `rich` provides beautiful tables, progress bars, and coloured output with zero effort alongside Typer.
 - As a UV workspace member, `agent-eval` can depend on `agents` directly (library import) and run evaluations in-process with no network overhead.
 
 **CLI command surface** (`agent-eval <command>`):
+
 ```
 evaluate   Run a test suite against an agent and score with LLM-as-a-Judge
 report     Display or export results from a previous evaluation run
@@ -481,6 +527,7 @@ improve    Suggest prompt revisions based on low-scoring evaluation cases
 ```
 
 **Alternatives considered**:
+
 - `click` directly: Lower-level than Typer; more boilerplate; Typer is strictly better for typed Python.
 - `argparse`: Standard library but verbose and lacks rich output integration.
 
@@ -491,11 +538,13 @@ improve    Suggest prompt revisions based on low-scoring evaluation cases
 **Decision**: `deepeval` as the primary evaluation framework for structured LLM-as-a-Judge metrics; Anthropic API (via `anthropic` SDK) used directly for custom judge prompts specific to research tasks.
 
 **Rationale**:
+
 - **`deepeval`** provides battle-tested, ready-made metrics: `GEval` (custom criteria via LLM), `FaithfulnessMetric`, `AnswerRelevancyMetric`, `HallucinationMetric`, and more. Integrates with pytest via `deepeval.test_case`. Supports any LLM as the judge, including Claude.
 - For research-specific metrics (e.g., "Did the agent correctly apply PICO criteria when screening this abstract?"), custom judge prompts written in Markdown and evaluated via the Anthropic API give full control.
 - The two approaches are complementary: deepeval for generic quality metrics, custom Anthropic calls for domain-specific research criteria.
 
 **Usage pattern**:
+
 ```python
 # agent_eval/evaluators/screener.py
 from deepeval import evaluate
@@ -513,6 +562,7 @@ def run_eval(test_cases: list[LLMTestCase]) -> EvalReport:
 ```
 
 **Alternatives considered**:
+
 - `ragas`: Focused on RAG pipelines (retrieval + generation); less suited to agent task evaluation.
 - `promptfoo`: CLI-first, YAML-driven; better suited to prompt A/B testing than programmatic agent evaluation.
 - `openai-evals`: OpenAI-specific framing; less idiomatic with Anthropic/Claude.
@@ -525,12 +575,14 @@ def run_eval(test_cases: list[LLMTestCase]) -> EvalReport:
 **Decision**: Store system and user prompts as Markdown files under `agents/prompts/{agent_type}/`; use Jinja2 for variable substitution at runtime. `agent-eval improve` command reads, evaluates, and proposes updated versions of these files.
 
 **Rationale**:
+
 - Markdown is human-readable, diff-friendly, and renders well in GitHub. Prompt engineers can edit prompts without touching Python code.
 - Jinja2 is the standard Python templating engine; `{{ variable }}` syntax is familiar and allows conditional blocks for complex prompts.
 - Versioning prompts as files in git gives full change history and enables `agent-eval compare` to diff performance between prompt versions.
 - The `improve` command uses LLM-as-a-Judge scores to identify weak cases, then calls the Anthropic API to suggest prompt revisions, writing candidates back to the filesystem for human review.
 
 **Directory structure**:
+
 ```
 agents/
 └── prompts/
@@ -546,6 +598,7 @@ agents/
 ```
 
 **Prompt loader**:
+
 ```python
 # agents/core/prompt_loader.py
 from jinja2 import Environment, FileSystemLoader
@@ -558,6 +611,7 @@ def load_prompt(agent_type: str, role: str, **kwargs: str) -> str:
 ```
 
 **Alternatives considered**:
+
 - Hardcoded strings in Python: Not editable without code changes; no diff history of prompt iterations.
 - YAML/TOML prompt files: Less readable for multi-paragraph prompts; Markdown is better for prose.
 - LangChain `PromptTemplate`: Adds LangChain as a dependency; unnecessary when Jinja2 suffices.
@@ -569,12 +623,14 @@ def load_prompt(agent_type: str, role: str, **kwargs: str) -> str:
 **Decision**: Multi-stage build from the repo root (workspace context). Stage 1 installs UV and syncs production deps; stage 2 is a minimal `python:3.14-slim` runtime.
 
 **Rationale**:
+
 - Building from the repo root lets the backend Dockerfile access the full UV workspace (`agents/`, `db/`) as path dependencies — the only clean way to package a UV workspace member for production.
 - Multi-stage keeps the final image small: the UV cache and build tools stay in stage 1.
 - `uv sync --frozen --no-dev` installs exactly what `uv.lock` specifies, producing reproducible images.
 - Running as a non-root user (`USER appuser`) follows Docker security best practices.
 
 **Dockerfile pattern**:
+
 ```dockerfile
 # syntax=docker/dockerfile:1
 FROM python:3.14-slim AS builder
@@ -600,6 +656,7 @@ CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000"]
 **Build context**: repo root (`.`) with `backend/Dockerfile`.
 
 **Alternatives considered**:
+
 - `uv export` → pip install: Decouples from UV but loses workspace path dependency resolution.
 - Build from `backend/` subdirectory only: Cannot resolve `agents`/`db` workspace siblings.
 
@@ -610,11 +667,13 @@ CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000"]
 **Decision**: Multi-stage build — Stage 1: `node:20-alpine` runs `npm ci && npm run build`; Stage 2: `nginx:alpine` serves the compiled static files.
 
 **Rationale**:
+
 - Vite produces a static bundle (`dist/`) that can be served by nginx with no Node runtime in production, yielding a very small image (~25 MB).
 - `npm ci` (not `npm install`) uses the lockfile exactly, ensuring reproducible builds.
 - A custom `nginx.conf` enables `try_files` fallback for React Router client-side routing.
 
 **Dockerfile pattern**:
+
 ```dockerfile
 # syntax=docker/dockerfile:1
 FROM node:20-alpine AS builder
@@ -631,6 +690,7 @@ EXPOSE 80
 ```
 
 **nginx.conf** (SPA fallback):
+
 ```nginx
 server {
     listen 80;
@@ -640,6 +700,7 @@ server {
 ```
 
 **Alternatives considered**:
+
 - `node:20-alpine` as runtime serving via `vite preview`: Much larger image; not suited for production.
 - `caddy:alpine`: Excellent alternative to nginx; equally valid but nginx is more universally familiar.
 
@@ -650,20 +711,23 @@ server {
 **Decision**: `hadolint` for Dockerfile linting (pre-commit + CI); `trivy` for container vulnerability scanning (CI only after image build).
 
 **Rationale**:
+
 - **`hadolint`**: The standard Dockerfile linter. Checks shell best practices (via ShellCheck), Docker layer caching patterns, `apt`/`apk` pinning, non-root user rules, and more. Runs in <1 second per Dockerfile — fast enough for pre-commit.
 - **`trivy`**: The leading open-source vulnerability scanner for container images (Aqua Security). Scans OS packages and language-specific deps (Python, npm) against CVE databases. Must run after `docker build`; CI-only.
 - Both are free, widely adopted, and have official GitHub Actions.
 
 **Pre-commit integration** (adds to root `.pre-commit-config.yaml`):
+
 ```yaml
 - repo: https://github.com/hadolint/hadolint
   rev: v2.12.0
   hooks:
     - id: hadolint
-      args: ["--ignore", "DL3008"]  # DL3008: apt pin versions (acceptable in slim)
+      args: ["--ignore", "DL3008"] # DL3008: apt pin versions (acceptable in slim)
 ```
 
 **CI integration** (adds to `.github/workflows/ci.yml`):
+
 ```yaml
 - name: Build backend image
   run: docker build -f backend/Dockerfile -t sms-backend:ci .
@@ -674,10 +738,11 @@ server {
     image-ref: sms-backend:ci
     format: sarif
     severity: CRITICAL,HIGH
-    exit-code: '1'
+    exit-code: "1"
 ```
 
 **Alternatives considered**:
+
 - `dockle`: CIS Dockerfile benchmark; complementary to hadolint but overlapping; hadolint covers most of the same rules.
 - `docker scout`: Docker's built-in scanner (replaces Snyk integration); requires Docker subscription for full features; trivy is fully free.
 - `snyk container`: Good but requires Snyk account; trivy is simpler to integrate.
@@ -689,6 +754,7 @@ server {
 **Decision**: Single `docker-compose.yml` at the repo root with four services: `db` (PostgreSQL), `backend`, `frontend`, `ollama`. The `ollama` service uses a **Compose profile** (`--profile ollama`) so it is opt-in — operators using a remote Ollama or Anthropic omit it.
 
 **Rationale**:
+
 - Docker Compose profiles (v2 feature) cleanly model optional services without separate compose files.
 - `OLLAMA_BASE_URL` env var in `backend` and `agent-eval` points to either the compose `ollama` service or a remote URL — no service code changes needed.
 - Health checks on `db` and `ollama` ensure `backend` doesn't start until dependencies are ready.
@@ -696,14 +762,15 @@ server {
 
 **Service matrix**:
 
-| Service | Image / Build | Ports | Profile |
-|---------|--------------|-------|---------|
-| `db` | `postgres:16-alpine` | 5432 | always |
-| `backend` | build `backend/Dockerfile` (context: root) | 8000 | always |
-| `frontend` | build `frontend/Dockerfile` (context: `frontend/`) | 3000→80 | always |
-| `ollama` | `ollama/ollama` | 11434 | `ollama` |
+| Service    | Image / Build                                      | Ports   | Profile  |
+| ---------- | -------------------------------------------------- | ------- | -------- |
+| `db`       | `postgres:16-alpine`                               | 5432    | always   |
+| `backend`  | build `backend/Dockerfile` (context: root)         | 8000    | always   |
+| `frontend` | build `frontend/Dockerfile` (context: `frontend/`) | 3000→80 | always   |
+| `ollama`   | `ollama/ollama`                                    | 11434   | `ollama` |
 
 **Usage**:
+
 ```bash
 # Anthropic cloud — no Ollama
 docker compose up
@@ -716,6 +783,7 @@ docker compose exec ollama ollama pull llama3.2:3b
 ```
 
 **Alternatives considered**:
+
 - Separate `docker-compose.ollama.yml` override file: Works but requires `--file` flags and is harder to discover.
 - Always-on Ollama service: Wastes GPU/CPU resources when using Anthropic; profiles are strictly better.
 - Kubernetes/Helm: Overkill for local development; Compose is the right tool at this stage.
@@ -727,12 +795,14 @@ docker compose exec ollama ollama pull llama3.2:3b
 **Decision**: `FastMCP` (the high-level Python MCP framework by Anthropic/jlowin) to implement the `researcher-mcp` MCP server; run as a standalone HTTP/SSE server on port 8002.
 
 **Rationale**:
+
 - FastMCP provides `@mcp.tool()`, `@mcp.resource()`, and `@mcp.prompt()` decorators, turning plain Python functions into MCP-compliant tools with zero protocol boilerplate.
 - Running as a standalone HTTP/SSE server decouples the tool implementation from the agent runtime — the same `researcher-mcp` server can serve multiple agent instances and future MCP clients (e.g., Claude Desktop, other AI tools).
 - FastMCP's `Client` can also be used for in-process testing without a network hop.
 - `researcher-mcp` is a UV workspace member; `agents` declares it as a workspace dependency for local testing, but connects to it via HTTP at runtime.
 
 **Package structure**:
+
 ```
 researcher-mcp/
 ├── pyproject.toml          # sms-researcher-mcp; deps: fastmcp, httpx, pydantic
@@ -747,6 +817,7 @@ researcher-mcp/
 ```
 
 **Server entry point**:
+
 ```python
 # researcher_mcp/server.py
 from fastmcp import FastMCP
@@ -760,6 +831,7 @@ if __name__ == "__main__":
 ```
 
 **Alternatives considered**:
+
 - Raw `mcp` SDK: Lower-level; FastMCP is the recommended high-level abstraction.
 - Implement as a library (no HTTP server): Loses MCP protocol benefits; prevents use by non-Python MCP clients.
 - Expose tools directly in `agents` without MCP: Tightly couples tool implementation to agent runtime.
@@ -771,12 +843,14 @@ if __name__ == "__main__":
 **Decision**: Configure the MCP client connection in `agents/core/mcp_client.py`; `agents` connects to `researcher-mcp` via HTTP/SSE using FastMCP's `Client`; discovered tools are converted to LiteLLM function-call format for use in agent prompts.
 
 **Rationale**:
+
 - The `agents` sub-project contains the AI agent logic that uses tools — it is the natural owner of the MCP client configuration.
 - The `backend` orchestrates agents but does not directly call MCP tools; placing MCP config in `backend` would create an unnecessary coupling.
 - FastMCP's `Client` provides `get_tools()` which returns tool definitions compatible with LiteLLM's `tools` parameter format after a small transformation.
 - `AGENT_MCP_URL` env var (default: `http://researcher-mcp:8002/sse`) controls the server location; `agents` can target a local process or a remote server without code changes.
 
 **Integration pattern**:
+
 ```python
 # agents/core/mcp_client.py
 from fastmcp import Client
@@ -795,12 +869,14 @@ async def get_mcp_tools() -> list[dict]:
 ```
 
 **Env var**:
+
 ```
 AGENT_MCP_URL=http://researcher-mcp:8002/sse   # docker-compose default
 AGENT_MCP_URL=http://localhost:8002/sse   # local dev default
 ```
 
 **Alternatives considered**:
+
 - Configure MCP in `backend`: Backend would need to know about agent tools; violates separation of concerns.
 - Hardcode tool list in `agents`: Loses dynamic tool discovery; breaks when `researcher-mcp` adds new tools.
 
@@ -811,12 +887,14 @@ AGENT_MCP_URL=http://localhost:8002/sse   # local dev default
 **Decision**: Multi-source search with priority order: **Semantic Scholar** → **OpenAlex** → **CrossRef**. All three are free and require no authentication for basic use.
 
 **Rationale**:
+
 - **Semantic Scholar** (Allen Institute): Comprehensive academic graph (200M+ papers), free API, supports full-text search, citation data, author profiles, and abstracts. Rate limit: 100 req/5min unauthenticated, 1 req/s with free API key.
 - **OpenAlex** (OurResearch): 250M+ works, fully open, DOI/ORCID/ROR integration, rich filtering. No auth required; polite pool at 100k req/day.
 - **CrossRef**: DOI metadata authority; best for resolving DOIs and getting citation counts. Free with `mailto` header for polite pool.
 - Sources are tried in order; results are merged and deduplicated by DOI.
 
 **Tool signatures**:
+
 ```python
 @mcp.tool()
 async def search_papers(
@@ -841,6 +919,7 @@ async def list_papers_by_author(author_id: str, limit: int = 50) -> list[PaperRe
 ```
 
 **Alternatives considered**:
+
 - PubMed/MEDLINE: Biomedical focus; useful but covered by Semantic Scholar.
 - IEEE Xplore / ACM DL: Paywalled APIs; not suitable for free-tier use.
 - CORE API: Open access focused; good complement; add in later phase.
@@ -852,11 +931,13 @@ async def list_papers_by_author(author_id: str, limit: int = 50) -> list[PaperRe
 **Decision**: Attempt PDF sources in priority order: **Unpaywall** (legal open access) → **arXiv** (for preprints) → **SciHub** (opt-in, disabled by default, configured via `SCIHUB_ENABLED=true`).
 
 **Rationale**:
+
 - **Unpaywall**: Free, legal API that resolves DOIs to open-access PDFs. Covers ~50% of recent papers. Requires only an email address (`email` param). Zero legal risk.
 - **arXiv**: Free, legal. Direct PDF download for preprints. Many CS/physics/math papers are available here even if paywalled in journals.
 - **SciHub**: Widely used in the research community but operates in a legal grey area (copyright litigation in multiple jurisdictions). Included as a configurable, opt-in option with clear documentation of legal/ethical implications. **Disabled by default.** Users enable it by setting `SCIHUB_ENABLED=true` and `SCIHUB_URL` in their environment.
 
 **Fetch tool**:
+
 ```python
 @mcp.tool()
 async def fetch_paper_pdf(
@@ -872,6 +953,7 @@ async def fetch_paper_pdf(
 **Legal/ethical note**: SciHub integration is documented with a prominent warning in the README. It is the user's responsibility to comply with applicable laws in their jurisdiction.
 
 **Alternatives considered**:
+
 - Unpaywall only: Misses ~50% of papers; researchers find this too limiting.
 - No PDF fetch: Removes a key capability for systematic review workflows.
 - Browser automation (Playwright): More complex, fragile; API-first approach preferred.
@@ -880,39 +962,39 @@ async def fetch_paper_pdf(
 
 ## Summary of All Decisions
 
-| Topic | Decision |
-|-------|----------|
-| Python workspace | UV workspace with shared lockfile |
-| Python version | 3.14+ |
-| Python lint/format | Ruff (all-in-one) |
-| Python type check | MyPy (strict) |
-| Python test | pytest + pytest-asyncio + pytest-cov |
-| Python pre-commit | `pre-commit` framework with `uv run` local hooks |
-| Frontend scaffold | Vite 5 + React 18 + TypeScript 5 |
-| Frontend test | Vitest + @testing-library/react |
-| Frontend lint | ESLint 9 flat config + typescript-eslint + react plugins |
-| Frontend format | Prettier 3 + eslint-config-prettier |
-| Frontend pre-commit | Husky v9 + lint-staged |
-| Backend framework | FastAPI 0.111+ with Pydantic v2 |
-| ORM | SQLAlchemy 2.x async |
-| Migrations | Alembic |
-| Database (prod) | PostgreSQL |
-| Database (dev) | SQLite via aiosqlite |
-| Agents integration | Direct Python import (UV workspace dependency) |
-| Schema sharing | `db/` workspace member imported by `backend/` |
-| LLM provider abstraction | LiteLLM (Anthropic + Ollama, config-driven) |
-| Backend Dockerfile | Multi-stage; UV workspace context from repo root |
-| Frontend Dockerfile | Multi-stage; node:20-alpine build + nginx:alpine runtime |
-| Dockerfile linting | hadolint (pre-commit + CI) |
-| Container vuln scanning | trivy (CI only, after image build) |
-| Local deployment | docker-compose.yml; ollama via Compose profile |
-| agent-eval CLI | Typer + Rich |
-| LLM-as-a-Judge | deepeval + LiteLLMJudge wrapper |
-| Prompt templates | Markdown files + Jinja2 in `agents/prompts/` |
-| MCP server | FastMCP; HTTP/SSE; port 8002 |
-| MCP client | `agents/core/mcp_client.py`; LiteLLM function-call conversion |
-| Paper search | Semantic Scholar → OpenAlex cascade; CrossRef DOI resolution |
-| PDF fetch | Unpaywall → arXiv → SciHub (opt-in, default off) |
-| API failure | Cascade fallback + tenacity retry (max 3, exp backoff + jitter) |
-| Rate limiting | Per-source env vars (SEMANTIC_SCHOLAR_RPM, OPEN_ALEX_RPM) |
-| researcher-mcp Docker | Multi-stage python:3.14-slim; repo root context |
+| Topic                    | Decision                                                        |
+| ------------------------ | --------------------------------------------------------------- |
+| Python workspace         | UV workspace with shared lockfile                               |
+| Python version           | 3.14+                                                           |
+| Python lint/format       | Ruff (all-in-one)                                               |
+| Python type check        | MyPy (strict)                                                   |
+| Python test              | pytest + pytest-asyncio + pytest-cov                            |
+| Python pre-commit        | `pre-commit` framework with `uv run` local hooks                |
+| Frontend scaffold        | Vite 5 + React 18 + TypeScript 5                                |
+| Frontend test            | Vitest + @testing-library/react                                 |
+| Frontend lint            | ESLint 9 flat config + typescript-eslint + react plugins        |
+| Frontend format          | Prettier 3 + eslint-config-prettier                             |
+| Frontend pre-commit      | Husky v9 + lint-staged                                          |
+| Backend framework        | FastAPI 0.111+ with Pydantic v2                                 |
+| ORM                      | SQLAlchemy 2.x async                                            |
+| Migrations               | Alembic                                                         |
+| Database (prod)          | PostgreSQL                                                      |
+| Database (dev)           | SQLite via aiosqlite                                            |
+| Agents integration       | Direct Python import (UV workspace dependency)                  |
+| Schema sharing           | `db/` workspace member imported by `backend/`                   |
+| LLM provider abstraction | LiteLLM (Anthropic + Ollama, config-driven)                     |
+| Backend Dockerfile       | Multi-stage; UV workspace context from repo root                |
+| Frontend Dockerfile      | Multi-stage; node:20-alpine build + nginx:alpine runtime        |
+| Dockerfile linting       | hadolint (pre-commit + CI)                                      |
+| Container vuln scanning  | trivy (CI only, after image build)                              |
+| Local deployment         | docker-compose.yml; ollama via Compose profile                  |
+| agent-eval CLI           | Typer + Rich                                                    |
+| LLM-as-a-Judge           | deepeval + LiteLLMJudge wrapper                                 |
+| Prompt templates         | Markdown files + Jinja2 in `agents/prompts/`                    |
+| MCP server               | FastMCP; HTTP/SSE; port 8002                                    |
+| MCP client               | `agents/core/mcp_client.py`; LiteLLM function-call conversion   |
+| Paper search             | Semantic Scholar → OpenAlex cascade; CrossRef DOI resolution    |
+| PDF fetch                | Unpaywall → arXiv → SciHub (opt-in, default off)                |
+| API failure              | Cascade fallback + tenacity retry (max 3, exp backoff + jitter) |
+| Rate limiting            | Per-source env vars (SEMANTIC_SCHOLAR_RPM, OPEN_ALEX_RPM)       |
+| researcher-mcp Docker    | Multi-stage python:3.14-slim; repo root context                 |

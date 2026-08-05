@@ -95,9 +95,9 @@ cd frontend && npm run dev
 
 ## 6. Key Configuration
 
-| Env Var | Description | Default |
-|---------|-------------|---------|
-| `SLR_KAPPA_THRESHOLD` | Minimum Cohen's Kappa before discussion triggered | `0.6` |
-| `SLR_MIN_SYNTHESIS_PAPERS` | Minimum accepted papers for synthesis/Forest plot | `3` |
+| Env Var                    | Description                                       | Default |
+| -------------------------- | ------------------------------------------------- | ------- |
+| `SLR_KAPPA_THRESHOLD`      | Minimum Cohen's Kappa before discussion triggered | `0.6`   |
+| `SLR_MIN_SYNTHESIS_PAPERS` | Minimum accepted papers for synthesis/Forest plot | `3`     |
 
 Add these to `.env.example` and `backend/src/backend/core/config.py` (Pydantic `BaseSettings`).

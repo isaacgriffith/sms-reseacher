@@ -91,14 +91,19 @@ export default function TertiaryQAGuidancePanel() {
           Secondary-Study Quality Assessment
         </Typography>
         <Typography variant="body2">
-          This Tertiary Study uses the six mandatory dimensions below to appraise each
-          included secondary study (SLR, SMS, or Rapid Review). Expand a dimension for
-          guidance on how to score it.
+          This Tertiary Study uses the six mandatory dimensions below to appraise each included
+          secondary study (SLR, SMS, or Rapid Review). Expand a dimension for guidance on how to
+          score it.
         </Typography>
       </Alert>
 
       {QA_DIMENSIONS.map((dim, idx) => (
-        <Accordion key={idx} disableGutters elevation={0} sx={{ border: '1px solid', borderColor: 'divider', mb: 0.5 }}>
+        <Accordion
+          key={idx}
+          disableGutters
+          elevation={0}
+          sx={{ border: '1px solid', borderColor: 'divider', mb: 0.5 }}
+        >
           <AccordionSummary
             expandIcon={<span>▾</span>}
             aria-controls={`qa-dim-${idx}-content`}

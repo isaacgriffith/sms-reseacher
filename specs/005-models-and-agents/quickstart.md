@@ -40,6 +40,7 @@ curl -X POST http://localhost:8000/api/v1/admin/providers \
 The system automatically fetches the model list on creation.
 
 For Ollama:
+
 ```bash
 curl -X POST http://localhost:8000/api/v1/admin/providers \
   -H "Authorization: Bearer <admin-jwt>" \
@@ -63,6 +64,7 @@ curl -X POST http://localhost:8000/api/v1/admin/providers \
 6. Review/edit the template, then click **Save**
 
 Or via API:
+
 ```bash
 curl -X POST http://localhost:8000/api/v1/admin/agents \
   -H "Authorization: Bearer <admin-jwt>" \
@@ -102,41 +104,44 @@ cd frontend && npm test
 ## Key Files Changed / Added
 
 ### New Python files
-| Package | Path | Purpose |
-|---------|------|---------|
-| `sms-db` | `db/src/db/models/agents.py` | Provider, AvailableModel, Agent SQLAlchemy models |
-| `sms-db` | `db/alembic/versions/0012_models_and_agents.py` | Database migration |
-| `sms-backend` | `backend/src/backend/api/v1/admin/providers.py` | Provider CRUD router |
-| `sms-backend` | `backend/src/backend/api/v1/admin/models.py` | Model management router |
-| `sms-backend` | `backend/src/backend/api/v1/admin/agents.py` | Agent CRUD router |
-| `sms-backend` | `backend/src/backend/services/provider_service.py` | Provider + model-fetch service |
-| `sms-backend` | `backend/src/backend/services/agent_service.py` | Agent CRUD + system-message-gen service |
-| `sms-agents` | `agents/src/agents/core/provider_config.py` | ProviderConfig Protocol |
-| `sms-agents` | `agents/prompts/agent_generator/system.md.j2` | AgentGenerator system prompt |
+
+| Package       | Path                                               | Purpose                                           |
+| ------------- | -------------------------------------------------- | ------------------------------------------------- |
+| `sms-db`      | `db/src/db/models/agents.py`                       | Provider, AvailableModel, Agent SQLAlchemy models |
+| `sms-db`      | `db/alembic/versions/0012_models_and_agents.py`    | Database migration                                |
+| `sms-backend` | `backend/src/backend/api/v1/admin/providers.py`    | Provider CRUD router                              |
+| `sms-backend` | `backend/src/backend/api/v1/admin/models.py`       | Model management router                           |
+| `sms-backend` | `backend/src/backend/api/v1/admin/agents.py`       | Agent CRUD router                                 |
+| `sms-backend` | `backend/src/backend/services/provider_service.py` | Provider + model-fetch service                    |
+| `sms-backend` | `backend/src/backend/services/agent_service.py`    | Agent CRUD + system-message-gen service           |
+| `sms-agents`  | `agents/src/agents/core/provider_config.py`        | ProviderConfig Protocol                           |
+| `sms-agents`  | `agents/prompts/agent_generator/system.md.j2`      | AgentGenerator system prompt                      |
 
 ### Modified Python files
-| Package | Path | Change |
-|---------|------|--------|
-| `sms-db` | `db/src/db/models/study.py` | Add `agent_id` FK to Reviewer |
-| `sms-db` | `db/src/db/models/__init__.py` | Export new models |
-| `sms-agents` | `agents/src/agents/core/llm_client.py` | Add ProviderConfig overload |
-| `sms-agents` | `agents/src/agents/screener.py` | Accept ProviderConfig override |
-| `sms-agents` | `agents/src/agents/extractor.py` | Accept ProviderConfig override |
-| `sms-backend` | `backend/src/backend/api/v1/admin/router.py` | Register new sub-routers |
+
+| Package       | Path                                         | Change                         |
+| ------------- | -------------------------------------------- | ------------------------------ |
+| `sms-db`      | `db/src/db/models/study.py`                  | Add `agent_id` FK to Reviewer  |
+| `sms-db`      | `db/src/db/models/__init__.py`               | Export new models              |
+| `sms-agents`  | `agents/src/agents/core/llm_client.py`       | Add ProviderConfig overload    |
+| `sms-agents`  | `agents/src/agents/screener.py`              | Accept ProviderConfig override |
+| `sms-agents`  | `agents/src/agents/extractor.py`             | Accept ProviderConfig override |
+| `sms-backend` | `backend/src/backend/api/v1/admin/router.py` | Register new sub-routers       |
 
 ### New TypeScript/React files
-| Package | Path | Purpose |
-|---------|------|---------|
-| `frontend` | `frontend/src/pages/AdminPage.tsx` | Extended with tabs |
-| `frontend` | `frontend/src/components/admin/providers/ProviderList.tsx` | Provider list table |
-| `frontend` | `frontend/src/components/admin/providers/ProviderForm.tsx` | Create/edit provider form |
-| `frontend` | `frontend/src/components/admin/models/ModelList.tsx` | Model enable/disable table |
-| `frontend` | `frontend/src/components/admin/agents/AgentList.tsx` | Agent list table |
-| `frontend` | `frontend/src/components/admin/agents/AgentWizard.tsx` | Multi-step creation wizard |
-| `frontend` | `frontend/src/components/admin/agents/AgentForm.tsx` | Edit agent form |
+
+| Package    | Path                                                           | Purpose                            |
+| ---------- | -------------------------------------------------------------- | ---------------------------------- |
+| `frontend` | `frontend/src/pages/AdminPage.tsx`                             | Extended with tabs                 |
+| `frontend` | `frontend/src/components/admin/providers/ProviderList.tsx`     | Provider list table                |
+| `frontend` | `frontend/src/components/admin/providers/ProviderForm.tsx`     | Create/edit provider form          |
+| `frontend` | `frontend/src/components/admin/models/ModelList.tsx`           | Model enable/disable table         |
+| `frontend` | `frontend/src/components/admin/agents/AgentList.tsx`           | Agent list table                   |
+| `frontend` | `frontend/src/components/admin/agents/AgentWizard.tsx`         | Multi-step creation wizard         |
+| `frontend` | `frontend/src/components/admin/agents/AgentForm.tsx`           | Edit agent form                    |
 | `frontend` | `frontend/src/components/admin/agents/SystemMessageEditor.tsx` | Syntax-highlighted template editor |
-| `frontend` | `frontend/src/services/providersApi.ts` | API client for providers/models |
-| `frontend` | `frontend/src/services/agentsApi.ts` | API client for agents |
+| `frontend` | `frontend/src/services/providersApi.ts`                        | API client for providers/models    |
+| `frontend` | `frontend/src/services/agentsApi.ts`                           | API client for agents              |
 
 ---
 

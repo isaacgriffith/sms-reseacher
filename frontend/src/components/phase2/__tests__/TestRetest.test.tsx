@@ -119,9 +119,7 @@ describe('TestRetest', () => {
 
     it('displays Approved status for approved iteration', async () => {
       const approved = { ...MOCK_ITERATION_PENDING, human_approved: true };
-      mockApi.get.mockResolvedValueOnce([
-        { ...MOCK_SEARCH_STRINGS[0], iterations: [approved] },
-      ]);
+      mockApi.get.mockResolvedValueOnce([{ ...MOCK_SEARCH_STRINGS[0], iterations: [approved] }]);
       renderWithQuery(<TestRetest studyId={1} />);
       await waitFor(() => {
         expect(screen.getByText('Approved')).toBeTruthy();
@@ -130,9 +128,7 @@ describe('TestRetest', () => {
 
     it('displays Rejected status for rejected iteration', async () => {
       const rejected = { ...MOCK_ITERATION_PENDING, human_approved: false };
-      mockApi.get.mockResolvedValueOnce([
-        { ...MOCK_SEARCH_STRINGS[0], iterations: [rejected] },
-      ]);
+      mockApi.get.mockResolvedValueOnce([{ ...MOCK_SEARCH_STRINGS[0], iterations: [rejected] }]);
       renderWithQuery(<TestRetest studyId={1} />);
       await waitFor(() => {
         expect(screen.getByText('Rejected')).toBeTruthy();
@@ -216,10 +212,9 @@ describe('TestRetest', () => {
       fireEvent.click(screen.getByRole('button', { name: /run test search/i }));
 
       await waitFor(() => {
-        expect(mockApi.post).toHaveBeenCalledWith(
-          '/api/v1/studies/1/search-strings/1/test',
-          { databases: ['acm', 'ieee', 'scopus'] },
-        );
+        expect(mockApi.post).toHaveBeenCalledWith('/api/v1/studies/1/search-strings/1/test', {
+          databases: ['acm', 'ieee', 'scopus'],
+        });
       });
     });
 
@@ -232,10 +227,9 @@ describe('TestRetest', () => {
       fireEvent.click(screen.getByRole('button', { name: /run test search/i }));
 
       await waitFor(() => {
-        expect(mockApi.post).toHaveBeenCalledWith(
-          '/api/v1/studies/1/search-strings/1/test',
-          { databases: [] },
-        );
+        expect(mockApi.post).toHaveBeenCalledWith('/api/v1/studies/1/search-strings/1/test', {
+          databases: [],
+        });
       });
     });
   });
@@ -356,7 +350,12 @@ describe('TestRetest', () => {
   describe('Active string selection', () => {
     it('auto-selects active string when no explicit selection', async () => {
       const activeString = { ...MOCK_SEARCH_STRINGS[0], id: 10, is_active: true };
-      const inactiveString = { ...MOCK_SEARCH_STRINGS[0], id: 11, is_active: false, iterations: [] };
+      const inactiveString = {
+        ...MOCK_SEARCH_STRINGS[0],
+        id: 11,
+        is_active: false,
+        iterations: [],
+      };
       mockApi.get.mockResolvedValueOnce([inactiveString, activeString]);
       renderWithQuery(<TestRetest studyId={1} />);
       await waitFor(() => screen.getByRole('button', { name: /run test search/i }));
@@ -379,7 +378,13 @@ describe('TestRetest', () => {
 
     it('selecting a string from dropdown switches active string', async () => {
       const strings = [
-        { ...MOCK_SEARCH_STRINGS[0], id: 30, version: 1, is_active: true, iterations: [MOCK_ITERATION_PENDING] },
+        {
+          ...MOCK_SEARCH_STRINGS[0],
+          id: 30,
+          version: 1,
+          is_active: true,
+          iterations: [MOCK_ITERATION_PENDING],
+        },
         { ...MOCK_SEARCH_STRINGS[0], id: 31, version: 2, is_active: false, iterations: [] },
       ];
       mockApi.get.mockResolvedValueOnce(strings);
@@ -517,7 +522,7 @@ describe('TestRetest', () => {
       expect(screen.queryByText(/queue is full/i)).toBeNull();
       // Also verify no error-styled paragraph exists (catches && → || mutations)
       const errorPs = Array.from(container.querySelectorAll('p')).filter(
-        el => (el as HTMLElement).style.color === 'rgb(239, 68, 68)'
+        (el) => (el as HTMLElement).style.color === 'rgb(239, 68, 68)',
       );
       expect(errorPs.length).toBe(0);
     });
@@ -536,7 +541,7 @@ describe('TestRetest', () => {
       renderWithQuery(<TestRetest studyId={1} />);
       await waitFor(() => {
         expect(screen.getByText('75.0%')).toBeTruthy();
-        expect(screen.queryByText('75%')).toBeNull();  // no rounding to integer
+        expect(screen.queryByText('75%')).toBeNull(); // no rounding to integer
       });
     });
   });

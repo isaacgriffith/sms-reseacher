@@ -19,25 +19,43 @@ import SynthesisPage from '../SynthesisPage';
 // Mocks
 // ---------------------------------------------------------------------------
 
+const { mockStartMutate } = vi.hoisted(() => ({
+  mockStartMutate: vi.fn(),
+}));
+
 vi.mock('../../../hooks/slr/useSynthesis', () => ({
   useSynthesisResults: vi.fn(),
   useStartSynthesis: vi.fn(() => ({
-    mutate: vi.fn(),
+    mutate: mockStartMutate,
     isPending: false,
     isError: false,
+    error: null,
   })),
   useSynthesisResult: vi.fn(() => ({ data: null, isLoading: true })),
 }));
 
 vi.mock('../../../components/slr/SynthesisConfigForm', () => ({
-  default: ({ onSubmit }: { onSubmit: (d: unknown) => void }) => (
-    <form data-testid="synthesis-config-form" onSubmit={(e) => { e.preventDefault(); onSubmit({}); }}>
+  default: ({ onSubmit }: { onSubmit: (d: Record<string, unknown>) => void }) => (
+    <form
+      data-testid="synthesis-config-form"
+      onSubmit={(e) => {
+        e.preventDefault();
+        onSubmit({ approach: 'meta_analysis', model_type: 'auto', heterogeneity_threshold: 0.1, confidence_interval: 0.95, papers: [{ label: 'P1', effect_size: 0.5, se: 0.1, ci_lower: 0.3, ci_upper: 0.7, weight: 1.0 }] });
+      }}
+    >
       <button type="submit">Start Synthesis</button>
     </form>
   ),
 }));
 
-import { useSynthesisResults } from '../../../hooks/slr/useSynthesis';
+vi.mock('../../../components/slr/ForestPlotViewer', () => ({
+  default: () => <div data-testid="forest-plot">Forest Plot</div>,
+}));
+vi.mock('../../../components/slr/FunnelPlotViewer', () => ({
+  default: () => <div data-testid="funnel-plot">Funnel Plot</div>,
+}));
+
+import { useSynthesisResults, useSynthesisResult } from '../../../hooks/slr/useSynthesis';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -77,7 +95,11 @@ function renderPage() {
 describe('SynthesisPage', () => {
   describe('Loading state', () => {
     it('shows a spinner while results are loading', () => {
-      vi.mocked(useSynthesisResults).mockReturnValue({ isLoading: true, error: null, data: undefined } as never);
+      vi.mocked(useSynthesisResults).mockReturnValue({
+        isLoading: true,
+        error: null,
+        data: undefined,
+      } as never);
       renderPage();
       // MUI CircularProgress renders a role="progressbar" element
       expect(screen.getAllByRole('progressbar').length).toBeGreaterThan(0);
@@ -131,6 +153,121 @@ describe('SynthesisPage', () => {
       renderPage();
       expect(screen.getByText('descriptive')).toBeInTheDocument();
       expect(screen.getByText('completed')).toBeInTheDocument();
+    });
+
+    it('clicking a result row selects it and shows detail', async () => {
+      vi.mocked(useSynthesisResults).mockReturnValue({
+        isLoading: false,
+        error: null,
+        data: { results: [makeResult({ id: 7, approach: 'descriptive', status: 'completed' })] },
+      } as never);
+      vi.mocked(useSynthesisResult).mockReturnValue({
+        data: makeResult({ id: 7, approach: 'descriptive', status: 'completed' }),
+        isLoading: false,
+      } as never);
+      renderPage();
+      const { fireEvent } = await import('@testing-library/react');
+      fireEvent.click(screen.getByText('descriptive'));
+      // Result detail shows result ID
+      expect(screen.getByText(/Result #7/)).toBeInTheDocument();
+    });
+  });
+
+  describe('handleSubmit', () => {
+    it('calls startMutation.mutate when form is submitted', async () => {
+      vi.mocked(useSynthesisResults).mockReturnValue({
+        isLoading: false,
+        error: null,
+        data: { results: [] },
+      } as never);
+      renderPage();
+      const { fireEvent } = await import('@testing-library/react');
+      fireEvent.submit(screen.getByTestId('synthesis-config-form'));
+      expect(mockStartMutate).toHaveBeenCalled();
+    });
+  });
+
+  describe('ResultDetail', () => {
+    it('shows in-progress alert for pending result', () => {
+      vi.mocked(useSynthesisResults).mockReturnValue({
+        isLoading: false,
+        error: null,
+        data: { results: [makeResult({ id: 5, status: 'pending' })] },
+      } as never);
+      vi.mocked(useSynthesisResult).mockReturnValue({
+        data: makeResult({ id: 5, status: 'pending' }),
+        isLoading: false,
+      } as never);
+      renderPage();
+      const { fireEvent } = require('@testing-library/react');
+      fireEvent.click(screen.getByText('pending'));
+      expect(screen.getByText(/polling for updates/i)).toBeInTheDocument();
+    });
+
+    it('shows error alert for failed result', () => {
+      vi.mocked(useSynthesisResults).mockReturnValue({
+        isLoading: false,
+        error: null,
+        data: { results: [makeResult({ id: 5, status: 'failed', error_message: 'Boom' })] },
+      } as never);
+      vi.mocked(useSynthesisResult).mockReturnValue({
+        data: makeResult({ id: 5, status: 'failed', error_message: 'Boom' }),
+        isLoading: false,
+      } as never);
+      renderPage();
+      const { fireEvent } = require('@testing-library/react');
+      fireEvent.click(screen.getByText('failed'));
+      expect(screen.getByText('Boom')).toBeInTheDocument();
+    });
+
+    it('shows forest and funnel plots for completed result', () => {
+      vi.mocked(useSynthesisResults).mockReturnValue({
+        isLoading: false,
+        error: null,
+        data: { results: [makeResult({ id: 5, status: 'completed' })] },
+      } as never);
+      vi.mocked(useSynthesisResult).mockReturnValue({
+        data: makeResult({ id: 5, status: 'completed' }),
+        isLoading: false,
+      } as never);
+      renderPage();
+      const { fireEvent } = require('@testing-library/react');
+      fireEvent.click(screen.getByText('completed'));
+      expect(screen.getByTestId('forest-plot')).toBeInTheDocument();
+      expect(screen.getByTestId('funnel-plot')).toBeInTheDocument();
+    });
+
+    it('shows qualitative themes table when present', () => {
+      vi.mocked(useSynthesisResults).mockReturnValue({
+        isLoading: false,
+        error: null,
+        data: { results: [makeResult({ id: 5, status: 'completed', qualitative_themes: { themes: { 'Theme A': [1, 2], 'Theme B': [3] } } })] },
+      } as never);
+      vi.mocked(useSynthesisResult).mockReturnValue({
+        data: makeResult({ id: 5, status: 'completed', qualitative_themes: { themes: { 'Theme A': [1, 2], 'Theme B': [3] } } }),
+        isLoading: false,
+      } as never);
+      renderPage();
+      const { fireEvent } = require('@testing-library/react');
+      fireEvent.click(screen.getByText('completed'));
+      expect(screen.getByText('Theme A')).toBeInTheDocument();
+      expect(screen.getByText('1, 2')).toBeInTheDocument();
+    });
+
+    it('shows sensitivity analysis when present', () => {
+      vi.mocked(useSynthesisResults).mockReturnValue({
+        isLoading: false,
+        error: null,
+        data: { results: [makeResult({ id: 5, status: 'completed', sensitivity_analysis: { key: 'value' } })] },
+      } as never);
+      vi.mocked(useSynthesisResult).mockReturnValue({
+        data: makeResult({ id: 5, status: 'completed', sensitivity_analysis: { key: 'value' } }),
+        isLoading: false,
+      } as never);
+      renderPage();
+      const { fireEvent } = require('@testing-library/react');
+      fireEvent.click(screen.getByText('completed'));
+      expect(screen.getByText(/Sensitivity Analysis/)).toBeInTheDocument();
     });
   });
 });

@@ -133,16 +133,19 @@ def build_test_cases(run_agent: bool = False) -> list[LLMTestCase]:
     for inp in SYNTHESISER_TEST_INPUTS:
         if run_agent:
             import asyncio
+
             actual_output = asyncio.run(_invoke_synthesiser(inp))
         else:
             actual_output = _STUB_SYNTHESIS
 
         cases.append(
             LLMTestCase(
-                input=json.dumps({
-                    "research_question": inp["research_question"],
-                    "papers_summary": inp["papers_summary"],
-                }),
+                input=json.dumps(
+                    {
+                        "research_question": inp["research_question"],
+                        "papers_summary": inp["papers_summary"],
+                    }
+                ),
                 actual_output=actual_output,
                 expected_output=(
                     "A structured synthesis with summary, key findings, "

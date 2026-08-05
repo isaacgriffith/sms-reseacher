@@ -131,7 +131,11 @@ function ProvidersTab({ state, dispatch }: ProvidersTabProps) {
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
-        <Button variant="contained" size="small" onClick={() => dispatch({ type: 'OPEN_CREATE_PROVIDER' })}>
+        <Button
+          variant="contained"
+          size="small"
+          onClick={() => dispatch({ type: 'OPEN_CREATE_PROVIDER' })}
+        >
           Add Provider
         </Button>
       </Box>
@@ -154,9 +158,7 @@ function ProvidersTab({ state, dispatch }: ProvidersTabProps) {
         maxWidth="sm"
         fullWidth
       >
-        <DialogTitle>
-          {state.editingProvider ? 'Edit Provider' : 'Add Provider'}
-        </DialogTitle>
+        <DialogTitle>{state.editingProvider ? 'Edit Provider' : 'Add Provider'}</DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 1 }}>
             <ProviderForm
@@ -274,17 +276,15 @@ export default function AdminPage() {
   const [state, dispatch] = useReducer(adminReducer, initialState);
 
   if (isLoading) {
-    return (
-      <Box sx={{ padding: '2rem', color: '#64748b' }}>
-        Checking access…
-      </Box>
-    );
+    return <Box sx={{ padding: '2rem', color: '#64748b' }}>Checking access…</Box>;
   }
 
   if (error instanceof ApiError && error.status === 403) {
     return (
       <Box sx={{ padding: '2rem' }}>
-        <Typography variant="h5" sx={{ color: '#dc2626', marginBottom: '0.5rem' }}>403 Forbidden</Typography>
+        <Typography variant="h5" sx={{ color: '#dc2626', marginBottom: '0.5rem' }}>
+          403 Forbidden
+        </Typography>
         <Typography sx={{ color: '#4b5563' }}>
           You do not have admin access. Only group administrators may view this page.
         </Typography>
@@ -301,7 +301,10 @@ export default function AdminPage() {
 
   return (
     <Container maxWidth="md" sx={{ padding: '1.5rem' }}>
-      <Typography variant="h5" sx={{ marginTop: 0, marginBottom: '1.5rem', fontSize: '1.375rem', color: '#111827' }}>
+      <Typography
+        variant="h5"
+        sx={{ marginTop: 0, marginBottom: '1.5rem', fontSize: '1.375rem', color: '#111827' }}
+      >
         Admin Dashboard
       </Typography>
 
@@ -325,21 +328,13 @@ export default function AdminPage() {
         </Box>
       )}
 
-      {state.selectedTab === 1 && (
-        <ProvidersTab state={state} dispatch={dispatch} />
-      )}
+      {state.selectedTab === 1 && <ProvidersTab state={state} dispatch={dispatch} />}
 
-      {state.selectedTab === 2 && (
-        <ModelsTab state={state} dispatch={dispatch} />
-      )}
+      {state.selectedTab === 2 && <ModelsTab state={state} dispatch={dispatch} />}
 
-      {state.selectedTab === 3 && (
-        <AgentsTab state={state} dispatch={dispatch} />
-      )}
+      {state.selectedTab === 3 && <AgentsTab state={state} dispatch={dispatch} />}
 
-      {state.selectedTab === 4 && (
-        <SearchIntegrationsTable />
-      )}
+      {state.selectedTab === 4 && <SearchIntegrationsTable />}
     </Container>
   );
 }

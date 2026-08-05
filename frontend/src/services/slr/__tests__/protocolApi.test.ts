@@ -71,10 +71,10 @@ describe('upsertProtocol', () => {
   it('calls PUT and parses the response', async () => {
     mockApi.put.mockResolvedValue(PROTOCOL_FIXTURE);
     const result = await upsertProtocol(42, { background: 'bg', rationale: 'rat' });
-    expect(mockApi.put).toHaveBeenCalledWith(
-      '/api/v1/slr/studies/42/protocol',
-      { background: 'bg', rationale: 'rat' },
-    );
+    expect(mockApi.put).toHaveBeenCalledWith('/api/v1/slr/studies/42/protocol', {
+      background: 'bg',
+      rationale: 'rat',
+    });
     expect(result.status).toBe('draft');
   });
 });
@@ -99,10 +99,7 @@ describe('validateProtocol', () => {
   it('calls POST and returns status', async () => {
     mockApi.post.mockResolvedValue({ status: 'validated' });
     const result = await validateProtocol(42);
-    expect(mockApi.post).toHaveBeenCalledWith(
-      '/api/v1/slr/studies/42/protocol/validate',
-      {},
-    );
+    expect(mockApi.post).toHaveBeenCalledWith('/api/v1/slr/studies/42/protocol/validate', {});
     expect(result.status).toBe('validated');
   });
 });

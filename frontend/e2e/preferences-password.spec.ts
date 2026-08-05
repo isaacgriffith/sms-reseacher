@@ -25,7 +25,10 @@ test.describe('Password change', () => {
   test('shows error when current password is wrong', async ({ page }) => {
     await page.goto('/preferences');
     await page.getByLabel(/current password/i).fill('wrong-password-123');
-    await page.getByLabel(/new password/i).first().fill('NewSecure@Password1');
+    await page
+      .getByLabel(/new password/i)
+      .first()
+      .fill('NewSecure@Password1');
     await page.getByLabel(/confirm new password/i).fill('NewSecure@Password1');
     await page.getByRole('button', { name: /change password/i }).click();
     await expect(page.getByRole('alert')).toContainText(/incorrect|invalid/i);
@@ -34,12 +37,13 @@ test.describe('Password change', () => {
   test('rejects new password that fails complexity rules', async ({ page }) => {
     await page.goto('/preferences');
     await page.getByLabel(/current password/i).fill(TEST_PASSWORD);
-    await page.getByLabel(/new password/i).first().fill('short');
+    await page
+      .getByLabel(/new password/i)
+      .first()
+      .fill('short');
     await page.getByLabel(/confirm new password/i).fill('short');
     await page.getByRole('button', { name: /change password/i }).click();
     // Client-side or server-side validation should block this
-    await expect(
-      page.getByText(/at least 12|too short|complexity/i),
-    ).toBeVisible();
+    await expect(page.getByText(/at least 12|too short|complexity/i)).toBeVisible();
   });
 });

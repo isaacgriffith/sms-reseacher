@@ -11,9 +11,11 @@ New router package: `backend/src/backend/api/v1/slr/` — mounted in the main ro
 ## Review Protocol
 
 ### `GET /api/v1/slr/studies/{study_id}/protocol`
+
 Retrieve the current protocol for a study. Returns 404 if no protocol exists yet.
 
 **Response 200**
+
 ```json
 {
   "id": 1,
@@ -43,9 +45,11 @@ Retrieve the current protocol for a study. Returns 404 if no protocol exists yet
 ---
 
 ### `PUT /api/v1/slr/studies/{study_id}/protocol`
+
 Create or update the draft protocol. Blocked if `status = validated`.
 
 **Request Body**
+
 ```json
 {
   "background": "...",
@@ -72,9 +76,11 @@ Create or update the draft protocol. Blocked if `status = validated`.
 ---
 
 ### `POST /api/v1/slr/studies/{study_id}/protocol/submit-for-review`
+
 Submits the protocol to the AI reviewer agent (async ARQ job). Sets `status = under_review`.
 
 **Response 202**
+
 ```json
 { "job_id": "uuid-...", "status": "under_review" }
 ```
@@ -84,9 +90,11 @@ Submits the protocol to the AI reviewer agent (async ARQ job). Sets `status = un
 ---
 
 ### `POST /api/v1/slr/studies/{study_id}/protocol/validate`
+
 Researcher approves the protocol. Sets `status = validated`.
 
 **Response 200**
+
 ```json
 { "status": "validated" }
 ```
@@ -98,9 +106,11 @@ Researcher approves the protocol. Sets `status = validated`.
 ## Quality Assessment
 
 ### `GET /api/v1/slr/studies/{study_id}/quality-checklist`
+
 Get the study's quality assessment checklist and items.
 
 **Response 200**
+
 ```json
 {
   "id": 1,
@@ -122,9 +132,11 @@ Get the study's quality assessment checklist and items.
 ---
 
 ### `PUT /api/v1/slr/studies/{study_id}/quality-checklist`
+
 Create or replace the checklist.
 
 **Request Body**
+
 ```json
 {
   "name": "...",
@@ -138,18 +150,18 @@ Create or replace the checklist.
 ---
 
 ### `GET /api/v1/slr/papers/{candidate_paper_id}/quality-scores`
+
 All quality scores submitted by any reviewer for a specific paper.
 
 **Response 200**
+
 ```json
 {
   "candidate_paper_id": 7,
   "reviewer_scores": [
     {
       "reviewer_id": 3,
-      "items": [
-        { "checklist_item_id": 10, "score_value": 1.0, "notes": null }
-      ],
+      "items": [{ "checklist_item_id": 10, "score_value": 1.0, "notes": null }],
       "aggregate_quality_score": 0.85
     }
   ]
@@ -159,15 +171,15 @@ All quality scores submitted by any reviewer for a specific paper.
 ---
 
 ### `PUT /api/v1/slr/papers/{candidate_paper_id}/quality-scores`
+
 Submit (or update) a reviewer's quality scores for a paper.
 
 **Request Body**
+
 ```json
 {
   "reviewer_id": 3,
-  "scores": [
-    { "checklist_item_id": 10, "score_value": 1.0, "notes": null }
-  ]
+  "scores": [{ "checklist_item_id": 10, "score_value": 1.0, "notes": null }]
 }
 ```
 
@@ -179,9 +191,11 @@ Submit (or update) a reviewer's quality scores for a paper.
 ## Inter-Rater Agreement
 
 ### `GET /api/v1/slr/studies/{study_id}/inter-rater`
+
 All Kappa records for the study.
 
 **Response 200**
+
 ```json
 {
   "records": [
@@ -204,9 +218,11 @@ All Kappa records for the study.
 ---
 
 ### `POST /api/v1/slr/studies/{study_id}/inter-rater/compute`
+
 Trigger a Kappa computation between two reviewers for a given round.
 
 **Request Body**
+
 ```json
 {
   "reviewer_a_id": 3,
@@ -221,6 +237,7 @@ Trigger a Kappa computation between two reviewers for a given round.
 ---
 
 ### `POST /api/v1/slr/studies/{study_id}/inter-rater/post-discussion`
+
 Record post-discussion Kappa after the Think-Aloud workflow is complete.
 
 **Request Body**: Same as `/compute`.
@@ -231,9 +248,11 @@ Record post-discussion Kappa after the Think-Aloud workflow is complete.
 ## Data Synthesis
 
 ### `GET /api/v1/slr/studies/{study_id}/synthesis`
+
 List all synthesis results for a study.
 
 **Response 200**
+
 ```json
 {
   "results": [
@@ -242,7 +261,11 @@ List all synthesis results for a study.
       "approach": "descriptive",
       "status": "completed",
       "model_type": null,
-      "computed_statistics": { "pooled_mean_difference": 0.42, "ci_lower": 0.11, "ci_upper": 0.73 },
+      "computed_statistics": {
+        "pooled_mean_difference": 0.42,
+        "ci_lower": 0.11,
+        "ci_upper": 0.73
+      },
       "forest_plot_svg": "<svg>...</svg>",
       "funnel_plot_svg": null,
       "qualitative_themes": null,
@@ -256,21 +279,24 @@ List all synthesis results for a study.
 ---
 
 ### `POST /api/v1/slr/studies/{study_id}/synthesis`
+
 Start a new synthesis run (async ARQ job).
 
 **Request Body**
+
 ```json
 {
   "approach": "meta_analysis",
   "model_type": "random",
   "parameters": {
-    "heterogeneity_threshold": 0.10,
+    "heterogeneity_threshold": 0.1,
     "confidence_interval": 0.95
   }
 }
 ```
 
 **Response 202**
+
 ```json
 { "synthesis_id": 1, "job_id": "uuid-...", "status": "pending" }
 ```
@@ -280,6 +306,7 @@ Start a new synthesis run (async ARQ job).
 ---
 
 ### `GET /api/v1/slr/synthesis/{synthesis_id}`
+
 Retrieve a single synthesis result by ID.
 
 ---
@@ -287,9 +314,11 @@ Retrieve a single synthesis result by ID.
 ## Grey Literature
 
 ### `GET /api/v1/slr/studies/{study_id}/grey-literature`
+
 List all grey literature sources for a study.
 
 **Response 200**
+
 ```json
 {
   "sources": [
@@ -311,9 +340,11 @@ List all grey literature sources for a study.
 ---
 
 ### `POST /api/v1/slr/studies/{study_id}/grey-literature`
+
 Add a grey literature source.
 
 **Request Body**
+
 ```json
 {
   "source_type": "technical_report",
@@ -330,6 +361,7 @@ Add a grey literature source.
 ---
 
 ### `DELETE /api/v1/slr/studies/{study_id}/grey-literature/{source_id}`
+
 Remove a grey literature source.
 
 **Response 204**: No content.
@@ -339,9 +371,11 @@ Remove a grey literature source.
 ## SLR Phase Gates
 
 ### `GET /api/v1/slr/studies/{study_id}/phases`
+
 Returns the SLR-specific unlocked phases (equivalent to the SMS `GET /api/v1/studies/{id}/phases` for SLR studies).
 
 **Response 200**
+
 ```json
 {
   "unlocked_phases": [1, 2],
@@ -356,6 +390,7 @@ Returns the SLR-specific unlocked phases (equivalent to the SMS `GET /api/v1/stu
 ## Report Export (extends existing export)
 
 ### `GET /api/v1/studies/{study_id}/export/slr-report`
+
 Generate and download a structured SLR report.
 
 **Query params**: `format=latex|markdown|json|csv`

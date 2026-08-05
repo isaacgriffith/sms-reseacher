@@ -5,7 +5,7 @@
 **Status**: Draft
 **Input**: User description: "number 6 database-search-and-retrieval @docs/features/010-database-search-and-retrieval.md"
 
-## User Scenarios & Testing *(mandatory)*
+## User Scenarios & Testing _(mandatory)_
 
 ### User Story 1 - Configure and Execute Multi-Database Search (Priority: P1)
 
@@ -116,7 +116,7 @@ A researcher needs to find papers by a specific author, or verify an author's pr
 
 ---
 
-## Requirements *(mandatory)*
+## Requirements _(mandatory)_
 
 ### Functional Requirements
 
@@ -179,7 +179,7 @@ A researcher needs to find papers by a specific author, or verify an author's pr
 
 ---
 
-## Success Criteria *(mandatory)*
+## Success Criteria _(mandatory)_
 
 ### Measurable Outcomes
 

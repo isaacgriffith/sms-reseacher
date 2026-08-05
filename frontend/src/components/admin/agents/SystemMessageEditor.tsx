@@ -78,7 +78,9 @@ const SystemMessageEditor = React.memo(
             inputRef={inputRef}
             inputProps={{ 'aria-label': label }}
           />
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mt: 1 }}>
+          <Box
+            sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mt: 1 }}
+          >
             <Typography variant="caption" color="text.secondary">
               Available variables: {AVAILABLE_VARS.join(', ')}
             </Typography>

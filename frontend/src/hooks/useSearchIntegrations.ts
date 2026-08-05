@@ -81,9 +81,7 @@ export function useSearchIntegration(integrationType: string) {
   return useQuery<SearchIntegrationSummary>({
     queryKey: searchIntegrationKey(integrationType),
     queryFn: () =>
-      api.get<SearchIntegrationSummary>(
-        `/api/v1/admin/search-integrations/${integrationType}`
-      ),
+      api.get<SearchIntegrationSummary>(`/api/v1/admin/search-integrations/${integrationType}`),
     enabled: !!integrationType,
   });
 }
@@ -101,7 +99,7 @@ export function useUpsertCredential() {
     mutationFn: ({ integrationType, body }) =>
       api.put<SearchIntegrationSummary>(
         `/api/v1/admin/search-integrations/${integrationType}`,
-        body
+        body,
       ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: SEARCH_INTEGRATIONS_KEY });
@@ -120,10 +118,7 @@ export function useTestIntegration() {
   const queryClient = useQueryClient();
   return useMutation<TestResult, Error, string>({
     mutationFn: (integrationType: string) =>
-      api.post<TestResult>(
-        `/api/v1/admin/search-integrations/${integrationType}/test`,
-        {}
-      ),
+      api.post<TestResult>(`/api/v1/admin/search-integrations/${integrationType}/test`, {}),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: SEARCH_INTEGRATIONS_KEY });
     },

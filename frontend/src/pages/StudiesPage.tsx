@@ -42,7 +42,11 @@ export default function StudiesPage() {
   const queryClient = useQueryClient();
   const [showWizard, setShowWizard] = useState(false);
 
-  const { data: studies, isLoading, error } = useQuery<StudySummary[]>({
+  const {
+    data: studies,
+    isLoading,
+    error,
+  } = useQuery<StudySummary[]>({
     queryKey: ['studies', groupId],
     queryFn: () => api.get<StudySummary[]>(`/api/v1/groups/${groupId}/studies`),
     enabled: !!groupId,
@@ -72,7 +76,9 @@ export default function StudiesPage() {
           marginBottom: '1.5rem',
         }}
       >
-        <Typography variant="h5" sx={{ margin: 0 }}>Studies</Typography>
+        <Typography variant="h5" sx={{ margin: 0 }}>
+          Studies
+        </Typography>
         <Button
           variant="contained"
           onClick={() => setShowWizard(true)}
@@ -94,8 +100,10 @@ export default function StudiesPage() {
         />
       )}
 
-      {(!studies || studies.length === 0) ? (
-        <Typography sx={{ color: '#475569' }}>No studies yet. Create one to get started.</Typography>
+      {!studies || studies.length === 0 ? (
+        <Typography sx={{ color: '#475569' }}>
+          No studies yet. Create one to get started.
+        </Typography>
       ) : (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
           {studies.map((s) => (
@@ -114,19 +122,29 @@ export default function StudiesPage() {
               onClick={() => navigate(`/studies/${s.id}`)}
             >
               <Box>
-                <Typography variant="subtitle1" sx={{ margin: '0 0 0.25rem', fontSize: '1rem' }}>{s.name}</Typography>
+                <Typography variant="subtitle1" sx={{ margin: '0 0 0.25rem', fontSize: '1rem' }}>
+                  {s.name}
+                </Typography>
                 {s.topic && (
-                  <Typography sx={{ margin: '0 0 0.25rem', color: '#64748b', fontSize: '0.875rem' }}>
+                  <Typography
+                    sx={{ margin: '0 0 0.25rem', color: '#64748b', fontSize: '0.875rem' }}
+                  >
                     {s.topic}
                   </Typography>
                 )}
                 <Box sx={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                  <Typography component="span" sx={{ fontSize: '0.8125rem', color: '#64748b' }}>{s.study_type}</Typography>
-                  <Typography component="span" sx={{ color: '#cbd5e1' }}>·</Typography>
+                  <Typography component="span" sx={{ fontSize: '0.8125rem', color: '#64748b' }}>
+                    {s.study_type}
+                  </Typography>
+                  <Typography component="span" sx={{ color: '#cbd5e1' }}>
+                    ·
+                  </Typography>
                   <Typography component="span" sx={{ fontSize: '0.8125rem', color: '#64748b' }}>
                     Phase {s.current_phase}: {PHASE_LABELS[s.current_phase] ?? ''}
                   </Typography>
-                  <Typography component="span" sx={{ color: '#cbd5e1' }}>·</Typography>
+                  <Typography component="span" sx={{ color: '#cbd5e1' }}>
+                    ·
+                  </Typography>
                   <Typography
                     component="span"
                     sx={{
@@ -141,10 +159,7 @@ export default function StudiesPage() {
                 </Box>
               </Box>
 
-              <Box
-                sx={{ display: 'flex', gap: '0.5rem' }}
-                onClick={(e) => e.stopPropagation()}
-              >
+              <Box sx={{ display: 'flex', gap: '0.5rem' }} onClick={(e) => e.stopPropagation()}>
                 {s.status !== 'archived' && (
                   <Button
                     variant="outlined"

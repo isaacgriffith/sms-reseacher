@@ -46,11 +46,7 @@ function ForestPlotViewer({ forestPlotSvg, isLoading = false }: ForestPlotViewer
 
   if (!forestPlotSvg) {
     return (
-      <Typography
-        variant="body2"
-        color="text.secondary"
-        data-testid="forest-plot-empty"
-      >
+      <Typography variant="body2" color="text.secondary" data-testid="forest-plot-empty">
         No forest plot available. Run a descriptive synthesis to generate one.
       </Typography>
     );

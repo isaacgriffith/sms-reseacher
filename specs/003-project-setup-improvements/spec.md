@@ -5,7 +5,7 @@
 **Status**: Draft
 **Input**: User description: "003 @/docs/features/006-project-setup-improvements.md"
 
-## User Scenarios & Testing *(mandatory)*
+## User Scenarios & Testing _(mandatory)_
 
 ### User Story 1 - First-Time Contributor Onboarding (Priority: P1)
 
@@ -80,7 +80,7 @@ A developer completes all quality improvements and is ready to merge the feature
 - What if a test is legitimately skipped (e.g., requires hardware unavailable in CI)? The skip must have a code comment or issue reference explaining why, and must not inflate the pass rate.
 - What if e2e tests require a running database or external service that is unavailable in CI? The GitHub Actions workflow must provision all required services (e.g., via `services:` containers) before running e2e tests.
 
-## Requirements *(mandatory)*
+## Requirements _(mandatory)_
 
 ### Functional Requirements
 
@@ -104,7 +104,7 @@ A developer completes all quality improvements and is ready to merge the feature
 - **FR-018**: All documentation updates (FR-014 through FR-017) MUST be completed and committed before the feature branch is merged.
 - **FR-019**: End-to-end (e2e) tests using **Playwright** (TypeScript) MUST be created for each service's primary user journeys. E2e tests MUST exercise the full stack (frontend → backend → db) and be runnable via a documented command in `CLAUDE.md`.
 
-## Success Criteria *(mandatory)*
+## Success Criteria _(mandatory)_
 
 ### Measurable Outcomes
 

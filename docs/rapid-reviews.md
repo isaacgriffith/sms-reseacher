@@ -9,6 +9,7 @@ Rapid Reviews are secondary studies aiming to provide research evidence to suppo
 - Rapid Reviews should be reported through mediums appealing to practitiones.
 
 **Note**:
+
 1. Rapid Reviews are not ad-hoc literature reviews
 2. Rapid Reviews are not an excuse for absence of scientific rigor
 
@@ -126,10 +127,12 @@ If such strategies are adopted, threats to validity must be transparently report
 Since Rapid Reviews are bound to a practical context, one may define restrictive inclusion/exclusion criteria.
 
 The goal here is two fold:
+
 - To reduce the amount of studies to screen
 - To provide evidence that better fits practitioners' needs
 
 **Examples**
+
 - The study must not be related to large companies
 - The study must not be related to distributed teams
 - The study must not be related to croud source software development
@@ -154,7 +157,6 @@ Using the inclusion/exclusion criteria the following steps are used to assess th
 While this is used as part of Systematic Reviews, this can be either totally skipped as part of Rapid Reviews.
 
 Antoher less radical approach is to focus only on those studies that are published in peer-reviewed conferences or journals. However, while this will increase the quality of the evidence it does could exclude relevant studies published in less reputable venues or on arXiv.
-
 
 ### Extraction Procedure
 
@@ -186,7 +188,7 @@ They should follow the template at: http://cin.ufpe.br/eseg/briefings
 
 1. The **title** of an Evidence Briefing should be as concise as possible, and comprise one or two lines only. Titles with more than two lines should be avoided since they might reduce document space to report Rapid Review findings.
 2. To fill the Evidence Briefing's **summary**, we suggest researchers to adopt the following structure:
-   
+
    ```
    This briefing reports scientific evidence on <RESEARCH GOAL>.
    ```
@@ -194,10 +196,12 @@ They should follow the template at: http://cin.ufpe.br/eseg/briefings
    The summary should span only a few lines.
 
    Example:
+
    ```
    This briefing reports scientific evidence on the challenges involved in using Scrum for global software
    development (GSD) projects, and strategies available to deal with them.
    ```
+
 3. The **findings** section is the most important one. It should list the main findings of the Rapid Review. When writing the findings, we recommend to use one finding per paragraph. Bullets to highlight important points as well as charts, figures, and tables are welcome since they make the findings even easier to read. Findings should be short sentences, straight to the point. The findings sections should not include information about the research method. The idea of the Evidence Briefing is to quickly comunicate the main findings of a Rapid Review to practitiones. If they have interest they can refer to the complementary material reference shown in item 5.
 4. The **box at the right side** of the Evidence Briefing should be filled with information about the Evidence Briefing's target audience, clarifications about what information is included, and what is not included in the Evidence Briefing.
 5. The **reference** to complementary material should be palced at the bottom of the Evidence Briefing. It may be a link to a webpage containing at least the following documents/information: the Rapid Review protocol document and a list of references to the primary studies included in the Rapid Review

@@ -15,6 +15,7 @@ Returns the database index selection for a study. If no selection has been saved
 **Auth**: Authenticated user with access to the study.
 
 **Response 200**:
+
 ```json
 {
   "study_id": "uuid",
@@ -45,11 +46,12 @@ Saves the database index selection for a study.
 **Auth**: Authenticated user with write access to the study.
 
 **Request body**:
+
 ```json
 {
   "selections": [
     { "database_index": "ieee_xplore", "is_enabled": true },
-    { "database_index": "scopus",      "is_enabled": true },
+    { "database_index": "scopus", "is_enabled": true },
     { "database_index": "semantic_scholar", "is_enabled": true }
   ],
   "snowball_enabled": true,
@@ -59,6 +61,7 @@ Saves the database index selection for a study.
 ```
 
 **Validation**:
+
 - `scihub_enabled: true` requires `scihub_acknowledged: true` and the server environment variable `SCIHUB_ENABLED=true`. Returns `422` if either condition is unmet.
 - `scihub_enabled: true` without `SCIHUB_ENABLED=true` in the server environment returns a `403` with `"SciHub is not enabled on this server"`.
 
@@ -75,6 +78,7 @@ Returns stored full-text Markdown for a paper. Used by AI agents and the fronten
 **Auth**: Authenticated user.
 
 **Response 200**:
+
 ```json
 {
   "paper_id": "uuid",
@@ -101,6 +105,7 @@ All endpoints under `/admin/search-integrations` require `GroupRole.ADMIN` membe
 Returns all integration credential records (one per `IntegrationType`), including status and whether a key is configured.
 
 **Response 200**:
+
 ```json
 [
   {
@@ -136,6 +141,7 @@ Returns details for a single integration credential record.
 Creates or updates the credential record for an integration type (upsert semantics — no separate POST/PATCH).
 
 **Request body**:
+
 ```json
 {
   "api_key": "string | null",
@@ -159,6 +165,7 @@ Creates or updates the credential record for an integration type (upsert semanti
 Runs a lightweight live connectivity probe for the integration (e.g., a one-paper search or metadata lookup).
 
 **Response 200**:
+
 ```json
 {
   "integration_type": "ieee_xplore",

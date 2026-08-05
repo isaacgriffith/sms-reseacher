@@ -78,6 +78,7 @@ curl -X POST http://localhost:8000/api/v1/rapid/studies/$STUDY_ID/protocol/valid
 
 **Expected**: Protocol status transitions to `VALIDATED`. Phase 2 (search) unlocks.
 Verify:
+
 ```bash
 curl http://localhost:8000/api/v1/studies/$STUDY_ID/phases \
   -H "Authorization: Bearer $TOKEN"

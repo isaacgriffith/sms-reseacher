@@ -53,12 +53,12 @@ describe('SingleReviewerWarningBanner', () => {
 
     it('calls mutate with single_reviewer_mode=true when Enable is clicked', () => {
       const mutate = vi.fn();
-      vi.mocked(useUpdateSearchConfig).mockReturnValue({ mutate, isPending: false } as ReturnType<typeof useUpdateSearchConfig>);
+      vi.mocked(useUpdateSearchConfig).mockReturnValue({ mutate, isPending: false } as ReturnType<
+        typeof useUpdateSearchConfig
+      >);
       renderWithQuery(<SingleReviewerWarningBanner studyId={42} singleReviewerMode={false} />);
       fireEvent.click(screen.getByRole('button', { name: /enable/i }));
-      expect(mutate).toHaveBeenCalledWith(
-        expect.objectContaining({ single_reviewer_mode: true }),
-      );
+      expect(mutate).toHaveBeenCalledWith(expect.objectContaining({ single_reviewer_mode: true }));
     });
   });
 
@@ -81,7 +81,9 @@ describe('SingleReviewerWarningBanner', () => {
 
     it('calls mutate with single_reviewer_mode=false when dialog Disable is confirmed', () => {
       const mutate = vi.fn();
-      vi.mocked(useUpdateSearchConfig).mockReturnValue({ mutate, isPending: false } as ReturnType<typeof useUpdateSearchConfig>);
+      vi.mocked(useUpdateSearchConfig).mockReturnValue({ mutate, isPending: false } as ReturnType<
+        typeof useUpdateSearchConfig
+      >);
       renderWithQuery(<SingleReviewerWarningBanner studyId={42} singleReviewerMode={true} />);
       // Open dialog
       fireEvent.click(screen.getByRole('button', { name: /disable/i }));
@@ -89,14 +91,14 @@ describe('SingleReviewerWarningBanner', () => {
       const disableButtons = screen.getAllByRole('button', { name: /disable/i });
       // The last "Disable" button is in the dialog
       fireEvent.click(disableButtons[disableButtons.length - 1]);
-      expect(mutate).toHaveBeenCalledWith(
-        expect.objectContaining({ single_reviewer_mode: false }),
-      );
+      expect(mutate).toHaveBeenCalledWith(expect.objectContaining({ single_reviewer_mode: false }));
     });
 
     it('does not call mutate when Cancel is clicked in dialog', () => {
       const mutate = vi.fn();
-      vi.mocked(useUpdateSearchConfig).mockReturnValue({ mutate, isPending: false } as ReturnType<typeof useUpdateSearchConfig>);
+      vi.mocked(useUpdateSearchConfig).mockReturnValue({ mutate, isPending: false } as ReturnType<
+        typeof useUpdateSearchConfig
+      >);
       renderWithQuery(<SingleReviewerWarningBanner studyId={42} singleReviewerMode={true} />);
       // Open dialog
       fireEvent.click(screen.getByRole('button', { name: /disable/i }));

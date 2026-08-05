@@ -77,7 +77,7 @@ export default function LoginPage() {
         }
         return;
       }
-      const data = await response.json() as {
+      const data = (await response.json()) as {
         access_token: string;
         user_id: number;
         display_name: string;
@@ -109,7 +109,9 @@ export default function LoginPage() {
           background: '#ffffff',
         }}
       >
-        <Typography variant="h4" sx={{ marginBottom: '0.5rem' }}>SMS Researcher</Typography>
+        <Typography variant="h4" sx={{ marginBottom: '0.5rem' }}>
+          SMS Researcher
+        </Typography>
         <Typography sx={{ color: '#666', marginBottom: '2rem' }}>
           {partialToken ? 'Enter your authentication code' : 'Sign in to your account'}
         </Typography>
@@ -143,7 +145,9 @@ export default function LoginPage() {
             </Box>
 
             {error && (
-              <Alert severity="error" sx={{ marginBottom: '1rem' }}>{error}</Alert>
+              <Alert severity="error" sx={{ marginBottom: '1rem' }}>
+                {error}
+              </Alert>
             )}
 
             <Button
@@ -159,8 +163,8 @@ export default function LoginPage() {
         ) : (
           <Box component="form" onSubmit={(e) => void onTotpSubmit(e)}>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              Open your authenticator app and enter the 6-digit code for SMS Researcher.
-              You can also enter a 10-character backup code.
+              Open your authenticator app and enter the 6-digit code for SMS Researcher. You can
+              also enter a 10-character backup code.
             </Typography>
 
             <TextField
@@ -175,7 +179,9 @@ export default function LoginPage() {
             />
 
             {error && (
-              <Alert severity="error" sx={{ marginBottom: '1rem' }}>{error}</Alert>
+              <Alert severity="error" sx={{ marginBottom: '1rem' }}>
+                {error}
+              </Alert>
             )}
 
             <Button
@@ -191,7 +197,11 @@ export default function LoginPage() {
             <Button
               variant="text"
               size="small"
-              onClick={() => { setPartialToken(null); setError(null); setTotpCode(''); }}
+              onClick={() => {
+                setPartialToken(null);
+                setError(null);
+                setTotpCode('');
+              }}
               sx={{ mt: 1 }}
             >
               Back to sign in
@@ -214,10 +224,14 @@ export default function LoginPage() {
           boxSizing: 'border-box',
         }}
       >
-        <Typography variant="h4" sx={{ fontSize: '2rem', marginBottom: '1rem' }}>Systematic Mapping Studies</Typography>
-        <Typography sx={{ fontSize: '1.125rem', textAlign: 'center', maxWidth: '480px', lineHeight: 1.6 }}>
-          AI-augmented research automation — guide your team through study scoping, database
-          search, paper screening, data extraction, and publication-ready visualisations.
+        <Typography variant="h4" sx={{ fontSize: '2rem', marginBottom: '1rem' }}>
+          Systematic Mapping Studies
+        </Typography>
+        <Typography
+          sx={{ fontSize: '1.125rem', textAlign: 'center', maxWidth: '480px', lineHeight: 1.6 }}
+        >
+          AI-augmented research automation — guide your team through study scoping, database search,
+          paper screening, data extraction, and publication-ready visualisations.
         </Typography>
         <ul
           style={{

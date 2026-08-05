@@ -150,6 +150,7 @@ Bundling all tables in one migration ensures consistent rollback semantics.
 ## Decision 9: Frontend Page/Component Layout
 
 **Decision**: Mirror the SLR pattern exactly:
+
 - Pages at `frontend/src/pages/rapid/`
 - Components at `frontend/src/components/rapid/`
 - API services at `frontend/src/services/rapid/`

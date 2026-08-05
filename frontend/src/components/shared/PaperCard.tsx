@@ -68,17 +68,12 @@ export default function PaperCard({
   const { data: decisions = [] } = useQuery<Decision[]>({
     queryKey: ['decisions', studyId, candidateId],
     queryFn: () =>
-      api.get<Decision[]>(
-        `/api/v1/studies/${studyId}/papers/${candidateId}/decisions`
-      ),
+      api.get<Decision[]>(`/api/v1/studies/${studyId}/papers/${candidateId}/decisions`),
   });
 
   const resolveConflict = useMutation({
     mutationFn: (body: { reviewer_id: number; decision: string; reasons: object[] }) =>
-      api.post(
-        `/api/v1/studies/${studyId}/papers/${candidateId}/resolve-conflict`,
-        body
-      ),
+      api.post(`/api/v1/studies/${studyId}/papers/${candidateId}/resolve-conflict`, body),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['decisions', studyId, candidateId] });
       qc.invalidateQueries({ queryKey: ['papers', studyId] });
@@ -105,8 +100,17 @@ export default function PaperCard({
           borderBottom: '1px solid #e2e8f0',
         }}
       >
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.75rem' }}>
-          <Typography sx={{ margin: 0, fontSize: '0.9375rem', color: '#111827', flex: 1, fontWeight: 600 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
+            gap: '0.75rem',
+          }}
+        >
+          <Typography
+            sx={{ margin: 0, fontSize: '0.9375rem', color: '#111827', flex: 1, fontWeight: 600 }}
+          >
             {paper.title}
           </Typography>
           <Box sx={{ display: 'flex', gap: '0.5rem', flexShrink: 0, alignItems: 'center' }}>
@@ -142,11 +146,36 @@ export default function PaperCard({
             </Typography>
           </Box>
         </Box>
-        <Box sx={{ display: 'flex', gap: '1rem', fontSize: '0.75rem', color: '#6b7280', marginTop: '0.375rem', flexWrap: 'wrap' }}>
-          {paper.year && <Typography component="span" sx={{ fontSize: '0.75rem', color: '#6b7280' }}>{paper.year}</Typography>}
-          {paper.venue && <Typography component="span" sx={{ fontSize: '0.75rem', color: '#6b7280' }}>{paper.venue}</Typography>}
-          {paper.doi && <Typography component="span" sx={{ fontSize: '0.75rem', color: '#6b7280' }}>DOI: {paper.doi}</Typography>}
-          {authorList && <Typography component="span" sx={{ fontSize: '0.75rem', color: '#6b7280' }}>{authorList}</Typography>}
+        <Box
+          sx={{
+            display: 'flex',
+            gap: '1rem',
+            fontSize: '0.75rem',
+            color: '#6b7280',
+            marginTop: '0.375rem',
+            flexWrap: 'wrap',
+          }}
+        >
+          {paper.year && (
+            <Typography component="span" sx={{ fontSize: '0.75rem', color: '#6b7280' }}>
+              {paper.year}
+            </Typography>
+          )}
+          {paper.venue && (
+            <Typography component="span" sx={{ fontSize: '0.75rem', color: '#6b7280' }}>
+              {paper.venue}
+            </Typography>
+          )}
+          {paper.doi && (
+            <Typography component="span" sx={{ fontSize: '0.75rem', color: '#6b7280' }}>
+              DOI: {paper.doi}
+            </Typography>
+          )}
+          {authorList && (
+            <Typography component="span" sx={{ fontSize: '0.75rem', color: '#6b7280' }}>
+              {authorList}
+            </Typography>
+          )}
           <Typography
             component="span"
             sx={{
@@ -172,7 +201,12 @@ export default function PaperCard({
 
       {/* Decision history timeline */}
       {decisions.length > 0 && (
-        <Box sx={{ padding: '0.75rem 1rem', borderBottom: conflictFlag ? '1px solid #fbbf24' : undefined }}>
+        <Box
+          sx={{
+            padding: '0.75rem 1rem',
+            borderBottom: conflictFlag ? '1px solid #fbbf24' : undefined,
+          }}
+        >
           <Typography
             sx={{
               margin: '0 0 0.625rem',
@@ -243,7 +277,17 @@ function DecisionEntry({ decision }: { decision: Decision }) {
             {decision.decision}
           </Typography>
           {decision.is_override && (
-            <Typography component="span" sx={{ fontSize: '0.6875rem', color: '#b45309', fontStyle: 'italic', background: '#fef3c7', padding: '0.0625rem 0.3rem', borderRadius: '0.25rem' }}>
+            <Typography
+              component="span"
+              sx={{
+                fontSize: '0.6875rem',
+                color: '#b45309',
+                fontStyle: 'italic',
+                background: '#fef3c7',
+                padding: '0.0625rem 0.3rem',
+                borderRadius: '0.25rem',
+              }}
+            >
               override
             </Typography>
           )}
@@ -256,7 +300,10 @@ function DecisionEntry({ decision }: { decision: Decision }) {
             Reviewer #{decision.reviewer_id}
           </Typography>
           {timestamp && (
-            <Typography component="span" sx={{ fontSize: '0.6875rem', color: '#9ca3af', marginLeft: 'auto' }}>
+            <Typography
+              component="span"
+              sx={{ fontSize: '0.6875rem', color: '#9ca3af', marginLeft: 'auto' }}
+            >
               {timestamp}
             </Typography>
           )}
@@ -299,7 +346,14 @@ function ConflictResolutionPanel({
       >
         Conflict Resolution Required
       </Typography>
-      <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '0.875rem' }}>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          gap: '0.75rem',
+          marginBottom: '0.875rem',
+        }}
+      >
         {lastTwo.map((d) => (
           <Box
             key={d.id}
@@ -310,7 +364,15 @@ function ConflictResolutionPanel({
               background: '#fff',
             }}
           >
-            <Typography sx={{ fontSize: '0.8125rem', fontWeight: 600, color: DECISION_COLORS[d.decision], textTransform: 'capitalize', marginBottom: '0.25rem' }}>
+            <Typography
+              sx={{
+                fontSize: '0.8125rem',
+                fontWeight: 600,
+                color: DECISION_COLORS[d.decision],
+                textTransform: 'capitalize',
+                marginBottom: '0.25rem',
+              }}
+            >
               {d.decision}
             </Typography>
             <Typography sx={{ fontSize: '0.75rem', color: '#6b7280' }}>

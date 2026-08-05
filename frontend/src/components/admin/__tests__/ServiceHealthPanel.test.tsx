@@ -18,7 +18,12 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 vi.mock('../../../services/api', () => ({
   api: { get: vi.fn() },
   ApiError: class ApiError extends Error {
-    constructor(public status: number, message: string) { super(message); }
+    constructor(
+      public status: number,
+      message: string,
+    ) {
+      super(message);
+    }
   },
 }));
 
@@ -142,9 +147,7 @@ describe('ServiceHealthPanel', () => {
       const unhealthy = {
         ...HEALTHY_RESPONSE,
         status: 'unhealthy',
-        services: [
-          { name: 'database', status: 'unhealthy', detail: 'Connection refused' },
-        ],
+        services: [{ name: 'database', status: 'unhealthy', detail: 'Connection refused' }],
       };
       mockApi.get.mockResolvedValue(unhealthy);
       renderWithQuery(<ServiceHealthPanel />);

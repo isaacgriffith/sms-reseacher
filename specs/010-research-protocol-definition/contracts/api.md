@@ -14,9 +14,11 @@
 List all protocols visible to the authenticated researcher: their own custom protocols plus all default templates matching the optional `study_type` filter.
 
 **Query params**:
+
 - `study_type` (optional): `SMS | SLR | Rapid | Tertiary`
 
 **Response `200`**:
+
 ```json
 [
   {
@@ -49,6 +51,7 @@ List all protocols visible to the authenticated researcher: their own custom pro
 Create a new custom protocol. Body must include either `copy_from_protocol_id` (copy an existing protocol or default template) or a full graph definition. The authenticated user becomes the owner.
 
 **Request body**:
+
 ```json
 {
   "name": "My Custom SMS Protocol",
@@ -56,7 +59,9 @@ Create a new custom protocol. Body must include either `copy_from_protocol_id` (
   "copy_from_protocol_id": 1
 }
 ```
+
 _or_ (full graph):
+
 ```json
 {
   "name": "From Scratch",
@@ -69,6 +74,7 @@ _or_ (full graph):
 **Response `201`**: Full `ProtocolDetailResponse` (see GET /protocols/{id}).
 
 **Errors**:
+
 - `400` — validation error (cycle, dangling input, unknown task type)
 - `409` — name already exists for this researcher
 
@@ -79,6 +85,7 @@ _or_ (full graph):
 Retrieve full protocol details including all nodes, edges, quality gates, assignees, inputs, and outputs.
 
 **Response `200`**:
+
 ```json
 {
   "id": 42,
@@ -99,13 +106,23 @@ Retrieve full protocol details including all nodes, edges, quality gates, assign
       "position_x": 100.0,
       "position_y": 200.0,
       "inputs": [
-        { "id": 201, "name": "research_questions", "data_type": "text", "is_required": true }
+        {
+          "id": 201,
+          "name": "research_questions",
+          "data_type": "text",
+          "is_required": true
+        }
       ],
       "outputs": [
         { "id": 301, "name": "pico_components", "data_type": "pico_struct" }
       ],
       "assignees": [
-        { "id": 401, "assignee_type": "human_role", "role": "study_admin", "agent_id": null }
+        {
+          "id": 401,
+          "assignee_type": "human_role",
+          "role": "study_admin",
+          "agent_id": null
+        }
       ],
       "quality_gates": [
         {
@@ -133,6 +150,7 @@ Retrieve full protocol details including all nodes, edges, quality gates, assign
 ```
 
 **Errors**:
+
 - `403` — protocol belongs to another researcher (and is not a default template)
 - `404` — not found
 
@@ -143,6 +161,7 @@ Retrieve full protocol details including all nodes, edges, quality gates, assign
 Replace the full protocol graph. Requires `version_id` matching the current database value (optimistic lock). Default templates return `403`.
 
 **Request body**:
+
 ```json
 {
   "name": "My Custom SMS Protocol v2",
@@ -156,6 +175,7 @@ Replace the full protocol graph. Requires `version_id` matching the current data
 **Response `200`**: Updated `ProtocolDetailResponse`.
 
 **Errors**:
+
 - `400` — validation error (cycle, dangling input, unknown task type, gate metric not in node outputs)
 - `403` — not owner, or protocol is a default template
 - `404` — not found
@@ -170,6 +190,7 @@ Delete a custom protocol. Fails if the protocol is currently assigned to any stu
 **Response `204`**: No body.
 
 **Errors**:
+
 - `403` — not owner, or is a default template
 - `409` — protocol is assigned to one or more studies; body lists the blocking study IDs
 
@@ -180,6 +201,7 @@ Delete a custom protocol. Fails if the protocol is currently assigned to any stu
 Export the protocol as a YAML file download.
 
 **Response `200`**:
+
 - `Content-Type: application/x-yaml`
 - `Content-Disposition: attachment; filename="protocol-{name}.yaml"`
 - Body: YAML as described in research.md Decision 6
@@ -195,6 +217,7 @@ Import a protocol from an uploaded YAML file. Creates a new custom protocol owne
 **Response `201`**: Created `ProtocolDetailResponse`.
 
 **Errors**:
+
 - `400` — YAML parse error, schema version unsupported, cycle detected, unknown task type, dangling input; body includes specific field-level error
 
 ---
@@ -206,6 +229,7 @@ Import a protocol from an uploaded YAML file. Creates a new custom protocol owne
 Get the protocol currently assigned to a study.
 
 **Response `200`**:
+
 ```json
 {
   "study_id": 10,
@@ -218,6 +242,7 @@ Get the protocol currently assigned to a study.
 ```
 
 **Errors**:
+
 - `403` — not a study member
 - `404` — study has no protocol assignment (should not occur post-migration)
 
@@ -228,6 +253,7 @@ Get the protocol currently assigned to a study.
 Assign or reassign a protocol to a study. Only the study administrator can call this. Blocked if the study is actively executing (any task has status `active`).
 
 **Request body**:
+
 ```json
 { "protocol_id": 42 }
 ```
@@ -235,6 +261,7 @@ Assign or reassign a protocol to a study. Only the study administrator can call 
 **Response `200`**: Updated assignment response.
 
 **Errors**:
+
 - `400` — protocol's `study_type` does not match study's `study_type`
 - `403` — not study administrator, or protocol is owned by another researcher
 - `409` — study is currently executing (task statuses would be lost); body: `{"detail": "study_executing"}`
@@ -246,6 +273,7 @@ Assign or reassign a protocol to a study. Only the study administrator can call 
 Reset the study's protocol to the default template for the study's type. Blocked while study is executing.
 
 **Request body**:
+
 ```json
 { "confirm_reset": true }
 ```
@@ -253,6 +281,7 @@ Reset the study's protocol to the default template for the study's type. Blocked
 **Response `200`**: New assignment response (pointing to default template).
 
 **Errors**:
+
 - `400` — `confirm_reset` not true (confirmation gate)
 - `403` — not study administrator
 - `409` — study is currently executing
@@ -266,6 +295,7 @@ Reset the study's protocol to the default template for the study's type. Blocked
 Get the current execution state for all tasks in the study's protocol. Available to all study members.
 
 **Response `200`**:
+
 ```json
 {
   "study_id": 10,
@@ -304,6 +334,7 @@ Mark a task as complete. Triggers synchronous quality gate evaluation and activa
 **Request body**: `{}` (empty — all needed data is read from existing study models)
 
 **Response `200`**:
+
 ```json
 {
   "completed_task_id": "build_search_string",
@@ -315,6 +346,7 @@ Mark a task as complete. Triggers synchronous quality gate evaluation and activa
 ```
 
 _On gate failure_:
+
 ```json
 {
   "completed_task_id": "screen_papers",
@@ -333,6 +365,7 @@ _On gate failure_:
 ```
 
 **Errors**:
+
 - `403` — not a study administrator or task assignee
 - `404` — task_id not found in study's protocol
 - `409` — task is not in `active` status
@@ -348,6 +381,7 @@ Provide human sign-off approval for a task's `human_sign_off` quality gate. Only
 **Response `200`**: Same shape as `/complete` response.
 
 **Errors**:
+
 - `403` — not study administrator
 - `404` — task_id not found
 - `409` — task has no pending human_sign_off gate, or task is not in `gate_failed` status
@@ -358,9 +392,9 @@ Provide human sign-off approval for a task's `human_sign_off` quality gate. Only
 
 Quality gate remediation messages are hardcoded per metric in the `QualityGateEvaluator` service:
 
-| Metric name | Remediation message |
-|-------------|---------------------|
-| `kappa_coefficient` | "Conduct a reconciliation round between reviewers and re-screen disputed papers." |
+| Metric name            | Remediation message                                                                       |
+| ---------------------- | ----------------------------------------------------------------------------------------- |
+| `kappa_coefficient`    | "Conduct a reconciliation round between reviewers and re-screen disputed papers."         |
 | `accepted_paper_count` | "Review exclusion criteria or broaden the search string to capture more relevant papers." |
-| `test_set_recall` | "Expand the search string with additional synonyms and re-run the search." |
-| `coverage_recall` | "Add missed papers as seed papers for a snowball round." |
+| `test_set_recall`      | "Expand the search string with additional synonyms and re-run the search."                |
+| `coverage_recall`      | "Add missed papers as seed papers for a snowball round."                                  |

@@ -48,7 +48,8 @@ async function loginAsAdmin(page: Page): Promise<void> {
 async function navigateToAdminAgents(page: Page): Promise<void> {
   await page.goto('/admin');
   // Click the Agents tab
-  const agentsTab = page.getByRole('tab', { name: /agents/i })
+  const agentsTab = page
+    .getByRole('tab', { name: /agents/i })
     .or(page.getByRole('button', { name: /agents/i }))
     .or(page.getByText('Agents').first());
   await agentsTab.click();
@@ -71,8 +72,7 @@ test.describe('Admin — Agent Wizard', () => {
   test('agents tab is visible in the admin panel', async ({ page }) => {
     await page.goto('/admin');
     await expect(
-      page.getByRole('tab', { name: /agents/i })
-        .or(page.getByText(/agents/i).first())
+      page.getByRole('tab', { name: /agents/i }).or(page.getByText(/agents/i).first()),
     ).toBeVisible({ timeout: 10_000 });
   });
 
@@ -83,13 +83,17 @@ test.describe('Admin — Agent Wizard', () => {
   test('opens add agent dialog when add button is clicked', async ({ page }) => {
     await navigateToAdminAgents(page);
 
-    await page.getByRole('button', { name: /add agent|new agent|add/i }).first().click();
+    await page
+      .getByRole('button', { name: /add agent|new agent|add/i })
+      .first()
+      .click();
 
     // Dialog or multi-step wizard should appear
     await expect(
-      page.getByRole('dialog')
+      page
+        .getByRole('dialog')
         .or(page.getByText(/add agent|create agent/i).first())
-        .or(page.getByLabel(/role name/i))
+        .or(page.getByLabel(/role name/i)),
     ).toBeVisible({ timeout: 5_000 });
   });
 
@@ -99,7 +103,10 @@ test.describe('Admin — Agent Wizard', () => {
     const roleName = `E2E Screener ${Date.now()}`;
 
     // Open the add agent dialog
-    await page.getByRole('button', { name: /add agent|new agent|add/i }).first().click();
+    await page
+      .getByRole('button', { name: /add agent|new agent|add/i })
+      .first()
+      .click();
 
     const dialog = page.getByRole('dialog');
 
@@ -125,17 +132,17 @@ test.describe('Admin — Agent Wizard', () => {
     }
 
     // Fill system message template
-    const templateField = dialog.getByLabel(/system message template|template/i).or(
-      dialog.locator('textarea').first()
-    );
+    const templateField = dialog
+      .getByLabel(/system message template|template/i)
+      .or(dialog.locator('textarea').first());
     if (await templateField.isVisible()) {
       await templateField.fill(VALID_TEMPLATE);
     }
 
     // Select task type (screener)
-    const taskTypeSelect = dialog.getByLabel(/task type/i).or(
-      dialog.getByRole('combobox', { name: /task type/i })
-    );
+    const taskTypeSelect = dialog
+      .getByLabel(/task type/i)
+      .or(dialog.getByRole('combobox', { name: /task type/i }));
     if (await taskTypeSelect.isVisible()) {
       await taskTypeSelect.selectOption({ label: /screener/i });
     }
@@ -154,14 +161,17 @@ test.describe('Admin — Agent Wizard', () => {
   test('shows validation error for template with unknown variable', async ({ page }) => {
     await navigateToAdminAgents(page);
 
-    await page.getByRole('button', { name: /add agent|new agent|add/i }).first().click();
+    await page
+      .getByRole('button', { name: /add agent|new agent|add/i })
+      .first()
+      .click();
 
     const dialog = page.getByRole('dialog');
 
     // Fill the template with an invalid variable
-    const templateField = dialog.getByLabel(/system message template|template/i).or(
-      dialog.locator('textarea').first()
-    );
+    const templateField = dialog
+      .getByLabel(/system message template|template/i)
+      .or(dialog.locator('textarea').first());
     if (await templateField.isVisible()) {
       await templateField.fill(INVALID_TEMPLATE);
     }
@@ -172,8 +182,10 @@ test.describe('Admin — Agent Wizard', () => {
 
     // Should show an error about the unknown variable — either inline or a toast
     await expect(
-      page.getByText(/unknown variable|invalid template|unknown_variable|422/i).first()
-        .or(dialog.getByText(/error/i).first())
+      page
+        .getByText(/unknown variable|invalid template|unknown_variable|422/i)
+        .first()
+        .or(dialog.getByText(/error/i).first()),
     ).toBeVisible({ timeout: 8_000 });
   });
 
@@ -184,12 +196,17 @@ test.describe('Admin — Agent Wizard', () => {
   test('generate button is present in the agent template form', async ({ page }) => {
     await navigateToAdminAgents(page);
 
-    await page.getByRole('button', { name: /add agent|new agent|add/i }).first().click();
+    await page
+      .getByRole('button', { name: /add agent|new agent|add/i })
+      .first()
+      .click();
 
     const dialog = page.getByRole('dialog');
 
     // Look for a "Generate" button near the template field
-    const generateButton = dialog.getByRole('button', { name: /generate/i }).first()
+    const generateButton = dialog
+      .getByRole('button', { name: /generate/i })
+      .first()
       .or(dialog.getByTitle(/generate/i).first());
 
     if (await generateButton.isVisible({ timeout: 3_000 })) {
@@ -208,14 +225,18 @@ test.describe('Admin — Agent Wizard', () => {
     await navigateToAdminAgents(page);
 
     // Navigate into an existing agent's detail/edit view if any exists
-    const editButton = page.getByRole('button', { name: /edit/i }).first()
+    const editButton = page
+      .getByRole('button', { name: /edit/i })
+      .first()
       .or(page.locator('[aria-label*="edit" i]').first());
 
     if (await editButton.isVisible({ timeout: 3_000 })) {
       await editButton.click();
 
       const dialog = page.getByRole('dialog');
-      const undoButton = dialog.getByRole('button', { name: /undo/i }).first()
+      const undoButton = dialog
+        .getByRole('button', { name: /undo/i })
+        .first()
         .or(dialog.getByTitle(/undo/i).first());
 
       // Undo may be disabled if no buffer — just check it exists
@@ -238,7 +259,8 @@ test.describe('Admin — Agent Wizard', () => {
     await navigateToAdminAgents(page);
 
     // Look for a filter/select dropdown for task type
-    const filterControl = page.getByLabel(/filter by task type|task type/i)
+    const filterControl = page
+      .getByLabel(/filter by task type|task type/i)
       .or(page.getByRole('combobox', { name: /task type/i }))
       .or(page.locator('select[name*="taskType"], select[name*="task_type"]'));
 
@@ -259,10 +281,11 @@ test.describe('Admin — Agent Wizard', () => {
 
     // Should not show an error state
     await expect(
-      page.getByText(/no agents/i)
+      page
+        .getByText(/no agents/i)
         .or(page.getByRole('table'))
         .or(page.getByRole('list'))
-        .or(page.getByText(/agent/i).first())
+        .or(page.getByText(/agent/i).first()),
     ).toBeVisible({ timeout: 10_000 });
   });
 });

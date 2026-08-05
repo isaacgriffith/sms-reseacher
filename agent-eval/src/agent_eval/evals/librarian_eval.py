@@ -127,19 +127,21 @@ def build_test_cases(run_agent: bool = False) -> list[LLMTestCase]:
             actual_output = asyncio.run(_invoke_librarian(inp))
         else:
             # Stub output: valid structure but skips LLM call
-            actual_output = json.dumps({
-                "papers": [
-                    {
-                        "title": "Stub Paper for " + inp["topic"],
-                        "authors": ["Stub Author"],
-                        "year": 2024,
-                        "venue": "Stub Venue",
-                        "doi": "10.0000/stub",
-                        "rationale": "Stub rationale.",
-                    }
-                ],
-                "authors": [],
-            })
+            actual_output = json.dumps(
+                {
+                    "papers": [
+                        {
+                            "title": "Stub Paper for " + inp["topic"],
+                            "authors": ["Stub Author"],
+                            "year": 2024,
+                            "venue": "Stub Venue",
+                            "doi": "10.0000/stub",
+                            "rationale": "Stub rationale.",
+                        }
+                    ],
+                    "authors": [],
+                }
+            )
 
         input_text = json.dumps({k: v for k, v in inp.items() if k != "case_id"})
 
@@ -182,10 +184,12 @@ async def _invoke_librarian(inp: dict[str, Any]) -> str:
         objectives=inp.get("objectives", []),
         questions=inp.get("questions", []),
     )
-    return json.dumps({
-        "papers": [p.model_dump() for p in result.papers],
-        "authors": [a.model_dump() for a in result.authors],
-    })
+    return json.dumps(
+        {
+            "papers": [p.model_dump() for p in result.papers],
+            "authors": [a.model_dump() for a in result.authors],
+        }
+    )
 
 
 # ---------------------------------------------------------------------------

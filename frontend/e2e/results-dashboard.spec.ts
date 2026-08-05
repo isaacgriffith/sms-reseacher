@@ -34,7 +34,10 @@ test.describe('Results dashboard', () => {
   test('results page loads without error', async ({ page }) => {
     // Either a heading or meaningful content should be present
     await expect(
-      page.getByRole('heading').first().or(page.getByText(/results|charts|export/i).first())
+      page
+        .getByRole('heading')
+        .first()
+        .or(page.getByText(/results|charts|export/i).first()),
     ).toBeVisible({ timeout: 10_000 });
   });
 
@@ -59,7 +62,10 @@ test.describe('Results dashboard', () => {
       await chartsTab.click();
       // Chart gallery should render — look for SVG, canvas, or chart labels
       await expect(
-        page.locator('svg, canvas').first().or(page.getByText(/chart|figure|publication year/i).first())
+        page
+          .locator('svg, canvas')
+          .first()
+          .or(page.getByText(/chart|figure|publication year/i).first()),
       ).toBeVisible({ timeout: 8_000 });
     } else {
       test.skip();
@@ -71,7 +77,10 @@ test.describe('Results dashboard', () => {
     if (await domainTab.isVisible({ timeout: 5_000 }).catch(() => false)) {
       await domainTab.click();
       await expect(
-        page.locator('svg').first().or(page.getByText(/not available|no domain model/i).first())
+        page
+          .locator('svg')
+          .first()
+          .or(page.getByText(/not available|no domain model/i).first()),
       ).toBeVisible({ timeout: 8_000 });
     } else {
       test.skip();
@@ -82,9 +91,9 @@ test.describe('Results dashboard', () => {
     const exportTab = page.getByRole('button', { name: /export/i });
     if (await exportTab.isVisible({ timeout: 5_000 }).catch(() => false)) {
       await exportTab.click();
-      await expect(
-        page.getByText(/export|download|format/i).first()
-      ).toBeVisible({ timeout: 8_000 });
+      await expect(page.getByText(/export|download|format/i).first()).toBeVisible({
+        timeout: 8_000,
+      });
     } else {
       test.skip();
     }
@@ -106,9 +115,9 @@ test.describe('Results dashboard', () => {
         ]);
         await generateBtn.click();
         // Accept any outcome — download OR job-progress indicator
-        await expect(
-          page.getByText(/running|queued|generating|download/i).first()
-        ).toBeVisible({ timeout: 10_000 });
+        await expect(page.getByText(/running|queued|generating|download/i).first()).toBeVisible({
+          timeout: 10_000,
+        });
         void downloadOrJobPromise; // prevent unhandled rejection warnings
       } else {
         test.skip();

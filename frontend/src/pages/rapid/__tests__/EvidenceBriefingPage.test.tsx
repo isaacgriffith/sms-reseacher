@@ -34,7 +34,13 @@ vi.mock('../../../services/rapid/briefingApi', () => ({
 }));
 
 vi.mock('../../../components/rapid/BriefingVersionPanel', () => ({
-  default: ({ onSelectBriefing }: { studyId: number; onSelectBriefing: (id: number) => void; selectedBriefingId: number | null }) => (
+  default: ({
+    onSelectBriefing,
+  }: {
+    studyId: number;
+    onSelectBriefing: (id: number) => void;
+    selectedBriefingId: number | null;
+  }) => (
     <div data-testid="briefing-version-panel">
       <button onClick={() => onSelectBriefing(1)}>Select Briefing 1</button>
     </div>
@@ -120,7 +126,9 @@ describe('EvidenceBriefingPage', () => {
     });
 
     it('shows info alert when briefings is undefined', () => {
-      vi.mocked(useBriefings).mockReturnValue({ data: undefined } as ReturnType<typeof useBriefings>);
+      vi.mocked(useBriefings).mockReturnValue({ data: undefined } as ReturnType<
+        typeof useBriefings
+      >);
       renderWithQuery(<EvidenceBriefingPage studyId={42} />);
       expect(screen.getByText(/no briefings yet/i)).toBeTruthy();
     });
@@ -138,7 +146,9 @@ describe('EvidenceBriefingPage', () => {
 
   describe('briefing version panel', () => {
     it('renders BriefingVersionPanel when briefings exist', () => {
-      vi.mocked(useBriefings).mockReturnValue({ data: [BRIEFING_SUMMARY] } as ReturnType<typeof useBriefings>);
+      vi.mocked(useBriefings).mockReturnValue({ data: [BRIEFING_SUMMARY] } as ReturnType<
+        typeof useBriefings
+      >);
       renderWithQuery(<EvidenceBriefingPage studyId={42} />);
       expect(screen.getByTestId('briefing-version-panel')).toBeTruthy();
     });
@@ -178,10 +188,14 @@ describe('EvidenceBriefingPage', () => {
 
     it('disables button when any briefing is still generating', () => {
       const generatingBriefing = { ...BRIEFING_SUMMARY, pdf_available: false };
-      vi.mocked(useBriefings).mockReturnValue({ data: [generatingBriefing] } as ReturnType<typeof useBriefings>);
+      vi.mocked(useBriefings).mockReturnValue({ data: [generatingBriefing] } as ReturnType<
+        typeof useBriefings
+      >);
 
       renderWithQuery(<EvidenceBriefingPage studyId={42} />);
-      const btn = screen.getByRole('button', { name: /generate new version/i }) as HTMLButtonElement;
+      const btn = screen.getByRole('button', {
+        name: /generate new version/i,
+      }) as HTMLButtonElement;
       expect(btn.disabled).toBe(true);
     });
   });
@@ -264,7 +278,9 @@ describe('EvidenceBriefingPage', () => {
 
   describe('briefing preview', () => {
     it('renders BriefingPreview after selecting a briefing', async () => {
-      vi.mocked(useBriefings).mockReturnValue({ data: [BRIEFING_SUMMARY] } as ReturnType<typeof useBriefings>);
+      vi.mocked(useBriefings).mockReturnValue({ data: [BRIEFING_SUMMARY] } as ReturnType<
+        typeof useBriefings
+      >);
       vi.mocked(getBriefing).mockResolvedValue(BRIEFING_DETAIL);
 
       renderWithQuery(<EvidenceBriefingPage studyId={42} />);

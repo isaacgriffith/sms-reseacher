@@ -21,7 +21,7 @@
 
 ---
 
-## User Scenarios & Testing *(mandatory)*
+## User Scenarios & Testing _(mandatory)_
 
 ### User Story 1 - Researcher Creates and Scopes a New Study (Priority: P1)
 
@@ -154,7 +154,7 @@ An LLM-as-a-Judge agent evaluates the current state of the study against the fiv
 
 ---
 
-## Requirements *(mandatory)*
+## Requirements _(mandatory)_
 
 ### Functional Requirements
 
@@ -169,11 +169,11 @@ An LLM-as-a-Judge agent evaluates the current state of the study against the fiv
 #### Study Management
 
 - **FR-006**: System MUST provide a New Study Wizard that collects: study name, study type (Systematic Mapping Study, Systematic Literature Review, Rapid Review, Tertiary Study), assigned members, motivation, research objectives, research questions, and reviewer configuration (one or more human members and/or AI agents to serve as reviewers for paper decisions and data extraction).
-  *Reviewer configuration*: Each reviewer entry has a `reviewer_type` (one of `human` or `ai_agent`) and a role. For human reviewers, the study admin selects from the study's assigned members. For AI agent reviewers, the valid `agent_name` values are: `"ScreenerAgent"` (paper inclusion/exclusion decisions) and `"ExtractorAgent"` (data extraction validation). The optional `agent_config` JSON field MAY override the agent's default LLM model or threshold settings. A study MUST have at least one reviewer. Reviewer configuration MAY be edited after study creation by a study admin.
+  _Reviewer configuration_: Each reviewer entry has a `reviewer_type` (one of `human` or `ai_agent`) and a role. For human reviewers, the study admin selects from the study's assigned members. For AI agent reviewers, the valid `agent_name` values are: `"ScreenerAgent"` (paper inclusion/exclusion decisions) and `"ExtractorAgent"` (data extraction validation). The optional `agent_config` JSON field MAY override the agent's default LLM model or threshold settings. A study MUST have at least one reviewer. Reviewer configuration MAY be edited after study creation by a study admin.
 - **FR-007**: System MUST allow users with appropriate permissions to archive or delete a study from the studies list.
 - **FR-008**: System MUST display each study's name, topic, study type, and current phase/progress in the studies list.
 - **FR-008a**: System MUST enforce soft phase gates: Phase 2 is unlocked only after PICO(C) is saved; Phase 3 is unlocked only after a full search is executed; Phases 4–5 are unlocked only after data extraction has been initiated. All previously unlocked phases remain editable.
-  *Phase re-edit invalidation rules*: When a researcher edits data in a phase that has already been completed, downstream derived data MUST NOT be silently invalidated or deleted. Instead, the system MUST flag the study as having a stale downstream phase and surface a banner in the affected downstream phase views ("PICO was changed after this search was run — consider re-running the search"). No automatic deletion of search results, decisions, or extractions is permitted; re-execution is always user-initiated. The `phase_gate` service MUST track a `pico_saved_at`, `search_run_at`, and `extraction_started_at` timestamp; any upstream edit that post-dates a downstream timestamp marks that downstream phase as potentially stale.
+  _Phase re-edit invalidation rules_: When a researcher edits data in a phase that has already been completed, downstream derived data MUST NOT be silently invalidated or deleted. Instead, the system MUST flag the study as having a stale downstream phase and surface a banner in the affected downstream phase views ("PICO was changed after this search was run — consider re-running the search"). No automatic deletion of search results, decisions, or extractions is permitted; re-execution is always user-initiated. The `phase_gate` service MUST track a `pico_saved_at`, `search_run_at`, and `extraction_started_at` timestamp; any upstream edit that post-dates a downstream timestamp marks that downstream phase as potentially stale.
 - **FR-009**: System MUST persist study ownership to the creating research group.
 
 #### Phase 1: Need for Map
@@ -181,7 +181,7 @@ An LLM-as-a-Judge agent evaluates the current state of the study against the fiv
 - **FR-010**: System MUST allow users to define and edit PICO(C) components for a study, supporting variants: PICO, PICOS, PICOT, SPIDER, PCC.
 - **FR-011**: System MUST provide AI-assisted refinement of each PICO(C) component based on the study's topic and research questions.
 - **FR-012**: System MUST allow users to add seed papers (known key papers) and seed authors to a study as the initial test set.
-- **FR-013**: System MUST provide a "Librarian" AI agent that suggests key papers and key authors relevant to the study topic. *(Research group discovery is out of scope for this iteration.)*
+- **FR-013**: System MUST provide a "Librarian" AI agent that suggests key papers and key authors relevant to the study topic. _(Research group discovery is out of scope for this iteration.)_
 - **FR-014**: System MUST provide an "Expert" AI agent that identifies a small set of 10–20 papers highly relevant to the research topic without hallucination.
 
 #### Phase 2: Study Identification
@@ -198,11 +198,11 @@ An LLM-as-a-Judge agent evaluates the current state of the study against the fiv
 - **FR-024**: System MUST execute forward snowball sampling on accepted papers using their citation lists.
 - **FR-025**: System MUST tag each paper with the search phase/round in which it was found (e.g., `initial-search`, `backward-search-1`, `forward-search-2`).
 - **FR-026**: System MUST stop snowball sampling when a round produces fewer non-duplicate papers than a configurable threshold (default: 5).
-  *Termination semantics*: A "new non-duplicate paper" in round N is any paper whose DOI (or fuzzy-matched title) does not appear in any previously processed `CandidatePaper` for this study. Papers already seen in prior snowball rounds count as duplicates for threshold purposes. Forward snowball MUST detect citation cycles: if a newly retrieved citation DOI matches a paper already in the snowball processing queue for the current round, it is skipped (not counted). The maximum number of snowball rounds is bounded by `Study.snowball_threshold * 20` (a safety cap) to prevent unbounded execution; if the cap is reached, the job MUST log a warning and terminate normally.
+  _Termination semantics_: A "new non-duplicate paper" in round N is any paper whose DOI (or fuzzy-matched title) does not appear in any previously processed `CandidatePaper` for this study. Papers already seen in prior snowball rounds count as duplicates for threshold purposes. Forward snowball MUST detect citation cycles: if a newly retrieved citation DOI matches a paper already in the snowball processing queue for the current round, it is skipped (not counted). The maximum number of snowball rounds is bounded by `Study.snowball_threshold * 20` (a safety cap) to prevent unbounded execution; if the cap is reached, the job MUST log a warning and terminate normally.
 - **FR-027**: System MUST track and display search metrics per phase: total identified, accepted, rejected, duplicates.
 - **FR-027a**: System MUST execute full database searches and batch data extraction as async background jobs, providing a live progress dashboard showing current phase, papers found so far, and percentage complete. Users MUST be able to navigate away from the progress view and return to it; results MUST be available when the job completes.
 - **FR-028**: System MUST support web-scraping-based search as an alternative to database search, using PICO(C) criteria to assess relevance.
-  *Scope for this iteration*: The MCP scraper tools (`scrape_journal`, `scrape_author_page`) are **fully implemented** in this iteration (T061–T062) and registered in `researcher-mcp/server.py`. The backend search-mode API endpoint (`search_mode=scrape`), the ARQ job variant that drives scraper-based search, and the frontend UI toggle selecting scraper mode are **deferred to a subsequent feature iteration**. FR-028 is therefore **partially satisfied** by this feature: the tool layer is complete; the orchestration and UI layers are out of scope here.
+  _Scope for this iteration_: The MCP scraper tools (`scrape_journal`, `scrape_author_page`) are **fully implemented** in this iteration (T061–T062) and registered in `researcher-mcp/server.py`. The backend search-mode API endpoint (`search_mode=scrape`), the ARQ job variant that drives scraper-based search, and the frontend UI toggle selecting scraper mode are **deferred to a subsequent feature iteration**. FR-028 is therefore **partially satisfied** by this feature: the tool layer is complete; the orchestration and UI layers are out of scope here.
 
 #### Phase 3: Data Extraction & Classification
 
@@ -210,10 +210,10 @@ An LLM-as-a-Judge agent evaluates the current state of the study against the fiv
 - **FR-030**: System MUST classify research type using decision rules R1–R6 in order, flagging conflicts for human review.
 - **FR-031**: System MUST apply the study's configured reviewer set (human and/or AI) to validate each extraction. Disagreements across any reviewers MUST be flagged for resolution. Reviewer composition is configured per study, not hardcoded.
 - **FR-032**: System MUST allow researchers to edit any extracted field and log the change with the original AI value preserved.
-- **FR-043**: System MUST use optimistic locking for concurrent edits to paper decisions and extraction fields. When a conflict is detected, the system MUST present the conflicting researcher with a diff view showing both versions and require them to resolve the conflict by choosing one of three actions: **Keep Mine** (discard the concurrent change), **Keep Theirs** (discard the local change), or **Merge** (field-by-field selection where the researcher picks a value per conflicting field). The chosen resolution is resubmitted as a new save with the current `version_id`. No silent overwrites are permitted. *Implementation note: optimistic locking MUST use SQLAlchemy's `version_id_col` pattern — concurrently-editable models MUST include a `version_id: Mapped[int]` column and `__mapper_args__ = {"version_id_col": version_id}`. A stale-version write MUST return HTTP 409 with both `your_version` and `current_version` in the response body.*
+- **FR-043**: System MUST use optimistic locking for concurrent edits to paper decisions and extraction fields. When a conflict is detected, the system MUST present the conflicting researcher with a diff view showing both versions and require them to resolve the conflict by choosing one of three actions: **Keep Mine** (discard the concurrent change), **Keep Theirs** (discard the local change), or **Merge** (field-by-field selection where the researcher picks a value per conflicting field). The chosen resolution is resubmitted as a new save with the current `version_id`. No silent overwrites are permitted. _Implementation note: optimistic locking MUST use SQLAlchemy's `version_id_col` pattern — concurrently-editable models MUST include a `version_id: Mapped[int]` column and `__mapper_args__ = {"version_id_col": version_id}`. A stale-version write MUST return HTTP 409 with both `your_version` and `current_version` in the response body._
 - **FR-033**: System MUST generate a domain model (UML concept diagram) from the open coding, keywords, relationships, and summaries of accepted papers.
 - **FR-034**: System MUST generate a classification scheme with bubble charts classifying research by: venue, author, locale, institution, year, area/subtopic, research type, and research method.
-- **FR-035**: System MUST export all visualizations as publication-ready SVG files. *(The "SVG Only" format in FR-042 is the export mechanism that satisfies this requirement; FR-035 and FR-042 SVG Only are complementary.)*
+- **FR-035**: System MUST export all visualizations as publication-ready SVG files. _(The "SVG Only" format in FR-042 is the export mechanism that satisfies this requirement; FR-035 and FR-042 SVG Only are complementary.)_
 
 #### Phase 4: Validity Discussion
 
@@ -234,26 +234,26 @@ An LLM-as-a-Judge agent evaluates the current state of the study against the fiv
   overrides — capturing: actor identity, timestamp, the entity and field changed, and the
   before/after values. Study admins MUST be able to view the full audit log for their study
   from the study administration view.
-  *Note: Data extraction field edits are tracked separately by the `ExtractionFieldAudit`
+  _Note: Data extraction field edits are tracked separately by the `ExtractionFieldAudit`
   entity (which preserves the original AI value for potential restoration). Extraction edits
-  are therefore excluded from the general `AuditRecord` audit log to avoid data duplication.*
+  are therefore excluded from the general `AuditRecord` audit log to avoid data duplication._
 - **FR-045**: System MUST provide an administrative status dashboard showing the real-time
   health of all system services (data storage, background job processing, external search
   connections). The dashboard MUST allow an administrator to view details of any failed
   background job and trigger a retry without requiring direct access to the underlying
   infrastructure.
-  *Monitored services*: The dashboard MUST report the status of the following four services:
+  _Monitored services_: The dashboard MUST report the status of the following four services:
   (1) **PostgreSQL** — database reachability (test via `SELECT 1`);
   (2) **Redis** — ARQ job queue reachability (test via `PING`);
   (3) **researcher-mcp** — MCP tool server reachability (test via `GET /health` or the first registered tool probe);
   (4) **LLM provider** — Anthropic API or Ollama endpoint reachability (lightweight probe; Anthropic: models list; Ollama: `GET /api/tags`).
   Each service status MUST be one of: `healthy`, `degraded`, or `unreachable`, with a `last_checked_at` timestamp.
-  *Retry semantics*: A job retry MUST be rejected with HTTP 409 if the job's current `status` is not `failed`; the retry MUST re-enqueue the original job arguments unchanged and return the new `BackgroundJob.id`.
+  _Retry semantics_: A job retry MUST be rejected with HTTP 409 if the job's current `status` is not `failed`; the retry MUST re-enqueue the original job arguments unchanged and return the new `BackgroundJob.id`.
 - **FR-046**: System MUST NOT expose secrets, API keys, database credentials, or security
   tokens through any user-visible interface, error message, log output visible to end users,
   or exported artefact. All sensitive configuration MUST be managed externally from the
   application codebase.
-  *Export redaction allowlist*: The export service MUST include ONLY the following categories
+  _Export redaction allowlist_: The export service MUST include ONLY the following categories
   of data in JSON/CSV/archive exports; all other fields are excluded by default:
   - Study metadata: id, name, study_type, status, topic, motivation, current_phase, created_at, updated_at, snowball_threshold
   - Members: user display_name and role only (no email, no hashed_password, no auth tokens)
@@ -265,9 +265,9 @@ An LLM-as-a-Judge agent evaluates the current state of the study against the fiv
   - Extractions: all extracted fields, extraction_status, extracted_by_agent
   - Audit records: entity_type, entity_id, action, field_name, before_value, after_value, created_at, actor display_name only
   - Visualizations: SVG content (no embedded paths or env data)
-  *Explicitly excluded from all exports*: `hashed_password`, `secret_key`, `anthropic_api_key`,
-  `database_url`, `redis_url`, `ollama_base_url`, `researcher_mcp_url`, `user.email`,
-  `user.id` (replace with display_name), JWT tokens, any `Settings`-derived field.
+    _Explicitly excluded from all exports_: `hashed_password`, `secret_key`, `anthropic_api_key`,
+    `database_url`, `redis_url`, `ollama_base_url`, `researcher_mcp_url`, `user.email`,
+    `user.id` (replace with display_name), JWT tokens, any `Settings`-derived field.
 
 #### Results & Reporting
 
@@ -317,7 +317,7 @@ An LLM-as-a-Judge agent evaluates the current state of the study against the fiv
 
 ---
 
-## Success Criteria *(mandatory)*
+## Success Criteria _(mandatory)_
 
 ### Measurable Outcomes
 

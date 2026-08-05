@@ -121,12 +121,17 @@ export default function PICOForm({ studyId }: Props) {
 
   return (
     <Box>
-      <Typography variant="h6" sx={{ margin: '0 0 1rem' }}>PICO/C Framework</Typography>
+      <Typography variant="h6" sx={{ margin: '0 0 1rem' }}>
+        PICO/C Framework
+      </Typography>
 
       <form onSubmit={onSubmit}>
         {/* Variant selector */}
         <Box sx={{ marginBottom: '1.5rem' }}>
-          <Typography component="label" sx={{ display: 'block', fontWeight: 500, marginBottom: '0.5rem' }}>
+          <Typography
+            component="label"
+            sx={{ display: 'block', fontWeight: 500, marginBottom: '0.5rem' }}
+          >
             Framework variant
           </Typography>
           <Box sx={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
@@ -143,7 +148,12 @@ export default function PICOForm({ studyId }: Props) {
                   color: variant === v ? '#1d4ed8' : '#374151',
                 }}
               >
-                <input type="radio" value={v} {...register('variant')} style={{ display: 'none' }} />
+                <input
+                  type="radio"
+                  value={v}
+                  {...register('variant')}
+                  style={{ display: 'none' }}
+                />
                 {v}
               </label>
             ))}
@@ -153,8 +163,17 @@ export default function PICOForm({ studyId }: Props) {
         {/* Component fields */}
         {Object.entries(COMPONENT_LABELS).map(([key, label]) => (
           <Box key={key} sx={{ marginBottom: '1.25rem' }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
-              <Typography component="label" sx={{ fontWeight: 500, fontSize: '0.9rem' }}>{label}</Typography>
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '0.25rem',
+              }}
+            >
+              <Typography component="label" sx={{ fontWeight: 500, fontSize: '0.9rem' }}>
+                {label}
+              </Typography>
               <Button
                 type="button"
                 variant="outlined"
@@ -173,21 +192,44 @@ export default function PICOForm({ studyId }: Props) {
             </Box>
             <textarea
               rows={3}
-              style={{ width: '100%', padding: '0.5rem', boxSizing: 'border-box', borderRadius: '0.25rem', border: '1px solid #cbd5e1', resize: 'vertical' }}
+              style={{
+                width: '100%',
+                padding: '0.5rem',
+                boxSizing: 'border-box',
+                borderRadius: '0.25rem',
+                border: '1px solid #cbd5e1',
+                resize: 'vertical',
+              }}
               {...register(key as keyof PICOData)}
             />
             {suggestions[key] && suggestions[key].length > 0 && (
-              <Box sx={{ marginTop: '0.5rem', padding: '0.75rem', background: '#f0f9ff', borderRadius: '0.375rem', fontSize: '0.875rem' }}>
-                <Typography sx={{ margin: '0 0 0.5rem', fontWeight: 500, color: '#0369a1' }}>AI suggestions:</Typography>
+              <Box
+                sx={{
+                  marginTop: '0.5rem',
+                  padding: '0.75rem',
+                  background: '#f0f9ff',
+                  borderRadius: '0.375rem',
+                  fontSize: '0.875rem',
+                }}
+              >
+                <Typography sx={{ margin: '0 0 0.5rem', fontWeight: 500, color: '#0369a1' }}>
+                  AI suggestions:
+                </Typography>
                 <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
-                  {suggestions[key].map((s, i) => <li key={i} style={{ marginBottom: '0.25rem' }}>{s}</li>)}
+                  {suggestions[key].map((s, i) => (
+                    <li key={i} style={{ marginBottom: '0.25rem' }}>
+                      {s}
+                    </li>
+                  ))}
                 </ul>
               </Box>
             )}
           </Box>
         ))}
 
-        {saveError && <Typography sx={{ color: 'red', fontSize: '0.875rem' }}>{saveError}</Typography>}
+        {saveError && (
+          <Typography sx={{ color: 'red', fontSize: '0.875rem' }}>{saveError}</Typography>
+        )}
 
         <Button
           type="submit"
@@ -199,7 +241,10 @@ export default function PICOForm({ studyId }: Props) {
         </Button>
 
         {pico && (
-          <Typography component="span" sx={{ marginLeft: '0.75rem', color: '#16a34a', fontSize: '0.875rem' }}>
+          <Typography
+            component="span"
+            sx={{ marginLeft: '0.75rem', color: '#16a34a', fontSize: '0.875rem' }}
+          >
             ✓ Saved — Phase 2 unlocked
           </Typography>
         )}

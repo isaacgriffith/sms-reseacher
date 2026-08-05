@@ -21,38 +21,38 @@ Replace the hardcoded `agent_name` string on `Reviewer` with a full database-bac
 
 ## Constitution Check
 
-| Gate | Status | Notes |
-|------|--------|-------|
-| SOLID — no SRP violations in target modules | PASS | Provider/Model/Agent each have dedicated service classes; LLMClient concern is inference only |
-| SOLID — extension points exist (OCP) where variation expected | PASS | ProviderConfig Protocol enables new providers without modifying LLMClient; AgentTaskType enum extensible |
-| Structural — no DRY violations (duplication) | PASS | Single ProviderConfig abstraction; encryption logic in one utility module |
-| Structural — no YAGNI violations (speculative generality) | PASS | Only three provider types in scope; no abstract factory beyond what's needed |
-| Code clarity — no long methods (>20 lines) in touched code | PASS | Services decomposed into focused methods; agent creation wizard steps are separate components |
-| Code clarity — no switch/if-chain smells in touched code | PASS | Provider-type dispatch uses a registry/strategy dict, not if-chain |
-| Code clarity — no common code smells identified | PASS | Pre-implementation review: existing LLMClient is clean; Reviewer model will gain FK column only |
-| Refactoring — pre-implementation review completed | PASS | Existing LLMClient, Reviewer, and AdminPage reviewed; no blocking violations found |
-| Refactoring — any found refactors added to task list with tests | PASS | See Complexity Tracking — agent_name transitional column noted; cleanup task included |
-| GRASP/patterns — responsibility assignments reviewed | PASS | ProviderConfig = Protected Variations; ProviderService = Information Expert; AgentService = Controller |
-| Test coverage — existing tests pass; refactor tests written first | PASS | Existing coverage verified; new migration tested with upgrade/downgrade test |
-| Toolchain (VII) — no unapproved deps or tool substitutions introduced | PASS | All deps already in approved stack (LiteLLM, Fernet, Jinja2, MUI v5, TanStack Query) |
-| Toolchain (VII) — FastAPI/SQLAlchemy 2.x/ARQ/LiteLLM patterns followed | PASS | New routers use async def + Depends(); models use Mapped[T] + mapped_column() |
-| Observability (VIII) — new models have audit fields + structlog used | PASS | All three new models have created_at/updated_at; version_id for optimistic locking; structlog in services |
-| Observability (VIII) — config via Pydantic BaseSettings + lru_cache | PASS | No new settings classes needed; reuses existing BackendSettings and AgentSettings |
-| Infrastructure (VIII) — Docker services have healthchecks if added | N/A | No new Docker services added |
-| Language (IX) — React components functional, props typed, ≤100 JSX lines | PASS | All admin components planned as functional; SystemMessageEditor decomposed separately |
-| Language (IX) — Hooks called at top level only (Rules of Hooks); no inline refs in deps | PASS | Wizard state managed via useReducer; no inline objects in dep arrays |
-| Language (IX) — No React state mutation; no array-index keys in lists | PASS | Provider/model/agent lists keyed by UUID |
-| Language (IX) — >3 related useState → useReducer; useCallback only when justified | PASS | AgentWizard uses useReducer for multi-step wizard state |
-| Language (IX) — useEffect returns cleanup for all resource-acquiring effects | PASS | TanStack Query handles fetch lifecycle; no raw useEffect fetches |
-| Language (IX) — React.memo applied deliberately; useImperativeHandle used for imperative APIs | PASS | SystemMessageEditor wrapped in React.memo (re-renders on large template changes would be costly) |
-| Language (IX) — useWatch used (not watch) for reactive form field subscriptions | PASS | Provider type selector uses useWatch to conditionally show api_key/base_url fields |
-| Language (IX) — Vite env vars use VITE_ prefix + import.meta.env | PASS | No new frontend env vars needed |
-| Language (IX) — Python: no plain dict for domain data; pathlib used | PASS | ProviderConfig is a Protocol; all domain objects are Pydantic models or dataclasses |
-| Language (IX) — Python: no mutable defaults; specific exception handling | PASS | Services raise specific HTTPException subtypes; no mutable defaults in new code |
-| Language (IX) — TypeScript: no any/enum/non-null(!) without justification | PASS | API response types use Zod schemas; no any; string literal unions for provider type |
-| Language (IX) — TypeScript: unknown + Zod at all external boundaries | PASS | All API responses parsed through Zod schemas before use |
-| Code clarity — all functions/methods/classes have doc comments | PASS | Google-style docstrings required for all Python; JSDoc for all exported TS symbols |
-| Feature completion docs (X) — CLAUDE.md, README, CHANGELOG update tasks in task list | PASS | TDOC tasks included in plan |
+| Gate                                                                                          | Status | Notes                                                                                                     |
+| --------------------------------------------------------------------------------------------- | ------ | --------------------------------------------------------------------------------------------------------- |
+| SOLID — no SRP violations in target modules                                                   | PASS   | Provider/Model/Agent each have dedicated service classes; LLMClient concern is inference only             |
+| SOLID — extension points exist (OCP) where variation expected                                 | PASS   | ProviderConfig Protocol enables new providers without modifying LLMClient; AgentTaskType enum extensible  |
+| Structural — no DRY violations (duplication)                                                  | PASS   | Single ProviderConfig abstraction; encryption logic in one utility module                                 |
+| Structural — no YAGNI violations (speculative generality)                                     | PASS   | Only three provider types in scope; no abstract factory beyond what's needed                              |
+| Code clarity — no long methods (>20 lines) in touched code                                    | PASS   | Services decomposed into focused methods; agent creation wizard steps are separate components             |
+| Code clarity — no switch/if-chain smells in touched code                                      | PASS   | Provider-type dispatch uses a registry/strategy dict, not if-chain                                        |
+| Code clarity — no common code smells identified                                               | PASS   | Pre-implementation review: existing LLMClient is clean; Reviewer model will gain FK column only           |
+| Refactoring — pre-implementation review completed                                             | PASS   | Existing LLMClient, Reviewer, and AdminPage reviewed; no blocking violations found                        |
+| Refactoring — any found refactors added to task list with tests                               | PASS   | See Complexity Tracking — agent_name transitional column noted; cleanup task included                     |
+| GRASP/patterns — responsibility assignments reviewed                                          | PASS   | ProviderConfig = Protected Variations; ProviderService = Information Expert; AgentService = Controller    |
+| Test coverage — existing tests pass; refactor tests written first                             | PASS   | Existing coverage verified; new migration tested with upgrade/downgrade test                              |
+| Toolchain (VII) — no unapproved deps or tool substitutions introduced                         | PASS   | All deps already in approved stack (LiteLLM, Fernet, Jinja2, MUI v5, TanStack Query)                      |
+| Toolchain (VII) — FastAPI/SQLAlchemy 2.x/ARQ/LiteLLM patterns followed                        | PASS   | New routers use async def + Depends(); models use Mapped[T] + mapped_column()                             |
+| Observability (VIII) — new models have audit fields + structlog used                          | PASS   | All three new models have created_at/updated_at; version_id for optimistic locking; structlog in services |
+| Observability (VIII) — config via Pydantic BaseSettings + lru_cache                           | PASS   | No new settings classes needed; reuses existing BackendSettings and AgentSettings                         |
+| Infrastructure (VIII) — Docker services have healthchecks if added                            | N/A    | No new Docker services added                                                                              |
+| Language (IX) — React components functional, props typed, ≤100 JSX lines                      | PASS   | All admin components planned as functional; SystemMessageEditor decomposed separately                     |
+| Language (IX) — Hooks called at top level only (Rules of Hooks); no inline refs in deps       | PASS   | Wizard state managed via useReducer; no inline objects in dep arrays                                      |
+| Language (IX) — No React state mutation; no array-index keys in lists                         | PASS   | Provider/model/agent lists keyed by UUID                                                                  |
+| Language (IX) — >3 related useState → useReducer; useCallback only when justified             | PASS   | AgentWizard uses useReducer for multi-step wizard state                                                   |
+| Language (IX) — useEffect returns cleanup for all resource-acquiring effects                  | PASS   | TanStack Query handles fetch lifecycle; no raw useEffect fetches                                          |
+| Language (IX) — React.memo applied deliberately; useImperativeHandle used for imperative APIs | PASS   | SystemMessageEditor wrapped in React.memo (re-renders on large template changes would be costly)          |
+| Language (IX) — useWatch used (not watch) for reactive form field subscriptions               | PASS   | Provider type selector uses useWatch to conditionally show api_key/base_url fields                        |
+| Language (IX) — Vite env vars use VITE\_ prefix + import.meta.env                             | PASS   | No new frontend env vars needed                                                                           |
+| Language (IX) — Python: no plain dict for domain data; pathlib used                           | PASS   | ProviderConfig is a Protocol; all domain objects are Pydantic models or dataclasses                       |
+| Language (IX) — Python: no mutable defaults; specific exception handling                      | PASS   | Services raise specific HTTPException subtypes; no mutable defaults in new code                           |
+| Language (IX) — TypeScript: no any/enum/non-null(!) without justification                     | PASS   | API response types use Zod schemas; no any; string literal unions for provider type                       |
+| Language (IX) — TypeScript: unknown + Zod at all external boundaries                          | PASS   | All API responses parsed through Zod schemas before use                                                   |
+| Code clarity — all functions/methods/classes have doc comments                                | PASS   | Google-style docstrings required for all Python; JSDoc for all exported TS symbols                        |
+| Feature completion docs (X) — CLAUDE.md, README, CHANGELOG update tasks in task list          | PASS   | TDOC tasks included in plan                                                                               |
 
 ## Project Structure
 
@@ -139,15 +139,16 @@ frontend/
 
 ## Complexity Tracking
 
-| Item | Type | Why Accepted / Resolution |
-|------|------|--------------------------|
-| `agent_name` retained on Reviewer during transition | Tech debt | Zero-downtime migration requirement (R-007). Cleanup task T-CLEANUP-001 added: remove `agent_name` column in follow-up migration once all rows migrated. |
-| `provider_id` denormalized on Agent | Design decision | Fast join path for provider display without multi-hop join; enforced by application-layer validation (model.provider_id == agent.provider_id). Documented in data-model.md. |
-| AgentGenerator bootstrap seed | Architectural necessity | Bootstrapping chicken-and-egg (R-005); seed record uses static default prompt; documented in research.md. |
+| Item                                                | Type                    | Why Accepted / Resolution                                                                                                                                                   |
+| --------------------------------------------------- | ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `agent_name` retained on Reviewer during transition | Tech debt               | Zero-downtime migration requirement (R-007). Cleanup task T-CLEANUP-001 added: remove `agent_name` column in follow-up migration once all rows migrated.                    |
+| `provider_id` denormalized on Agent                 | Design decision         | Fast join path for provider display without multi-hop join; enforced by application-layer validation (model.provider_id == agent.provider_id). Documented in data-model.md. |
+| AgentGenerator bootstrap seed                       | Architectural necessity | Bootstrapping chicken-and-egg (R-005); seed record uses static default prompt; documented in research.md.                                                                   |
 
 ## Phase 0 Output
 
 All unknowns resolved. See [research.md](research.md) for:
+
 - R-001: LiteLLM model string format
 - R-002: Provider model-list API endpoints
 - R-003: API key encryption (Fernet reuse)

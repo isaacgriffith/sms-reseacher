@@ -1,0 +1,73 @@
+- **F1-SF01** -- The tool is simple to install and setup
+- **F1-SF02** -- There is an installation guide
+- **F1-SF03** -- There is a tutorial
+- **F1-SF04** -- The tool is self-contained
+- **F2-SF01** -- The tool supports protocol development
+  - The protocol should be based on the guidelines defined in:
+    - SLR:
+      - Kitchenham et al, 2007, Guidelines for performing Systematic Literature Reviews in Software Engineering
+      - Page et al., 2020, The PRISMA 2020 statement: an updated guideline for reporting systematic reviews
+      - Kitchenham et al., 2023, SEGRESS: Software Engineering Guidelines for REporting Secondary Studies
+      - Holst et al., 2025, Transparent REporting of AI in Systematic Literature Reviews: Development of the PRISMA-trAIce Checklist
+    - SMS:
+      - Petersen et al., 2008, Systematic Mapping Studies in Software Engineering
+      - Petersen et al., 2015, Guidelines for conducting systematic mapping studies in software engineering: an update
+    - Threats to Validity
+      - Ampatzoglou et al., 2020, Guidelines for managing threats to validity of secondary studies in software engineering
+      - Petersen and Gencel, 2013, Worldviews, Research Methods, and their RElationship to Validity in EMpirical Sfotware Engineering Research
+    - Grey Literature
+      - Rainer and Williams, 2019, Heuristics for improving the rigour and relevance of grey literature searches for sfotware engineering research
+      - Graousi et al., 2019, Guidelines for including grey literature and conducting multivocal literature reviews in software engineering
+      - Yasin et al., 2020, On using grey literature and google scholar in systematic literature reviews in software engineering
+      - Kitcheham et al., 2023, How should software engineering secondary studies include grey material?
+- **F2-SF02** -- The tool supports protocol validation
+- **F2-SF03** -- The tool supports automated searches, must be capable of executing the follow types of search automatically:
+  - Database search, must be capable of taking a given Boolean operator Search String and optimize it for each database search engine and then execute the search:
+    - Google Scholar
+    - arXiv
+    - IEEE Xplore
+    - ACM Digital Library
+    - Scopus
+    - EI Compendex
+    - ScienceDirect
+    - Web of Science
+  - Manual Search, given a list of authors, journals, or conferences, it should be able to find the appropriate website and search for publications that match the keywords associated with the current review
+  - Snowball Sampling
+    - See: Wohlin, 2014, Guidelines for Snowballing in Systematic Literature Studies and a Replication in Software Engineering
+    - Forward Snowball Sampling - is capable of using tools such as google scholar, citeseer, etc. to find papers citing an included paper and then add these papers to the queue. It must ensure that these are not duplicates that have already been seen and decided upon
+    - Backward Snowball Sampling - must be able to extract the references from a paper (or using tools like google scholar, citeseer, etc.) to find papers that should be reviewed, but have not already been decided upon.
+    - In both cases should utilize decision rules and inclusion/exclusion criteria to pre-emptively include/exclude papers based on title and year (if possible) before attempting to obtain the paper.
+    - In the snowballing process, must maintain tracability links for papers found during this process, since if we exclude a previously included papers, then we must exclude any papers found from it directly. However, if those papers were found from other papers as well, then they are able to stay. Thus this does suggest we need a form of DAG to handle this.
+- **F2-SF04** -- The tool supports study selection and validation, must facilitate the tracking of information related to the status of a current study/paper (included, excluded, duplicate, irrelevant, unknown) and must be able to apply the inclusion/exclusion criteria automatically via an agent or script. Furthermore, it should have the ability to provide a way of discussing when either two human reviewers disagree or when an agent and human disagree. Finally, if only being reviewed by a single human or single agent, then must be able to apply a test-re-test approach where a random sample of decided papers are re-evaluated. In all these cases the inter- or intra-rater agreement needs to be evaluated using cohen's kappa. Additionally, as part of the protocol, the specific decision rules used to determine when a paper is to be included/excluded must be defined. The system should have a defined set of these decision rules available (with the ability to define additional ones). These decision rules take effect when disagreement is present.
+  - See: Petersen and Bin Ali, 2011, Identifying Strategies for Study Selection in Systematic Reviews and Maps
+- **F2-SF05** -- The tool supports quality assessment and validation, must be capable of assessing a study for the purpose of quality evaluation. Noting that a paper may define multiple studies, and a study is capable of being defined across multiple papers. The quality analysis must be defined as a checklist which can then be applied by an agent, and validated by a reviewer (either another agent, human, or both)
+- **F2-SF06** -- The tool supports data extraction and validation agent based approaches to analyze the text of a paper to extract the each item to be coded, themed, etc. This data must be extracted, validated, and captured for traceability
+- **F2-SF07** -- The tool supports automated analysis using agents and scripts to extract the necessary information to provide the basic needs of a SLR, RR, or SMS and to answer questions defined as part of the protocol
+- **F2-SF08** -- The tool supports text analysis see the automated analysis
+- **F2-SF09** -- The tool supports meta-analysis such as Qualitative Metasummary and Thematic Synthesis
+  - See: Cruzes and Dyba, 2011, Recommended Steps for Thematic Synthesis in Software Engineering
+  - See: Ribeiro et al., 2014, Using Qualitative Metasummary to Synthesize Empirical Findings in Literature Reviews
+- **F2-SF10** -- The tool supports report write up, using tools such as Markdown, Typst, and LaTeX
+- **F2-SF11** -- The tool supports report validation, ensures that the generated report follows reporting guidelines such PRISMA 2000, PRISMA-trAIce, and SEGRESS
+- **F3-SF01** -- The tool supports multiple users
+  - There should be a superuser who has the capability to only add and remove users
+  - There should be a user who is a project manager, they can
+    - Create new studies
+    - Modify and delete studies they are the "owner" of
+    - Assign/remove other users in the role of owner or review for the current study
+    - Can do everything a review can
+  - There should be a user who is a reviewer, they can
+    - Take part in a study
+    - Review the protocol of a study
+    - Review papers found in a study
+    - See results of a study
+- **F3-SF02** -- The tool supports document management
+  - Should be able to automatically retrieve the correct version of the paper to be reviewed
+  - IF the paper cannot be retrieved automatically, will flag this for manual download
+  - Manages the documents on disk for review
+  - Allows users to view the paper
+- **F3-SF03** -- The tool supports security
+  - Uses the roles defined above to ensure that individuals only have the capabilities assigned to them
+  - Requires users to log in
+- **F3-SF04** -- The tool provides support for multiple projects
+  - Manages multiple studies in a multi-tenant way

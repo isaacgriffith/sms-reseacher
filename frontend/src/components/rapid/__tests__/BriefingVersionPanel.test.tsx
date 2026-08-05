@@ -57,7 +57,9 @@ describe('BriefingVersionPanel', () => {
 
   describe('loading state', () => {
     it('shows loading indicator when isLoading is true', () => {
-      vi.mocked(useBriefings).mockReturnValue({ data: undefined, isLoading: true } as ReturnType<typeof useBriefings>);
+      vi.mocked(useBriefings).mockReturnValue({ data: undefined, isLoading: true } as ReturnType<
+        typeof useBriefings
+      >);
       renderWithQuery(
         <BriefingVersionPanel studyId={42} onSelectBriefing={vi.fn()} selectedBriefingId={null} />,
       );
@@ -67,7 +69,9 @@ describe('BriefingVersionPanel', () => {
 
   describe('empty state', () => {
     it('renders empty fragment when briefings array is empty', () => {
-      vi.mocked(useBriefings).mockReturnValue({ data: [], isLoading: false } as ReturnType<typeof useBriefings>);
+      vi.mocked(useBriefings).mockReturnValue({ data: [], isLoading: false } as ReturnType<
+        typeof useBriefings
+      >);
       const { container } = renderWithQuery(
         <BriefingVersionPanel studyId={42} onSelectBriefing={vi.fn()} selectedBriefingId={null} />,
       );
@@ -76,7 +80,9 @@ describe('BriefingVersionPanel', () => {
     });
 
     it('renders empty fragment when data is undefined', () => {
-      vi.mocked(useBriefings).mockReturnValue({ data: undefined, isLoading: false } as ReturnType<typeof useBriefings>);
+      vi.mocked(useBriefings).mockReturnValue({ data: undefined, isLoading: false } as ReturnType<
+        typeof useBriefings
+      >);
       const { container } = renderWithQuery(
         <BriefingVersionPanel studyId={42} onSelectBriefing={vi.fn()} selectedBriefingId={null} />,
       );
@@ -86,7 +92,10 @@ describe('BriefingVersionPanel', () => {
 
   describe('version display', () => {
     it('shows version number in the table', () => {
-      vi.mocked(useBriefings).mockReturnValue({ data: [BASE_SUMMARY], isLoading: false } as ReturnType<typeof useBriefings>);
+      vi.mocked(useBriefings).mockReturnValue({
+        data: [BASE_SUMMARY],
+        isLoading: false,
+      } as ReturnType<typeof useBriefings>);
       renderWithQuery(
         <BriefingVersionPanel studyId={42} onSelectBriefing={vi.fn()} selectedBriefingId={null} />,
       );
@@ -94,7 +103,10 @@ describe('BriefingVersionPanel', () => {
     });
 
     it('shows Draft status chip for draft briefing with pdf_available', () => {
-      vi.mocked(useBriefings).mockReturnValue({ data: [BASE_SUMMARY], isLoading: false } as ReturnType<typeof useBriefings>);
+      vi.mocked(useBriefings).mockReturnValue({
+        data: [BASE_SUMMARY],
+        isLoading: false,
+      } as ReturnType<typeof useBriefings>);
       renderWithQuery(
         <BriefingVersionPanel studyId={42} onSelectBriefing={vi.fn()} selectedBriefingId={null} />,
       );
@@ -103,7 +115,9 @@ describe('BriefingVersionPanel', () => {
 
     it('shows Published chip for a published briefing', () => {
       const published = { ...BASE_SUMMARY, status: 'published' as const };
-      vi.mocked(useBriefings).mockReturnValue({ data: [published], isLoading: false } as ReturnType<typeof useBriefings>);
+      vi.mocked(useBriefings).mockReturnValue({ data: [published], isLoading: false } as ReturnType<
+        typeof useBriefings
+      >);
       renderWithQuery(
         <BriefingVersionPanel studyId={42} onSelectBriefing={vi.fn()} selectedBriefingId={null} />,
       );
@@ -112,7 +126,10 @@ describe('BriefingVersionPanel', () => {
 
     it('shows Generating indicator when pdf_available is false', () => {
       const generating = { ...BASE_SUMMARY, pdf_available: false };
-      vi.mocked(useBriefings).mockReturnValue({ data: [generating], isLoading: false } as ReturnType<typeof useBriefings>);
+      vi.mocked(useBriefings).mockReturnValue({
+        data: [generating],
+        isLoading: false,
+      } as ReturnType<typeof useBriefings>);
       renderWithQuery(
         <BriefingVersionPanel studyId={42} onSelectBriefing={vi.fn()} selectedBriefingId={null} />,
       );
@@ -122,7 +139,10 @@ describe('BriefingVersionPanel', () => {
 
   describe('action buttons', () => {
     it('shows Publish button for draft briefing with pdf_available', () => {
-      vi.mocked(useBriefings).mockReturnValue({ data: [BASE_SUMMARY], isLoading: false } as ReturnType<typeof useBriefings>);
+      vi.mocked(useBriefings).mockReturnValue({
+        data: [BASE_SUMMARY],
+        isLoading: false,
+      } as ReturnType<typeof useBriefings>);
       renderWithQuery(
         <BriefingVersionPanel studyId={42} onSelectBriefing={vi.fn()} selectedBriefingId={null} />,
       );
@@ -131,7 +151,10 @@ describe('BriefingVersionPanel', () => {
 
     it('does not show Publish button when briefing is generating', () => {
       const generating = { ...BASE_SUMMARY, pdf_available: false };
-      vi.mocked(useBriefings).mockReturnValue({ data: [generating], isLoading: false } as ReturnType<typeof useBriefings>);
+      vi.mocked(useBriefings).mockReturnValue({
+        data: [generating],
+        isLoading: false,
+      } as ReturnType<typeof useBriefings>);
       renderWithQuery(
         <BriefingVersionPanel studyId={42} onSelectBriefing={vi.fn()} selectedBriefingId={null} />,
       );
@@ -139,7 +162,10 @@ describe('BriefingVersionPanel', () => {
     });
 
     it('shows PDF button when pdf_available', () => {
-      vi.mocked(useBriefings).mockReturnValue({ data: [BASE_SUMMARY], isLoading: false } as ReturnType<typeof useBriefings>);
+      vi.mocked(useBriefings).mockReturnValue({
+        data: [BASE_SUMMARY],
+        isLoading: false,
+      } as ReturnType<typeof useBriefings>);
       renderWithQuery(
         <BriefingVersionPanel studyId={42} onSelectBriefing={vi.fn()} selectedBriefingId={null} />,
       );
@@ -147,7 +173,10 @@ describe('BriefingVersionPanel', () => {
     });
 
     it('shows HTML button when html_available', () => {
-      vi.mocked(useBriefings).mockReturnValue({ data: [BASE_SUMMARY], isLoading: false } as ReturnType<typeof useBriefings>);
+      vi.mocked(useBriefings).mockReturnValue({
+        data: [BASE_SUMMARY],
+        isLoading: false,
+      } as ReturnType<typeof useBriefings>);
       renderWithQuery(
         <BriefingVersionPanel studyId={42} onSelectBriefing={vi.fn()} selectedBriefingId={null} />,
       );
@@ -156,7 +185,9 @@ describe('BriefingVersionPanel', () => {
 
     it('does not show PDF button when pdf_available is false', () => {
       const noPdf = { ...BASE_SUMMARY, pdf_available: false, html_available: false };
-      vi.mocked(useBriefings).mockReturnValue({ data: [noPdf], isLoading: false } as ReturnType<typeof useBriefings>);
+      vi.mocked(useBriefings).mockReturnValue({ data: [noPdf], isLoading: false } as ReturnType<
+        typeof useBriefings
+      >);
       renderWithQuery(
         <BriefingVersionPanel studyId={42} onSelectBriefing={vi.fn()} selectedBriefingId={null} />,
       );
@@ -165,7 +196,9 @@ describe('BriefingVersionPanel', () => {
 
     it('shows Copy Share Link button for published briefing', () => {
       const published = { ...BASE_SUMMARY, status: 'published' as const };
-      vi.mocked(useBriefings).mockReturnValue({ data: [published], isLoading: false } as ReturnType<typeof useBriefings>);
+      vi.mocked(useBriefings).mockReturnValue({ data: [published], isLoading: false } as ReturnType<
+        typeof useBriefings
+      >);
       renderWithQuery(
         <BriefingVersionPanel studyId={42} onSelectBriefing={vi.fn()} selectedBriefingId={null} />,
       );
@@ -173,7 +206,10 @@ describe('BriefingVersionPanel', () => {
     });
 
     it('does not show Copy Share Link button for draft briefing', () => {
-      vi.mocked(useBriefings).mockReturnValue({ data: [BASE_SUMMARY], isLoading: false } as ReturnType<typeof useBriefings>);
+      vi.mocked(useBriefings).mockReturnValue({
+        data: [BASE_SUMMARY],
+        isLoading: false,
+      } as ReturnType<typeof useBriefings>);
       renderWithQuery(
         <BriefingVersionPanel studyId={42} onSelectBriefing={vi.fn()} selectedBriefingId={null} />,
       );
@@ -183,7 +219,10 @@ describe('BriefingVersionPanel', () => {
 
   describe('row click callback', () => {
     it('calls onSelectBriefing with briefing id when row is clicked', () => {
-      vi.mocked(useBriefings).mockReturnValue({ data: [BASE_SUMMARY], isLoading: false } as ReturnType<typeof useBriefings>);
+      vi.mocked(useBriefings).mockReturnValue({
+        data: [BASE_SUMMARY],
+        isLoading: false,
+      } as ReturnType<typeof useBriefings>);
       const onSelect = vi.fn();
       renderWithQuery(
         <BriefingVersionPanel studyId={42} onSelectBriefing={onSelect} selectedBriefingId={null} />,
@@ -196,8 +235,14 @@ describe('BriefingVersionPanel', () => {
   describe('publish action', () => {
     it('calls publish mutation when Publish button is clicked and user confirms', () => {
       const publishMutate = vi.fn();
-      vi.mocked(useBriefings).mockReturnValue({ data: [BASE_SUMMARY], isLoading: false } as ReturnType<typeof useBriefings>);
-      vi.mocked(usePublishBriefing).mockReturnValue({ mutate: publishMutate, isPending: false } as ReturnType<typeof usePublishBriefing>);
+      vi.mocked(useBriefings).mockReturnValue({
+        data: [BASE_SUMMARY],
+        isLoading: false,
+      } as ReturnType<typeof useBriefings>);
+      vi.mocked(usePublishBriefing).mockReturnValue({
+        mutate: publishMutate,
+        isPending: false,
+      } as ReturnType<typeof usePublishBriefing>);
       vi.spyOn(window, 'confirm').mockReturnValue(true);
 
       renderWithQuery(
@@ -211,8 +256,14 @@ describe('BriefingVersionPanel', () => {
 
     it('does not call publish mutation when user cancels confirm dialog', () => {
       const publishMutate = vi.fn();
-      vi.mocked(useBriefings).mockReturnValue({ data: [BASE_SUMMARY], isLoading: false } as ReturnType<typeof useBriefings>);
-      vi.mocked(usePublishBriefing).mockReturnValue({ mutate: publishMutate, isPending: false } as ReturnType<typeof usePublishBriefing>);
+      vi.mocked(useBriefings).mockReturnValue({
+        data: [BASE_SUMMARY],
+        isLoading: false,
+      } as ReturnType<typeof useBriefings>);
+      vi.mocked(usePublishBriefing).mockReturnValue({
+        mutate: publishMutate,
+        isPending: false,
+      } as ReturnType<typeof usePublishBriefing>);
       vi.spyOn(window, 'confirm').mockReturnValue(false);
 
       renderWithQuery(
@@ -227,7 +278,10 @@ describe('BriefingVersionPanel', () => {
 
   describe('table headers', () => {
     it('renders table column headers', () => {
-      vi.mocked(useBriefings).mockReturnValue({ data: [BASE_SUMMARY], isLoading: false } as ReturnType<typeof useBriefings>);
+      vi.mocked(useBriefings).mockReturnValue({
+        data: [BASE_SUMMARY],
+        isLoading: false,
+      } as ReturnType<typeof useBriefings>);
       renderWithQuery(
         <BriefingVersionPanel studyId={42} onSelectBriefing={vi.fn()} selectedBriefingId={null} />,
       );
@@ -240,7 +294,10 @@ describe('BriefingVersionPanel', () => {
 
   describe('PDF download', () => {
     it('triggers download when PDF button is clicked', async () => {
-      vi.mocked(useBriefings).mockReturnValue({ data: [BASE_SUMMARY], isLoading: false } as ReturnType<typeof useBriefings>);
+      vi.mocked(useBriefings).mockReturnValue({
+        data: [BASE_SUMMARY],
+        isLoading: false,
+      } as ReturnType<typeof useBriefings>);
 
       // Mock URL.createObjectURL and revokeObjectURL
       const createUrl = vi.fn().mockReturnValue('blob:url');

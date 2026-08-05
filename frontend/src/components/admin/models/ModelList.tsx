@@ -84,7 +84,8 @@ export default function ModelList({ providerId }: ModelListProps) {
           {(models ?? []).length === 0 && (
             <TableRow>
               <TableCell colSpan={3} align="center" sx={{ color: 'text.secondary', py: 3 }}>
-                No models found. Use &ldquo;Refresh Models&rdquo; on the provider to fetch the catalog.
+                No models found. Use &ldquo;Refresh Models&rdquo; on the provider to fetch the
+                catalog.
               </TableCell>
             </TableRow>
           )}

@@ -68,7 +68,9 @@ describe('PICOForm', () => {
       await waitFor(() => screen.getByDisplayValue('Software engineers'));
 
       // Variant selector uses visually-hidden radio inputs inside styled labels
-      const variantRadios = container.querySelectorAll('input[type="radio"]') as NodeListOf<HTMLInputElement>;
+      const variantRadios = container.querySelectorAll(
+        'input[type="radio"]',
+      ) as NodeListOf<HTMLInputElement>;
       expect(variantRadios.length).toBeGreaterThan(0);
       // PICO is the default variant
       const picoRadio = Array.from(variantRadios).find((r) => r.value === 'PICO');

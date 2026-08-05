@@ -53,4 +53,4 @@ When `body` is `undefined`, `true ? JSON.stringify(undefined) : undefined` evalu
 + () => undefined,
 ```
 
-**Why equivalent:** This is the third argument to `useSyncExternalStore` — the *server-side snapshot* function used only during SSR/hydration in Node.js environments. The jsdom test environment always invokes the client-side `getSnapshot` (second argument), never the server snapshot. This code path is unreachable in all unit tests.
+**Why equivalent:** This is the third argument to `useSyncExternalStore` — the _server-side snapshot_ function used only during SSR/hydration in Node.js environments. The jsdom test environment always invokes the client-side `getSnapshot` (second argument), never the server snapshot. This code path is unreachable in all unit tests.

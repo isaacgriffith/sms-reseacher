@@ -19,6 +19,7 @@ http://<host>:8001
 ### `GET /health`
 
 **Response 200**:
+
 ```json
 {
   "status": "ok",
@@ -35,6 +36,7 @@ http://<host>:8001
 Submit an analysis job.
 
 **Request body**:
+
 ```json
 {
   "study_id": 1,
@@ -46,6 +48,7 @@ Submit an analysis job.
 `task_type` MUST be one of: `screen_abstract`, `extract_data`, `synthesise` (expanded in later features).
 
 **Response 202**:
+
 ```json
 {
   "job_id": "abc123",
@@ -56,6 +59,7 @@ Submit an analysis job.
 ### `GET /jobs/{job_id}`
 
 **Response 200**:
+
 ```json
 {
   "job_id": "abc123",

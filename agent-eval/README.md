@@ -36,8 +36,13 @@ uv run agent-eval evaluate \
 ```
 
 Test suite format (JSONL, one case per line):
+
 ```json
-{"case_id": "tc-001", "input": {"inclusion_criteria": "...", "abstract": "..."}, "expected_decision": "include"}
+{
+  "case_id": "tc-001",
+  "input": { "inclusion_criteria": "...", "abstract": "..." },
+  "expected_decision": "include"
+}
 ```
 
 **Exit codes**: `0` = all passed, `1` = cases failed, `2` = config error
@@ -57,6 +62,7 @@ uv run agent-eval compare baseline.json candidate.json
 ```
 
 Output:
+
 ```
 Metric                 Baseline   Candidate   Delta
 ─────────────────────────────────────────────────────
@@ -76,12 +82,12 @@ Writes `system_candidate_{timestamp}.md` and `user_candidate_{timestamp}.md.j2` 
 
 ## Environment Variables
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `LLM_PROVIDER` | `anthropic` | `anthropic` or `ollama` |
-| `LLM_MODEL` | `claude-sonnet-4-6` | Judge model ID |
-| `OLLAMA_BASE_URL` | `http://localhost:11434` | Ollama URL (when `LLM_PROVIDER=ollama`) |
-| `ANTHROPIC_API_KEY` | — | Required for Anthropic provider |
+| Variable            | Default                  | Description                             |
+| ------------------- | ------------------------ | --------------------------------------- |
+| `LLM_PROVIDER`      | `anthropic`              | `anthropic` or `ollama`                 |
+| `LLM_MODEL`         | `claude-sonnet-4-6`      | Judge model ID                          |
+| `OLLAMA_BASE_URL`   | `http://localhost:11434` | Ollama URL (when `LLM_PROVIDER=ollama`) |
+| `ANTHROPIC_API_KEY` | —                        | Required for Anthropic provider         |
 
 ## AgentGeneratorAgent Evaluation Pipeline
 
@@ -97,6 +103,7 @@ uv run agent-eval evaluate \
 ```
 
 **Metrics used** (via DeepEval):
+
 - `AnswerRelevancyMetric` — generated message must reference the role name
 - `FaithfulnessMetric` — no hallucinated Jinja2 variable names
 

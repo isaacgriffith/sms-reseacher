@@ -15,6 +15,7 @@ authenticated user to be a member of the study via the `Reviewer` model.
 Retrieve the Rapid Review protocol for a study.
 
 **Response 200**:
+
 ```json
 {
   "id": 1,
@@ -25,7 +26,10 @@ Retrieve the Rapid Review protocol for a study.
   "time_budget_days": 14,
   "effort_budget_hours": 40,
   "context_restrictions": [
-    {"type": "company_size", "description": "Small and medium enterprises only"}
+    {
+      "type": "company_size",
+      "description": "Small and medium enterprises only"
+    }
   ],
   "dissemination_medium": "Evidence Briefing",
   "problem_scoping_notes": null,
@@ -51,6 +55,7 @@ Update the protocol. If the protocol is currently `VALIDATED`, this resets it to
 and marks all `CandidatePaper` records as `PROTOCOL_INVALIDATED`.
 
 **Query params**:
+
 - `acknowledge_invalidation=true` — Required if protocol is currently `VALIDATED`.
   If omitted and protocol is `VALIDATED`, returns `409 Conflict`.
 
@@ -59,6 +64,7 @@ and marks all `CandidatePaper` records as `PROTOCOL_INVALIDATED`.
 **Response 200**: Updated `RRProtocolResponse` (same shape as GET).
 
 **Errors**:
+
 - `409 Conflict` — Protocol is VALIDATED and `?acknowledge_invalidation=true` was not
   provided. Body: `{"detail": "Protocol is validated. All collected papers will be invalidated. Resend with ?acknowledge_invalidation=true to confirm.", "papers_at_risk": 23}`
 - `404` if study not found.
@@ -68,6 +74,7 @@ and marks all `CandidatePaper` records as `PROTOCOL_INVALIDATED`.
 ### `POST /api/v1/rapid/studies/{study_id}/protocol/validate`
 
 Attempt to validate the protocol. Runs pre-validation checks:
+
 1. At least one `PractitionerStakeholder` exists for this study.
 2. `research_questions` is non-empty.
 3. `practical_problem` is non-empty.
@@ -77,6 +84,7 @@ Attempt to validate the protocol. Runs pre-validation checks:
 **Response 200**: Updated protocol with `status = VALIDATED`.
 
 **Response 422 Unprocessable Entity**:
+
 ```json
 {
   "detail": "Protocol validation failed",
@@ -94,6 +102,7 @@ Attempt to validate the protocol. Runs pre-validation checks:
 ### `GET /api/v1/rapid/studies/{study_id}/stakeholders`
 
 **Response 200**: `list[StakeholderResponse]`
+
 ```json
 [
   {
@@ -114,6 +123,7 @@ Attempt to validate the protocol. Runs pre-validation checks:
 ### `POST /api/v1/rapid/studies/{study_id}/stakeholders`
 
 **Request body**:
+
 ```json
 {
   "name": "Jane Smith",
@@ -151,6 +161,7 @@ resets the protocol to `DRAFT` (with the same acknowledgment flow as protocol PU
 Read-only. Threats are auto-created by the service layer when restrictions are applied.
 
 **Response 200**: `list[ThreatResponse]`
+
 ```json
 [
   {
@@ -174,6 +185,7 @@ Returns all synthesis sections for the study (one per research question).
 Sections are auto-created when the protocol is first validated.
 
 **Response 200**: `list[NarrativeSectionResponse]`
+
 ```json
 [
   {
@@ -198,6 +210,7 @@ Sections are auto-created when the protocol is first validated.
 Update a narrative section's text or completion status.
 
 **Request body**:
+
 ```json
 {
   "narrative_text": "Studies consistently show that structured mentoring...",
@@ -214,6 +227,7 @@ Update a narrative section's text or completion status.
 Enqueue an ARQ background job to generate an AI draft for this section.
 
 **Response 202 Accepted**:
+
 ```json
 {
   "job_id": "arq:job:abc123",
@@ -223,6 +237,7 @@ Enqueue an ARQ background job to generate an AI draft for this section.
 ```
 
 **Notes**:
+
 - If a draft job is already running for this section, returns `409 Conflict`.
 - The draft is written to `ai_draft_text` when the job completes. The researcher must
   explicitly copy or edit the draft into `narrative_text` — it is never auto-applied.
@@ -237,6 +252,7 @@ All sections must have `is_complete = true`.
 **Response 200**: `{"synthesis_complete": true}`
 
 **Response 422**: If any section is not complete:
+
 ```json
 {
   "detail": "All synthesis sections must be marked complete before synthesis can be finalised.",
@@ -253,6 +269,7 @@ All sections must have `is_complete = true`.
 List all Evidence Briefing versions for the study.
 
 **Response 200**: `list[BriefingSummaryResponse]`
+
 ```json
 [
   {
@@ -286,6 +303,7 @@ Generate a new Evidence Briefing version from the current synthesis state.
 Requires synthesis to be marked complete.
 
 **Response 202 Accepted**:
+
 ```json
 {
   "job_id": "arq:job:def456",
@@ -299,6 +317,7 @@ Requires synthesis to be marked complete.
 ### `GET /api/v1/rapid/studies/{study_id}/briefings/{briefing_id}`
 
 **Response 200**: Full `BriefingResponse`
+
 ```json
 {
   "id": 3,
@@ -350,6 +369,7 @@ Download the Evidence Briefing in the requested format.
 Generate a new shareable token for the published version of this study's briefing.
 
 **Response 201**:
+
 ```json
 {
   "token": "abc123xyz...",
@@ -383,6 +403,7 @@ Serve the currently `PUBLISHED` Evidence Briefing for the token's study.
 internal IDs and file paths; threats to validity included).
 
 **Errors**:
+
 - `404` — Token not found, revoked, or expired.
 - `404` — No published briefing exists for the study.
 

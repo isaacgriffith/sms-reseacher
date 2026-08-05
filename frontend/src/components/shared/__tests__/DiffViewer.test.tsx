@@ -72,7 +72,7 @@ describe('DiffViewer', () => {
           conflict={CONFLICT_PAYLOAD}
           onResolved={onResolved}
           onDismiss={onDismiss}
-        />
+        />,
       );
       expect(screen.getByText(/conflict detected/i)).toBeTruthy();
     });
@@ -85,7 +85,7 @@ describe('DiffViewer', () => {
           conflict={CONFLICT_PAYLOAD}
           onResolved={onResolved}
           onDismiss={onDismiss}
-        />
+        />,
       );
       expect(screen.getByText(/your version/i)).toBeTruthy();
       expect(screen.getByText(/current version/i)).toBeTruthy();
@@ -99,7 +99,7 @@ describe('DiffViewer', () => {
           conflict={CONFLICT_PAYLOAD}
           onResolved={onResolved}
           onDismiss={onDismiss}
-        />
+        />,
       );
       expect(screen.getByText('ICSE 2023')).toBeTruthy();
     });
@@ -112,7 +112,7 @@ describe('DiffViewer', () => {
           conflict={CONFLICT_PAYLOAD}
           onResolved={onResolved}
           onDismiss={onDismiss}
-        />
+        />,
       );
       expect(screen.getByText('TSE')).toBeTruthy();
     });
@@ -125,7 +125,7 @@ describe('DiffViewer', () => {
           conflict={CONFLICT_PAYLOAD}
           onResolved={onResolved}
           onDismiss={onDismiss}
-        />
+        />,
       );
       expect(screen.getByRole('button', { name: /keep mine/i })).toBeTruthy();
       expect(screen.getByRole('button', { name: /keep theirs/i })).toBeTruthy();
@@ -145,7 +145,7 @@ describe('DiffViewer', () => {
           conflict={CONFLICT_PAYLOAD}
           onResolved={onResolved}
           onDismiss={onDismiss}
-        />
+        />,
       );
 
       fireEvent.click(screen.getByRole('button', { name: /keep mine/i }));
@@ -171,7 +171,7 @@ describe('DiffViewer', () => {
           conflict={CONFLICT_PAYLOAD}
           onResolved={onResolved}
           onDismiss={onDismiss}
-        />
+        />,
       );
 
       fireEvent.click(screen.getByRole('button', { name: /keep mine/i }));
@@ -191,7 +191,7 @@ describe('DiffViewer', () => {
           conflict={CONFLICT_PAYLOAD}
           onResolved={onResolved}
           onDismiss={onDismiss}
-        />
+        />,
       );
 
       fireEvent.click(screen.getByRole('button', { name: /keep theirs/i }));
@@ -214,7 +214,7 @@ describe('DiffViewer', () => {
           conflict={CONFLICT_PAYLOAD}
           onResolved={onResolved}
           onDismiss={onDismiss}
-        />
+        />,
       );
 
       fireEvent.click(screen.getByRole('button', { name: /merge/i }));
@@ -248,7 +248,7 @@ describe('DiffViewer', () => {
           conflict={payload}
           onResolved={onResolved}
           onDismiss={onDismiss}
-        />
+        />,
       );
 
       fireEvent.click(screen.getByRole('button', { name: /merge/i }));
@@ -269,7 +269,7 @@ describe('DiffViewer', () => {
           conflict={CONFLICT_PAYLOAD}
           onResolved={onResolved}
           onDismiss={onDismiss}
-        />
+        />,
       );
 
       fireEvent.click(screen.getByRole('button', { name: /cancel/i }));

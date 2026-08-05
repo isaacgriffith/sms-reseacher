@@ -9,6 +9,7 @@ import {
   getCurrentUser,
   setSession,
   clearSession,
+  updateUserFields,
   useAuthStore,
   type AuthUser,
 } from '../auth';
@@ -52,14 +53,26 @@ describe('auth service', () => {
 
   it('setSession dispatches sms-auth-change event', () => {
     let fired = false;
-    window.addEventListener('sms-auth-change', () => { fired = true; }, { once: true });
+    window.addEventListener(
+      'sms-auth-change',
+      () => {
+        fired = true;
+      },
+      { once: true },
+    );
     setSession('token', TEST_USER);
     expect(fired).toBe(true);
   });
 
   it('clearSession dispatches sms-auth-change event', () => {
     let fired = false;
-    window.addEventListener('sms-auth-change', () => { fired = true; }, { once: true });
+    window.addEventListener(
+      'sms-auth-change',
+      () => {
+        fired = true;
+      },
+      { once: true },
+    );
     clearSession();
     expect(fired).toBe(true);
   });
@@ -69,6 +82,21 @@ describe('auth service', () => {
     const user = getCurrentUser();
     expect(user?.email).toBe('alice@example.com');
     expect(user?.displayName).toBe('Alice');
+  });
+
+  describe('updateUserFields', () => {
+    it('updates stored user fields', () => {
+      setSession('tok', TEST_USER);
+      updateUserFields({ displayName: 'Bob' });
+      const user = getCurrentUser();
+      expect(user?.displayName).toBe('Bob');
+      expect(user?.email).toBe('alice@example.com');
+    });
+
+    it('does nothing when no current user', () => {
+      updateUserFields({ displayName: 'Bob' });
+      expect(getCurrentUser()).toBeNull();
+    });
   });
 
   describe('storage key isolation', () => {
@@ -93,8 +121,20 @@ describe('auth service', () => {
     it('setSession fires sms-auth-change (not another event)', () => {
       let correctFired = false;
       let wrongFired = false;
-      window.addEventListener('sms-auth-change', () => { correctFired = true; }, { once: true });
-      window.addEventListener('other-event', () => { wrongFired = true; }, { once: true });
+      window.addEventListener(
+        'sms-auth-change',
+        () => {
+          correctFired = true;
+        },
+        { once: true },
+      );
+      window.addEventListener(
+        'other-event',
+        () => {
+          wrongFired = true;
+        },
+        { once: true },
+      );
       setSession('tok', TEST_USER);
       expect(correctFired).toBe(true);
       expect(wrongFired).toBe(false);
@@ -103,8 +143,20 @@ describe('auth service', () => {
     it('clearSession fires sms-auth-change (not another event)', () => {
       let correctFired = false;
       let wrongFired = false;
-      window.addEventListener('sms-auth-change', () => { correctFired = true; }, { once: true });
-      window.addEventListener('other-event', () => { wrongFired = true; }, { once: true });
+      window.addEventListener(
+        'sms-auth-change',
+        () => {
+          correctFired = true;
+        },
+        { once: true },
+      );
+      window.addEventListener(
+        'other-event',
+        () => {
+          wrongFired = true;
+        },
+        { once: true },
+      );
       clearSession();
       expect(correctFired).toBe(true);
       expect(wrongFired).toBe(false);
@@ -113,7 +165,9 @@ describe('auth service', () => {
     it('subscribe adds listener for sms-auth-change: setSession triggers re-render', () => {
       const { result } = renderHook(() => useAuthStore((s) => s.token));
       expect(result.current).toBeNull();
-      act(() => { setSession('subscribe-test', TEST_USER); });
+      act(() => {
+        setSession('subscribe-test', TEST_USER);
+      });
       expect(result.current).toBe('subscribe-test');
     });
 
@@ -121,7 +175,9 @@ describe('auth service', () => {
       const { result, unmount } = renderHook(() => useAuthStore((s) => s.token));
       unmount();
       // After unmount, firing the event should not throw or update anything
-      act(() => { setSession('after-unmount', TEST_USER); });
+      act(() => {
+        setSession('after-unmount', TEST_USER);
+      });
       // result.current should be whatever it was at unmount time (null)
       expect(result.current).toBeNull();
     });
@@ -161,7 +217,9 @@ describe('auth service', () => {
     it('re-renders on setSession call', () => {
       const { result } = renderHook(() => useAuthStore((s) => s.token));
       expect(result.current).toBeNull();
-      act(() => { setSession('updated-token', TEST_USER); });
+      act(() => {
+        setSession('updated-token', TEST_USER);
+      });
       expect(result.current).toBe('updated-token');
     });
 
@@ -169,7 +227,9 @@ describe('auth service', () => {
       setSession('initial', TEST_USER);
       const { result } = renderHook(() => useAuthStore((s) => s.token));
       expect(result.current).toBe('initial');
-      act(() => { clearSession(); });
+      act(() => {
+        clearSession();
+      });
       expect(result.current).toBeNull();
     });
 

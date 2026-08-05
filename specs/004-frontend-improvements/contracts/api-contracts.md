@@ -13,11 +13,13 @@
 Modified to support 2FA-enabled accounts.
 
 **Request** (unchanged):
+
 ```json
 { "username": "user@example.com", "password": "string" }
 ```
 
 **Response — 2FA disabled** (unchanged):
+
 ```json
 {
   "access_token": "<full JWT>",
@@ -28,12 +30,14 @@ Modified to support 2FA-enabled accounts.
 ```
 
 **Response — 2FA enabled** (new):
+
 ```json
 {
   "requires_totp": true,
   "partial_token": "<short-lived JWT with stage=totp_required>"
 }
 ```
+
 HTTP 200 in both cases. Frontend detects `requires_totp: true` and routes to TOTP entry screen.
 
 ---
@@ -43,6 +47,7 @@ HTTP 200 in both cases. Frontend detects `requires_totp: true` and routes to TOT
 Returns additional user fields.
 
 **Response** (extended):
+
 ```json
 {
   "user_id": 42,
@@ -67,6 +72,7 @@ Complete login for 2FA-enabled accounts.
 **Auth**: None (unauthenticated endpoint)
 
 **Request**:
+
 ```json
 {
   "partial_token": "<partial JWT from /auth/login>",
@@ -75,6 +81,7 @@ Complete login for 2FA-enabled accounts.
 ```
 
 **Response 200**:
+
 ```json
 {
   "access_token": "<full JWT>",
@@ -85,16 +92,19 @@ Complete login for 2FA-enabled accounts.
 ```
 
 **Response 401** — invalid/expired partial token:
+
 ```json
 { "detail": "Invalid or expired authentication token" }
 ```
 
 **Response 422** — invalid TOTP code:
+
 ```json
 { "detail": "Invalid TOTP code" }
 ```
 
 **Response 429** — account locked after repeated failures:
+
 ```json
 {
   "detail": "Too many failed attempts. Account locked until 2026-03-16T14:30:00Z"
@@ -110,6 +120,7 @@ Change the authenticated user's password.
 **Auth**: Full JWT required
 
 **Request**:
+
 ```json
 {
   "current_password": "string",
@@ -118,21 +129,25 @@ Change the authenticated user's password.
 ```
 
 **Response 200**:
+
 ```json
 { "message": "Password changed successfully" }
 ```
 
 **Response 400** — current password incorrect:
+
 ```json
 { "detail": "Current password is incorrect" }
 ```
 
 **Response 400** — new password same as current:
+
 ```json
 { "detail": "New password must differ from current password" }
 ```
 
 **Response 422** — complexity requirements not met:
+
 ```json
 {
   "detail": "Password does not meet complexity requirements",
@@ -156,6 +171,7 @@ Retrieve the current user's preferences.
 **Auth**: Full JWT required
 
 **Response 200**:
+
 ```json
 {
   "theme_preference": "system",
@@ -172,17 +188,21 @@ Update display theme preference.
 **Auth**: Full JWT required
 
 **Request**:
+
 ```json
 { "theme": "dark" }
 ```
+
 Valid values: `"light"`, `"dark"`, `"system"`
 
 **Response 200**:
+
 ```json
 { "theme_preference": "dark" }
 ```
 
 **Response 422** — invalid theme value:
+
 ```json
 { "detail": "theme must be one of: light, dark, system" }
 ```
@@ -198,6 +218,7 @@ Begin 2FA enrollment. Generates a TOTP secret (not yet active).
 **Request**: Empty body `{}`
 
 **Response 200**:
+
 ```json
 {
   "qr_code_image": "<base64-encoded PNG>",
@@ -205,6 +226,7 @@ Begin 2FA enrollment. Generates a TOTP secret (not yet active).
   "issuer": "SMS Researcher"
 }
 ```
+
 The `qr_code_image` encodes the `otpauth://` URI. `manual_key` is the human-readable TOTP secret for manual app entry.
 
 ---
@@ -216,28 +238,29 @@ Confirm 2FA enrollment with a valid TOTP code. Activates 2FA and returns backup 
 **Auth**: Full JWT required
 
 **Request**:
+
 ```json
 { "totp_code": "123456" }
 ```
 
 **Response 200**:
+
 ```json
 {
-  "backup_codes": [
-    "A1B2C3D4E5",
-    "F6G7H8I9J0",
-    "..."
-  ]
+  "backup_codes": ["A1B2C3D4E5", "F6G7H8I9J0", "..."]
 }
 ```
+
 10 codes returned. Each is a 10-character uppercase alphanumeric string. Display once — not retrievable again.
 
 **Response 422** — invalid or expired TOTP code:
+
 ```json
 { "detail": "Invalid TOTP code. Please try again." }
 ```
 
 **Response 409** — 2FA already active:
+
 ```json
 { "detail": "Two-factor authentication is already enabled" }
 ```
@@ -251,6 +274,7 @@ Disable 2FA. Requires current password and a valid TOTP code.
 **Auth**: Full JWT required
 
 **Request**:
+
 ```json
 {
   "password": "string",
@@ -259,16 +283,19 @@ Disable 2FA. Requires current password and a valid TOTP code.
 ```
 
 **Response 200**:
+
 ```json
 { "message": "Two-factor authentication disabled" }
 ```
 
 **Response 400** — incorrect password:
+
 ```json
 { "detail": "Current password is incorrect" }
 ```
 
 **Response 422** — invalid TOTP code:
+
 ```json
 { "detail": "Invalid TOTP code" }
 ```
@@ -282,6 +309,7 @@ Regenerate backup codes. Invalidates all previous codes.
 **Auth**: Full JWT required
 
 **Request**:
+
 ```json
 {
   "password": "string",
@@ -290,22 +318,23 @@ Regenerate backup codes. Invalidates all previous codes.
 ```
 
 **Response 200**:
+
 ```json
 {
-  "backup_codes": [
-    "A1B2C3D4E5",
-    "..."
-  ]
+  "backup_codes": ["A1B2C3D4E5", "..."]
 }
 ```
+
 10 new codes. All previous codes are permanently invalidated.
 
 **Response 400** — incorrect password:
+
 ```json
 { "detail": "Current password is incorrect" }
 ```
 
 **Response 422** — invalid TOTP code:
+
 ```json
 { "detail": "Invalid TOTP code" }
 ```
@@ -326,22 +355,23 @@ Returns the application's OpenAPI schema.
 
 ## Frontend Route Additions
 
-| Route | Component | Auth | Description |
-|-------|-----------|------|-------------|
+| Route          | Component             | Auth     | Description                       |
+| -------------- | --------------------- | -------- | --------------------------------- |
 | `/preferences` | `UserPreferencesPage` | Required | Password, 2FA, and theme settings |
-| `/api-docs` | `APIDocsPage` | Required | Swagger UI for backend API |
+| `/api-docs`    | `APIDocsPage`         | Required | Swagger UI for backend API        |
 
 ## Error Response Shape (all endpoints)
 
 All error responses follow FastAPI's standard shape:
+
 ```json
 { "detail": "Human-readable error message" }
 ```
+
 or for validation errors:
+
 ```json
 {
-  "detail": [
-    { "loc": ["body", "field"], "msg": "message", "type": "type" }
-  ]
+  "detail": [{ "loc": ["body", "field"], "msg": "message", "type": "type" }]
 }
 ```

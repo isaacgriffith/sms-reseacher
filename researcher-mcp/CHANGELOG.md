@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [0.6.0] — 2026-03-18 — feature/006-database-search-and-retrieval
 
 ### Added
+
 - **Multi-database fan-out search**: `search_papers` MCP tool queries up to 9 academic databases
   in parallel; results merged and deduplicated by DOI then by normalised title + first-author
   last name (`deduplicate_paper_records` in `core/dedup.py`)
@@ -29,6 +30,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `WOS_API_KEY`, `SPRINGER_API_KEY`, `SCHOLARLY_PROXY_URL` added to `ResearcherSettings`
 
 ### Changed
+
 - `search_papers` tool extended with `indices: list[str] | None` parameter; `SearchPapersResult`
   extended with `sources_failed: list[str]` field
 - `pyproject.toml`: added `pybliometrics`, `semanticscholar`, `scholarly`, `unpywall`,
@@ -39,6 +41,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [0.3.0] — 2026-03-16 — feature/003-project-setup-improvements
 
 ### Changed
+
 - Coverage command documented in `CLAUDE.md`:
   `uv run pytest researcher-mcp/tests/ --cov=researcher_mcp`
 - Mutation testing tool updated to `cosmic-ray` (was `mutmut`); run via manual GitHub
@@ -50,6 +53,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [0.2.0] — 2026-03-12 — feature/002-sms-workflow
 
 ### Added
+
 - FastMCP 2.0 server serving five MCP tools over HTTP/SSE on port 8002
 - `search_papers` — Semantic Scholar → OpenAlex cascade search
 - `get_paper` — retrieve full paper metadata by ID or DOI with CrossRef enrichment
@@ -68,6 +72,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [0.1.0] — 2026-03-11 — feature/001-repo-setup
 
 ### Added
+
 - Initial `pyproject.toml` (`sms-researcher-mcp`) as UV workspace member
 - FastMCP 2.0 dependency baseline
 - Ruff, MyPy strict, pytest + pytest-asyncio configuration

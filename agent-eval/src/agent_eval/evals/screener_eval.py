@@ -24,7 +24,11 @@ SCREENER_TEST_INPUTS: list[dict[str, Any]] = [
         "case_id": "scr-001",
         "title": "A controlled experiment on the effect of TDD on software quality",
         "abstract": "We present a controlled experiment comparing TDD with traditional waterfall development. Defect density was reduced by 40% in the TDD group.",
-        "inclusion_criteria": ["empirical studies", "controlled experiments", "software quality metrics"],
+        "inclusion_criteria": [
+            "empirical studies",
+            "controlled experiments",
+            "software quality metrics",
+        ],
         "exclusion_criteria": ["grey literature", "non-software projects"],
         "expected": "accepted",
     },
@@ -81,9 +85,7 @@ def _assert_rationale_present(output: str) -> None:
     """
     data: dict[str, Any] = json.loads(output)
     rationale = data.get("rationale", "")
-    assert rationale and len(rationale) > 10, (
-        f"Expected non-empty rationale, got: {rationale!r}"
-    )
+    assert rationale and len(rationale) > 10, f"Expected non-empty rationale, got: {rationale!r}"
 
 
 # ---------------------------------------------------------------------------
@@ -106,21 +108,26 @@ def build_test_cases(run_agent: bool = False) -> list[LLMTestCase]:
     for inp in SCREENER_TEST_INPUTS:
         if run_agent:
             import asyncio
+
             actual_output = asyncio.run(_invoke_screener(inp))
         else:
-            actual_output = json.dumps({
-                "decision": inp["expected"],
-                "rationale": f"Stub rationale for {inp['case_id']}",
-                "matched_inclusion": inp["inclusion_criteria"][:1],
-                "matched_exclusion": [],
-            })
+            actual_output = json.dumps(
+                {
+                    "decision": inp["expected"],
+                    "rationale": f"Stub rationale for {inp['case_id']}",
+                    "matched_inclusion": inp["inclusion_criteria"][:1],
+                    "matched_exclusion": [],
+                }
+            )
 
-        input_text = json.dumps({
-            "title": inp["title"],
-            "abstract": inp["abstract"],
-            "inclusion_criteria": inp["inclusion_criteria"],
-            "exclusion_criteria": inp["exclusion_criteria"],
-        })
+        input_text = json.dumps(
+            {
+                "title": inp["title"],
+                "abstract": inp["abstract"],
+                "inclusion_criteria": inp["inclusion_criteria"],
+                "exclusion_criteria": inp["exclusion_criteria"],
+            }
+        )
 
         cases.append(
             LLMTestCase(

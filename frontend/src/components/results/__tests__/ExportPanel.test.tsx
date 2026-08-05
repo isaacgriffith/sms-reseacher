@@ -95,10 +95,9 @@ describe('ExportPanel', () => {
       fireEvent.click(exportBtn);
 
       await waitFor(() => {
-        expect(mockApi.post).toHaveBeenCalledWith(
-          `/api/v1/studies/${STUDY_ID}/export`,
-          { format: 'svg_only' }
-        );
+        expect(mockApi.post).toHaveBeenCalledWith(`/api/v1/studies/${STUDY_ID}/export`, {
+          format: 'svg_only',
+        });
       });
     });
 
@@ -108,10 +107,9 @@ describe('ExportPanel', () => {
       fireEvent.click(exportBtn);
 
       await waitFor(() => {
-        expect(mockApi.post).toHaveBeenCalledWith(
-          `/api/v1/studies/${STUDY_ID}/export`,
-          { format: 'full_archive' }
-        );
+        expect(mockApi.post).toHaveBeenCalledWith(`/api/v1/studies/${STUDY_ID}/export`, {
+          format: 'full_archive',
+        });
       });
     });
   });
@@ -154,7 +152,11 @@ describe('ExportPanel', () => {
         id: 'job-003',
         status: 'completed',
         progress_pct: 100,
-        progress_detail: { download_url: '/exports/job-003.zip', size_bytes: 1024, format: 'json_only' },
+        progress_detail: {
+          download_url: '/exports/job-003.zip',
+          size_bytes: 1024,
+          format: 'json_only',
+        },
         error_message: null,
       });
 
@@ -180,7 +182,11 @@ describe('ExportPanel', () => {
         id: 'job-004',
         status: 'completed',
         progress_pct: 100,
-        progress_detail: { download_url: '/exports/job-004.json', size_bytes: 512, format: 'json_only' },
+        progress_detail: {
+          download_url: '/exports/job-004.json',
+          size_bytes: 512,
+          format: 'json_only',
+        },
         error_message: null,
       });
 
@@ -241,7 +247,11 @@ describe('ExportPanel', () => {
         id: 'job-newexp',
         status: 'completed',
         progress_pct: 100,
-        progress_detail: { download_url: '/exports/file.zip', size_bytes: 2048, format: 'full_archive' },
+        progress_detail: {
+          download_url: '/exports/file.zip',
+          size_bytes: 2048,
+          format: 'full_archive',
+        },
         error_message: null,
       });
 
@@ -409,7 +419,7 @@ describe('ExportPanel', () => {
 
       await waitFor(() => {
         const radios = screen.getAllByRole('radio') as HTMLInputElement[];
-        expect(radios.some(r => r.disabled)).toBe(true);
+        expect(radios.some((r) => r.disabled)).toBe(true);
       });
     });
 
@@ -432,7 +442,7 @@ describe('ExportPanel', () => {
 
       await waitFor(() => {
         const radios = screen.getAllByRole('radio') as HTMLInputElement[];
-        expect(radios.every(r => !r.disabled)).toBe(true);
+        expect(radios.every((r) => !r.disabled)).toBe(true);
       });
     });
   });
@@ -466,8 +476,11 @@ describe('ExportPanel', () => {
       vi.useFakeTimers({ shouldAdvanceTime: true });
       mockApi.post.mockResolvedValue({ job_id: 'job-running', study_id: STUDY_ID });
       mockApi.get.mockResolvedValue({
-        id: 'job-running', status: 'running', progress_pct: 30,
-        progress_detail: null, error_message: null,
+        id: 'job-running',
+        status: 'running',
+        progress_pct: 30,
+        progress_detail: null,
+        error_message: null,
       });
       render(<ExportPanel studyId={STUDY_ID} />);
       fireEvent.click(screen.getByRole('button', { name: /^export$/i }));
@@ -483,7 +496,7 @@ describe('ExportPanel', () => {
       expect(screen.queryByText(/network error/i)).toBeNull();
       // Also check no error-styled paragraph exists (catches && → || mutations)
       const errorPs = Array.from(container.querySelectorAll('p')).filter(
-        el => (el as HTMLElement).style.color === 'rgb(220, 38, 38)'
+        (el) => (el as HTMLElement).style.color === 'rgb(220, 38, 38)',
       );
       expect(errorPs.length).toBe(0);
     });
@@ -492,8 +505,11 @@ describe('ExportPanel', () => {
       vi.useFakeTimers({ shouldAdvanceTime: true });
       mockApi.post.mockResolvedValue({ job_id: 'job-fail-radio', study_id: STUDY_ID });
       mockApi.get.mockResolvedValue({
-        id: 'job-fail-radio', status: 'failed', progress_pct: 0,
-        progress_detail: null, error_message: 'Agent crashed',
+        id: 'job-fail-radio',
+        status: 'failed',
+        progress_pct: 0,
+        progress_detail: null,
+        error_message: 'Agent crashed',
       });
       render(<ExportPanel studyId={STUDY_ID} />);
       fireEvent.click(screen.getByRole('button', { name: /^export$/i }));
@@ -501,7 +517,7 @@ describe('ExportPanel', () => {
       await vi.advanceTimersByTimeAsync(2500);
       await waitFor(() => {
         const radios = screen.getAllByRole('radio') as HTMLInputElement[];
-        expect(radios.every(r => !r.disabled)).toBe(true);
+        expect(radios.every((r) => !r.disabled)).toBe(true);
       });
     });
 
@@ -509,8 +525,11 @@ describe('ExportPanel', () => {
       vi.useFakeTimers({ shouldAdvanceTime: true });
       mockApi.post.mockResolvedValue({ job_id: 'job-noready', study_id: STUDY_ID });
       mockApi.get.mockResolvedValue({
-        id: 'job-noready', status: 'running', progress_pct: 50,
-        progress_detail: null, error_message: null,
+        id: 'job-noready',
+        status: 'running',
+        progress_pct: 50,
+        progress_detail: null,
+        error_message: null,
       });
       render(<ExportPanel studyId={STUDY_ID} />);
       fireEvent.click(screen.getByRole('button', { name: /^export$/i }));
@@ -524,8 +543,11 @@ describe('ExportPanel', () => {
       vi.useFakeTimers({ shouldAdvanceTime: true });
       mockApi.post.mockResolvedValue({ job_id: 'job-nulldetail', study_id: STUDY_ID });
       mockApi.get.mockResolvedValue({
-        id: 'job-nulldetail', status: 'completed', progress_pct: 100,
-        progress_detail: null, error_message: null,
+        id: 'job-nulldetail',
+        status: 'completed',
+        progress_pct: 100,
+        progress_detail: null,
+        error_message: null,
       });
       render(<ExportPanel studyId={STUDY_ID} />);
       fireEvent.click(screen.getByRole('button', { name: /^export$/i }));
@@ -541,7 +563,7 @@ describe('ExportPanel', () => {
     it('only the selected radio shows as checked', () => {
       render(<ExportPanel studyId={STUDY_ID} />);
       const radios = screen.getAllByRole('radio') as HTMLInputElement[];
-      const checked = radios.filter(r => r.checked);
+      const checked = radios.filter((r) => r.checked);
       expect(checked.length).toBe(1);
       expect(checked[0].value).toBe('full_archive');
     });
@@ -552,7 +574,9 @@ describe('ExportPanel', () => {
       vi.useFakeTimers({ shouldAdvanceTime: true });
       mockApi.post.mockResolvedValue({ job_id: 'job-sz-b', study_id: STUDY_ID });
       mockApi.get.mockResolvedValue({
-        id: 'job-sz-b', status: 'completed', progress_pct: 100,
+        id: 'job-sz-b',
+        status: 'completed',
+        progress_pct: 100,
         progress_detail: { download_url: '/exports/f.zip', size_bytes: 512, format: 'json_only' },
         error_message: null,
       });
@@ -567,7 +591,9 @@ describe('ExportPanel', () => {
       vi.useFakeTimers({ shouldAdvanceTime: true });
       mockApi.post.mockResolvedValue({ job_id: 'job-sz-kb', study_id: STUDY_ID });
       mockApi.get.mockResolvedValue({
-        id: 'job-sz-kb', status: 'completed', progress_pct: 100,
+        id: 'job-sz-kb',
+        status: 'completed',
+        progress_pct: 100,
         progress_detail: { download_url: '/exports/f.zip', size_bytes: 2048, format: 'json_only' },
         error_message: null,
       });
@@ -582,8 +608,14 @@ describe('ExportPanel', () => {
       vi.useFakeTimers({ shouldAdvanceTime: true });
       mockApi.post.mockResolvedValue({ job_id: 'job-sz-mb', study_id: STUDY_ID });
       mockApi.get.mockResolvedValue({
-        id: 'job-sz-mb', status: 'completed', progress_pct: 100,
-        progress_detail: { download_url: '/exports/f.zip', size_bytes: 1024 * 1024 * 2, format: 'json_only' },
+        id: 'job-sz-mb',
+        status: 'completed',
+        progress_pct: 100,
+        progress_detail: {
+          download_url: '/exports/f.zip',
+          size_bytes: 1024 * 1024 * 2,
+          format: 'json_only',
+        },
         error_message: null,
       });
       render(<ExportPanel studyId={STUDY_ID} />);
@@ -597,7 +629,9 @@ describe('ExportPanel', () => {
       vi.useFakeTimers({ shouldAdvanceTime: true });
       mockApi.post.mockResolvedValue({ job_id: 'job-sz-1023', study_id: STUDY_ID });
       mockApi.get.mockResolvedValue({
-        id: 'job-sz-1023', status: 'completed', progress_pct: 100,
+        id: 'job-sz-1023',
+        status: 'completed',
+        progress_pct: 100,
         progress_detail: { download_url: '/exports/f.zip', size_bytes: 1023, format: 'json_only' },
         error_message: null,
       });
@@ -612,7 +646,9 @@ describe('ExportPanel', () => {
       vi.useFakeTimers({ shouldAdvanceTime: true });
       mockApi.post.mockResolvedValue({ job_id: 'job-sz-1024', study_id: STUDY_ID });
       mockApi.get.mockResolvedValue({
-        id: 'job-sz-1024', status: 'completed', progress_pct: 100,
+        id: 'job-sz-1024',
+        status: 'completed',
+        progress_pct: 100,
         progress_detail: { download_url: '/exports/f.zip', size_bytes: 1024, format: 'json_only' },
         error_message: null,
       });
@@ -627,8 +663,14 @@ describe('ExportPanel', () => {
       vi.useFakeTimers({ shouldAdvanceTime: true });
       mockApi.post.mockResolvedValue({ job_id: 'job-sz-1mb', study_id: STUDY_ID });
       mockApi.get.mockResolvedValue({
-        id: 'job-sz-1mb', status: 'completed', progress_pct: 100,
-        progress_detail: { download_url: '/exports/f.zip', size_bytes: 1024 * 1024, format: 'json_only' },
+        id: 'job-sz-1mb',
+        status: 'completed',
+        progress_pct: 100,
+        progress_detail: {
+          download_url: '/exports/f.zip',
+          size_bytes: 1024 * 1024,
+          format: 'json_only',
+        },
         error_message: null,
       });
       render(<ExportPanel studyId={STUDY_ID} />);

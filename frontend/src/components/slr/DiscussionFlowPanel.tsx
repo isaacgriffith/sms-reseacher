@@ -77,7 +77,9 @@ function DecisionCell({ label, decision }: DecisionCellProps) {
   const color = decision === 'accepted' ? 'success' : 'error';
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
-      <Typography variant="caption" color="text.secondary">{label}</Typography>
+      <Typography variant="caption" color="text.secondary">
+        {label}
+      </Typography>
       <Chip label={decision} color={color} size="small" />
     </Box>
   );

@@ -56,10 +56,7 @@ export default function LandscapeSummarySection({ landscape }: LandscapeSummaryS
         title="Research Question Evolution"
         content={landscape.research_question_evolution}
       />
-      <LandscapePanel
-        title="Synthesis Method Shifts"
-        content={landscape.synthesis_method_shifts}
-      />
+      <LandscapePanel title="Synthesis Method Shifts" content={landscape.synthesis_method_shifts} />
     </>
   );
 }

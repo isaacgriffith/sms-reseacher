@@ -30,9 +30,7 @@ const mockApi = api as {
   patch: ReturnType<typeof vi.fn>;
 };
 
-const MOCK_SUMMARY = [
-  { id: 1, version: 1, total_score: 7, generated_at: '2026-03-12T10:00:00Z' },
-];
+const MOCK_SUMMARY = [{ id: 1, version: 1, total_score: 7, generated_at: '2026-03-12T10:00:00Z' }];
 
 const MOCK_DETAIL = {
   id: 1,
@@ -46,15 +44,36 @@ const MOCK_DETAIL = {
   total_score: 7,
   rubric_details: {
     need_for_review: { score: 2, justification: 'Clear motivation with defined population.' },
-    search_strategy: { score: 1, justification: 'Multiple databases used but test-retest not performed.' },
-    search_evaluation: { score: 2, justification: 'Two reviewers; conflicts identified but not formally resolved.' },
-    extraction_classification: { score: 1, justification: 'Schema defined; single reviewer applied it.' },
+    search_strategy: {
+      score: 1,
+      justification: 'Multiple databases used but test-retest not performed.',
+    },
+    search_evaluation: {
+      score: 2,
+      justification: 'Two reviewers; conflicts identified but not formally resolved.',
+    },
+    extraction_classification: {
+      score: 1,
+      justification: 'Schema defined; single reviewer applied it.',
+    },
     study_validity: { score: 1, justification: 'All six validity dimensions discussed.' },
   },
   recommendations: [
-    { priority: 1, action: 'Perform test-retest search validation.', target_rubric: 'search_strategy' },
-    { priority: 2, action: 'Define formal conflict resolution process.', target_rubric: 'search_evaluation' },
-    { priority: 3, action: 'Add a second reviewer for extraction.', target_rubric: 'extraction_classification' },
+    {
+      priority: 1,
+      action: 'Perform test-retest search validation.',
+      target_rubric: 'search_strategy',
+    },
+    {
+      priority: 2,
+      action: 'Define formal conflict resolution process.',
+      target_rubric: 'search_evaluation',
+    },
+    {
+      priority: 3,
+      action: 'Add a second reviewer for extraction.',
+      target_rubric: 'extraction_classification',
+    },
   ],
   generated_at: '2026-03-12T10:00:00Z',
 };
@@ -104,7 +123,7 @@ describe('QualityReport', () => {
     it('renders justification text for each rubric', async () => {
       render(<QualityReport studyId={STUDY_ID} />);
       await waitFor(() =>
-        expect(screen.getByText(/Clear motivation with defined population/)).toBeTruthy()
+        expect(screen.getByText(/Clear motivation with defined population/)).toBeTruthy(),
       );
     });
   });
@@ -123,7 +142,7 @@ describe('QualityReport', () => {
     it('displays recommendation action text', async () => {
       render(<QualityReport studyId={STUDY_ID} />);
       await waitFor(() =>
-        expect(screen.getByText(/Perform test-retest search validation/)).toBeTruthy()
+        expect(screen.getByText(/Perform test-retest search validation/)).toBeTruthy(),
       );
     });
 
@@ -144,8 +163,8 @@ describe('QualityReport', () => {
       await waitFor(() =>
         expect(mockApi.post).toHaveBeenCalledWith(
           `/api/v1/studies/${STUDY_ID}/quality-reports`,
-          {}
-        )
+          {},
+        ),
       );
     });
   });
@@ -154,9 +173,7 @@ describe('QualityReport', () => {
     it('shows empty message when no reports exist', async () => {
       mockApi.get.mockResolvedValue([]);
       render(<QualityReport studyId={STUDY_ID} />);
-      await waitFor(() =>
-        expect(screen.getByText(/No quality evaluations yet/i)).toBeTruthy()
-      );
+      await waitFor(() => expect(screen.getByText(/No quality evaluations yet/i)).toBeTruthy());
     });
   });
 });

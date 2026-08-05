@@ -24,7 +24,10 @@ export interface ThemeSelectorProps {
   onChange?: (pref: ThemePreference) => void;
 }
 
-export default function ThemeSelector({ value: valueProp, onChange: onChangeProp }: ThemeSelectorProps) {
+export default function ThemeSelector({
+  value: valueProp,
+  onChange: onChangeProp,
+}: ThemeSelectorProps) {
   const { preference, setThemePreference } = useThemeContext();
 
   const current = valueProp ?? preference;

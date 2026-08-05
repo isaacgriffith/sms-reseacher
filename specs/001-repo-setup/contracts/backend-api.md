@@ -23,6 +23,7 @@ All responses use `Content-Type: application/json`.
 Returns service health. Used by pre-commit smoke tests and deployment health probes.
 
 **Response 200**:
+
 ```json
 {
   "status": "ok",
@@ -39,6 +40,7 @@ Returns service health. Used by pre-commit smoke tests and deployment health pro
 List all studies.
 
 **Response 200**:
+
 ```json
 [
   {
@@ -56,6 +58,7 @@ List all studies.
 Create a new study.
 
 **Request body**:
+
 ```json
 {
   "name": "My First SMS",
@@ -66,6 +69,7 @@ Create a new study.
 `study_type` MUST be one of: `SMS`, `SLR`, `Tertiary`, `Rapid`.
 
 **Response 201**:
+
 ```json
 {
   "id": 1,
@@ -77,9 +81,16 @@ Create a new study.
 ```
 
 **Response 422** (validation error):
+
 ```json
 {
-  "detail": [{ "loc": ["body", "study_type"], "msg": "value is not a valid enum member", "type": "value_error.enum" }]
+  "detail": [
+    {
+      "loc": ["body", "study_type"],
+      "msg": "value is not a valid enum member",
+      "type": "value_error.enum"
+    }
+  ]
 }
 ```
 
@@ -99,6 +110,7 @@ Get a single study.
 List papers associated with a study.
 
 **Response 200**:
+
 ```json
 [
   {
@@ -123,6 +135,7 @@ Trigger an analysis run via the agents service.
 **Request body**: `{}` (parameters added in later features)
 
 **Response 202**:
+
 ```json
 {
   "job_id": "abc123",
@@ -135,11 +148,12 @@ Trigger an analysis run via the agents service.
 Poll the status of a running agent job.
 
 **Response 200**:
+
 ```json
 {
   "job_id": "abc123",
-  "status": "running",   // "queued" | "running" | "completed" | "failed"
-  "result": null          // populated when status == "completed"
+  "status": "running", // "queued" | "running" | "completed" | "failed"
+  "result": null // populated when status == "completed"
 }
 ```
 

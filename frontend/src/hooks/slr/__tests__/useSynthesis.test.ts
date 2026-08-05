@@ -3,19 +3,21 @@
  */
 
 import { describe, it, expect, vi } from 'vitest';
-import { renderHook, waitFor } from '@testing-library/react';
+import { renderHook, waitFor, act } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
 import {
+  synthesisListKey,
+  synthesisResultKey,
   useSynthesisResults,
   useStartSynthesis,
   useSynthesisResult,
 } from '../useSynthesis';
 
 vi.mock('../../../services/slr/synthesisApi', () => ({
-  listSynthesisResults: vi.fn().mockRejectedValue(new Error('network')),
+  listSynthesisResults: vi.fn().mockResolvedValue({ results: [] }),
   startSynthesis: vi.fn().mockResolvedValue({ id: 1, status: 'pending' }),
-  getSynthesisResult: vi.fn().mockRejectedValue(new Error('not found')),
+  getSynthesisResult: vi.fn().mockResolvedValue({ id: 1, status: 'completed' }),
 }));
 
 function makeWrapper() {
@@ -24,25 +26,48 @@ function makeWrapper() {
     React.createElement(QueryClientProvider, { client: qc }, children);
 }
 
+describe('synthesisListKey', () => {
+  it('returns stable key', () => {
+    expect(synthesisListKey(5)).toEqual(['slr-synthesis-list', 5]);
+  });
+});
+
+describe('synthesisResultKey', () => {
+  it('returns stable key', () => {
+    expect(synthesisResultKey(10)).toEqual(['slr-synthesis-result', 10]);
+  });
+});
+
 describe('useSynthesisResults', () => {
-  it('returns a query result object', async () => {
+  it('fetches data', async () => {
     const { result } = renderHook(() => useSynthesisResults(42), { wrapper: makeWrapper() });
-    await waitFor(() => !result.current.isLoading);
-    expect(result.current).toHaveProperty('error');
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+  });
+
+  it('is disabled when studyId is 0', () => {
+    const { result } = renderHook(() => useSynthesisResults(0), { wrapper: makeWrapper() });
+    expect(result.current.fetchStatus).toBe('idle');
   });
 });
 
 describe('useStartSynthesis', () => {
-  it('returns a mutation object', () => {
+  it('executes mutation', async () => {
     const { result } = renderHook(() => useStartSynthesis(42), { wrapper: makeWrapper() });
-    expect(typeof result.current.mutate).toBe('function');
+    await act(async () => {
+      result.current.mutate({ approach: 'meta_analysis', parameters: {} });
+    });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
   });
 });
 
 describe('useSynthesisResult', () => {
-  it('returns a query result object', async () => {
+  it('fetches data', async () => {
     const { result } = renderHook(() => useSynthesisResult(1), { wrapper: makeWrapper() });
-    await waitFor(() => !result.current.isLoading);
-    expect(result.current).toHaveProperty('data');
+    await waitFor(() => expect(result.current.data).toBeDefined());
+  });
+
+  it('is disabled when synthesisId is 0', () => {
+    const { result } = renderHook(() => useSynthesisResult(0), { wrapper: makeWrapper() });
+    expect(result.current.fetchStatus).toBe('idle');
   });
 });

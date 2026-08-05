@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [0.10.0] — 2026-03-31 — feature/010-research-protocol-definition
 
 ### Added
+
 - **`ProtocolGraph` component** (`src/components/protocols/ProtocolGraph.tsx`):
   D3 force-directed SVG; read-only mode in StudyPage (click-to-select node); edit mode in
   `ProtocolEditorPage` adds drag-to-reposition (updates `position_x`/`position_y` in reducer)
@@ -61,9 +62,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   returns `svgRef` and `render` function; simulation cleanup on unmount
 - **`protocolsApi.ts`** (`src/services/protocols/protocolsApi.ts`):
   Zod-validated wrappers for all Protocol REST endpoints; `exportProtocol` uses raw `fetch`
-  + blob anchor download; `importProtocol` uses raw `fetch` with `FormData` (bypasses
-  `api.post` JSON-encoding); `resetProtocol` uses raw `fetch` DELETE with JSON body;
-  `assignProtocol` uses `api.put`; `getExecutionState`, `completeTask`, `approveTask` use `api`
+  - blob anchor download; `importProtocol` uses raw `fetch` with `FormData` (bypasses
+    `api.post` JSON-encoding); `resetProtocol` uses raw `fetch` DELETE with JSON body;
+    `assignProtocol` uses `api.put`; `getExecutionState`, `completeTask`, `approveTask` use `api`
 - **Protocol tab added to `StudyPage`** (`src/pages/StudyPage.tsx`): Phase 0 always unlocked;
   Graph sub-tab shows `ProtocolGraph` + `ProtocolNodePanel`; Execution sub-tab shows
   `ExecutionStateView`; Reset to Default button opens MUI Dialog
@@ -74,6 +75,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [0.9.0] — 2026-03-30 — feature/009-tertiary-studies-workflow
 
 ### Added
+
 - **`TertiaryProtocolForm` component** (`src/components/tertiary/TertiaryProtocolForm.tsx`):
   react-hook-form + Zod form for Tertiary protocol fields; all fields disabled when status
   is `validated`; validates that at least one research question and one secondary study type
@@ -112,6 +114,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [0.8.0] — 2026-03-29 — feature/008-rapid-review-workflow
 
 ### Added
+
 - **`ProtocolForm` component** (`src/components/rapid/ProtocolForm.tsx`): react-hook-form + Zod
   form for Rapid Review protocol fields (scope, research question, timeframe, team); `useWatch`
   throughout; save delegates to `useUpdateRRProtocol` mutation
@@ -165,11 +168,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **`StudyPage.tsx`**: phase 0–6 delegation to RR page components when `study.study_type === 'rapid'`
 
 ### Changed
+
 - `StudyPage.tsx`: renders `RREvidenceBriefingPage` for phase 6 when study is Rapid type
 
 ## [0.7.0] — 2026-03-21 — feature/007-slr-workflow
 
 ### Added
+
 - **`ProtocolForm` component** (`src/components/slr/ProtocolForm.tsx`): react-hook-form + Zod
   form for PICO/S protocol fields (population, intervention, comparator, outcome, context),
   synthesis approach selector, and inclusion/exclusion criteria; `useWatch` throughout;
@@ -224,6 +229,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [0.6.0] — 2026-03-18 — feature/006-database-search-and-retrieval
 
 ### Added
+
 - **`SearchIntegrationsTable` component** (`src/components/admin/SearchIntegrationsTable/`):
   MUI DataGrid listing all 9 academic database integration types; status chip (configured via
   database / environment / not_configured); last-tested timestamp; "Test" button per row;
@@ -242,6 +248,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [0.5.0] — 2026-03-17 — feature/005-models-and-agents
 
 ### Added
+
 - **`src/types/provider.ts`**: Zod schemas and inferred TypeScript interfaces for `Provider`,
   `ProviderCreate`, `ProviderUpdate`, `AvailableModel`, `ModelRefreshResult`; provider type
   as string literal union `'anthropic' | 'openai' | 'ollama'` (no TS enum)
@@ -283,6 +290,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [0.4.0] — 2026-03-16 — feature/004-frontend-improvements
 
 ### Added
+
 - **Preferences page** (`/preferences`): tabbed UI for Password, Theme, and 2FA settings
 - **Password change form**: React Hook Form + Zod (min 12 chars, uppercase, digit, special);
   real-time complexity indicator via `useWatch`
@@ -302,6 +310,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Vitest tests: `useColorMode`, `ThemeSelector`, `TwoFactorSetupDialog`, `TwoFactorSettings`
 
 ### Changed
+
 - **Full MUI v5 migration**: all 30+ components replaced inline styles with MUI `sx` prop,
   `Box`, `Typography`, `Button`, `TextField`, `Alert`, `Paper`, `Card`, `Grid`, `Tabs`, etc.
 - `ThemeContext`: reads `themePreference` from auth store; `setThemePreference` calls API
@@ -312,6 +321,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [0.3.0] — 2026-03-16 — feature/003-project-setup-improvements
 
 ### Added
+
 - Playwright (TypeScript) added as the e2e testing tool for full-stack browser and API tests
 - Frontend environment setup (Node 20 LTS, `npm install`) documented in `CLAUDE.md`
 - `vitest run --coverage` coverage command documented in `CLAUDE.md`
@@ -325,6 +335,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [0.2.0] — 2026-03-12 — feature/002-sms-workflow
 
 ### Added
+
 - React 18 / TypeScript 5.4 SPA bootstrapped with Vite 5
 - Routing via React Router DOM v6
 - Server-state management with TanStack Query v5 (`@tanstack/react-query`) and
@@ -345,6 +356,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [0.1.0] — 2026-03-11 — feature/001-repo-setup
 
 ### Added
+
 - Initial `package.json` with Node 20 LTS / TypeScript 5.4 baseline
 - Vite 5 build and dev-server configuration
 - ESLint, Prettier, and Husky pre-commit hook setup

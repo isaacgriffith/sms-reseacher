@@ -90,7 +90,14 @@ describe('ResultsPage', () => {
     vi.mocked(api.get).mockResolvedValue({
       domain_model: null,
       charts: [
-        { id: 1, chart_type: 'venue', version: 1, chart_data: {}, svg_content: '<svg/>', generated_at: '' },
+        {
+          id: 1,
+          chart_type: 'venue',
+          version: 1,
+          chart_data: {},
+          svg_content: '<svg/>',
+          generated_at: '',
+        },
       ],
     });
     vi.mocked(api.post).mockResolvedValue({ job_id: 'j1', study_id: 42 });
@@ -100,7 +107,14 @@ describe('ResultsPage', () => {
 
   it('renders domain model tab when clicked', async () => {
     vi.mocked(api.get).mockResolvedValue({
-      domain_model: { id: 1, version: 1, concepts: [], relationships: [], svg_content: null, generated_at: '' },
+      domain_model: {
+        id: 1,
+        version: 1,
+        concepts: [],
+        relationships: [],
+        svg_content: null,
+        generated_at: '',
+      },
       charts: [],
     });
     vi.mocked(api.post).mockResolvedValue({ job_id: 'j1', study_id: 42 });

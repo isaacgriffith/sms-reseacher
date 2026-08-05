@@ -27,8 +27,8 @@ export default function GreyLiteraturePage({ studyId }: GreyLiteraturePageProps)
         Grey Literature Sources
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-        Track technical reports, dissertations, rejected publications, and works-in-progress
-        that are not available through standard academic databases.
+        Track technical reports, dissertations, rejected publications, and works-in-progress that
+        are not available through standard academic databases.
       </Typography>
       <GreyLiteraturePanel studyId={studyId} />
     </Box>

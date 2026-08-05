@@ -22,13 +22,14 @@ The administration panel gains a **Models** section with two subsections:
 
 Administrators can configure one or more LLM providers. The following providers are supported out of the box:
 
-| Provider | Notes |
-|---|---|
-| **Anthropic** | API key required; uses Anthropic Messages API |
-| **OpenAI** | API key required; uses OpenAI Chat Completions API |
-| **Ollama** | No API key; configurable base URL (defaults to localhost, can point to a remote server) |
+| Provider      | Notes                                                                                   |
+| ------------- | --------------------------------------------------------------------------------------- |
+| **Anthropic** | API key required; uses Anthropic Messages API                                           |
+| **OpenAI**    | API key required; uses OpenAI Chat Completions API                                      |
+| **Ollama**    | No API key; configurable base URL (defaults to localhost, can point to a remote server) |
 
 Each provider record stores:
+
 - Provider name and type
 - API key (for Anthropic/OpenAI; stored encrypted, never exposed in the UI)
 - Base URL (for Ollama; required, editable)
@@ -37,6 +38,7 @@ Each provider record stores:
 #### Available Models
 
 Once a provider is configured, the system loads the list of available models from that provider:
+
 - Anthropic: fetched via the Anthropic models list API
 - OpenAI: fetched via the OpenAI models list API
 - Ollama: fetched via `GET /api/tags` on the configured base URL
@@ -47,17 +49,17 @@ Administrators can view, enable, or disable individual models. Only enabled mode
 
 Each agent in the system is represented as a database entity with the following fields:
 
-| Field | Type | Description |
-|---|---|---|
-| `agentId` | UUID | Unique identifier |
-| `roleName` | string | Name of the role the agent performs (e.g., "Screener", "Extractor") |
-| `roleDescription` | string | Description of the role |
-| `personaName` | string | Agent's persona name (e.g., "Dr. Aria") |
-| `personaDescription` | string | Narrative description of the persona |
-| `personaImage` | SVG | An SVG image representing the agent's persona (can be AI-generated) |
-| `systemMessageTemplate` | string | Templated system message using the agent's role, persona, and other fields |
-| `modelId` | UUID (FK) | The specific model this agent uses |
-| `modelProviderId` | UUID (FK) | The provider this agent's model comes from |
+| Field                   | Type      | Description                                                                |
+| ----------------------- | --------- | -------------------------------------------------------------------------- |
+| `agentId`               | UUID      | Unique identifier                                                          |
+| `roleName`              | string    | Name of the role the agent performs (e.g., "Screener", "Extractor")        |
+| `roleDescription`       | string    | Description of the role                                                    |
+| `personaName`           | string    | Agent's persona name (e.g., "Dr. Aria")                                    |
+| `personaDescription`    | string    | Narrative description of the persona                                       |
+| `personaImage`          | SVG       | An SVG image representing the agent's persona (can be AI-generated)        |
+| `systemMessageTemplate` | string    | Templated system message using the agent's role, persona, and other fields |
+| `modelId`               | UUID (FK) | The specific model this agent uses                                         |
+| `modelProviderId`       | UUID (FK) | The provider this agent's model comes from                                 |
 
 System message templates support variables for role name, role description, persona name, persona description, and any study-type-specific context. Agent creation is restricted to the task types defined as part of the supported research processes (Screener, Extractor, Librarian, Expert, QualityJudge, AgentGenerator, etc.).
 

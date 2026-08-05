@@ -42,40 +42,40 @@ Minimum acceptable mutation score: **85% mutants killed**.
 
 ## Tech Stack
 
-| Concern | Library |
-|---------|---------|
-| Build / dev server | Vite 5 |
-| UI framework | React 18 (functional components + hooks only) |
-| Language | TypeScript 5.4 (`strict`, `noUnusedLocals`) |
-| Routing | React Router DOM v6 |
-| Server state / data fetching | TanStack Query v5 (`refetchInterval` polling) |
-| Forms | React Hook Form v7 + Zod validation (`useWatch` — not `watch()`) |
-| Data visualisation | D3.js v7 (network graphs), Recharts v2 (result charts) |
-| Unit / component tests | Vitest + `@testing-library/react` + `jsdom` |
-| E2e tests | Playwright (TypeScript) — full-stack browser + API |
-| Mutation testing | Stryker (`@stryker-mutator/vitest-runner`) |
-| Linting | ESLint 9 + `typescript-eslint` + `eslint-plugin-react-hooks` |
-| Formatting | Prettier 3 (`singleQuote`, `trailingComma: "all"`, `printWidth: 100`) |
-| Pre-commit | Husky + `lint-staged` (eslint + prettier on staged `.ts`/`.tsx`) |
+| Concern                      | Library                                                               |
+| ---------------------------- | --------------------------------------------------------------------- |
+| Build / dev server           | Vite 5                                                                |
+| UI framework                 | React 18 (functional components + hooks only)                         |
+| Language                     | TypeScript 5.4 (`strict`, `noUnusedLocals`)                           |
+| Routing                      | React Router DOM v6                                                   |
+| Server state / data fetching | TanStack Query v5 (`refetchInterval` polling)                         |
+| Forms                        | React Hook Form v7 + Zod validation (`useWatch` — not `watch()`)      |
+| Data visualisation           | D3.js v7 (network graphs), Recharts v2 (result charts)                |
+| Unit / component tests       | Vitest + `@testing-library/react` + `jsdom`                           |
+| E2e tests                    | Playwright (TypeScript) — full-stack browser + API                    |
+| Mutation testing             | Stryker (`@stryker-mutator/vitest-runner`)                            |
+| Linting                      | ESLint 9 + `typescript-eslint` + `eslint-plugin-react-hooks`          |
+| Formatting                   | Prettier 3 (`singleQuote`, `trailingComma: "all"`, `printWidth: 100`) |
+| Pre-commit                   | Husky + `lint-staged` (eslint + prettier on staged `.ts`/`.tsx`)      |
 
 ## Environment Variables
 
 All client-side variables **must** use the `VITE_` prefix and be accessed via `import.meta.env.VITE_*`.
 
-| Variable | Default | Description |
-|----------|---------|-------------|
+| Variable            | Default                 | Description               |
+| ------------------- | ----------------------- | ------------------------- |
 | `VITE_API_BASE_URL` | `http://localhost:8000` | Backend REST API base URL |
 
 ## Admin Tabs
 
 The `AdminPage` component (`src/pages/AdminPage.tsx`) exposes three MUI tabs:
 
-| Tab | Components | Query hooks |
-|-----|-----------|-------------|
-| **Providers** | `ProviderList`, `ProviderForm` | `useProviders`, `useCreateProvider`, `useUpdateProvider`, `useDeleteProvider`, `useRefreshModels` |
-| **Models** | `ModelList` | `useProviderModels`, `useToggleModel` |
-| **Agents** | `AgentList`, `AgentWizard`, `AgentForm` | `useAgents`, `useCreateAgent`, `useUpdateAgent`, `useDeleteAgent`, `useGenerateSystemMessage`, `useUndoSystemMessage`, `useGeneratePersonaSvg`, `useAgentTaskTypes` |
-| **Search Integrations** | `SearchIntegrationsTable` | `useSearchIntegrations`, `useUpsertSearchIntegration`, `useTestSearchIntegration` |
+| Tab                     | Components                              | Query hooks                                                                                                                                                         |
+| ----------------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Providers**           | `ProviderList`, `ProviderForm`          | `useProviders`, `useCreateProvider`, `useUpdateProvider`, `useDeleteProvider`, `useRefreshModels`                                                                   |
+| **Models**              | `ModelList`                             | `useProviderModels`, `useToggleModel`                                                                                                                               |
+| **Agents**              | `AgentList`, `AgentWizard`, `AgentForm` | `useAgents`, `useCreateAgent`, `useUpdateAgent`, `useDeleteAgent`, `useGenerateSystemMessage`, `useUndoSystemMessage`, `useGeneratePersonaSvg`, `useAgentTaskTypes` |
+| **Search Integrations** | `SearchIntegrationsTable`               | `useSearchIntegrations`, `useUpsertSearchIntegration`, `useTestSearchIntegration`                                                                                   |
 
 `AgentWizard` is a 5-step MUI `Stepper` (task type → model → role/persona → SVG → system
 message review) with state managed via `useReducer`. `SystemMessageEditor` is a
@@ -89,36 +89,36 @@ Reusable protocol graph editor, library management, and real-time execution trac
 
 ### Protocol Components (`src/components/protocols/`)
 
-| Component | Description |
-|-----------|-------------|
-| `ProtocolGraph` | D3 force-directed SVG — read-only in StudyPage; drag-to-reposition + click-to-select in editor; `useProtocolD3.ts` extracts all D3 imperative setup |
-| `ProtocolNodePanel` | MUI Drawer showing selected node detail (label, task type, inputs, outputs, quality gates, assignees); edit mode adds react-hook-form fields |
-| `ProtocolTextEditor` | Monospace `<textarea>` YAML editor; displays parse errors inline; 300 ms debounced sync with graph state |
-| `ProtocolList` | MUI List of `ProtocolListItem`s with Copy / Assign / Export / Delete action buttons |
-| `QualityGateEditor` | `gate_type` MUI Select with conditional config fields per gate type; Zod-validated |
-| `EdgeConditionBuilder` | `output_name` / operator / value triple; null condition = unconditional edge |
-| `ExecutionStateView` | Task status table (pending/active/completed); Mark Complete and Approve buttons; reads from `useExecutionState` |
+| Component              | Description                                                                                                                                         |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ProtocolGraph`        | D3 force-directed SVG — read-only in StudyPage; drag-to-reposition + click-to-select in editor; `useProtocolD3.ts` extracts all D3 imperative setup |
+| `ProtocolNodePanel`    | MUI Drawer showing selected node detail (label, task type, inputs, outputs, quality gates, assignees); edit mode adds react-hook-form fields        |
+| `ProtocolTextEditor`   | Monospace `<textarea>` YAML editor; displays parse errors inline; 300 ms debounced sync with graph state                                            |
+| `ProtocolList`         | MUI List of `ProtocolListItem`s with Copy / Assign / Export / Delete action buttons                                                                 |
+| `QualityGateEditor`    | `gate_type` MUI Select with conditional config fields per gate type; Zod-validated                                                                  |
+| `EdgeConditionBuilder` | `output_name` / operator / value triple; null condition = unconditional edge                                                                        |
+| `ExecutionStateView`   | Task status table (pending/active/completed); Mark Complete and Approve buttons; reads from `useExecutionState`                                     |
 
 ### Protocol Pages (`src/pages/protocols/`)
 
-| Page | Route | Description |
-|------|-------|-------------|
-| `ProtocolLibraryPage` | `/protocols` | Browse and filter all visible protocols; copy to custom; import YAML; export YAML; assign to a study |
-| `ProtocolEditorPage` | `/protocols/:id` | Dual-pane editor: left — ProtocolGraph (edit mode), right — ProtocolTextEditor; Save calls `PUT /protocols/{id}` with `version_id`; conflict dialog on 409 |
+| Page                  | Route            | Description                                                                                                                                                |
+| --------------------- | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ProtocolLibraryPage` | `/protocols`     | Browse and filter all visible protocols; copy to custom; import YAML; export YAML; assign to a study                                                       |
+| `ProtocolEditorPage`  | `/protocols/:id` | Dual-pane editor: left — ProtocolGraph (edit mode), right — ProtocolTextEditor; Save calls `PUT /protocols/{id}` with `version_id`; conflict dialog on 409 |
 
 ### Protocol Hooks (`src/hooks/protocols/`)
 
-| Hook file | Exports |
-|-----------|---------|
-| `useProtocol.ts` | `useProtocolList`, `useProtocolDetail`, `useProtocolAssignment`, `useCopyProtocol`, `useCreateProtocol`, `useUpdateProtocol`, `useDeleteProtocol`, `useImportProtocol`, `useResetProtocol`, `useAssignProtocol` |
-| `useExecutionState.ts` | `useExecutionState` (5 s poll while ACTIVE), `useCompleteTask`, `useApproveTask` |
-| `useProtocolEditor.ts` | `useProtocolEditor` — `useReducer` with `graphToYaml` / `yamlToGraph` sync; actions: `SET_GRAPH`, `ADD_NODE`, `REMOVE_NODE`, `UPDATE_NODE`, `ADD_EDGE`, `REMOVE_EDGE`, `SET_YAML`, `SELECT_NODE` |
-| `useProtocolD3.ts` | D3 force simulation + drag behaviour; returns SVG container ref and render function |
+| Hook file              | Exports                                                                                                                                                                                                         |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `useProtocol.ts`       | `useProtocolList`, `useProtocolDetail`, `useProtocolAssignment`, `useCopyProtocol`, `useCreateProtocol`, `useUpdateProtocol`, `useDeleteProtocol`, `useImportProtocol`, `useResetProtocol`, `useAssignProtocol` |
+| `useExecutionState.ts` | `useExecutionState` (5 s poll while ACTIVE), `useCompleteTask`, `useApproveTask`                                                                                                                                |
+| `useProtocolEditor.ts` | `useProtocolEditor` — `useReducer` with `graphToYaml` / `yamlToGraph` sync; actions: `SET_GRAPH`, `ADD_NODE`, `REMOVE_NODE`, `UPDATE_NODE`, `ADD_EDGE`, `REMOVE_EDGE`, `SET_YAML`, `SELECT_NODE`                |
+| `useProtocolD3.ts`     | D3 force simulation + drag behaviour; returns SVG container ref and render function                                                                                                                             |
 
 ### Protocol Services (`src/services/protocols/`)
 
-| File | Description |
-|------|-------------|
+| File              | Description                                                                                                                                                                                                                                                                 |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `protocolsApi.ts` | Zod-validated wrappers for all Protocol REST endpoints; types: `ProtocolListItem`, `ProtocolDetail`, `ProtocolAssignment`, `ExecutionStateResponse`, `CompleteTaskResponse`; raw-`fetch` used for multipart import, YAML export (blob download), and DELETE-with-body reset |
 
 ## Tertiary Study Components (009-tertiary-studies-workflow)
@@ -127,35 +127,35 @@ New components, hooks, and services supporting the Tertiary Study workflow (aggr
 
 ### Tertiary Components (`src/components/tertiary/`)
 
-| Component | Description |
-|-----------|-------------|
-| `TertiaryProtocolForm` | react-hook-form + Zod form for Tertiary protocol fields; read-only when status is `validated` |
-| `TertiaryExtractionForm` | Data extraction form for nine secondary-study-specific fields; shows AI pre-fill banner when `extraction_status` is `ai_complete` |
-| `TertiaryQAGuidancePanel` | MUI Accordion panel listing the six mandatory QA dimensions for evaluating secondary study quality |
-| `SeedImportPanel` | Lists existing seed imports; dialog to import candidate papers from another platform study within the same group |
+| Component                 | Description                                                                                                                       |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `TertiaryProtocolForm`    | react-hook-form + Zod form for Tertiary protocol fields; read-only when status is `validated`                                     |
+| `TertiaryExtractionForm`  | Data extraction form for nine secondary-study-specific fields; shows AI pre-fill banner when `extraction_status` is `ai_complete` |
+| `TertiaryQAGuidancePanel` | MUI Accordion panel listing the six mandatory QA dimensions for evaluating secondary study quality                                |
+| `SeedImportPanel`         | Lists existing seed imports; dialog to import candidate papers from another platform study within the same group                  |
 
 ### Tertiary Pages (`src/pages/`)
 
-| Page | Route | Description |
-|------|-------|-------------|
-| `TertiaryStudyPage` | `/studies/:id/tertiary` | 5-phase tab layout for the Tertiary Study workflow |
+| Page                 | Route                          | Description                                                                            |
+| -------------------- | ------------------------------ | -------------------------------------------------------------------------------------- |
+| `TertiaryStudyPage`  | `/studies/:id/tertiary`        | 5-phase tab layout for the Tertiary Study workflow                                     |
 | `TertiaryReportPage` | `/studies/:id/tertiary/report` | Landscape section, per-RQ synthesis, recommendations; JSON/CSV/Markdown export buttons |
 
 ### Tertiary Hooks (`src/hooks/tertiary/`)
 
-| Hook file | Exported hooks |
-|-----------|---------------|
-| `useProtocol.ts` | `useProtocol`, `useUpdateProtocol` |
-| `useExtractions.ts` | `useExtractions`, `useUpdateExtraction`, `useAiAssist` |
+| Hook file           | Exported hooks                                             |
+| ------------------- | ---------------------------------------------------------- |
+| `useProtocol.ts`    | `useProtocol`, `useUpdateProtocol`                         |
+| `useExtractions.ts` | `useExtractions`, `useUpdateExtraction`, `useAiAssist`     |
 | `useSeedImports.ts` | `useSeedImports`, `useCreateSeedImport`, `useGroupStudies` |
 
 ### Tertiary Services (`src/services/tertiary/`)
 
-| Service | Description |
-|---------|-------------|
-| `protocolApi.ts` | Tertiary protocol read/update endpoints |
+| Service            | Description                                       |
+| ------------------ | ------------------------------------------------- |
+| `protocolApi.ts`   | Tertiary protocol read/update endpoints           |
 | `extractionApi.ts` | Data extraction read/update and AI assist trigger |
-| `seedImportApi.ts` | Seed import list and creation endpoints |
+| `seedImportApi.ts` | Seed import list and creation endpoints           |
 
 ## Rapid Review Components (008-rapid-review-workflow)
 
@@ -163,51 +163,51 @@ New components, hooks, and services supporting the accelerated Rapid Review work
 
 ### RR Components (`src/components/rapid/`)
 
-| Component | Description |
-|-----------|-------------|
-| `ProtocolForm` | react-hook-form + Zod form for RR protocol fields; `useWatch` throughout |
-| `QAModeSelector` | MUI radio group for quality appraisal mode (`full` / `critical_appraisal_only` / `descriptive`) |
-| `SearchRestrictionPanel` | Date range, language, and source type restriction controls |
-| `StakeholderPanel` | MUI Table for practitioner stakeholder CRUD; `readOnly` prop for locked phases |
-| `SingleReviewerWarningBanner` | MUI `Alert` when QA mode implies single-reviewer risk |
-| `ThreatToValidityList` | Read-only list of auto-created validity threat records |
-| `NarrativeSectionEditor` | Per-RQ section editor with AI draft request, `is_complete` toggle, pending/error state |
-| `BriefingPreview` | Read-only evidence briefing renderer (Title, Summary, Findings, Target Audience, Reference, Logos) |
-| `BriefingVersionPanel` | MUI Table of briefing versions with Publish, Download PDF/HTML, Copy Share Link actions |
+| Component                     | Description                                                                                        |
+| ----------------------------- | -------------------------------------------------------------------------------------------------- |
+| `ProtocolForm`                | react-hook-form + Zod form for RR protocol fields; `useWatch` throughout                           |
+| `QAModeSelector`              | MUI radio group for quality appraisal mode (`full` / `critical_appraisal_only` / `descriptive`)    |
+| `SearchRestrictionPanel`      | Date range, language, and source type restriction controls                                         |
+| `StakeholderPanel`            | MUI Table for practitioner stakeholder CRUD; `readOnly` prop for locked phases                     |
+| `SingleReviewerWarningBanner` | MUI `Alert` when QA mode implies single-reviewer risk                                              |
+| `ThreatToValidityList`        | Read-only list of auto-created validity threat records                                             |
+| `NarrativeSectionEditor`      | Per-RQ section editor with AI draft request, `is_complete` toggle, pending/error state             |
+| `BriefingPreview`             | Read-only evidence briefing renderer (Title, Summary, Findings, Target Audience, Reference, Logos) |
+| `BriefingVersionPanel`        | MUI Table of briefing versions with Publish, Download PDF/HTML, Copy Share Link actions            |
 
 ### RR Pages (`src/pages/rapid/`)
 
-| Page | Route | Description |
-|------|-------|-------------|
-| `ProtocolEditorPage` | study phase 0 | RR protocol editor |
-| `SearchConfigPage` | study phase 1 | Search restriction configuration |
-| `QAConfigPage` | study phase 2 | Quality appraisal mode and item configuration |
-| `StakeholderPage` | study phase 3 | Practitioner stakeholder management |
-| `NarrativeSynthesisPage` | study phase 5 | Narrative synthesis editor with AI draft and finalize CTA |
-| `EvidenceBriefingPage` | study phase 6 | Evidence Briefing generation, versioning, and export |
-| `PublicBriefingPage` | `/public/briefings/:token` | Unauthenticated briefing view via share token |
+| Page                     | Route                      | Description                                               |
+| ------------------------ | -------------------------- | --------------------------------------------------------- |
+| `ProtocolEditorPage`     | study phase 0              | RR protocol editor                                        |
+| `SearchConfigPage`       | study phase 1              | Search restriction configuration                          |
+| `QAConfigPage`           | study phase 2              | Quality appraisal mode and item configuration             |
+| `StakeholderPage`        | study phase 3              | Practitioner stakeholder management                       |
+| `NarrativeSynthesisPage` | study phase 5              | Narrative synthesis editor with AI draft and finalize CTA |
+| `EvidenceBriefingPage`   | study phase 6              | Evidence Briefing generation, versioning, and export      |
+| `PublicBriefingPage`     | `/public/briefings/:token` | Unauthenticated briefing view via share token             |
 
 ### RR Hooks (`src/hooks/rapid/`)
 
-| Hook file | Exported hooks |
-|-----------|---------------|
-| `useRRProtocol.ts` | `useRRProtocol`, `useUpdateRRProtocol` |
-| `useSearchConfig.ts` | `useSearchConfig`, `useUpdateSearchConfig` |
-| `useQAConfig.ts` | `useQAConfig`, `useUpdateQAConfig` |
-| `useStakeholders.ts` | `useStakeholders`, `useCreateStakeholder`, `useUpdateStakeholder`, `useDeleteStakeholder` |
-| `useNarrativeSynthesis.ts` | `useNarrativeSections`, `useUpdateSection`, `useRequestAIDraft`, `useCompleteSynthesis` |
-| `useBriefingVersions.ts` | `useBriefings`, `useGenerateBriefing`, `usePublishBriefing`, `useCreateShareToken`, `useRevokeShareToken` |
+| Hook file                  | Exported hooks                                                                                            |
+| -------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `useRRProtocol.ts`         | `useRRProtocol`, `useUpdateRRProtocol`                                                                    |
+| `useSearchConfig.ts`       | `useSearchConfig`, `useUpdateSearchConfig`                                                                |
+| `useQAConfig.ts`           | `useQAConfig`, `useUpdateQAConfig`                                                                        |
+| `useStakeholders.ts`       | `useStakeholders`, `useCreateStakeholder`, `useUpdateStakeholder`, `useDeleteStakeholder`                 |
+| `useNarrativeSynthesis.ts` | `useNarrativeSections`, `useUpdateSection`, `useRequestAIDraft`, `useCompleteSynthesis`                   |
+| `useBriefingVersions.ts`   | `useBriefings`, `useGenerateBriefing`, `usePublishBriefing`, `useCreateShareToken`, `useRevokeShareToken` |
 
 ### RR Services (`src/services/rapid/`)
 
-| Service | Description |
-|---------|-------------|
-| `protocolApi.ts` | RR protocol read/update endpoints |
-| `searchConfigApi.ts` | Search config read/update endpoints |
-| `qaConfigApi.ts` | QA config read/update endpoints |
-| `stakeholdersApi.ts` | Stakeholder CRUD endpoints |
-| `synthesisApi.ts` | Narrative synthesis sections; AI draft job; finalize; `ApiError` class |
-| `briefingApi.ts` | Briefing version CRUD; publish; binary PDF export; share token management |
+| Service              | Description                                                               |
+| -------------------- | ------------------------------------------------------------------------- |
+| `protocolApi.ts`     | RR protocol read/update endpoints                                         |
+| `searchConfigApi.ts` | Search config read/update endpoints                                       |
+| `qaConfigApi.ts`     | QA config read/update endpoints                                           |
+| `stakeholdersApi.ts` | Stakeholder CRUD endpoints                                                |
+| `synthesisApi.ts`    | Narrative synthesis sections; AI draft job; finalize; `ApiError` class    |
+| `briefingApi.ts`     | Briefing version CRUD; publish; binary PDF export; share token management |
 
 ## SLR Workflow Components (007-slr-workflow)
 
@@ -215,49 +215,49 @@ New components, hooks, and services supporting the full Systematic Literature Re
 
 ### SLR Components (`src/components/slr/`)
 
-| Component | Description |
-|-----------|-------------|
-| `ProtocolForm` | react-hook-form + Zod form for PICO/S protocol fields; `useWatch` on all fields; saves via `useUpdateProtocol` mutation |
-| `ProtocolReviewReport` | Renders AI-generated per-section strengths/weaknesses/recommendations from `ProtocolReviewReport` |
-| `QualityChecklistEditor` | Editable MUI DataGrid for configuring quality checklist items (binary/numeric scoring, weights) |
-| `QualityScoreForm` | Per-reviewer score submission form; conditional numeric input vs checkbox based on scoring method |
-| `InterRaterPanel` | Displays Cohen's κ score with interpretation band (poor/fair/moderate/good/excellent) |
-| `DiscussionFlowPanel` | Step-by-step discussion resolution panel for resolving inter-rater disagreements |
-| `SynthesisConfigForm` | Synthesis approach selector (meta-analysis / descriptive / qualitative) with parameter fields |
-| `ForestPlotViewer` | Renders Forest plot SVG returned by meta-analysis synthesis with download action |
-| `FunnelPlotViewer` | Renders Funnel plot SVG for publication bias visualisation |
-| `GreyLiteraturePanel` | CRUD panel for non-database literature sources (dissertation, report, preprint, conference, website) |
+| Component                | Description                                                                                                             |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------- |
+| `ProtocolForm`           | react-hook-form + Zod form for PICO/S protocol fields; `useWatch` on all fields; saves via `useUpdateProtocol` mutation |
+| `ProtocolReviewReport`   | Renders AI-generated per-section strengths/weaknesses/recommendations from `ProtocolReviewReport`                       |
+| `QualityChecklistEditor` | Editable MUI DataGrid for configuring quality checklist items (binary/numeric scoring, weights)                         |
+| `QualityScoreForm`       | Per-reviewer score submission form; conditional numeric input vs checkbox based on scoring method                       |
+| `InterRaterPanel`        | Displays Cohen's κ score with interpretation band (poor/fair/moderate/good/excellent)                                   |
+| `DiscussionFlowPanel`    | Step-by-step discussion resolution panel for resolving inter-rater disagreements                                        |
+| `SynthesisConfigForm`    | Synthesis approach selector (meta-analysis / descriptive / qualitative) with parameter fields                           |
+| `ForestPlotViewer`       | Renders Forest plot SVG returned by meta-analysis synthesis with download action                                        |
+| `FunnelPlotViewer`       | Renders Funnel plot SVG for publication bias visualisation                                                              |
+| `GreyLiteraturePanel`    | CRUD panel for non-database literature sources (dissertation, report, preprint, conference, website)                    |
 
 ### SLR Pages (`src/pages/slr/`)
 
-| Page | Route | Description |
-|------|-------|-------------|
-| `ProtocolEditorPage` | `/slr/:studyId/protocol` | Full-page protocol editor with AI review trigger |
-| `QualityAssessmentPage` | `/slr/:studyId/quality` | Checklist editor + per-reviewer score forms |
-| `SynthesisPage` | `/slr/:studyId/synthesis` | Synthesis config, job trigger, Forest/Funnel plot display |
-| `GreyLiteraturePage` | `/slr/:studyId/grey-literature` | Grey literature source management |
-| `ReportPage` | `/slr/:studyId/report` | Rendered Markdown SLR report with download |
+| Page                    | Route                           | Description                                               |
+| ----------------------- | ------------------------------- | --------------------------------------------------------- |
+| `ProtocolEditorPage`    | `/slr/:studyId/protocol`        | Full-page protocol editor with AI review trigger          |
+| `QualityAssessmentPage` | `/slr/:studyId/quality`         | Checklist editor + per-reviewer score forms               |
+| `SynthesisPage`         | `/slr/:studyId/synthesis`       | Synthesis config, job trigger, Forest/Funnel plot display |
+| `GreyLiteraturePage`    | `/slr/:studyId/grey-literature` | Grey literature source management                         |
+| `ReportPage`            | `/slr/:studyId/report`          | Rendered Markdown SLR report with download                |
 
 ### SLR Hooks (`src/hooks/slr/`)
 
-| Hook file | Exported hooks |
-|-----------|---------------|
-| `useProtocol.ts` | `useProtocol`, `useCreateProtocol`, `useUpdateProtocol`, `useTriggerProtocolReview` |
-| `useQualityAssessment.ts` | `useQualityChecklist`, `useCreateChecklist`, `useUpdateChecklist`, `useSubmitScore` |
-| `useInterRater.ts` | `useInterRaterStats`, `useKappaScore` |
-| `useSynthesis.ts` | `useSynthesisResult`, `useTriggerSynthesis` |
-| `useGreyLiterature.ts` | `useGreyLiteratureSources`, `useAddGreyLiteratureSource`, `useDeleteGreyLiteratureSource` |
+| Hook file                 | Exported hooks                                                                            |
+| ------------------------- | ----------------------------------------------------------------------------------------- |
+| `useProtocol.ts`          | `useProtocol`, `useCreateProtocol`, `useUpdateProtocol`, `useTriggerProtocolReview`       |
+| `useQualityAssessment.ts` | `useQualityChecklist`, `useCreateChecklist`, `useUpdateChecklist`, `useSubmitScore`       |
+| `useInterRater.ts`        | `useInterRaterStats`, `useKappaScore`                                                     |
+| `useSynthesis.ts`         | `useSynthesisResult`, `useTriggerSynthesis`                                               |
+| `useGreyLiterature.ts`    | `useGreyLiteratureSources`, `useAddGreyLiteratureSource`, `useDeleteGreyLiteratureSource` |
 
 ### SLR Services (`src/services/slr/`)
 
-| Service | Description |
-|---------|-------------|
-| `protocolApi.ts` | CRUD + review-trigger endpoints for `ReviewProtocol` |
-| `qualityApi.ts` | Checklist CRUD and score submission endpoints |
-| `interRaterApi.ts` | Cohen's κ computation endpoint |
-| `synthesisApi.ts` | Synthesis trigger and result fetch |
-| `greyLiteratureApi.ts` | Grey literature source CRUD |
-| `reportApi.ts` | Structured Markdown report fetch |
+| Service                | Description                                          |
+| ---------------------- | ---------------------------------------------------- |
+| `protocolApi.ts`       | CRUD + review-trigger endpoints for `ReviewProtocol` |
+| `qualityApi.ts`        | Checklist CRUD and score submission endpoints        |
+| `interRaterApi.ts`     | Cohen's κ computation endpoint                       |
+| `synthesisApi.ts`      | Synthesis trigger and result fetch                   |
+| `greyLiteratureApi.ts` | Grey literature source CRUD                          |
+| `reportApi.ts`         | Structured Markdown report fetch                     |
 
 ## Project Structure
 

@@ -101,19 +101,37 @@ export default function DiffViewer({
           boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
         }}
       >
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-          <Typography variant="subtitle1" sx={{ margin: 0, fontSize: '1rem', color: '#111827' }}>Edit Conflict Detected</Typography>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '1.25rem',
+          }}
+        >
+          <Typography variant="subtitle1" sx={{ margin: 0, fontSize: '1rem', color: '#111827' }}>
+            Edit Conflict Detected
+          </Typography>
           <Button
             onClick={onDismiss}
             aria-label="Dismiss"
-            sx={{ background: 'transparent', border: 'none', fontSize: '1rem', cursor: 'pointer', color: '#6b7280', padding: '0.25rem', minWidth: 'auto' }}
+            sx={{
+              background: 'transparent',
+              border: 'none',
+              fontSize: '1rem',
+              cursor: 'pointer',
+              color: '#6b7280',
+              padding: '0.25rem',
+              minWidth: 'auto',
+            }}
           >
             ✕
           </Button>
         </Box>
 
         <Typography sx={{ margin: '0 0 1rem', fontSize: '0.875rem', color: '#6b7280' }}>
-          Another user edited this extraction while you were working. Choose how to resolve the conflict.
+          Another user edited this extraction while you were working. Choose how to resolve the
+          conflict.
         </Typography>
 
         {/* Diff table */}
@@ -135,7 +153,9 @@ export default function DiffViewer({
                   <tr key={key} style={{ background: isDiff ? '#fffbeb' : 'transparent' }}>
                     <td style={{ ...tdStyle, fontWeight: 600, color: '#374151' }}>{label}</td>
                     <td style={{ ...tdStyle, color: '#1d4ed8', whiteSpace: 'pre-wrap' }}>{mine}</td>
-                    <td style={{ ...tdStyle, color: '#15803d', whiteSpace: 'pre-wrap' }}>{theirs}</td>
+                    <td style={{ ...tdStyle, color: '#15803d', whiteSpace: 'pre-wrap' }}>
+                      {theirs}
+                    </td>
                   </tr>
                 );
               })}
@@ -155,7 +175,12 @@ export default function DiffViewer({
             variant="contained"
             onClick={keepMine}
             disabled={mutation.isPending}
-            sx={{ padding: '0.5rem 1rem', background: '#2563eb', fontSize: '0.875rem', fontWeight: 500 }}
+            sx={{
+              padding: '0.5rem 1rem',
+              background: '#2563eb',
+              fontSize: '0.875rem',
+              fontWeight: 500,
+            }}
           >
             Keep Mine
           </Button>
@@ -163,7 +188,13 @@ export default function DiffViewer({
             variant="contained"
             onClick={keepTheirs}
             disabled={mutation.isPending}
-            sx={{ padding: '0.5rem 1rem', background: '#16a34a', '&:hover': { background: '#15803d' }, fontSize: '0.875rem', fontWeight: 500 }}
+            sx={{
+              padding: '0.5rem 1rem',
+              background: '#16a34a',
+              '&:hover': { background: '#15803d' },
+              fontSize: '0.875rem',
+              fontWeight: 500,
+            }}
           >
             Keep Theirs
           </Button>
@@ -171,7 +202,13 @@ export default function DiffViewer({
             variant="contained"
             onClick={merge}
             disabled={mutation.isPending}
-            sx={{ padding: '0.5rem 1rem', background: '#7c3aed', '&:hover': { background: '#6d28d9' }, fontSize: '0.875rem', fontWeight: 500 }}
+            sx={{
+              padding: '0.5rem 1rem',
+              background: '#7c3aed',
+              '&:hover': { background: '#6d28d9' },
+              fontSize: '0.875rem',
+              fontWeight: 500,
+            }}
           >
             Merge
           </Button>
@@ -179,7 +216,13 @@ export default function DiffViewer({
             variant="outlined"
             onClick={onDismiss}
             disabled={mutation.isPending}
-            sx={{ padding: '0.5rem 1rem', color: '#374151', borderColor: '#d1d5db', fontSize: '0.875rem', fontWeight: 500 }}
+            sx={{
+              padding: '0.5rem 1rem',
+              color: '#374151',
+              borderColor: '#d1d5db',
+              fontSize: '0.875rem',
+              fontWeight: 500,
+            }}
           >
             Cancel
           </Button>

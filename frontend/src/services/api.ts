@@ -41,7 +41,9 @@ export async function loginUser(email: string, password: string): Promise<LoginR
     try {
       const data = await response.json();
       detail = data?.detail ?? detail;
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
     throw new ApiError(response.status, detail);
   }
 

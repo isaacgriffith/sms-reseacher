@@ -30,7 +30,11 @@ interface ExportPanelProps {
 const FORMAT_OPTIONS: Array<{ value: string; label: string; description: string }> = [
   { value: 'svg_only', label: 'SVG Only', description: 'ZIP of all generated chart SVG files' },
   { value: 'json_only', label: 'JSON Only', description: 'Full study data as a single JSON file' },
-  { value: 'csv_json', label: 'CSV + JSON', description: 'Tabular extractions CSV + full study JSON (ZIP)' },
+  {
+    value: 'csv_json',
+    label: 'CSV + JSON',
+    description: 'Tabular extractions CSV + full study JSON (ZIP)',
+  },
   { value: 'full_archive', label: 'Full Archive', description: 'SVGs, CSV, and JSON in one ZIP' },
 ];
 
@@ -97,23 +101,39 @@ export default function ExportPanel({ studyId }: ExportPanelProps) {
   };
 
   return (
-    <Paper variant="outlined" sx={{ border: '1px solid #e2e8f0', borderRadius: '0.5rem', padding: '1.25rem', background: '#fff' }}>
-      <Typography variant="subtitle1" sx={{ margin: '0 0 1rem', fontSize: '1rem', fontWeight: 600, color: '#111827' }}>Export Study</Typography>
+    <Paper
+      variant="outlined"
+      sx={{
+        border: '1px solid #e2e8f0',
+        borderRadius: '0.5rem',
+        padding: '1.25rem',
+        background: '#fff',
+      }}
+    >
+      <Typography
+        variant="subtitle1"
+        sx={{ margin: '0 0 1rem', fontSize: '1rem', fontWeight: 600, color: '#111827' }}
+      >
+        Export Study
+      </Typography>
 
       {/* Format selector */}
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1rem' }}>
         {FORMAT_OPTIONS.map((opt) => {
           const selected = selectedFormat === opt.value;
           return (
-            <label key={opt.value} style={{
-              display: 'flex',
-              alignItems: 'flex-start',
-              padding: '0.625rem 0.875rem',
-              border: `1px solid ${selected ? '#3b82f6' : '#e2e8f0'}`,
-              borderRadius: '0.375rem',
-              cursor: 'pointer',
-              background: selected ? '#eff6ff' : '#fff',
-            }}>
+            <label
+              key={opt.value}
+              style={{
+                display: 'flex',
+                alignItems: 'flex-start',
+                padding: '0.625rem 0.875rem',
+                border: `1px solid ${selected ? '#3b82f6' : '#e2e8f0'}`,
+                borderRadius: '0.375rem',
+                cursor: 'pointer',
+                background: selected ? '#eff6ff' : '#fff',
+              }}
+            >
               <input
                 type="radio"
                 name="export_format"
@@ -121,11 +141,17 @@ export default function ExportPanel({ studyId }: ExportPanelProps) {
                 checked={selected}
                 onChange={() => setSelectedFormat(opt.value)}
                 style={{ marginRight: '0.625rem' }}
-                disabled={!!job && jobStatus?.status !== 'completed' && jobStatus?.status !== 'failed'}
+                disabled={
+                  !!job && jobStatus?.status !== 'completed' && jobStatus?.status !== 'failed'
+                }
               />
               <Box>
-                <Typography sx={{ fontWeight: 600, fontSize: '0.875rem', color: '#111827' }}>{opt.label}</Typography>
-                <Typography sx={{ fontSize: '0.75rem', color: '#6b7280' }}>{opt.description}</Typography>
+                <Typography sx={{ fontWeight: 600, fontSize: '0.875rem', color: '#111827' }}>
+                  {opt.label}
+                </Typography>
+                <Typography sx={{ fontSize: '0.75rem', color: '#6b7280' }}>
+                  {opt.description}
+                </Typography>
               </Box>
             </label>
           );
@@ -152,14 +178,25 @@ export default function ExportPanel({ studyId }: ExportPanelProps) {
           <Button
             variant="contained"
             onClick={handleDownload}
-            sx={{ padding: '0.5rem 1.25rem', background: '#16a34a', '&:hover': { background: '#15803d' }, fontSize: '0.875rem', fontWeight: 600 }}
+            sx={{
+              padding: '0.5rem 1.25rem',
+              background: '#16a34a',
+              '&:hover': { background: '#15803d' },
+              fontSize: '0.875rem',
+              fontWeight: 600,
+            }}
           >
             ↓ Download
           </Button>
           <Button
             variant="outlined"
             onClick={handleReset}
-            sx={{ padding: '0.5rem 1rem', color: '#374151', borderColor: '#d1d5db', fontSize: '0.875rem' }}
+            sx={{
+              padding: '0.5rem 1rem',
+              color: '#374151',
+              borderColor: '#d1d5db',
+              fontSize: '0.875rem',
+            }}
           >
             New Export
           </Button>
@@ -175,7 +212,9 @@ export default function ExportPanel({ studyId }: ExportPanelProps) {
 
       {/* Status messages */}
       {error && (
-        <Typography sx={{ marginTop: '0.75rem', color: '#dc2626', fontSize: '0.8125rem' }}>{error}</Typography>
+        <Typography sx={{ marginTop: '0.75rem', color: '#dc2626', fontSize: '0.8125rem' }}>
+          {error}
+        </Typography>
       )}
       {jobStatus?.status === 'failed' && (
         <Typography sx={{ marginTop: '0.75rem', color: '#dc2626', fontSize: '0.8125rem' }}>
@@ -199,10 +238,16 @@ function ProgressBar({ pct }: { pct: number }) {
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
-        <Typography component="span" sx={{ fontSize: '0.75rem', color: '#6b7280' }}>Exporting…</Typography>
-        <Typography component="span" sx={{ fontSize: '0.75rem', color: '#6b7280' }}>{pct}%</Typography>
+        <Typography component="span" sx={{ fontSize: '0.75rem', color: '#6b7280' }}>
+          Exporting…
+        </Typography>
+        <Typography component="span" sx={{ fontSize: '0.75rem', color: '#6b7280' }}>
+          {pct}%
+        </Typography>
       </Box>
-      <Box sx={{ height: '6px', background: '#e2e8f0', borderRadius: '9999px', overflow: 'hidden' }}>
+      <Box
+        sx={{ height: '6px', background: '#e2e8f0', borderRadius: '9999px', overflow: 'hidden' }}
+      >
         <Box
           sx={{
             height: '100%',

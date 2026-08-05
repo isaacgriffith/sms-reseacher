@@ -165,6 +165,21 @@ describe('api service', () => {
     expect(headers['Authorization']).toBe('Bearer default-auth-token');
   });
 
+  it('uses statusText when error json() throws', async () => {
+    vi.mocked(fetch).mockResolvedValue({
+      ok: false,
+      status: 502,
+      statusText: 'Bad Gateway',
+      json: () => Promise.reject(new SyntaxError('Unexpected token')),
+    } as unknown as Response);
+    try {
+      await api.get('/api/v1/bad-gateway');
+      expect.fail('should have thrown');
+    } catch (err) {
+      expect((err as ApiError).detail).toBe('Bad Gateway');
+    }
+  });
+
   it('uses statusText when error json() returns null', async () => {
     vi.mocked(fetch).mockResolvedValue({
       ok: false,

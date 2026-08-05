@@ -59,11 +59,12 @@ export default function QualityChecklistEditor({ studyId }: QualityChecklistEdit
     defaultValues: {
       name: checklist?.name ?? '',
       description: checklist?.description ?? '',
-      items: checklist?.items.map((item) => ({
-        question: item.question,
-        scoring_method: item.scoring_method,
-        weight: item.weight,
-      })) ?? [],
+      items:
+        checklist?.items.map((item) => ({
+          question: item.question,
+          scoring_method: item.scoring_method,
+          weight: item.weight,
+        })) ?? [],
     },
   });
 

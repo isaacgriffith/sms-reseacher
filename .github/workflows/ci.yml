@@ -54,18 +54,23 @@ jobs:
           - package: sms-backend
             testdir: backend/tests
             covdir: backend
+            covsrc: backend/src/backend
           - package: agents
             testdir: agents/tests
             covdir: agents
+            covsrc: agents/src/agents
           - package: db
             testdir: db/tests
             covdir: db
+            covsrc: db/src/db
           - package: sms-agent-eval
             testdir: agent-eval/tests
             covdir: agent-eval
+            covsrc: agent-eval/src/agent_eval
           - package: sms-researcher-mcp
             testdir: researcher-mcp/tests
             covdir: researcher-mcp
+            covsrc: researcher-mcp/src/researcher_mcp
     permissions:
       pull-requests: write
     steps:
@@ -85,6 +90,7 @@ jobs:
       - name: Run pytest with coverage
         run: |
           uv run --package ${{ matrix.package }} pytest ${{ matrix.testdir }} \
+            --cov=${{ matrix.covsrc }} \
             --cov-report=xml:${{ matrix.covdir }}/coverage.xml \
             --cov-fail-under=85
 
@@ -301,7 +307,15 @@ jobs:
   ghcr-push:
     name: Push to GHCR
     runs-on: ubuntu-latest
-    needs: [python-lint, python-test, frontend-lint, frontend-test, e2e-tests, docker-build-scan]
+    needs:
+      [
+        python-lint,
+        python-test,
+        frontend-lint,
+        frontend-test,
+        e2e-tests,
+        docker-build-scan,
+      ]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     permissions:
       contents: read

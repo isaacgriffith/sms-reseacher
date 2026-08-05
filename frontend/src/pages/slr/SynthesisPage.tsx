@@ -19,7 +19,9 @@ import TableCell from '@mui/material/TableCell';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Typography from '@mui/material/Typography';
-import SynthesisConfigForm, { type SynthesisFormData } from '../../components/slr/SynthesisConfigForm';
+import SynthesisConfigForm, {
+  type SynthesisFormData,
+} from '../../components/slr/SynthesisConfigForm';
 import ForestPlotViewer from '../../components/slr/ForestPlotViewer';
 import FunnelPlotViewer from '../../components/slr/FunnelPlotViewer';
 import {
@@ -40,9 +42,7 @@ interface PageState {
   selectedResultId: number | null;
 }
 
-type PageAction =
-  | { type: 'SELECT_RESULT'; id: number }
-  | { type: 'SHOW_CONFIG' };
+type PageAction = { type: 'SELECT_RESULT'; id: number } | { type: 'SHOW_CONFIG' };
 
 function pageReducer(state: PageState, action: PageAction): PageState {
   switch (action.type) {
@@ -103,11 +103,7 @@ function ResultsList({ results, selectedId, onSelect }: ResultsListProps) {
             <TableCell>{r.id}</TableCell>
             <TableCell>{r.approach}</TableCell>
             <TableCell>
-              <Chip
-                label={r.status}
-                color={STATUS_COLOR[r.status] ?? 'default'}
-                size="small"
-              />
+              <Chip label={r.status} color={STATUS_COLOR[r.status] ?? 'default'} size="small" />
             </TableCell>
             <TableCell>{new Date(r.created_at).toLocaleString()}</TableCell>
           </TableRow>
@@ -194,7 +190,9 @@ function QualitativeThemesTable({ themes }: QualitativeThemesTableProps) {
 
   return (
     <Box sx={{ mt: 2 }}>
-      <Typography variant="caption" sx={{ display: 'block', mb: 0.5 }}>Themes</Typography>
+      <Typography variant="caption" sx={{ display: 'block', mb: 0.5 }}>
+        Themes
+      </Typography>
       <Table size="small" aria-label="Qualitative themes">
         <TableHead>
           <TableRow>
@@ -271,7 +269,9 @@ export default function SynthesisPage({ studyId }: SynthesisPageProps) {
 
       <Divider sx={{ my: 3 }} />
 
-      <Typography variant="subtitle2" sx={{ mb: 1 }}>Past Synthesis Runs</Typography>
+      <Typography variant="subtitle2" sx={{ mb: 1 }}>
+        Past Synthesis Runs
+      </Typography>
 
       {listLoading ? (
         <CircularProgress size={20} />
@@ -283,9 +283,7 @@ export default function SynthesisPage({ studyId }: SynthesisPageProps) {
         />
       )}
 
-      {state.selectedResultId !== null && (
-        <ResultDetail synthesisId={state.selectedResultId} />
-      )}
+      {state.selectedResultId !== null && <ResultDetail synthesisId={state.selectedResultId} />}
     </Box>
   );
 }

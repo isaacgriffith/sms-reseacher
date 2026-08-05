@@ -94,9 +94,34 @@ function ChartCard({ studyId, chart }: ChartCardProps) {
     : null;
 
   return (
-    <Paper variant="outlined" sx={{ border: '1px solid #e2e8f0', borderRadius: '0.5rem', padding: '0.875rem', background: '#fff' }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.625rem' }}>
-        <Typography component="span" sx={{ fontSize: '0.8125rem', fontWeight: 600, color: '#374151', textTransform: 'capitalize' }}>{label}</Typography>
+    <Paper
+      variant="outlined"
+      sx={{
+        border: '1px solid #e2e8f0',
+        borderRadius: '0.5rem',
+        padding: '0.875rem',
+        background: '#fff',
+      }}
+    >
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '0.625rem',
+        }}
+      >
+        <Typography
+          component="span"
+          sx={{
+            fontSize: '0.8125rem',
+            fontWeight: 600,
+            color: '#374151',
+            textTransform: 'capitalize',
+          }}
+        >
+          {label}
+        </Typography>
         <Button
           variant="outlined"
           size="small"

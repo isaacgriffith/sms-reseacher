@@ -15,6 +15,7 @@ All endpoints require admin authentication (existing admin auth middleware).
 List all configured providers.
 
 **Response 200**:
+
 ```json
 [
   {
@@ -28,6 +29,7 @@ List all configured providers.
   }
 ]
 ```
+
 Note: `api_key_encrypted` is **never** returned. An `has_api_key: boolean` field indicates whether a key is stored.
 
 ---
@@ -37,6 +39,7 @@ Note: `api_key_encrypted` is **never** returned. An `has_api_key: boolean` field
 Create a new provider.
 
 **Request body**:
+
 ```json
 {
   "provider_type": "anthropic | openai | ollama",
@@ -68,6 +71,7 @@ Get a single provider.
 Update a provider's display name, API key, base URL, or enabled status.
 
 **Request body** (all fields optional):
+
 ```json
 {
   "display_name": "string",
@@ -97,6 +101,7 @@ Delete a provider and all its models (CASCADE).
 Re-fetch the model list from the provider's catalog API and update `available_model` records.
 
 **Response 200**:
+
 ```json
 {
   "models_added": 3,
@@ -104,6 +109,7 @@ Re-fetch the model list from the provider's catalog API and update `available_mo
   "models_total": 12
 }
 ```
+
 **Response 502**: Provider API unreachable — existing model list unchanged.
 
 ---
@@ -115,6 +121,7 @@ Re-fetch the model list from the provider's catalog API and update `available_mo
 List all models for a provider.
 
 **Response 200**:
+
 ```json
 [
   {
@@ -136,6 +143,7 @@ List all models for a provider.
 Enable or disable a model.
 
 **Request body**:
+
 ```json
 {
   "is_enabled": false
@@ -154,10 +162,12 @@ Enable or disable a model.
 List all agents.
 
 **Query params**:
+
 - `task_type` (optional) — filter by AgentTaskType value
 - `is_active` (optional, default true)
 
 **Response 200**:
+
 ```json
 [
   {
@@ -183,6 +193,7 @@ List all agents.
 Create a new agent.
 
 **Request body**:
+
 ```json
 {
   "task_type": "screener",
@@ -215,6 +226,7 @@ Get full agent details.
 Update an agent's fields.
 
 **Request body** (all optional):
+
 ```json
 {
   "role_name": "string",
@@ -248,12 +260,14 @@ Soft-delete (set `is_active = false`) an agent.
 Invoke the AgentGenerator agent to produce a new system message for the given agent based on its current role, persona, and model. Stores the previous message in `system_message_undo_buffer`.
 
 **Response 200**:
+
 ```json
 {
   "system_message_template": "generated Jinja2 template string",
   "previous_message_preserved": true
 }
 ```
+
 **Response 409**: No active AgentGenerator agent configured.
 **Response 502**: LLM call failed.
 
@@ -273,6 +287,7 @@ Restore the system message from the undo buffer.
 Generate a persona SVG image using the current LLM for a given persona name and description. Does not save — caller decides whether to include it in a create/update request.
 
 **Request body**:
+
 ```json
 {
   "persona_name": "string",
@@ -282,11 +297,13 @@ Generate a persona SVG image using the current LLM for a given persona name and 
 ```
 
 **Response 200**:
+
 ```json
 {
   "svg": "<svg>...</svg>"
 }
 ```
+
 **Response 502**: LLM call failed or did not produce valid SVG.
 
 ---
@@ -296,8 +313,19 @@ Generate a persona SVG image using the current LLM for a given persona name and 
 `GET /api/v1/admin/agent-task-types`
 
 **Response 200**:
+
 ```json
-["screener", "extractor", "librarian", "expert", "quality_judge", "agent_generator", "domain_modeler", "synthesiser", "validity_assessor"]
+[
+  "screener",
+  "extractor",
+  "librarian",
+  "expert",
+  "quality_judge",
+  "agent_generator",
+  "domain_modeler",
+  "synthesiser",
+  "validity_assessor"
+]
 ```
 
 Used to populate the task type selector in the agent creation wizard.

@@ -178,7 +178,7 @@
 
 ---
 
-## Phase 9: Feature Completion Documentation *(mandatory — Constitution Principle X)*
+## Phase 9: Feature Completion Documentation _(mandatory — Constitution Principle X)_
 
 **Purpose**: Update all required documentation before the feature branch is merged.
 
@@ -208,13 +208,13 @@
 
 ### User Story Dependencies
 
-| User Story | Depends On | Notes |
-|------------|-----------|-------|
-| US1 (P1) | Phase 2 complete | Independent — pure provider/model CRUD |
-| US2 (P2) | Phase 2 + US1 (frontend tab wiring) | AgentGeneratorAgent needs bootstrap Agent record from migration |
-| US3 (P3) | US2 (reuses AgentForm, SystemMessageEditor) | Backend endpoints independent; frontend builds on US2 components |
-| US4 (P4) | Phase 2 (migration file) | Backend agent class updates independent of US1–US3 |
-| US5 (P5) | US4 (agent invocation paths) | Rendering depends on ProviderConfig overload from US4 |
+| User Story | Depends On                                  | Notes                                                            |
+| ---------- | ------------------------------------------- | ---------------------------------------------------------------- |
+| US1 (P1)   | Phase 2 complete                            | Independent — pure provider/model CRUD                           |
+| US2 (P2)   | Phase 2 + US1 (frontend tab wiring)         | AgentGeneratorAgent needs bootstrap Agent record from migration  |
+| US3 (P3)   | US2 (reuses AgentForm, SystemMessageEditor) | Backend endpoints independent; frontend builds on US2 components |
+| US4 (P4)   | Phase 2 (migration file)                    | Backend agent class updates independent of US1–US3               |
+| US5 (P5)   | US4 (agent invocation paths)                | Rendering depends on ProviderConfig overload from US4            |
 
 ### Within Each User Story
 
@@ -282,6 +282,7 @@ Task T027: "ProviderList.tsx component"
 ### Parallel Team Strategy
 
 With multiple developers after Phase 2 completes:
+
 - **Developer A**: US1 (Phase 3) — provider/model management
 - **Developer B**: US4 (Phase 6) — migration seed data + agent class ProviderConfig updates
 - Once US1 and US4 complete:

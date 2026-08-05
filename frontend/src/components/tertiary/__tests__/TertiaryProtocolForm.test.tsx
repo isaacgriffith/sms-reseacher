@@ -163,7 +163,7 @@ describe('TertiaryProtocolForm', () => {
       await waitFor(() => {
         expect(
           screen.queryByText(/Select at least one secondary study type/i) ||
-          screen.queryByText(/Select at least one type/i)
+            screen.queryByText(/Select at least one type/i),
         ).not.toBeNull();
       });
     });

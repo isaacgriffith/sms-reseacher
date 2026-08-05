@@ -29,7 +29,11 @@ import Typography from '@mui/material/Typography';
 import DeleteIcon from '@mui/icons-material/Delete';
 import type { GreyLiteratureSource } from '../../services/slr/greyLiteratureApi';
 import type { CreateGreyLiteratureBody } from '../../services/slr/greyLiteratureApi';
-import { useGreyLiterature, useAddSource, useDeleteSource } from '../../hooks/slr/useGreyLiterature';
+import {
+  useGreyLiterature,
+  useAddSource,
+  useDeleteSource,
+} from '../../hooks/slr/useGreyLiterature';
 
 // ---------------------------------------------------------------------------
 // Source type options
@@ -91,7 +95,9 @@ function AddSourceDialog({ open, onClose, onSubmit, isPending }: AddSourceDialog
             render={({ field }) => (
               <Select {...field} size="small" displayEmpty aria-label="Source type">
                 {SOURCE_TYPES.map((t) => (
-                  <MenuItem key={t.value} value={t.value}>{t.label}</MenuItem>
+                  <MenuItem key={t.value} value={t.value}>
+                    {t.label}
+                  </MenuItem>
                 ))}
               </Select>
             )}
@@ -107,9 +113,7 @@ function AddSourceDialog({ open, onClose, onSubmit, isPending }: AddSourceDialog
           <Controller
             name="authors"
             control={control}
-            render={({ field }) => (
-              <TextField {...field} label="Authors" size="small" fullWidth />
-            )}
+            render={({ field }) => <TextField {...field} label="Authors" size="small" fullWidth />}
           />
           <Controller
             name="year"
@@ -121,16 +125,16 @@ function AddSourceDialog({ open, onClose, onSubmit, isPending }: AddSourceDialog
                 size="small"
                 type="number"
                 fullWidth
-                onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                onChange={(e) =>
+                  field.onChange(e.target.value ? Number(e.target.value) : undefined)
+                }
               />
             )}
           />
           <Controller
             name="url"
             control={control}
-            render={({ field }) => (
-              <TextField {...field} label="URL" size="small" fullWidth />
-            )}
+            render={({ field }) => <TextField {...field} label="URL" size="small" fullWidth />}
           />
           <Controller
             name="description"
@@ -142,7 +146,9 @@ function AddSourceDialog({ open, onClose, onSubmit, isPending }: AddSourceDialog
         </Box>
       </DialogContent>
       <DialogActions>
-        <Button onClick={handleClose} disabled={isPending}>Cancel</Button>
+        <Button onClick={handleClose} disabled={isPending}>
+          Cancel
+        </Button>
         <Button
           variant="contained"
           disabled={isPending}

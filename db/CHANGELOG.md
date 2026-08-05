@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [0.10.0] — 2026-03-31 — feature/010-research-protocol-definition
 
 ### Added
+
 - **Enums** (`db/src/db/models/protocols.py`):
   `ProtocolTaskType` (23 values: `define_pico`, `define_search_string`, `test_retest`,
   `screen_titles`, `screen_abstracts`, `screen_full_text`, `extract_data`,
@@ -47,6 +48,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [0.9.0] — 2026-03-30 — feature/009-tertiary-studies-workflow
 
 ### Added
+
 - **Enums** (`db/src/db/models/tertiary.py`): `TertiaryProtocolStatus` (`draft`/`validated`),
   `SecondaryStudyType` (`SLR`/`SMS`/`RAPID_REVIEW`/`UNKNOWN`)
 - **`TertiaryStudyProtocol`** ORM: one protocol per Tertiary study; background, research
@@ -73,6 +75,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [0.8.0] — 2026-03-29 — feature/008-rapid-review-workflow
 
 ### Added
+
 - **Enums** (`db/src/db/models/rapid_review.py`): `RRProtocolStatus` (`draft`/`validated`),
   `RRQualityAppraisalMode` (`full`/`critical_appraisal_only`/`descriptive`),
   `RRInvolvementType` (`advisor`/`co-investigator`/`reviewer`/`end_user`/`commissioner`),
@@ -99,6 +102,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [0.7.0] — 2026-03-21 — feature/007-slr-workflow
 
 ### Added
+
 - **`ReviewProtocol`** ORM model (`db/src/db/models/slr.py`): PICO/S fields, synthesis approach
   enum, status lifecycle (`draft` → `validated`); FK to `study`
 - **`ProtocolReviewReport`** ORM: per-section strengths/weaknesses/recommendations from AI review
@@ -114,6 +118,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [0.6.0] — 2026-03-18 — feature/006-database-search-and-retrieval
 
 ### Added
+
 - **`DatabaseIndex` StrEnum**: `ieee_xplore`, `acm_dl`, `scopus`, `web_of_science`, `inspec`,
   `science_direct`, `springer_link`, `google_scholar`, `semantic_scholar`
 - **`IntegrationType` StrEnum**: maps to credential types for each source
@@ -135,6 +140,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [0.5.0] — 2026-03-17 — feature/005-models-and-agents
 
 ### Added
+
 - **`ProviderType` StrEnum**: `anthropic`, `openai`, `ollama`
 - **`AgentTaskType` StrEnum**: `screener`, `extractor`, `librarian`, `expert`, `quality_judge`,
   `agent_generator`, `domain_modeler`, `synthesiser`, `validity_assessor`
@@ -162,6 +168,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `AvailableModel`, `Agent`
 
 ### Changed
+
 - `Reviewer` model: added nullable `agent_id` UUID FK → `agent.id` (SET NULL on delete);
   existing `agent_name` column retained
 
@@ -170,6 +177,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [0.3.0] — 2026-03-16 — feature/003-project-setup-improvements
 
 ### Changed
+
 - Coverage command documented in `CLAUDE.md`: `uv run pytest db/tests/ --cov=db`
 - Mutation testing tool updated to `cosmic-ray` (was `mutmut`); run via manual GitHub
   Actions `workflow_dispatch` workflow
@@ -180,6 +188,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [0.2.0] — 2026-03-12 — feature/002-sms-workflow
 
 ### Added
+
 - `Study` model: `id`, `name`, `study_type` (SMS/SLR/Tertiary/Rapid), `status`
   (draft/active/completed/archived), `created_at`, `updated_at`
 - `Paper` model: `id`, `title`, `abstract`, `doi` (unique), `metadata` (JSON),
@@ -197,6 +206,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [0.1.0] — 2026-03-11 — feature/001-repo-setup
 
 ### Added
+
 - Initial `pyproject.toml` (`sms-db`) as UV workspace member
 - SQLAlchemy 2.x async + Alembic dependency baseline
 - Ruff, MyPy strict, pytest + pytest-asyncio configuration

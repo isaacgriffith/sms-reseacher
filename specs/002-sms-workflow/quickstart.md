@@ -125,18 +125,21 @@ cd agent-eval && uv run agent-eval eval-all --run-agent
 ## Key Workflows
 
 ### Create a Study
+
 1. Open http://localhost:5173 → log in
 2. Select or create a Research Group
 3. Click **New Study** → complete the wizard (name, type, PICO/C, reviewers)
 4. Study appears in the group's studies list at Phase 1
 
 ### Run a Search
+
 1. Open a study → Phase 2 tab
 2. Generate or manually enter a search string
 3. Run **Test Search** → compare against seed papers, iterate
 4. Click **Run Full Search** → monitor progress in the live progress dashboard
 
 ### View Results
+
 1. Open a study → Results tab (unlocks after extraction is complete)
 2. View charts, domain model
 3. Click **Export** → choose format (SVG Only, JSON Only, CSV+JSON, Full Archive)
@@ -152,6 +155,7 @@ docker compose -f docker-compose_2.yml up -d
 ```
 
 Set in `.env`:
+
 ```env
 LLM_MODEL=ollama/llama3.2
 LLM_API_KEY=ollama  # placeholder

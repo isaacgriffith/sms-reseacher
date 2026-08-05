@@ -120,7 +120,9 @@ export default function ValidityForm({ studyId }: ValidityFormProps) {
       .catch(() => {
         // Silently ignore load errors — form starts empty
       });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [studyId, reset]);
 
   /**
@@ -168,24 +170,51 @@ export default function ValidityForm({ studyId }: ValidityFormProps) {
   };
 
   return (
-    <Paper variant="outlined" sx={{ padding: '1.25rem', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '0.5rem' }}>
+    <Paper
+      variant="outlined"
+      sx={{
+        padding: '1.25rem',
+        background: '#fff',
+        border: '1px solid #e2e8f0',
+        borderRadius: '0.5rem',
+      }}
+    >
       {/* Header */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-        <Typography variant="h5" sx={{ margin: 0, fontSize: '1.125rem', fontWeight: 700, color: '#111827' }}>Validity Discussion</Typography>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '1.25rem',
+        }}
+      >
+        <Typography
+          variant="h5"
+          sx={{ margin: 0, fontSize: '1.125rem', fontWeight: 700, color: '#111827' }}
+        >
+          Validity Discussion
+        </Typography>
         <Button
           variant="contained"
           onClick={handleGenerate}
           aria-label="Generate with AI"
           type="button"
-          sx={{ background: '#7c3aed', '&:hover': { background: '#6d28d9' }, fontSize: '0.875rem', fontWeight: 600 }}
+          sx={{
+            background: '#7c3aed',
+            '&:hover': { background: '#6d28d9' },
+            fontSize: '0.875rem',
+            fontWeight: 600,
+          }}
         >
           Generate with AI
         </Button>
       </Box>
 
-      <Typography sx={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '1.5rem', marginTop: 0 }}>
-        Document potential threats to validity across six dimensions.
-        Changes are saved automatically when you leave each field.
+      <Typography
+        sx={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '1.5rem', marginTop: 0 }}
+      >
+        Document potential threats to validity across six dimensions. Changes are saved
+        automatically when you leave each field.
       </Typography>
 
       {/* Six text area fields */}
@@ -196,10 +225,22 @@ export default function ValidityForm({ studyId }: ValidityFormProps) {
           });
           return (
             <Box key={field} sx={{ marginBottom: '1.25rem' }}>
-              <Typography component="label" htmlFor={field} sx={{ display: 'block', fontWeight: 600, fontSize: '0.875rem', color: '#374151', marginBottom: '0.25rem' }}>
+              <Typography
+                component="label"
+                htmlFor={field}
+                sx={{
+                  display: 'block',
+                  fontWeight: 600,
+                  fontSize: '0.875rem',
+                  color: '#374151',
+                  marginBottom: '0.25rem',
+                }}
+              >
                 {label}
               </Typography>
-              <Typography sx={{ margin: '0 0 0.375rem', fontSize: '0.75rem', color: '#9ca3af' }}>{hint}</Typography>
+              <Typography sx={{ margin: '0 0 0.375rem', fontSize: '0.75rem', color: '#9ca3af' }}>
+                {hint}
+              </Typography>
               <textarea
                 {...fieldProps}
                 id={field}

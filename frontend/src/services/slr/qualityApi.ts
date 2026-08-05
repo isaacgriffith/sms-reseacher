@@ -109,14 +109,8 @@ export async function getChecklist(studyId: number): Promise<Checklist> {
  * @param data - Checklist name, description, and item definitions.
  * @returns The updated {@link Checklist}.
  */
-export async function upsertChecklist(
-  studyId: number,
-  data: ChecklistUpsert,
-): Promise<Checklist> {
-  const raw = await api.put<unknown>(
-    `/api/v1/slr/studies/${studyId}/quality-checklist`,
-    data,
-  );
+export async function upsertChecklist(studyId: number, data: ChecklistUpsert): Promise<Checklist> {
+  const raw = await api.put<unknown>(`/api/v1/slr/studies/${studyId}/quality-checklist`, data);
   return ChecklistSchema.parse(raw);
 }
 
@@ -127,9 +121,7 @@ export async function upsertChecklist(
  * @returns The parsed {@link QualityScores}.
  */
 export async function getQualityScores(candidatePaperId: number): Promise<QualityScores> {
-  const raw = await api.get<unknown>(
-    `/api/v1/slr/papers/${candidatePaperId}/quality-scores`,
-  );
+  const raw = await api.get<unknown>(`/api/v1/slr/papers/${candidatePaperId}/quality-scores`);
   return QualityScoresSchema.parse(raw);
 }
 
@@ -144,9 +136,6 @@ export async function submitQualityScores(
   candidatePaperId: number,
   data: SubmitScores,
 ): Promise<QualityScores> {
-  const raw = await api.put<unknown>(
-    `/api/v1/slr/papers/${candidatePaperId}/quality-scores`,
-    data,
-  );
+  const raw = await api.put<unknown>(`/api/v1/slr/papers/${candidatePaperId}/quality-scores`, data);
   return QualityScoresSchema.parse(raw);
 }

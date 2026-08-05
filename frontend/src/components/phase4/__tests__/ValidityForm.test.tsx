@@ -67,44 +67,36 @@ describe('ValidityForm', () => {
 
     it('renders Descriptive Validity label', async () => {
       render(<ValidityForm studyId={STUDY_ID} />);
-      await waitFor(() =>
-        expect(screen.getByLabelText(/descriptive validity/i)).toBeTruthy()
-      );
+      await waitFor(() => expect(screen.getByLabelText(/descriptive validity/i)).toBeTruthy());
     });
 
     it('renders Theoretical Validity label', async () => {
       render(<ValidityForm studyId={STUDY_ID} />);
-      await waitFor(() =>
-        expect(screen.getByLabelText(/theoretical validity/i)).toBeTruthy()
-      );
+      await waitFor(() => expect(screen.getByLabelText(/theoretical validity/i)).toBeTruthy());
     });
 
     it('renders Generalizability (Internal) label', async () => {
       render(<ValidityForm studyId={STUDY_ID} />);
       await waitFor(() =>
-        expect(screen.getByLabelText(/generalizability.*internal/i)).toBeTruthy()
+        expect(screen.getByLabelText(/generalizability.*internal/i)).toBeTruthy(),
       );
     });
 
     it('renders Generalizability (External) label', async () => {
       render(<ValidityForm studyId={STUDY_ID} />);
       await waitFor(() =>
-        expect(screen.getByLabelText(/generalizability.*external/i)).toBeTruthy()
+        expect(screen.getByLabelText(/generalizability.*external/i)).toBeTruthy(),
       );
     });
 
     it('renders Interpretive Validity label', async () => {
       render(<ValidityForm studyId={STUDY_ID} />);
-      await waitFor(() =>
-        expect(screen.getByLabelText(/interpretive validity/i)).toBeTruthy()
-      );
+      await waitFor(() => expect(screen.getByLabelText(/interpretive validity/i)).toBeTruthy());
     });
 
     it('renders Repeatability label', async () => {
       render(<ValidityForm studyId={STUDY_ID} />);
-      await waitFor(() =>
-        expect(screen.getByLabelText(/repeatability/i)).toBeTruthy()
-      );
+      await waitFor(() => expect(screen.getByLabelText(/repeatability/i)).toBeTruthy());
     });
   });
 
@@ -118,10 +110,9 @@ describe('ValidityForm', () => {
       fireEvent.blur(textarea);
 
       await waitFor(() =>
-        expect(mockApi.patch).toHaveBeenCalledWith(
-          `/api/v1/studies/${STUDY_ID}/validity`,
-          { descriptive: 'New descriptive text' }
-        )
+        expect(mockApi.patch).toHaveBeenCalledWith(`/api/v1/studies/${STUDY_ID}/validity`, {
+          descriptive: 'New descriptive text',
+        }),
       );
     });
 
@@ -140,7 +131,7 @@ describe('ValidityForm', () => {
     it('renders the Generate with AI button', async () => {
       render(<ValidityForm studyId={STUDY_ID} />);
       await waitFor(() =>
-        expect(screen.getByRole('button', { name: /generate with ai/i })).toBeTruthy()
+        expect(screen.getByRole('button', { name: /generate with ai/i })).toBeTruthy(),
       );
     });
 
@@ -153,8 +144,8 @@ describe('ValidityForm', () => {
       await waitFor(() =>
         expect(mockApi.post).toHaveBeenCalledWith(
           `/api/v1/studies/${STUDY_ID}/validity/generate`,
-          {}
-        )
+          {},
+        ),
       );
     });
   });

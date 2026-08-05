@@ -8,17 +8,17 @@ This guide covers getting any sub-project running from a fresh clone.
 
 ## Prerequisites
 
-| Tool | Minimum Version | Install |
-|------|----------------|---------|
-| `uv` | 0.4+ | `curl -Ls https://astral.sh/uv/install.sh \| sh` |
-| `node` | 20 LTS | via `nvm` or package manager |
-| `npm` | 10+ | bundled with Node 20 |
-| `pre-commit` | 3.7+ | `pip install pre-commit` or `uv tool install pre-commit` |
-| `git` | 2.40+ | package manager |
-| `ollama` | 0.3+ | **Optional** (host install) — only needed if running outside Docker; `curl -fsSL https://ollama.com/install.sh \| sh` |
-| `docker` | 24+ (with Compose v2) | Required for containerised deployment |
-| `hadolint` | 2.12+ | Dockerfile linter — `brew install hadolint` or from GitHub releases |
-| `trivy` | 0.50+ | **Optional** — container vulnerability scanner; `brew install trivy` |
+| Tool         | Minimum Version       | Install                                                                                                               |
+| ------------ | --------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `uv`         | 0.4+                  | `curl -Ls https://astral.sh/uv/install.sh \| sh`                                                                      |
+| `node`       | 20 LTS                | via `nvm` or package manager                                                                                          |
+| `npm`        | 10+                   | bundled with Node 20                                                                                                  |
+| `pre-commit` | 3.7+                  | `pip install pre-commit` or `uv tool install pre-commit`                                                              |
+| `git`        | 2.40+                 | package manager                                                                                                       |
+| `ollama`     | 0.3+                  | **Optional** (host install) — only needed if running outside Docker; `curl -fsSL https://ollama.com/install.sh \| sh` |
+| `docker`     | 24+ (with Compose v2) | Required for containerised deployment                                                                                 |
+| `hadolint`   | 2.12+                 | Dockerfile linter — `brew install hadolint` or from GitHub releases                                                   |
+| `trivy`      | 0.50+                 | **Optional** — container vulnerability scanner; `brew install trivy`                                                  |
 
 ---
 
@@ -238,6 +238,7 @@ cd frontend && npm run prepare  # installs Husky
 ```
 
 After installation, every `git commit` automatically runs:
+
 - **Python**: Ruff lint, Ruff format check, MyPy, pytest
 - **Frontend**: ESLint, Prettier (via lint-staged on staged files)
 
@@ -253,27 +254,27 @@ cp .env.example .env
 
 Key variables:
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `DATABASE_URL` | `sqlite+aiosqlite:///./dev.db` | Database connection string |
-| `SECRET_KEY` | (required in prod) | JWT signing key |
-| `LLM_PROVIDER` | `anthropic` | LLM provider: `anthropic` or `ollama` |
-| `LLM_MODEL` | `claude-sonnet-4-6` | Model ID (e.g. `llama3.2:3b` for Ollama) |
-| `OLLAMA_BASE_URL` | `http://localhost:11434` | Ollama server URL (used when `LLM_PROVIDER=ollama`) |
-| `ANTHROPIC_API_KEY` | (required when `LLM_PROVIDER=anthropic`) | Anthropic API key |
-| `RESEARCHER_MCP_URL` | `http://localhost:8002/sse` | MCP server URL used by `agents` |
-| `SEMANTIC_SCHOLAR_RPM` | `100` | Semantic Scholar requests-per-minute limit |
-| `OPEN_ALEX_RPM` | `300` | OpenAlex requests-per-minute limit |
-| `SCIHUB_ENABLED` | `false` | Enable SciHub PDF fetching (opt-in; see legal notice) |
+| Variable               | Default                                  | Description                                           |
+| ---------------------- | ---------------------------------------- | ----------------------------------------------------- |
+| `DATABASE_URL`         | `sqlite+aiosqlite:///./dev.db`           | Database connection string                            |
+| `SECRET_KEY`           | (required in prod)                       | JWT signing key                                       |
+| `LLM_PROVIDER`         | `anthropic`                              | LLM provider: `anthropic` or `ollama`                 |
+| `LLM_MODEL`            | `claude-sonnet-4-6`                      | Model ID (e.g. `llama3.2:3b` for Ollama)              |
+| `OLLAMA_BASE_URL`      | `http://localhost:11434`                 | Ollama server URL (used when `LLM_PROVIDER=ollama`)   |
+| `ANTHROPIC_API_KEY`    | (required when `LLM_PROVIDER=anthropic`) | Anthropic API key                                     |
+| `RESEARCHER_MCP_URL`   | `http://localhost:8002/sse`              | MCP server URL used by `agents`                       |
+| `SEMANTIC_SCHOLAR_RPM` | `100`                                    | Semantic Scholar requests-per-minute limit            |
+| `OPEN_ALEX_RPM`        | `300`                                    | OpenAlex requests-per-minute limit                    |
+| `SCIHUB_ENABLED`       | `false`                                  | Enable SciHub PDF fetching (opt-in; see legal notice) |
 
 ---
 
 ## Common Issues
 
-| Problem | Solution |
-|---------|---------|
-| `uv: command not found` | Install uv: `curl -Ls https://astral.sh/uv/install.sh \| sh` |
-| `Python 3.14 not found` | `uv python install 3.12` |
-| `npm: command not found` | Install Node 20 LTS via `nvm install 20` |
-| MyPy errors on first run | Run `uv sync` first to install stubs |
-| Pre-commit hooks not firing | Run `pre-commit install` from repo root |
+| Problem                     | Solution                                                     |
+| --------------------------- | ------------------------------------------------------------ |
+| `uv: command not found`     | Install uv: `curl -Ls https://astral.sh/uv/install.sh \| sh` |
+| `Python 3.14 not found`     | `uv python install 3.12`                                     |
+| `npm: command not found`    | Install Node 20 LTS via `nvm install 20`                     |
+| MyPy errors on first run    | Run `uv sync` first to install stubs                         |
+| Pre-commit hooks not firing | Run `pre-commit install` from repo root                      |

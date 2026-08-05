@@ -15,13 +15,14 @@ Returns the protocol for a Tertiary Study. Creates a draft protocol if none exis
 **Path params**: `study_id: int`
 
 **Response 200**:
+
 ```json
 {
   "id": 1,
   "study_id": 42,
   "status": "draft",
   "background": "string | null",
-  "research_questions": ["string"] ,
+  "research_questions": ["string"],
   "secondary_study_types": ["SLR", "SMS", "RAPID_REVIEW"],
   "inclusion_criteria": ["string"],
   "exclusion_criteria": ["string"],
@@ -47,6 +48,7 @@ Update the protocol. Returns updated record.
 **Path params**: `study_id: int`
 
 **Request body** (all fields optional, partial update):
+
 ```json
 {
   "background": "string | null",
@@ -76,6 +78,7 @@ Validates the protocol and transitions it to `validated` status. Triggers `Proto
 **Path params**: `study_id: int`
 
 **Response 202**:
+
 ```json
 {
   "job_id": "arq:job:uuid",
@@ -96,6 +99,7 @@ Lists all seed import operations for a Tertiary Study.
 **Path params**: `study_id: int`
 
 **Response 200**:
+
 ```json
 [
   {
@@ -121,6 +125,7 @@ Imports included papers from a source platform study into this Tertiary Study's 
 **Path params**: `study_id: int`
 
 **Request body**:
+
 ```json
 {
   "source_study_id": 17
@@ -128,6 +133,7 @@ Imports included papers from a source platform study into this Tertiary Study's 
 ```
 
 **Response 201**:
+
 ```json
 {
   "id": 1,
@@ -153,6 +159,7 @@ Lists all tertiary extraction records for a study.
 **Query params**: `status: pending | ai_complete | validated | human_reviewed` (optional filter)
 
 **Response 200**:
+
 ```json
 [
   {
@@ -195,6 +202,7 @@ Returns a single extraction record.
 Update an extraction record (human review).
 
 **Request body** (all fields optional):
+
 ```json
 {
   "secondary_study_type": "SLR",
@@ -222,6 +230,7 @@ Update an extraction record (human review).
 Triggers AI-assisted pre-population of extraction fields for all pending papers in this study.
 
 **Response 202**:
+
 ```json
 {
   "job_id": "arq:job:uuid",
@@ -242,6 +251,7 @@ Generates and returns the Tertiary Study report. Includes the landscape-of-secon
 **Query params**: `format: json | csv | markdown` (default `json`)
 
 **Response 200** (JSON format):
+
 ```json
 {
   "study_id": 42,
@@ -274,11 +284,11 @@ Generates and returns the Tertiary Study report. Includes the landscape-of-secon
 
 The following endpoints already support Tertiary Studies by operating on `study_id` generically:
 
-| Endpoint | Use in Tertiary Workflow |
-|----------|--------------------------|
-| `GET /studies/{id}/phases` | Phase gate dispatch (tertiary gate registered) |
-| `GET/POST /slr/studies/{id}/quality-checklist` | Checklist setup with secondary-study items |
-| `GET/POST /slr/studies/{id}/inter-rater-reliability` | Cohen's κ across reviewers |
-| `POST /slr/studies/{id}/synthesis` | Triggers synthesis job (narrative/thematic strategies added) |
-| `GET /slr/studies/{id}/synthesis/{result_id}` | Poll synthesis result |
-| `GET/POST researcher-mcp search_papers` | Multi-database search |
+| Endpoint                                             | Use in Tertiary Workflow                                     |
+| ---------------------------------------------------- | ------------------------------------------------------------ |
+| `GET /studies/{id}/phases`                           | Phase gate dispatch (tertiary gate registered)               |
+| `GET/POST /slr/studies/{id}/quality-checklist`       | Checklist setup with secondary-study items                   |
+| `GET/POST /slr/studies/{id}/inter-rater-reliability` | Cohen's κ across reviewers                                   |
+| `POST /slr/studies/{id}/synthesis`                   | Triggers synthesis job (narrative/thematic strategies added) |
+| `GET /slr/studies/{id}/synthesis/{result_id}`        | Poll synthesis result                                        |
+| `GET/POST researcher-mcp search_papers`              | Multi-database search                                        |

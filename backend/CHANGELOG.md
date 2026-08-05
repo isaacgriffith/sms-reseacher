@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [0.10.0] — 2026-03-31 — feature/010-research-protocol-definition
 
 ### Added
+
 - **Protocol REST API** (`api/v1/protocols/`): three sub-modules —
   - `library.py`: `GET/POST /protocols`, `GET/PUT/DELETE /protocols/{id}`,
     `GET /protocols/{id}/export` (YAML download), `POST /protocols/import` (multipart upload)
@@ -47,6 +48,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [0.9.0] — 2026-03-30 — feature/009-tertiary-studies-workflow
 
 ### Added
+
 - **Tertiary API router** (`api/v1/tertiary/`): mounted at `/api/v1/tertiary/`; sub-routers
   for `protocol`, `seed_imports`, `extractions`, and `report`
 - **`TertiaryProtocolService`** (`services/tertiary_protocol_service.py`): create/read/update
@@ -75,6 +77,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [0.8.0] — 2026-03-29 — feature/008-rapid-review-workflow
 
 ### Added
+
 - **RR API routers** (`api/v1/rapid/`): `protocol.py`, `search_config.py`, `qa_config.py`,
   `stakeholders.py`, `narrative.py`, `briefing.py` — full CRUD + job-trigger endpoints for
   every Rapid Review phase
@@ -109,6 +112,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [0.7.0] — 2026-03-21 — feature/007-slr-workflow
 
 ### Added
+
 - **SLR API routers** (`api/v1/slr/`): protocol, inter-rater reliability, quality assessment,
   synthesis, grey literature, and report endpoints
 - **`SLRProtocolService`** (`services/slr_protocol_service.py`): create/read/update protocol with
@@ -132,6 +136,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [0.6.0] — 2026-03-18 — feature/006-database-search-and-retrieval
 
 ### Added
+
 - **`CredentialService`** (`services/credential_service.py`): `upsert_credential` (Fernet-encrypted
   key, optimistic locking via `version_id`), `get_credential`, `get_effective_key` (DB key with
   env-var fallback), `configured_via` (database / environment / not_configured),
@@ -156,6 +161,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [0.5.0] — 2026-03-17 — feature/005-models-and-agents
 
 ### Added
+
 - **`ProviderService`** (`services/provider_service.py`): CRUD for `Provider` records; Fernet
   encryption of API keys on create/update; `fetch_models_anthropic`, `fetch_models_openai`,
   `fetch_models_ollama` fetchers; `refresh_models` upserts `AvailableModel` rows preserving
@@ -187,6 +193,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [0.4.0] — 2026-03-16 — feature/004-frontend-improvements
 
 ### Added
+
 - `PUT /me/password` — password change with complexity validation and `token_version` session
   invalidation; audit event `PASSWORD_CHANGED`
 - `POST /me/2fa/setup`, `/confirm`, `/disable`, `/backup-codes/regenerate` — full TOTP
@@ -203,6 +210,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `test_auth_totp`, `test_openapi_auth`
 
 ### Changed
+
 - `get_current_user` now performs a DB lookup to validate `token_version`; missing users
   return 401 instead of propagating to the endpoint
 - `POST /auth/login` checks `totp_enabled` and returns partial token when 2FA is required
@@ -213,6 +221,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [0.3.0] — 2026-03-16 — feature/003-project-setup-improvements
 
 ### Changed
+
 - Coverage command documented in `CLAUDE.md`: `uv run pytest backend/tests/ --cov=backend`
 - Mutation testing tool updated to `cosmic-ray` (was `mutmut`); run via manual GitHub
   Actions `workflow_dispatch` workflow
@@ -223,6 +232,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [0.2.0] — 2026-03-12 — feature/002-sms-workflow
 
 ### Added
+
 - FastAPI app factory (`src/backend/main.py`) with lifespan event handling
 - REST API v1 router (`/api/v1`) with endpoints for:
   - Studies (CRUD, status transitions)
@@ -247,6 +257,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [0.1.0] — 2026-03-11 — feature/001-repo-setup
 
 ### Added
+
 - Initial `pyproject.toml` (`sms-backend`) as UV workspace member
 - Minimal FastAPI skeleton (`GET /api/v1/health`)
 - Ruff, MyPy strict, pytest + pytest-asyncio configuration

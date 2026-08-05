@@ -3,7 +3,11 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { listGreyLiterature, addGreyLiteratureSource, deleteGreyLiteratureSource } from '../greyLiteratureApi';
+import {
+  listGreyLiterature,
+  addGreyLiteratureSource,
+  deleteGreyLiteratureSource,
+} from '../greyLiteratureApi';
 import { api } from '../../api';
 
 vi.mock('../../api', () => ({ api: { get: vi.fn(), post: vi.fn(), delete: vi.fn() } }));
@@ -43,7 +47,10 @@ describe('addGreyLiteratureSource', () => {
       source_type: 'dissertation',
       title: 'A dissertation',
     });
-    expect(mockApi.post).toHaveBeenCalledWith('/api/v1/slr/studies/42/grey-literature', expect.any(Object));
+    expect(mockApi.post).toHaveBeenCalledWith(
+      '/api/v1/slr/studies/42/grey-literature',
+      expect.any(Object),
+    );
     expect(result.source_type).toBe('dissertation');
   });
 });

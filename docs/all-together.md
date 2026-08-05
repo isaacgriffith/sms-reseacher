@@ -14,6 +14,7 @@ This project is focused, currently, on automating the processes of conducting em
   - Typically these are conducted, when a significant number of secondary studies are found during the course of conducting a Systematic Mapping Study.
 
 **Note**:
+
 - Primary Studies are studies which conduct direct research and collect evidence.
 - Secondary Studies are reviews of primary studies with the purpose of aggregating and synthesizing a large body of evidence related to a particular topic
 - Tertiary Studies are reviews of secondary studies with a similar purpose of secondary studies but with a larger goal in mind.

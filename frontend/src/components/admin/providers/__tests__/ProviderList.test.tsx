@@ -20,17 +20,13 @@ const PROVIDER: Provider = {
 
 describe('ProviderList', () => {
   it('renders table headers', () => {
-    render(
-      <ProviderList providers={[]} onEdit={vi.fn()} onDelete={vi.fn()} onRefresh={vi.fn()} />,
-    );
+    render(<ProviderList providers={[]} onEdit={vi.fn()} onDelete={vi.fn()} onRefresh={vi.fn()} />);
     expect(screen.getByText(/type/i)).toBeInTheDocument();
     expect(screen.getByText(/display name/i)).toBeInTheDocument();
   });
 
   it('shows empty state when no providers', () => {
-    render(
-      <ProviderList providers={[]} onEdit={vi.fn()} onDelete={vi.fn()} onRefresh={vi.fn()} />,
-    );
+    render(<ProviderList providers={[]} onEdit={vi.fn()} onDelete={vi.fn()} onRefresh={vi.fn()} />);
     expect(screen.getByText(/no providers/i)).toBeInTheDocument();
   });
 

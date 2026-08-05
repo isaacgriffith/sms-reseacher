@@ -75,8 +75,6 @@ describe('TwoFactorSettings — enabled state', () => {
     fireEvent.change(codeFields[1], { target: { value: '123456' } });
     fireEvent.click(screen.getByRole('button', { name: /regenerate codes/i }));
 
-    await waitFor(() =>
-      expect(screen.getByText('NEWCODE0001')).toBeInTheDocument(),
-    );
+    await waitFor(() => expect(screen.getByText('NEWCODE0001')).toBeInTheDocument());
   });
 });

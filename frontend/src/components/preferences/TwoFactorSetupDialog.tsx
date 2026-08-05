@@ -95,7 +95,9 @@ function QrStep({ data, onNext, onClose }: QrStepProps) {
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Cancel</Button>
-        <Button variant="contained" onClick={onNext}>Next</Button>
+        <Button variant="contained" onClick={onNext}>
+          Next
+        </Button>
       </DialogActions>
     </>
   );
@@ -116,7 +118,11 @@ function CodeStep({ onConfirm, onClose, isPending, error }: CodeStepProps) {
         <Typography gutterBottom>
           Enter the 6-digit code from your authenticator app to complete setup.
         </Typography>
-        {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+        )}
         <TextField
           inputRef={inputRef}
           label="Authentication code"
@@ -259,7 +265,9 @@ export default function TwoFactorSetupDialog({ onEnabled }: TwoFactorSetupDialog
             onConfirm={(code) => void handleConfirm(code)}
             onClose={handleClose}
             isPending={confirmMutation.isPending}
-            error={confirmMutation.isError ? (confirmMutation.error?.message ?? 'Invalid code') : null}
+            error={
+              confirmMutation.isError ? (confirmMutation.error?.message ?? 'Invalid code') : null
+            }
           />
         )}
         {state.step === 'backup_codes' && (

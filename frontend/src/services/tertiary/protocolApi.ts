@@ -94,9 +94,6 @@ export async function updateProtocol(
 export async function validateProtocol(
   studyId: number,
 ): Promise<{ job_id: string; status: string }> {
-  const raw = await api.post<unknown>(
-    `/api/v1/tertiary/studies/${studyId}/protocol/validate`,
-    {},
-  );
+  const raw = await api.post<unknown>(`/api/v1/tertiary/studies/${studyId}/protocol/validate`, {});
   return ValidateResponseSchema.parse(raw);
 }

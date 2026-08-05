@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [0.10.0] — 2026-03-31 — feature/010-research-protocol-definition
 
 ### Added
+
 - **Reusable protocol graph model**: `ResearchProtocol` with versioned directed acyclic graphs
   of `ProtocolNode` tasks (23 `ProtocolTaskType` values), typed I/O slots, `QualityGate`
   (JSONB config supporting `min_kappa`, `min_papers`, `completion_ratio`, `human_sign_off`
@@ -57,6 +58,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [0.9.0] — 2026-03-30 — feature/009-tertiary-studies-workflow
 
 ### Added
+
 - **Tertiary Study type**: new `Tertiary` study type with a 5-phase workflow for aggregating
   and synthesising secondary studies (SLRs, SMSs, and Rapid Reviews)
 - **`TertiaryStudyProtocol`** ORM + `GET/PUT /api/v1/tertiary/studies/{id}/protocol`:
@@ -113,6 +115,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [0.8.0] — 2026-03-29 — feature/008-rapid-review-workflow
 
 ### Added
+
 - **Rapid Review study type**: new `Rapid` study type with an accelerated 6-phase workflow
   aimed at producing practitioner-facing outputs within compressed timelines
 - **Rapid Review Protocol** (`RapidReviewProtocol` ORM + `GET/PUT /api/v1/rapid/studies/{id}/protocol`):
@@ -197,6 +200,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [0.7.0] — 2026-03-21 — feature/007-slr-workflow
 
 ### Added
+
 - **SLR Protocol editor** (`ReviewProtocol` ORM + `GET/PUT /api/v1/slr/studies/{id}/protocol`):
   full PICO/S fields, synthesis approach select, status lifecycle (`draft` → `validated`);
   `ProtocolForm` frontend component with Zod validation and read-only state when validated
@@ -234,6 +238,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [0.6.0] — 2026-03-18 — feature/006-database-search-and-retrieval
 
 ### Added
+
 - **Multi-database fan-out search**: `search_papers` MCP tool queries up to 9 academic databases
   in parallel (IEEE Xplore, ACM DL, Scopus, Web of Science, Inspec, ScienceDirect,
   SpringerNature, Google Scholar, Semantic Scholar); results merged and deduplicated by DOI
@@ -280,6 +285,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `SCHOLARLY_PROXY_URL`, `SCIHUB_ENABLED`
 
 ### Changed
+
 - `researcher-mcp/pyproject.toml`: added `pybliometrics`, `semanticscholar`, `scholarly`,
   `unpywall`, `springernature-api-client`, `markitdown[all]`, `scidownl` dependencies
 - `search_papers` tool updated to accept `indices: list[str] | None` and fan out via
@@ -292,6 +298,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [0.5.0] — 2026-03-17 — feature/005-models-and-agents
 
 ### Added
+
 - **`Provider` DB table**: stores Anthropic, OpenAI, and Ollama provider records; API key
   encrypted at rest via Fernet (PBKDF2HMAC key derivation from `SECRET_KEY`); `has_api_key`
   flag returned in API responses instead of the key itself
@@ -351,6 +358,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [0.4.0] — 2026-03-16 — feature/004-frontend-improvements
 
 ### Added
+
 - **Password change**: `PUT /me/password` — verifies current password, enforces complexity
   (min 12 chars, uppercase, digit, special character), invalidates all prior sessions via
   `User.token_version` increment
@@ -366,6 +374,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - E2e Playwright specs: `preferences-password`, `two-factor-auth`, `theme`, `api-docs`
 
 ### Changed
+
 - `GET /api/v1/auth/me` response now includes `theme_preference` and `totp_enabled`
 - `POST /api/v1/auth/login` returns TOTP challenge when 2FA is enabled
 - `get_current_user` validates `token_version` via DB lookup to detect invalidated sessions
@@ -375,6 +384,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [0.3.0] — 2026-03-16 — feature/003-project-setup-improvements
 
 ### Added
+
 - `cosmic-ray` configured as the standard Python mutation testing tool (replaces `mutmut`)
 - `stryker` and `cosmic-ray` exposed as manually-triggered `workflow_dispatch` GitHub Actions
   workflows; both are also triggered automatically at the end of every speckit feature
@@ -389,6 +399,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `README.md`, and `CHANGELOG.md` updates at the end of every feature
 
 ### Changed
+
 - `CLAUDE.md` updated to reflect `cosmic-ray` as the mutation testing tool
 - `README.md` tech stack updated: `mutmut` → `cosmic-ray`, CI description expanded
 
@@ -397,6 +408,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [0.2.0] — 2026-03-12 — feature/002-sms-workflow
 
 ### Added
+
 - Full six-subproject UV workspace: `backend`, `agents`, `db`, `agent-eval`,
   `researcher-mcp`, `frontend`
 - **backend**: FastAPI REST gateway with endpoints for studies, papers, screening criteria,
@@ -424,6 +436,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [0.1.0] — 2026-03-11 — feature/001-repo-setup
 
 ### Added
+
 - Initial UV workspace mono-repo structure with root `pyproject.toml`
 - Python 3.14 runtime pinned across all packages
 - TypeScript 5.4 / Node 20 LTS frontend toolchain

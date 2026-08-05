@@ -1,8 +1,6 @@
--
----
+- ***
 
-description: "Task list for 008-Rapid-Review-Workflow"
----
+## description: "Task list for 008-Rapid-Review-Workflow"
 
 # Tasks: Rapid Review Workflow
 
@@ -232,18 +230,19 @@ and revokes the link when done.
 ---
 
 ## Phase 9.
-: Feature Completion Documentation *(mandatory — Constitution Principle X)*
+
+: Feature Completion Documentation _(mandatory — Constitution Principle X)_
 
 **Purpose**: Update all required documentation before the feature branch is merged.
 
 > **These tasks MUST be completed before the feature is marked done. Omitting them is a
 > blocking violation of Constitution Principle X (Feature Completion Documentation).**
 
-- [X] TDOC1 [P] Update `CLAUDE.md` at repository root: add `008-rapid-review-workflow` to Active Technologies section (new dep: `weasyprint`; new entities: `RapidReviewProtocol`, `EvidenceBriefing`, `EvidenceBriefingShareToken`; new agent: `NarrativeSynthesiserAgent`; new migration: `0016_rapid_review_workflow`)
-- [X] TDOC2 [P] Update `README.md` at repository root to document Rapid Review as a supported study type alongside SMS and SLR
-- [X] TDOC3 [P] Update `CHANGELOG.md` at repository root with a new entry describing what was added by this feature (RR workflow, Evidence Briefing, share tokens, narrative synthesis AI)
-- [X] TDOC4 [P] Update `README.md` in `backend/`, `agents/`, `db/`, `frontend/` with Rapid Review-specific additions
-- [X] TDOC5 [P] Update `CHANGELOG.md` in `backend/`, `agents/`, `db/`, `frontend/` with the same level of detail as the root changelog entry
+- [x] TDOC1 [P] Update `CLAUDE.md` at repository root: add `008-rapid-review-workflow` to Active Technologies section (new dep: `weasyprint`; new entities: `RapidReviewProtocol`, `EvidenceBriefing`, `EvidenceBriefingShareToken`; new agent: `NarrativeSynthesiserAgent`; new migration: `0016_rapid_review_workflow`)
+- [x] TDOC2 [P] Update `README.md` at repository root to document Rapid Review as a supported study type alongside SMS and SLR
+- [x] TDOC3 [P] Update `CHANGELOG.md` at repository root with a new entry describing what was added by this feature (RR workflow, Evidence Briefing, share tokens, narrative synthesis AI)
+- [x] TDOC4 [P] Update `README.md` in `backend/`, `agents/`, `db/`, `frontend/` with Rapid Review-specific additions
+- [x] TDOC5 [P] Update `CHANGELOG.md` in `backend/`, `agents/`, `db/`, `frontend/` with the same level of detail as the root changelog entry
 
 > **All TDOC tasks MUST be completed and committed before merge.**
 
@@ -304,10 +303,10 @@ and revokes the link when done.
 ### Incremental Delivery
 
 1. Foundation + US1 → RR study with validated protocol (demo-able)
-2. + US2 → Search restrictions and single-reviewer mode (demo-able)
-3. + US3 → QA mode selection (demo-able)
-4. + US4 → AI narrative drafting (demo-able)
-5. + US5 → Evidence Briefing with share link (full feature)
+2. - US2 → Search restrictions and single-reviewer mode (demo-able)
+3. - US3 → QA mode selection (demo-able)
+4. - US4 → AI narrative drafting (demo-able)
+5. - US5 → Evidence Briefing with share link (full feature)
 
 ---
 

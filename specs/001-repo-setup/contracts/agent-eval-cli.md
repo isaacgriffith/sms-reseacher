@@ -47,16 +47,23 @@ Options:
 ```
 
 **Test suite file format** (JSONL, one case per line):
+
 ```json
-{"case_id": "tc-001", "input": {"inclusion_criteria": "...", "abstract": "..."}, "expected_decision": "include"}
+{
+  "case_id": "tc-001",
+  "input": { "inclusion_criteria": "...", "abstract": "..." },
+  "expected_decision": "include"
+}
 ```
 
 **Exit codes**:
+
 - `0` — all cases passed (score ≥ threshold)
 - `1` — one or more cases failed
 - `2` — configuration / input error
 
 **stdout (rich table excerpt)**:
+
 ```
 ┌──────────┬───────────────────┬───────────┬────────┐
 │ Case ID  │ Metric            │ Score     │ Pass   │
@@ -104,6 +111,7 @@ Options:
 ```
 
 **stdout excerpt**:
+
 ```
 Metric                 Baseline   Candidate   Delta
 ─────────────────────────────────────────────────────
@@ -133,12 +141,14 @@ Options:
 ```
 
 **Behaviour**:
+
 1. Reads failing/low-scoring cases from `--report`.
 2. Calls Anthropic API with the current system/user prompt + failure context.
 3. Writes `system_candidate_{timestamp}.md` and `user_candidate_{timestamp}.md.j2` to `--output-dir`.
 4. Prints a diff-style summary of proposed changes to stdout.
 
 **stdout**:
+
 ```
 Generated 2 candidate prompt files in agents/prompts/screener/candidates/
   system_candidate_20260308T120000.md

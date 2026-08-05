@@ -29,7 +29,7 @@
 - Q: Should full MyPy + Ruff + pytest tooling apply to all Python sub-projects? → A: Yes — all five (`backend`, `agents`, `db`, `agent-eval`, `researcher-mcp`) must have full tooling; FR-002 updated to reflect this.
 - Q: Should `researcher-mcp` Docker image be pushed to GHCR on `main` merges? → A: Yes — push `ghcr.io/<org>/sms-researcher-mcp` tagged with commit SHA and `latest` alongside backend and frontend; SC-016 updated.
 
-## User Scenarios & Testing *(mandatory)*
+## User Scenarios & Testing _(mandatory)_
 
 ### User Story 1 - Developer bootstraps Python sub-project (Priority: P1)
 
@@ -105,7 +105,7 @@ A developer can navigate to `db/` and find schema definitions consumable by the 
 - What if a developer tries to test `agents` independently of `backend`? → It should work; `agents` is a self-contained Python package with its own test suite, even though backend imports it as a library.
 - What if trivy reports a HIGH/CRITICAL CVE in a base image with no available fix? → Add the CVE ID to `.trivyignore` with a comment stating the rationale and a scheduled review date; the addition requires a PR review before merging.
 
-## Requirements *(mandatory)*
+## Requirements _(mandatory)_
 
 ### Functional Requirements
 
@@ -159,7 +159,7 @@ A developer can navigate to `db/` and find schema definitions consumable by the 
 - **Harness**: The combination of static-analysis tools, test runner, and pre-commit hooks configured for a sub-project.
 - **Schema**: A database definition (tables, relationships, constraints) living in `db/` and imported by `backend/`.
 
-## Success Criteria *(mandatory)*
+## Success Criteria _(mandatory)_
 
 ### Measurable Outcomes
 

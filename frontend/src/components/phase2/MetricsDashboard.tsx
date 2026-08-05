@@ -67,11 +67,21 @@ function FunnelBar({
           marginBottom: '0.2rem',
         }}
       >
-        <Typography component="span" sx={{ fontSize: '0.8125rem' }}>{label}</Typography>
+        <Typography component="span" sx={{ fontSize: '0.8125rem' }}>
+          {label}
+        </Typography>
         <Typography component="span" sx={{ fontWeight: 600, color, fontSize: '0.8125rem' }}>
           {value.toLocaleString()}
           {max > 0 && (
-            <Typography component="span" sx={{ fontWeight: 400, color: '#9ca3af', marginLeft: '0.25rem', fontSize: '0.8125rem' }}>
+            <Typography
+              component="span"
+              sx={{
+                fontWeight: 400,
+                color: '#9ca3af',
+                marginLeft: '0.25rem',
+                fontSize: '0.8125rem',
+              }}
+            >
               ({pct}%)
             </Typography>
           )}
@@ -152,12 +162,7 @@ function PhaseCard({ phase }: { phase: PhaseMetrics }) {
 }
 
 export default function MetricsDashboard({ studyId }: MetricsDashboardProps) {
-  const {
-    data,
-    isLoading,
-    isError,
-    error,
-  } = useQuery<StudyMetricsResponse>({
+  const { data, isLoading, isError, error } = useQuery<StudyMetricsResponse>({
     queryKey: ['metrics', studyId],
     queryFn: () => api.get<StudyMetricsResponse>(`/api/v1/studies/${studyId}/metrics`),
     staleTime: 30_000,
@@ -165,9 +170,7 @@ export default function MetricsDashboard({ studyId }: MetricsDashboardProps) {
 
   if (isLoading) {
     return (
-      <Box sx={{ padding: '1.5rem', color: '#6b7280', fontSize: '0.875rem' }}>
-        Loading metrics…
-      </Box>
+      <Box sx={{ padding: '1.5rem', color: '#6b7280', fontSize: '0.875rem' }}>Loading metrics…</Box>
     );
   }
 
@@ -208,7 +211,10 @@ export default function MetricsDashboard({ studyId }: MetricsDashboardProps) {
 
   return (
     <Box component="section">
-      <Typography variant="subtitle1" sx={{ margin: '0 0 1rem', fontSize: '1rem', color: '#111827', fontWeight: 700 }}>
+      <Typography
+        variant="subtitle1"
+        sx={{ margin: '0 0 1rem', fontSize: '1rem', color: '#111827', fontWeight: 700 }}
+      >
         Search Metrics
       </Typography>
 
@@ -229,9 +235,7 @@ export default function MetricsDashboard({ studyId }: MetricsDashboardProps) {
       )}
 
       {/* Totals card (only shown when >1 phase) */}
-      {data.phases.length > 1 && (
-        <PhaseCard phase={data.totals} />
-      )}
+      {data.phases.length > 1 && <PhaseCard phase={data.totals} />}
     </Box>
   );
 }

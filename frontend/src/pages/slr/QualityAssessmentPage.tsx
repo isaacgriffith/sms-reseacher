@@ -87,9 +87,7 @@ export default function QualityAssessmentPage({
       </TabPanel>
 
       <TabPanel value={activeTab} index={1}>
-        <Typography sx={{ color: '#6b7280' }}>
-          Select an accepted paper to score it.
-        </Typography>
+        <Typography sx={{ color: '#6b7280' }}>Select an accepted paper to score it.</Typography>
       </TabPanel>
     </Box>
   );

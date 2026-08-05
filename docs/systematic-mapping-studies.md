@@ -90,8 +90,8 @@ Examples of Systematic Mapping Study Research Questions:
 - **Manual Search**: In this strategy, a search of conference websites, journal sites, special interest websites, author websites, etc. is conducted to find relevent papers of interest.
 
 - **Snowball Sampling**: In this strategy, a set of known papers is used as a baseline. From these papers additional papers are identified using one or both of the following:
-  - *Forward Snowball Sampling*: In this approach, tools/websites which capture papers citing a paper are used to find papers that refer to a given paper. These papers, if not duplicates, are then reviewed for relevancy, and the process continues until no additional new papers are found meeting the inclusion/exclusion criteria (or when a round produces less than a specified threshold of new papers).
-  - *Backward Snowball Sampling*: In this approach, a papers references list or tools/websites which catalog references of a paper are used to find papers cited by a given paper. These papers, if not duplicates, are then reviewed for relevancy and year of publication, and the process continues until no additional new papers are found meeting the inclusion/exclusion criteria (or when a round produces less than a specified threshold of new papers).
+  - _Forward Snowball Sampling_: In this approach, tools/websites which capture papers citing a paper are used to find papers that refer to a given paper. These papers, if not duplicates, are then reviewed for relevancy, and the process continues until no additional new papers are found meeting the inclusion/exclusion criteria (or when a round produces less than a specified threshold of new papers).
+  - _Backward Snowball Sampling_: In this approach, a papers references list or tools/websites which catalog references of a paper are used to find papers cited by a given paper. These papers, if not duplicates, are then reviewed for relevancy and year of publication, and the process continues until no additional new papers are found meeting the inclusion/exclusion criteria (or when a round produces less than a specified threshold of new papers).
 
   **Note**: Snowball Sampling should be combined with either Manual or Database search to find papers missed by the initial search.
 
@@ -102,31 +102,34 @@ Examples of Systematic Mapping Study Research Questions:
 PICO(C) (Population, Intervention, Comparison, Outcome, Context) is a structured framework used to formulate precise, answerable research questions for systematic reviews, improving search precision and efficiency. It helps define inclusion/exclusion criteria and identify keywords for databases.
 
 ##### Key Components of PICO for Systematic Reviews
-* P - Population/Problem: In software engineering experiments, the populations might be any of the following:
-    - A specific software engineering role e.g., testers, managers.
-    - A category of software engineer, e.g., a novice or experienced engineer.
-    - An application area e.g., IT systems, command and control systems.
-    - An industry group such as Telecommunications companies, or Small IT companies
+
+- P - Population/Problem: In software engineering experiments, the populations might be any of the following:
+  - A specific software engineering role e.g., testers, managers.
+  - A category of software engineer, e.g., a novice or experienced engineer.
+  - An application area e.g., IT systems, command and control systems.
+  - An industry group such as Telecommunications companies, or Small IT companies
     A question may refer to very specific population groups e.g., novice testers, or experienced software architects working on IT systems.
 
-* I - Intervention/Exposure: The intervention is the software methodology/tool/technology/procedure that addresses a specific issue, for example, technologies to perform specific stasks such as requirements specification, system testing, or software cost estimation.
+- I - Intervention/Exposure: The intervention is the software methodology/tool/technology/procedure that addresses a specific issue, for example, technologies to perform specific stasks such as requirements specification, system testing, or software cost estimation.
 
-* C - Comparison/Control: This is the software engineering methodology/tool/technology/procedure with which the intervention is being compared. When the comparison technology is the conventional or commonly-used technology, it is often referred to as the "control" treatment. The control situation must be adequately described. In particular "not using the intervention" is inadequate as a description of the control treatment. Software engineering techniques usually require training. If you compare people using a technique with people not using a technique, the effect of the technique is confounded with the effect of training. That is, any effect might be due to providing training not the specific technique. This is a particular problem if the participants are students.
+- C - Comparison/Control: This is the software engineering methodology/tool/technology/procedure with which the intervention is being compared. When the comparison technology is the conventional or commonly-used technology, it is often referred to as the "control" treatment. The control situation must be adequately described. In particular "not using the intervention" is inadequate as a description of the control treatment. Software engineering techniques usually require training. If you compare people using a technique with people not using a technique, the effect of the technique is confounded with the effect of training. That is, any effect might be due to providing training not the specific technique. This is a particular problem if the participants are students.
 
-* O - Outcome(s): Outcomes shoudl relate to factors of importance to practitioners such as improved reliability, reduced production costs and reduced time to market. All relevant outcomes should be specified. For example, in some cases we require interventions that imporve some aspect of software production without affecting another e.g., improved reliability with no increase in cost. A pariticluar problem for software engineering experiment sis the widespread use of surrogate measures for example, defects found during system testing as a surrogate for quality, or coupling measures for design quality. Studies that use surrogate measures may be misleading and conclusions based on such studies may be less robust.
+- O - Outcome(s): Outcomes shoudl relate to factors of importance to practitioners such as improved reliability, reduced production costs and reduced time to market. All relevant outcomes should be specified. For example, in some cases we require interventions that imporve some aspect of software production without affecting another e.g., improved reliability with no increase in cost. A pariticluar problem for software engineering experiment sis the widespread use of surrogate measures for example, defects found during system testing as a surrogate for quality, or coupling measures for design quality. Studies that use surrogate measures may be misleading and conclusions based on such studies may be less robust.
 
-* C - Context: For software Engineering, this is the context in whihc the comparison takes place (e.g., academia or industry), the participants taking part in the study (e.g., practitioners, academics, consultants, students), and the tasks being performed (e.g., small scale, large scale). Many software experiments take place in academia using student participants and small scale tasks. Such experiments are unlikely to be representative of what might occur with practitioners working in industry. Some systematic reviews might choose to exclude such experiments althrough in software engineering, these may be the only type of studies available.
+- C - Context: For software Engineering, this is the context in whihc the comparison takes place (e.g., academia or industry), the participants taking part in the study (e.g., practitioners, academics, consultants, students), and the tasks being performed (e.g., small scale, large scale). Many software experiments take place in academia using student participants and small scale tasks. Such experiments are unlikely to be representative of what might occur with practitioners working in industry. Some systematic reviews might choose to exclude such experiments althrough in software engineering, these may be the only type of studies available.
 
 ##### Application in Systematic Reviews
+
 - Developing Search Strategies: PICO terms are used to generate search queries using Boolean operators (AND/OR).
 - Defining Eligibility: Helps in drafting inclusion and exclusion criteria to select relevant studies.
-- Data Extraction: Structures the extraction of data to ensure all relevant information is captured. 
+- Data Extraction: Structures the extraction of data to ensure all relevant information is captured.
 
 ##### Common PICO Variations
+
 - PICOS: Includes "Study Design" for restricting to specific research methods.
 - PICOT: Adds "Time" to define the study duration.
 - SPIDER: Often used for qualitative or mixed-methods reviews (Sample, Phenomenon of Interest, Design, Evaluation, Research type).
-- PCC: Used for scoping reviews (Population, Concept, Context). 
+- PCC: Used for scoping reviews (Population, Concept, Context).
 
 Using PICO leads to more specific, relevant results compared to broader, unstructured searches.
 
@@ -184,6 +187,7 @@ As part of the UI and Data Model, we need the ability to specify the inclusion a
 - Context, objectives, or research method are manifestly missing
 
 The basic idea is that the criteria need to refer to:
+
 - the relevance of the topic of the article
 - the venue of publication
 - the time period considered
@@ -210,6 +214,7 @@ The basic idea is that the criteria need to refer to:
 The search process should work as follows:
 
 #### Index Based Approach:
+
 1. Generate Search String based on PICOC Criteria
 2. Work with the User to refine the search string
    - This includes conducting initial searches and comparing the results of the search with known papers.
@@ -227,6 +232,7 @@ The search process should work as follows:
 5. The candidate papers are evaluated, using the process in step 3. The process continues at step 4 until backward and forward snowballing no longer finds enough papers to continue. What this means is that the backward/forward snowballing process will continue until the number of non-duplicated papers found no-longer surpasses a threshold number of papers (e.g., 5). The exact threshold can be configured as part of a study's configuration.
 
 #### Web-scraping Based Approach:
+
 Similar to the Index Based Approach, but instead uses the PICOC Criteria to determine relevance. Steps 1 and 2 become the following:
 
 1. Generate relevance criteria from the Study's PICOC criteria.
@@ -258,6 +264,7 @@ Steps 3 - 5 are the same as in the Index-Based Approach.
 The purpose of data extraction for a Systematic Mapping Study is to extract information from each paper in order to pull together a broad overview of the research topic/field.
 
 Towards this, we want to start by classifying each paper by the following:
+
 - Type of paper
 - Type of research
 - Venue of Publication and Venue Type
@@ -265,6 +272,7 @@ Towards this, we want to start by classifying each paper by the following:
 - Author Institution/Locale
 
 Once this information is extracted, we also want to extract infromation from the paper for the following:
+
 - Extract a summary of the paper that presents those conducting the study with a good idea of the work the paper presents, its findings, gaps, and next steps
 - Additionally, we want to extract keywords related back to the topic/field. The goal of this is to essentially extract codings such as done in Grounded Theory. These codings and relationships between the codings will be used when extracting the Domain Model and Classification Scheme
 - Extract information related to the Research Goals/Questions posed for the study
@@ -310,7 +318,7 @@ Once this information is extracted, we also want to extract infromation from the
 
 Papres can be classified into several broad classifications:
 
-- **Evaluation Research**: The investigation of a problem in practice or an implementation of a technique in practice. If it reports on the use of a technique in practice, then the novelty of the technique is not a criterion byt which the paper should be evaluated. Rather, novelty of the *knowledge claim* made by the paper is a relevant criterion, as is the soundness of the research method used. In general, research results in new knowledge of causal relationships among phenomena, or in knew knowledge of logical relationships among propositions. Causal properties are studied empirically, such as by case study, field study, field experiment, survey, etc. Logical properties are studied by conceptual means, such as by mathematics or lgoic. Whatever the method of study, it should support the conclusions stated in the paper.
+- **Evaluation Research**: The investigation of a problem in practice or an implementation of a technique in practice. If it reports on the use of a technique in practice, then the novelty of the technique is not a criterion byt which the paper should be evaluated. Rather, novelty of the _knowledge claim_ made by the paper is a relevant criterion, as is the soundness of the research method used. In general, research results in new knowledge of causal relationships among phenomena, or in knew knowledge of logical relationships among propositions. Causal properties are studied empirically, such as by case study, field study, field experiment, survey, etc. Logical properties are studied by conceptual means, such as by mathematics or lgoic. Whatever the method of study, it should support the conclusions stated in the paper.
   - Evaluation Criteria:
     - Is the problem clearly stated?
     - Are the causal or logical properties of the problem clearly stated?
@@ -357,7 +365,7 @@ Papres can be classified into several broad classifications:
     - Is the stated position sound?
     - Is the opinion surprising?
     - Is it likely to provoke discussion?
-- **Personal Experience Papers**: In these papers, the emphasis is on *what* and not on *why*. The experience may concern one project or more, but it must be the author's personal experience. The paper should contain a list of lessons learned by the author from his or her experience. Papers in this category will often come from industry practitiones or from researchers who have used their tools in practice, and the experience will be reported without a discussion of research methods. The evidence presented in the paper can be anecdotal.
+- **Personal Experience Papers**: In these papers, the emphasis is on _what_ and not on _why_. The experience may concern one project or more, but it must be the author's personal experience. The paper should contain a list of lessons learned by the author from his or her experience. Papers in this category will often come from industry practitiones or from researchers who have used their tools in practice, and the experience will be reported without a discussion of research methods. The evidence presented in the paper can be anecdotal.
   - Evaluation Criteria:
     - Is the experience original?
     - Is the report about it sound?
@@ -422,44 +430,44 @@ The following rubrics have been developed to evaluate the quality of a Systemati
 
 ### Rubric: Need for Review
 
-| Evaluation | Description | Score |
-|------------|-------------|-------|
-| No description | The study is not motivated and the goal is not stated | 0 |
-| Partial evaluation | Motivations and questions are provided | 1 |
-| Full evaluation | Motivations and questions are provided and have been defined in correspondence with target audience | 2 |
+| Evaluation         | Description                                                                                         | Score |
+| ------------------ | --------------------------------------------------------------------------------------------------- | ----- |
+| No description     | The study is not motivated and the goal is not stated                                               | 0     |
+| Partial evaluation | Motivations and questions are provided                                                              | 1     |
+| Full evaluation    | Motivations and questions are provided and have been defined in correspondence with target audience | 2     |
 
 ### Rubric: Choosing the search strategy
 
-| Evaluation | Description | Score |
-|------------|-------------|-------|
-| No description | Only one type of search has been conducted | 0 |
-| Minimal evaluation | Two search strategies have been used | 1 |
-| Full evaluation | All three search strategies have been used | 2 |
+| Evaluation         | Description                                | Score |
+| ------------------ | ------------------------------------------ | ----- |
+| No description     | Only one type of search has been conducted | 0     |
+| Minimal evaluation | Two search strategies have been used       | 1     |
+| Full evaluation    | All three search strategies have been used | 2     |
 
 ### Rubric: Evaluation of the search
 
-| Evaluation | Description | Score |
-|------------|-------------|-------|
-| No description | No actions have been reported to improve the reliability of the search and inclusion/exclusion | 0 |
-| At least one action has been taken to improve the reliability of the search xor the reliability of the inclusion/exclusion | 1 |
-| Partial evaluation | At least one action has been taken to improve the reliability of the search and the inclusion/exclusion | 2 |
-| Full evaluation | All actions identified have been taken | 3 |
+| Evaluation                                                                                                                 | Description                                                                                             | Score |
+| -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- | ----- |
+| No description                                                                                                             | No actions have been reported to improve the reliability of the search and inclusion/exclusion          | 0     |
+| At least one action has been taken to improve the reliability of the search xor the reliability of the inclusion/exclusion | 1                                                                                                       |
+| Partial evaluation                                                                                                         | At least one action has been taken to improve the reliability of the search and the inclusion/exclusion | 2     |
+| Full evaluation                                                                                                            | All actions identified have been taken                                                                  | 3     |
 
 ### Rubric: Extraction and classification
 
-| Evaluation | Description | Score |
-|------------|-------------|-------|
-| No description | No actions have been reported to improve on the extraction process or enable comparability between studies through the use of existing classifications | 0 |
-| Minimal evaluation | At least one action has been taken to increase the reliability of the extraction process | 1 |
-| Partial evaluation | At least one action has been taken to increase the reliability of the extration process, and research type and method have been classified | 2 |
-| Full evaluation | All actions identified have been taken | 3 |
+| Evaluation         | Description                                                                                                                                            | Score |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ----- |
+| No description     | No actions have been reported to improve on the extraction process or enable comparability between studies through the use of existing classifications | 0     |
+| Minimal evaluation | At least one action has been taken to increase the reliability of the extraction process                                                               | 1     |
+| Partial evaluation | At least one action has been taken to increase the reliability of the extration process, and research type and method have been classified             | 2     |
+| Full evaluation    | All actions identified have been taken                                                                                                                 | 3     |
 
 ### Rubric: Study validity
 
-| Evaluation | Description | Score |
-|------------|-------------|-------|
-| No description | No threats or limitations are described | 0 |
-| Full evaluation | Threats and limitations are described | 1 |
+| Evaluation      | Description                             | Score |
+| --------------- | --------------------------------------- | ----- |
+| No description  | No threats or limitations are described | 0     |
+| Full evaluation | Threats and limitations are described   | 1     |
 
 ## Results
 

@@ -56,12 +56,19 @@ function RetryResultBanner({ originalId, newId, onDismiss }: RetryResultBannerPr
       }}
     >
       <Typography component="span" sx={{ fontSize: '0.875rem', color: '#15803d' }}>
-        Retried job <code>{originalId.slice(-8)}</code>. New job ID:{' '}
-        <code>{newId.slice(-8)}</code>
+        Retried job <code>{originalId.slice(-8)}</code>. New job ID: <code>{newId.slice(-8)}</code>
       </Typography>
       <Button
         onClick={onDismiss}
-        sx={{ background: 'none', border: 'none', cursor: 'pointer', color: '#15803d', fontSize: '1rem', minWidth: 'auto', padding: 0 }}
+        sx={{
+          background: 'none',
+          border: 'none',
+          cursor: 'pointer',
+          color: '#15803d',
+          fontSize: '1rem',
+          minWidth: 'auto',
+          padding: 0,
+        }}
       >
         ✕
       </Button>
@@ -93,7 +100,10 @@ function JobRow({ job, onRetry, isRetrying }: JobRowProps) {
     >
       <Box sx={{ flex: 1, minWidth: 0 }}>
         <Box sx={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.25rem' }}>
-          <Typography component="span" sx={{ fontWeight: 600, fontSize: '0.875rem', color: '#111827' }}>
+          <Typography
+            component="span"
+            sx={{ fontWeight: 600, fontSize: '0.875rem', color: '#111827' }}
+          >
             {job.job_type}
           </Typography>
           <Typography component="span" sx={{ fontSize: '0.8125rem', color: '#6b7280' }}>
@@ -104,7 +114,9 @@ function JobRow({ job, onRetry, isRetrying }: JobRowProps) {
           </Typography>
         </Box>
         {job.error_message && (
-          <Typography sx={{ margin: 0, fontSize: '0.8125rem', color: '#dc2626', wordBreak: 'break-word' }}>
+          <Typography
+            sx={{ margin: 0, fontSize: '0.8125rem', color: '#dc2626', wordBreak: 'break-word' }}
+          >
             {job.error_message}
           </Typography>
         )}
@@ -143,8 +155,7 @@ export default function JobRetryPanel() {
   });
 
   const retryMutation = useMutation({
-    mutationFn: (jobId: string) =>
-      api.post<RetryResponse>(`/api/v1/admin/jobs/${jobId}/retry`, {}),
+    mutationFn: (jobId: string) => api.post<RetryResponse>(`/api/v1/admin/jobs/${jobId}/retry`, {}),
     onSuccess: (result) => {
       setRetryResult(result);
       setRetryingId(null);
@@ -180,7 +191,9 @@ export default function JobRetryPanel() {
       )}
 
       {jobs.length === 0 ? (
-        <Typography sx={{ color: '#16a34a', fontSize: '0.9375rem' }}>No failed jobs. All systems running.</Typography>
+        <Typography sx={{ color: '#16a34a', fontSize: '0.9375rem' }}>
+          No failed jobs. All systems running.
+        </Typography>
       ) : (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
           {jobs.map((job) => (

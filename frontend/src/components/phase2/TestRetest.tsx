@@ -45,13 +45,18 @@ export default function TestRetest({ studyId }: TestRetestProps) {
 
   const activeOrFirst = selectedStringId
     ? strings.find((s) => s.id === selectedStringId)
-    : strings.find((s) => s.is_active) ?? strings[0];
+    : (strings.find((s) => s.is_active) ?? strings[0]);
 
   const runTest = useMutation({
     mutationFn: (ssId: number) =>
       api.post<{ job_id: string | null; search_string_id: number }>(
         `/api/v1/studies/${studyId}/search-strings/${ssId}/test`,
-        { databases: databases.split(',').map((d) => d.trim()).filter(Boolean) }
+        {
+          databases: databases
+            .split(',')
+            .map((d) => d.trim())
+            .filter(Boolean),
+        },
       ),
     onSuccess: () => {
       setTestError(null);
@@ -67,12 +72,13 @@ export default function TestRetest({ studyId }: TestRetestProps) {
     mutationFn: ({ ssId, iterId, approved }: { ssId: number; iterId: number; approved: boolean }) =>
       api.patch<Iteration>(
         `/api/v1/studies/${studyId}/search-strings/${ssId}/iterations/${iterId}`,
-        { human_approved: approved }
+        { human_approved: approved },
       ),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['search-strings', studyId] }),
   });
 
-  if (isLoading) return <Typography sx={{ color: '#64748b', fontSize: '0.875rem' }}>Loading…</Typography>;
+  if (isLoading)
+    return <Typography sx={{ color: '#64748b', fontSize: '0.875rem' }}>Loading…</Typography>;
 
   if (strings.length === 0) {
     return (
@@ -84,11 +90,19 @@ export default function TestRetest({ studyId }: TestRetestProps) {
 
   return (
     <Box>
-      <Typography variant="subtitle1" sx={{ margin: '0 0 1rem', fontSize: '1rem', color: '#111827' }}>Test &amp; Evaluate</Typography>
+      <Typography
+        variant="subtitle1"
+        sx={{ margin: '0 0 1rem', fontSize: '1rem', color: '#111827' }}
+      >
+        Test &amp; Evaluate
+      </Typography>
 
       {/* String selector */}
       <Box sx={{ marginBottom: '1rem' }}>
-        <Typography component="label" sx={{ fontSize: '0.875rem', color: '#374151', marginRight: '0.5rem' }}>
+        <Typography
+          component="label"
+          sx={{ fontSize: '0.875rem', color: '#374151', marginRight: '0.5rem' }}
+        >
           Search string:
         </Typography>
         <select
@@ -103,7 +117,9 @@ export default function TestRetest({ studyId }: TestRetestProps) {
         >
           {strings.map((ss) => (
             <option key={ss.id} value={ss.id}>
-              v{ss.version}{ss.is_active ? ' (active)' : ''}{ss.created_by_agent ? ' [AI]' : ''}
+              v{ss.version}
+              {ss.is_active ? ' (active)' : ''}
+              {ss.created_by_agent ? ' [AI]' : ''}
             </option>
           ))}
         </select>
@@ -111,7 +127,10 @@ export default function TestRetest({ studyId }: TestRetestProps) {
 
       {/* Databases input */}
       <Box sx={{ marginBottom: '1rem' }}>
-        <Typography component="label" sx={{ fontSize: '0.875rem', color: '#374151', display: 'block', marginBottom: '0.25rem' }}>
+        <Typography
+          component="label"
+          sx={{ fontSize: '0.875rem', color: '#374151', display: 'block', marginBottom: '0.25rem' }}
+        >
           Databases (comma-separated, e.g. acm,ieee,scopus):
         </Typography>
         <TextField
@@ -149,13 +168,18 @@ export default function TestRetest({ studyId }: TestRetestProps) {
       )}
 
       {testError && (
-        <Typography sx={{ color: '#ef4444', fontSize: '0.875rem', margin: '0 0 0.75rem' }}>{testError}</Typography>
+        <Typography sx={{ color: '#ef4444', fontSize: '0.875rem', margin: '0 0 0.75rem' }}>
+          {testError}
+        </Typography>
       )}
 
       {/* Iterations table */}
       {activeOrFirst && activeOrFirst.iterations.length > 0 && (
         <Box>
-          <Typography variant="subtitle2" sx={{ margin: '0 0 0.5rem', fontSize: '0.875rem', color: '#374151' }}>
+          <Typography
+            variant="subtitle2"
+            sx={{ margin: '0 0 0.5rem', fontSize: '0.875rem', color: '#374151' }}
+          >
             Iterations for v{activeOrFirst.version}
           </Typography>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
@@ -178,25 +202,44 @@ export default function TestRetest({ studyId }: TestRetestProps) {
                     <Typography
                       component="span"
                       style={{
-                        color: it.test_set_recall >= 0.8 ? '#16a34a' : it.test_set_recall >= 0.5 ? '#d97706' : '#dc2626',
+                        color:
+                          it.test_set_recall >= 0.8
+                            ? '#16a34a'
+                            : it.test_set_recall >= 0.5
+                              ? '#d97706'
+                              : '#dc2626',
                       }}
                       sx={{ fontWeight: 600 }}
                     >
                       {(it.test_set_recall * 100).toFixed(1)}%
                     </Typography>
                   </td>
-                  <td style={{ ...tdStyle, maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <td
+                    style={{
+                      ...tdStyle,
+                      maxWidth: '200px',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
                     {it.ai_adequacy_judgment ?? '—'}
                   </td>
                   <td style={tdStyle}>
                     {it.human_approved === true && (
-                      <Typography component="span" sx={{ color: '#16a34a', fontWeight: 600 }}>Approved</Typography>
+                      <Typography component="span" sx={{ color: '#16a34a', fontWeight: 600 }}>
+                        Approved
+                      </Typography>
                     )}
                     {it.human_approved === false && (
-                      <Typography component="span" sx={{ color: '#dc2626', fontWeight: 600 }}>Rejected</Typography>
+                      <Typography component="span" sx={{ color: '#dc2626', fontWeight: 600 }}>
+                        Rejected
+                      </Typography>
                     )}
                     {it.human_approved === null && (
-                      <Typography component="span" sx={{ color: '#64748b' }}>Pending</Typography>
+                      <Typography component="span" sx={{ color: '#64748b' }}>
+                        Pending
+                      </Typography>
                     )}
                   </td>
                   <td style={tdStyle}>
@@ -211,7 +254,12 @@ export default function TestRetest({ studyId }: TestRetestProps) {
                             approved: true,
                           })
                         }
-                        sx={{ color: '#16a34a', borderColor: '#16a34a', fontSize: '0.75rem', padding: '0.25rem 0.5rem' }}
+                        sx={{
+                          color: '#16a34a',
+                          borderColor: '#16a34a',
+                          fontSize: '0.75rem',
+                          padding: '0.25rem 0.5rem',
+                        }}
                       >
                         Approve
                       </Button>
@@ -227,7 +275,13 @@ export default function TestRetest({ studyId }: TestRetestProps) {
                             approved: false,
                           })
                         }
-                        sx={{ color: '#dc2626', borderColor: '#dc2626', fontSize: '0.75rem', padding: '0.25rem 0.5rem', marginLeft: '0.25rem' }}
+                        sx={{
+                          color: '#dc2626',
+                          borderColor: '#dc2626',
+                          fontSize: '0.75rem',
+                          padding: '0.25rem 0.5rem',
+                          marginLeft: '0.25rem',
+                        }}
                       >
                         Reject
                       </Button>

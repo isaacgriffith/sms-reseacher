@@ -8,7 +8,7 @@
 
 **Organization**: Tasks grouped by user story for independent implementation and testing.
 
-> **Terminology note**: "Phase N" in this task list refers to *implementation phases*. The SMS study workflow phases 1–5 are referred to as "SMS Phase N" throughout to avoid confusion.
+> **Terminology note**: "Phase N" in this task list refers to _implementation phases_. The SMS study workflow phases 1–5 are referred to as "SMS Phase N" throughout to avoid confusion.
 
 ## Format: `[ID] [P?] [Story] Description`
 
@@ -123,8 +123,8 @@ before any remaining unchecked tasks are started (Constitution Principle IV).**
 
 ### AI Agents: Librarian & Expert
 
-- [x] T027 [P] [US1] Create Jinja2 prompt templates `agents/src/agents/prompts/librarian/system.jinja2` and `user.jinja2` for seed paper and author suggestions *(note: T178 will rename these to the approved `system.md` / `user.md.j2` convention — Principle VII)*
-- [x] T028 [P] [US1] Create Jinja2 prompt templates `agents/src/agents/prompts/expert/system.jinja2` and `user.jinja2` for 10–20 high-confidence relevant papers *(note: T178 will rename these to the approved `system.md` / `user.md.j2` convention — Principle VII)*
+- [x] T027 [P] [US1] Create Jinja2 prompt templates `agents/src/agents/prompts/librarian/system.jinja2` and `user.jinja2` for seed paper and author suggestions _(note: T178 will rename these to the approved `system.md` / `user.md.j2` convention — Principle VII)_
+- [x] T028 [P] [US1] Create Jinja2 prompt templates `agents/src/agents/prompts/expert/system.jinja2` and `user.jinja2` for 10–20 high-confidence relevant papers _(note: T178 will rename these to the approved `system.md` / `user.md.j2` convention — Principle VII)_
 - [x] T029 [P] [US1] Implement `LibrarianAgent` in `agents/src/agents/services/librarian.py` using LLMClient + PromptLoader; returns structured `{papers: [...], authors: [...]}` Pydantic model
 - [x] T030 [US1] Implement `ExpertAgent` in `agents/src/agents/services/expert.py`; returns structured list of up to 20 papers with title, authors, year, venue, rationale fields
 
@@ -171,7 +171,7 @@ before any remaining unchecked tasks are started (Constitution Principle IV).**
 
 ### Search String Builder Agent
 
-- [x] T044 [P] [US2] Create Jinja2 prompt templates `agents/src/agents/prompts/search_builder/system.jinja2` and `user.jinja2` (generates Boolean search string from PICO/C + keywords + synonyms/thesaurus expansion) *(note: T178 will rename these to the approved `system.md` / `user.md.j2` convention — Principle VII)*
+- [x] T044 [P] [US2] Create Jinja2 prompt templates `agents/src/agents/prompts/search_builder/system.jinja2` and `user.jinja2` (generates Boolean search string from PICO/C + keywords + synonyms/thesaurus expansion) _(note: T178 will rename these to the approved `system.md` / `user.md.j2` convention — Principle VII)_
 - [x] T045 [US2] Implement `SearchStringBuilderAgent` in `agents/src/agents/services/search_builder.py`; accepts PICOComponent dict + seed keywords, returns `{search_string: str, terms_used: [...], expansion_notes: str}` Pydantic model
 
 ### Search String & Criteria API
@@ -303,37 +303,38 @@ before any remaining unchecked tasks are started (Constitution Principle IV).**
 
 ### Extraction Models (Migration 6)
 
-- [X] T081 [P] [US5] Create `db/src/db/models/extraction.py` with DataExtraction (id, candidate_paper_id FK unique, research_type Enum evaluation/solution_proposal/validation/philosophical/opinion/personal_experience/unknown, venue_type String, venue_name nullable, author_details JSON, summary Text nullable, open_codings JSON, keywords JSON, question_data JSON, extraction_status Enum pending/ai_complete/validated/human_reviewed, version_id Integer, extracted_by_agent nullable, validated_by_reviewer_id FK nullable, conflict_flag Boolean, created_at, updated_at; `__mapper_args__ = {"version_id_col": version_id}`) and ExtractionFieldAudit (id, extraction_id FK, field_name String, original_value JSON, new_value JSON, changed_by_user_id FK, changed_at)
-- [X] T082 [US5] Create Alembic migration `db/alembic/versions/0009_extraction.py` (created as 0009 / down_revision=0008 to slot after the pre-existing 0008_study_phase_timestamps migration; 0010 down_revision updated to 0009) for DataExtraction and ExtractionFieldAudit tables — use `revision = "0008"`, `down_revision = "0007"` (chaining after the existing `0007_conflict_flag.py` migration)
+- [x] T081 [P] [US5] Create `db/src/db/models/extraction.py` with DataExtraction (id, candidate_paper_id FK unique, research_type Enum evaluation/solution_proposal/validation/philosophical/opinion/personal_experience/unknown, venue_type String, venue_name nullable, author_details JSON, summary Text nullable, open_codings JSON, keywords JSON, question_data JSON, extraction_status Enum pending/ai_complete/validated/human_reviewed, version_id Integer, extracted_by_agent nullable, validated_by_reviewer_id FK nullable, conflict_flag Boolean, created_at, updated_at; `__mapper_args__ = {"version_id_col": version_id}`) and ExtractionFieldAudit (id, extraction_id FK, field_name String, original_value JSON, new_value JSON, changed_by_user_id FK, changed_at)
+- [x] T082 [US5] Create Alembic migration `db/alembic/versions/0009_extraction.py` (created as 0009 / down_revision=0008 to slot after the pre-existing 0008_study_phase_timestamps migration; 0010 down_revision updated to 0009) for DataExtraction and ExtractionFieldAudit tables — use `revision = "0008"`, `down_revision = "0007"` (chaining after the existing `0007_conflict_flag.py` migration)
 
 ### Extractor Agent Extension
 
-- [X] T083 [P] [US5] Update Jinja2 prompt templates in `agents/src/agents/prompts/extractor/` to produce structured output covering: research_type (with R1–R6 decision rules applied), venue_type, venue_name, author_details, summary, open_codings `[{code, definition, evidence_quote}]`, keywords, question_data `{question_text: extracted_value}`
-- [X] T084 [US5] Extend `ExtractorAgent` in `agents/src/agents/services/extractor.py` to accept paper metadata + abstract/full_text + study research questions; return `ExtractionResult` Pydantic model with all fields from DataExtraction; apply R1–R6 decision rules for research_type classification
+- [x] T083 [P] [US5] Update Jinja2 prompt templates in `agents/src/agents/prompts/extractor/` to produce structured output covering: research_type (with R1–R6 decision rules applied), venue_type, venue_name, author_details, summary, open_codings `[{code, definition, evidence_quote}]`, keywords, question_data `{question_text: extracted_value}`
+- [x] T084 [US5] Extend `ExtractorAgent` in `agents/src/agents/services/extractor.py` to accept paper metadata + abstract/full_text + study research questions; return `ExtractionResult` Pydantic model with all fields from DataExtraction; apply R1–R6 decision rules for research_type classification
 
 ### Batch Extraction ARQ Job
 
-- [X] T161 Update `WorkerSettings.functions` in `backend/src/backend/jobs/worker.py` to ADD the new ARQ job functions to the **existing** list — do NOT replace or remove the existing entries (`run_test_search`, `run_full_search`, `run_snowball`). Add imports and append: `run_batch_extraction` (from `backend.jobs.extraction_job`), `run_generate_results` + `run_export` (from `backend.jobs.results_job`), `run_quality_eval` (from `backend.jobs.quality_job`). The resulting `functions` list MUST contain all seven functions: `[run_test_search, run_full_search, run_snowball, run_batch_extraction, run_generate_results, run_export, run_quality_eval]`. MUST run before T085 so the worker can discover these jobs at startup (ARQ silently ignores unregistered functions)
+- [x] T161 Update `WorkerSettings.functions` in `backend/src/backend/jobs/worker.py` to ADD the new ARQ job functions to the **existing** list — do NOT replace or remove the existing entries (`run_test_search`, `run_full_search`, `run_snowball`). Add imports and append: `run_batch_extraction` (from `backend.jobs.extraction_job`), `run_generate_results` + `run_export` (from `backend.jobs.results_job`), `run_quality_eval` (from `backend.jobs.quality_job`). The resulting `functions` list MUST contain all seven functions: `[run_test_search, run_full_search, run_snowball, run_batch_extraction, run_generate_results, run_export, run_quality_eval]`. MUST run before T085 so the worker can discover these jobs at startup (ARQ silently ignores unregistered functions)
 
 > **⚠️ SRP note (Constitution Principle I)**: T085, T097-T099, and T108 currently all target `extraction_job.py`. To avoid a God-module anti-pattern, implement as three separate files: `extraction_job.py` (batch extraction only), `results_job.py` (result generation + export), `quality_job.py` (quality evaluation). Update T097-T099 to target `backend/src/backend/jobs/results_job.py` and T108 to target `backend/src/backend/jobs/quality_job.py` before implementation begins.
-- [X] T085 [US5] Implement `run_batch_extraction(study_id)` ARQ job in `backend/src/backend/jobs/extraction_job.py`: iterates all accepted CandidatePapers without completed extraction, fetches full text via researcher-mcp `fetch_paper_pdf` (falls back to abstract), calls ExtractorAgent, creates DataExtraction record, calls configured AI reviewers for validation, flags conflict if they disagree, writes progress to BackgroundJob
+
+- [x] T085 [US5] Implement `run_batch_extraction(study_id)` ARQ job in `backend/src/backend/jobs/extraction_job.py`: iterates all accepted CandidatePapers without completed extraction, fetches full text via researcher-mcp `fetch_paper_pdf` (falls back to abstract), calls ExtractorAgent, creates DataExtraction record, calls configured AI reviewers for validation, flags conflict if they disagree, writes progress to BackgroundJob
 
 ### Extraction API with Optimistic Locking
 
-- [X] T086 [US5] Implement extraction endpoints in `backend/src/backend/api/v1/extractions.py`: `GET /studies/{study_id}/extractions` (with status filter + pagination), `GET /studies/{study_id}/extractions/{id}` (with audit history), `POST /studies/{study_id}/extractions/batch-run` (enqueues batch extraction job)
-- [X] T087 [US5] Implement `PATCH /studies/{study_id}/extractions/{id}` in `backend/src/backend/api/v1/extractions.py`: catches SQLAlchemy `StaleDataError` after `session.flush()`, rolls back, re-queries current state, returns `HTTP 409` with `{error: "conflict", your_version: {...}, current_version: {...}}`; on success creates ExtractionFieldAudit entries for changed fields
-- [X] T088 [US5] Register extractions router in `backend/src/backend/api/v1/router.py`
+- [x] T086 [US5] Implement extraction endpoints in `backend/src/backend/api/v1/extractions.py`: `GET /studies/{study_id}/extractions` (with status filter + pagination), `GET /studies/{study_id}/extractions/{id}` (with audit history), `POST /studies/{study_id}/extractions/batch-run` (enqueues batch extraction job)
+- [x] T087 [US5] Implement `PATCH /studies/{study_id}/extractions/{id}` in `backend/src/backend/api/v1/extractions.py`: catches SQLAlchemy `StaleDataError` after `session.flush()`, rolls back, re-queries current state, returns `HTTP 409` with `{error: "conflict", your_version: {...}, current_version: {...}}`; on success creates ExtractionFieldAudit entries for changed fields
+- [x] T088 [US5] Register extractions router in `backend/src/backend/api/v1/router.py`
 
 ### Frontend: Extraction & Diff/Merge UI
 
-- [X] T089 [US5] Create `frontend/src/components/phase3/ExtractionView.tsx` (displays all extraction fields for an accepted paper; inline editable fields; version_id sent with PATCH; shows validation status badge)
-- [X] T090 [US5] Create `frontend/src/components/shared/DiffViewer.tsx` (shows two-column diff of `your_version` vs `current_version` from 409 response; "Keep Mine", "Keep Theirs", "Merge" actions; resubmits with updated version_id)
-- [X] T091 [US5] Create `frontend/src/pages/ExtractionPage.tsx` wrapping ExtractionView with DiffViewer modal on 409 conflict response
+- [x] T089 [US5] Create `frontend/src/components/phase3/ExtractionView.tsx` (displays all extraction fields for an accepted paper; inline editable fields; version_id sent with PATCH; shows validation status badge)
+- [x] T090 [US5] Create `frontend/src/components/shared/DiffViewer.tsx` (shows two-column diff of `your_version` vs `current_version` from 409 response; "Keep Mine", "Keep Theirs", "Merge" actions; resubmits with updated version_id)
+- [x] T091 [US5] Create `frontend/src/pages/ExtractionPage.tsx` wrapping ExtractionView with DiffViewer modal on 409 conflict response
 
 ### Testing: Phase 7 (US5) Modules (Constitution Principle VI)
 
-- [X] T151 [P] [T] Write unit tests for extended `ExtractorAgent` in `agents/tests/unit/test_extractor.py` (mock LLMClient; verify ExtractionResult all fields present, research_type is valid R1–R6 Enum value); write integration tests in `backend/tests/integration/test_extractions_router.py` covering: batch-run 202 response, PATCH with correct version_id succeeds, PATCH with stale version_id returns 409 with both versions, ExtractionFieldAudit row created on successful PATCH
-- [X] T152 [P] [T] Write Vitest + Testing Library tests for `ExtractionView.tsx` and `DiffViewer.tsx` in `frontend/src/components/phase3/__tests__/` and `frontend/src/components/shared/__tests__/` — verify inline field edit triggers PATCH, 409 response opens DiffViewer with both versions, "Keep Mine" resubmits with original version_id
+- [x] T151 [P] [T] Write unit tests for extended `ExtractorAgent` in `agents/tests/unit/test_extractor.py` (mock LLMClient; verify ExtractionResult all fields present, research_type is valid R1–R6 Enum value); write integration tests in `backend/tests/integration/test_extractions_router.py` covering: batch-run 202 response, PATCH with correct version_id succeeds, PATCH with stale version_id returns 409 with both versions, ExtractionFieldAudit row created on successful PATCH
+- [x] T152 [P] [T] Write Vitest + Testing Library tests for `ExtractionView.tsx` and `DiffViewer.tsx` in `frontend/src/components/phase3/__tests__/` and `frontend/src/components/shared/__tests__/` — verify inline field edit triggers PATCH, 409 response opens DiffViewer with both versions, "Keep Mine" resubmits with original version_id
 
 **Checkpoint**: Full US5 flow functional — batch extraction, AI classification, human edit with audit trail, concurrent edit conflict resolution.
 
@@ -352,12 +353,12 @@ before any remaining unchecked tasks are started (Constitution Principle IV).**
 
 ### Domain Model Agent
 
-- [X] T094 [P] [US6] Create Jinja2 prompt templates `agents/src/agents/prompts/domain_modeler/system.md` and `user.md.j2` (extracts concepts and relationships from open codings + keywords + summaries) — use `.md`/`.md.j2` convention matching existing librarian, expert, search_builder prompts
-- [X] T095 [US6] Implement `DomainModelAgent` in `agents/src/agents/services/domain_modeler.py`; returns `DomainModelResult(concepts: [{name, definition, attributes}], relationships: [{from, to, label, type}])` Pydantic model
+- [x] T094 [P] [US6] Create Jinja2 prompt templates `agents/src/agents/prompts/domain_modeler/system.md` and `user.md.j2` (extracts concepts and relationships from open codings + keywords + summaries) — use `.md`/`.md.j2` convention matching existing librarian, expert, search_builder prompts
+- [x] T095 [US6] Implement `DomainModelAgent` in `agents/src/agents/services/domain_modeler.py`; returns `DomainModelResult(concepts: [{name, definition, attributes}], relationships: [{from, to, label, type}])` Pydantic model
 
 ### Visualization Service
 
-- [X] T096 [US6] Implement `backend/src/backend/services/visualization.py` with functions:
+- [x] T096 [US6] Implement `backend/src/backend/services/visualization.py` with functions:
   - `generate_bar_chart(data, title, xlabel, ylabel) → str` (matplotlib SVG string, publications per year)
   - `generate_bubble_chart(items: [{label, value}], title) → str` (plotly + kaleido SVG string, keyword/classification bubbles)
   - `generate_classification_charts(extractions, chart_type) → str` (matplotlib SVG for venue/author/locale/institution/year/research_type/research_method)
@@ -365,27 +366,27 @@ before any remaining unchecked tasks are started (Constitution Principle IV).**
 
 ### Results & Export ARQ Job
 
-- [X] T097 [US6] Implement `run_generate_results(study_id)` ARQ job in `backend/src/backend/jobs/results_job.py` (separate from extraction_job.py — SRP): (1) calls DomainModelAgent with all open codings/keywords, stores DomainModel; (2) calls visualization service for each of 8 ClassificationScheme chart types, stores SVGs; (3) writes progress to BackgroundJob
-- [X] T098 [US6] Implement export service `backend/src/backend/services/export.py` with `build_export(study_id, format) → bytes`: handles svg_only (zip of SVGs), json_only (full study JSON), csv_json (tabular CSV + JSON), full_archive (zip of all)
-- [X] T099 [US6] Implement `run_export(study_id, format)` ARQ job in `backend/src/backend/jobs/results_job.py` that calls export service and stores result in temp storage, marks BackgroundJob complete with download URL
+- [x] T097 [US6] Implement `run_generate_results(study_id)` ARQ job in `backend/src/backend/jobs/results_job.py` (separate from extraction_job.py — SRP): (1) calls DomainModelAgent with all open codings/keywords, stores DomainModel; (2) calls visualization service for each of 8 ClassificationScheme chart types, stores SVGs; (3) writes progress to BackgroundJob
+- [x] T098 [US6] Implement export service `backend/src/backend/services/export.py` with `build_export(study_id, format) → bytes`: handles svg_only (zip of SVGs), json_only (full study JSON), csv_json (tabular CSV + JSON), full_archive (zip of all)
+- [x] T099 [US6] Implement `run_export(study_id, format)` ARQ job in `backend/src/backend/jobs/results_job.py` that calls export service and stores result in temp storage, marks BackgroundJob complete with download URL
 
 ### Results API
 
-- [X] T100 [US6] Implement results endpoints in `backend/src/backend/api/v1/results.py`: `GET /studies/{study_id}/results`, `POST /studies/{study_id}/results/generate` (enqueues job), `GET /studies/{study_id}/results/charts/{id}/svg` (returns SVG content-type), `GET /studies/{study_id}/results/domain-model/svg`, `POST /studies/{study_id}/export` (enqueues export job), `GET /studies/{study_id}/export/{export_id}/download`
-- [X] T101 [US6] Register results router in `backend/src/backend/api/v1/router.py`
+- [x] T100 [US6] Implement results endpoints in `backend/src/backend/api/v1/results.py`: `GET /studies/{study_id}/results`, `POST /studies/{study_id}/results/generate` (enqueues job), `GET /studies/{study_id}/results/charts/{id}/svg` (returns SVG content-type), `GET /studies/{study_id}/results/domain-model/svg`, `POST /studies/{study_id}/export` (enqueues export job), `GET /studies/{study_id}/export/{export_id}/download`
+- [x] T101 [US6] Register results router in `backend/src/backend/api/v1/router.py`
 
 ### Frontend: Results & Domain Model
 
-- [X] T102 [US6] Create `frontend/src/pages/ResultsPage.tsx` (shows all generated charts as SVG img tags with download buttons, export format selector panel)
-- [X] T103 [P] [US6] Create `frontend/src/components/results/ChartGallery.tsx` (grid of 8 classification SVG charts + publications bar chart + infographic, each downloadable)
-- [X] T104 [P] [US6] Create `frontend/src/components/results/DomainModelViewer.tsx` (D3.js force-directed graph rendering `concepts` and `relationships` JSON from DomainModel record; "Export SVG" button serializes current SVG node)
-- [X] T105 [US6] Create `frontend/src/components/results/ExportPanel.tsx` (radio buttons: SVG Only, JSON Only, CSV+JSON, Full Archive; "Export" triggers job; progress via SSE; "Download" on complete)
+- [x] T102 [US6] Create `frontend/src/pages/ResultsPage.tsx` (shows all generated charts as SVG img tags with download buttons, export format selector panel)
+- [x] T103 [P] [US6] Create `frontend/src/components/results/ChartGallery.tsx` (grid of 8 classification SVG charts + publications bar chart + infographic, each downloadable)
+- [x] T104 [P] [US6] Create `frontend/src/components/results/DomainModelViewer.tsx` (D3.js force-directed graph rendering `concepts` and `relationships` JSON from DomainModel record; "Export SVG" button serializes current SVG node)
+- [x] T105 [US6] Create `frontend/src/components/results/ExportPanel.tsx` (radio buttons: SVG Only, JSON Only, CSV+JSON, Full Archive; "Export" triggers job; progress via SSE; "Download" on complete)
 
 ### Testing: Phase 8 (US6) Modules (Constitution Principle VI)
 
-- [X] T153 [P] [T] Write unit tests for `visualization.py` in `backend/tests/unit/test_visualization.py` (mock matplotlib/plotly; verify SVG string returned, non-empty, contains `<svg>` tag); write unit tests for `export.py` in `backend/tests/unit/test_export.py` (verify no Settings field names in any export payload — `_REDACTED_FIELDS` check); write integration tests in `backend/tests/integration/test_results_router.py` covering: generate 202, svg endpoint Content-Type image/svg+xml, export download 200
-- [X] T154 [P] [T] Write Vitest + Testing Library tests for `ChartGallery.tsx` and `ExportPanel.tsx` in `frontend/src/components/results/__tests__/` — verify SVG img tags render, export format selection triggers job, download button appears on completion
-- [X] T164 [P] [T] Add deepeval evaluation pipeline for `DomainModelAgent` in `agent-eval/src/agent_eval/evals/domain_modeler_eval.py` — define dataset of open-codings + keyword sets, output criteria (≥1 concept, ≥1 relationship, no duplicate concept names, valid relationship direction), pass/fail threshold (Constitution Principle VI — deepeval MUST be added when agent is first created)
+- [x] T153 [P] [T] Write unit tests for `visualization.py` in `backend/tests/unit/test_visualization.py` (mock matplotlib/plotly; verify SVG string returned, non-empty, contains `<svg>` tag); write unit tests for `export.py` in `backend/tests/unit/test_export.py` (verify no Settings field names in any export payload — `_REDACTED_FIELDS` check); write integration tests in `backend/tests/integration/test_results_router.py` covering: generate 202, svg endpoint Content-Type image/svg+xml, export download 200
+- [x] T154 [P] [T] Write Vitest + Testing Library tests for `ChartGallery.tsx` and `ExportPanel.tsx` in `frontend/src/components/results/__tests__/` — verify SVG img tags render, export format selection triggers job, download button appears on completion
+- [x] T164 [P] [T] Add deepeval evaluation pipeline for `DomainModelAgent` in `agent-eval/src/agent_eval/evals/domain_modeler_eval.py` — define dataset of open-codings + keyword sets, output criteria (≥1 concept, ≥1 relationship, no duplicate concept names, valid relationship direction), pass/fail threshold (Constitution Principle VI — deepeval MUST be added when agent is first created)
 
 **Checkpoint**: Full US6 flow functional — all 6+ chart types generated as SVGs, interactive domain model, all four export formats.
 
@@ -399,41 +400,41 @@ before any remaining unchecked tasks are started (Constitution Principle IV).**
 
 ### Quality Judge Agent
 
-- [X] T106 [P] [US7] Create Jinja2 prompt templates `agents/src/agents/prompts/quality_judge/system.md` and `user.md.j2` encoding the 5 rubric definitions with scoring criteria — use `.md`/`.md.j2` convention matching existing agent prompts
-- [X] T107 [US7] Implement `QualityJudgeAgent` in `agents/src/agents/services/quality_judge.py`; accepts study snapshot JSON (PICO saved?, search strategies used, test-retest done?, reviewers configured?, extractions done?, validity section filled?); returns `QualityJudgeResult(scores: {rubric: int}, rubric_details: {rubric: {score, justification}}, recommendations: [{priority, action, target_rubric}])` Pydantic model
+- [x] T106 [P] [US7] Create Jinja2 prompt templates `agents/src/agents/prompts/quality_judge/system.md` and `user.md.j2` encoding the 5 rubric definitions with scoring criteria — use `.md`/`.md.j2` convention matching existing agent prompts
+- [x] T107 [US7] Implement `QualityJudgeAgent` in `agents/src/agents/services/quality_judge.py`; accepts study snapshot JSON (PICO saved?, search strategies used, test-retest done?, reviewers configured?, extractions done?, validity section filled?); returns `QualityJudgeResult(scores: {rubric: int}, rubric_details: {rubric: {score, justification}}, recommendations: [{priority, action, target_rubric}])` Pydantic model
 
 ### Quality Evaluation ARQ Job & API
 
-- [X] T108 [US7] Implement `run_quality_eval(study_id)` ARQ job in `backend/src/backend/jobs/quality_job.py` (separate from extraction_job.py — SRP): assembles study snapshot, calls QualityJudgeAgent, creates QualityReport record, marks job complete
-- [X] T109 [US7] Implement quality report endpoints in `backend/src/backend/api/v1/quality.py`: `GET /studies/{study_id}/quality-reports`, `GET /studies/{study_id}/quality-reports/{id}`, `POST /studies/{study_id}/quality-reports` (enqueues quality eval job)
-- [X] T110 [US7] Register quality router in `backend/src/backend/api/v1/router.py`
+- [x] T108 [US7] Implement `run_quality_eval(study_id)` ARQ job in `backend/src/backend/jobs/quality_job.py` (separate from extraction_job.py — SRP): assembles study snapshot, calls QualityJudgeAgent, creates QualityReport record, marks job complete
+- [x] T109 [US7] Implement quality report endpoints in `backend/src/backend/api/v1/quality.py`: `GET /studies/{study_id}/quality-reports`, `GET /studies/{study_id}/quality-reports/{id}`, `POST /studies/{study_id}/quality-reports` (enqueues quality eval job)
+- [x] T110 [US7] Register quality router in `backend/src/backend/api/v1/router.py`
 
 ### Validity Discussion API
 
-- [X] T111 [P] [US7] Add `validity` JSON column to Study model in `db/src/db/models/study.py` (stores descriptive/theoretical/generalizability_internal/generalizability_external/interpretive/repeatability text); create Alembic migration `db/alembic/versions/0011_study_validity_column.py` with `down_revision = "0010"` — ⚠️ **depends on T123 completing first** so the `down_revision` chain is correct (0010 = audit_trail migration from T123; see dependency note in Phase Dependencies)
-- [X] T112 [P] [US7] Implement `GET /studies/{study_id}/validity`, `PUT /studies/{study_id}/validity`, `POST /studies/{study_id}/validity/generate` (enqueues `run_validity_prefill` ARQ job from T170) in `backend/src/backend/api/v1/validity.py`
+- [x] T111 [P] [US7] Add `validity` JSON column to Study model in `db/src/db/models/study.py` (stores descriptive/theoretical/generalizability_internal/generalizability_external/interpretive/repeatability text); create Alembic migration `db/alembic/versions/0011_study_validity_column.py` with `down_revision = "0010"` — ⚠️ **depends on T123 completing first** so the `down_revision` chain is correct (0010 = audit_trail migration from T123; see dependency note in Phase Dependencies)
+- [x] T112 [P] [US7] Implement `GET /studies/{study_id}/validity`, `PUT /studies/{study_id}/validity`, `POST /studies/{study_id}/validity/generate` (enqueues `run_validity_prefill` ARQ job from T170) in `backend/src/backend/api/v1/validity.py`
 
 ### ValidityAgent — AI Pre-fill (FR-037)
 
 > **New tasks (remediation C2)**: T112's `/validity/generate` endpoint requires a ValidityAgent
 > and ARQ job. These MUST be completed before T112 is marked done.
 
-- [X] T168 [P] [US7] Create Jinja2 prompt templates `agents/src/agents/prompts/validity/system.md` and `user.md.j2` — system prompt encodes the six validity dimensions (descriptive, theoretical, generalizability_internal, generalizability_external, interpretive, repeatability) with instructions to generate pre-populated draft text for each based on the study's process, decisions, and context
-- [X] T169 [US7] Implement `ValidityAgent` in `agents/src/agents/services/validity.py`; accepts study snapshot (PICO, search strategy summary, inclusion/exclusion criteria list, data extraction summary, reviewer configuration); returns `ValidityResult(descriptive: str, theoretical: str, generalizability_internal: str, generalizability_external: str, interpretive: str, repeatability: str)` Pydantic model; routes LLM call through `LLMClient` (Principle VII — no direct SDK calls); prompt loaded via `PromptLoader` (depends on T168)
-- [X] T170 [US7] Implement `run_validity_prefill(study_id)` ARQ job in `backend/src/backend/jobs/validity_job.py` (SRP — separate file from quality_job.py): assembles study snapshot from DB, calls `ValidityAgent`, updates `Study.validity` JSON with generated text, marks BackgroundJob complete (depends on T169)
-- [X] T171 [P] [US7] Register `run_validity_prefill` in `backend/src/backend/jobs/worker.py` `WorkerSettings.functions` alongside the other job functions (depends on T170 completing first — same pattern as T161 for extraction/results/quality jobs)
-- [X] T173 [P] [T] Add deepeval evaluation pipeline for `ValidityAgent` in `agent-eval/src/agent_eval/evals/validity_eval.py` — define dataset of study snapshots at varying completion states, output criteria (all 6 validity dimensions non-empty, no hallucinated citations, language reflects actual study decisions), pass/fail threshold (Constitution Principle VI — deepeval MUST be added when agent is first created; MUST complete before T169 is marked done)
+- [x] T168 [P] [US7] Create Jinja2 prompt templates `agents/src/agents/prompts/validity/system.md` and `user.md.j2` — system prompt encodes the six validity dimensions (descriptive, theoretical, generalizability_internal, generalizability_external, interpretive, repeatability) with instructions to generate pre-populated draft text for each based on the study's process, decisions, and context
+- [x] T169 [US7] Implement `ValidityAgent` in `agents/src/agents/services/validity.py`; accepts study snapshot (PICO, search strategy summary, inclusion/exclusion criteria list, data extraction summary, reviewer configuration); returns `ValidityResult(descriptive: str, theoretical: str, generalizability_internal: str, generalizability_external: str, interpretive: str, repeatability: str)` Pydantic model; routes LLM call through `LLMClient` (Principle VII — no direct SDK calls); prompt loaded via `PromptLoader` (depends on T168)
+- [x] T170 [US7] Implement `run_validity_prefill(study_id)` ARQ job in `backend/src/backend/jobs/validity_job.py` (SRP — separate file from quality_job.py): assembles study snapshot from DB, calls `ValidityAgent`, updates `Study.validity` JSON with generated text, marks BackgroundJob complete (depends on T169)
+- [x] T171 [P] [US7] Register `run_validity_prefill` in `backend/src/backend/jobs/worker.py` `WorkerSettings.functions` alongside the other job functions (depends on T170 completing first — same pattern as T161 for extraction/results/quality jobs)
+- [x] T173 [P] [T] Add deepeval evaluation pipeline for `ValidityAgent` in `agent-eval/src/agent_eval/evals/validity_eval.py` — define dataset of study snapshots at varying completion states, output criteria (all 6 validity dimensions non-empty, no hallucinated citations, language reflects actual study decisions), pass/fail threshold (Constitution Principle VI — deepeval MUST be added when agent is first created; MUST complete before T169 is marked done)
 
 ### Frontend: Quality & Validity UI
 
-- [X] T113 [US7] Create `frontend/src/components/phase5/QualityReport.tsx` (rubric score cards with score/max, justification text, prioritized recommendation list with action buttons)
-- [X] T114 [P] [US7] Create `frontend/src/components/phase4/ValidityForm.tsx` (six text areas for validity dimensions, "Generate with AI" button, auto-save on blur) — ⚠️ **Principle IX compliance**: auto-save on blur MUST use `register` + `onBlur` (not `watch()`); if any cross-field conditional logic requires reactive subscription, use `useWatch` on the specific field(s) — never import the `watch` function from `useForm()` in the render path
+- [x] T113 [US7] Create `frontend/src/components/phase5/QualityReport.tsx` (rubric score cards with score/max, justification text, prioritized recommendation list with action buttons)
+- [x] T114 [P] [US7] Create `frontend/src/components/phase4/ValidityForm.tsx` (six text areas for validity dimensions, "Generate with AI" button, auto-save on blur) — ⚠️ **Principle IX compliance**: auto-save on blur MUST use `register` + `onBlur` (not `watch()`); if any cross-field conditional logic requires reactive subscription, use `useWatch` on the specific field(s) — never import the `watch` function from `useForm()` in the render path
 
 ### Testing: Phase 9 (US7) Modules (Constitution Principle VI)
 
-- [X] T155 [P] [T] Write unit tests for `QualityJudgeAgent` in `agents/tests/unit/test_quality_judge.py` (mock LLMClient; verify scores are within valid ranges per rubric, recommendations list non-empty); write unit tests for `ValidityAgent` in `agents/tests/unit/test_validity.py` (mock LLMClient; verify `ValidityResult` has all 6 fields non-empty, `ValueError` raised when study snapshot is missing required keys); write integration tests in `backend/tests/integration/test_quality_router.py` and `test_validity_router.py` covering: quality report POST 202, GET returns rubric details, validity PUT stores six fields, validity/generate POST 202 enqueues BackgroundJob
-- [X] T156 [P] [T] Write Vitest + Testing Library tests for `QualityReport.tsx` and `ValidityForm.tsx` in `frontend/src/components/phase5/__tests__/` and `frontend/src/components/phase4/__tests__/` — verify score cards render with score/max, recommendation list displays priority, validity text areas auto-save on blur
-- [X] T165 [P] [T] Add deepeval evaluation pipeline for `QualityJudgeAgent` in `agent-eval/src/agent_eval/evals/quality_judge_eval.py` — define dataset of study snapshots at varying completion levels, output criteria (all 5 rubrics scored, scores within valid 0–max ranges, ≥1 recommendation per low-scoring rubric), pass/fail threshold (Constitution Principle VI — deepeval MUST be added when agent is first created)
+- [x] T155 [P] [T] Write unit tests for `QualityJudgeAgent` in `agents/tests/unit/test_quality_judge.py` (mock LLMClient; verify scores are within valid ranges per rubric, recommendations list non-empty); write unit tests for `ValidityAgent` in `agents/tests/unit/test_validity.py` (mock LLMClient; verify `ValidityResult` has all 6 fields non-empty, `ValueError` raised when study snapshot is missing required keys); write integration tests in `backend/tests/integration/test_quality_router.py` and `test_validity_router.py` covering: quality report POST 202, GET returns rubric details, validity PUT stores six fields, validity/generate POST 202 enqueues BackgroundJob
+- [x] T156 [P] [T] Write Vitest + Testing Library tests for `QualityReport.tsx` and `ValidityForm.tsx` in `frontend/src/components/phase5/__tests__/` and `frontend/src/components/phase4/__tests__/` — verify score cards render with score/max, recommendation list displays priority, validity text areas auto-save on blur
+- [x] T165 [P] [T] Add deepeval evaluation pipeline for `QualityJudgeAgent` in `agent-eval/src/agent_eval/evals/quality_judge_eval.py` — define dataset of study snapshots at varying completion levels, output criteria (all 5 rubrics scored, scores within valid 0–max ranges, ≥1 recommendation per low-scoring rubric), pass/fail threshold (Constitution Principle VI — deepeval MUST be added when agent is first created)
 
 **Checkpoint**: Full US7 flow functional — quality rubric scoring, recommendations, validity discussion with AI pre-fill (T168–T171).
 
@@ -451,31 +452,31 @@ the browser without touching infrastructure.
 
 ### Audit Trail Service & API (FR-044)
 
-- [X] T125 [P] Implement `backend/src/backend/services/audit.py` with `async def record(session, study_id, actor_user_id, actor_agent, entity_type, entity_id, action, field_name, before_value, after_value)` — thin write layer using structlog; raises `ValueError` if both actor_user_id and actor_agent are None
-- [X] T126 [P] Instrument existing write endpoints to call `AuditService.record()`: PICO saves in `backend/src/backend/api/v1/pico.py`, search string saves in `backend/src/backend/api/v1/search_strings.py`, criteria CRUD in `backend/src/backend/api/v1/criteria.py`, study PATCH in `backend/src/backend/api/v1/studies.py`, paper decision submission and conflict resolution in `backend/src/backend/api/v1/papers.py`, seed CRUD (papers + authors) in `backend/src/backend/api/v1/seeds.py`, StudyMember add/remove in `backend/src/backend/api/v1/groups.py`
-- [X] T127 Implement `backend/src/backend/api/v1/audit.py` — `GET /studies/{study_id}/audit` with pagination, optional `entity_type` and `actor_user_id` query filters, admin-only access guard (HTTP 403 for non-admins), returns paginated AuditRecord list per contracts/api-v1.md
-- [X] T128 Register `audit_router` in `backend/src/backend/api/v1/router.py`
+- [x] T125 [P] Implement `backend/src/backend/services/audit.py` with `async def record(session, study_id, actor_user_id, actor_agent, entity_type, entity_id, action, field_name, before_value, after_value)` — thin write layer using structlog; raises `ValueError` if both actor_user_id and actor_agent are None
+- [x] T126 [P] Instrument existing write endpoints to call `AuditService.record()`: PICO saves in `backend/src/backend/api/v1/pico.py`, search string saves in `backend/src/backend/api/v1/search_strings.py`, criteria CRUD in `backend/src/backend/api/v1/criteria.py`, study PATCH in `backend/src/backend/api/v1/studies.py`, paper decision submission and conflict resolution in `backend/src/backend/api/v1/papers.py`, seed CRUD (papers + authors) in `backend/src/backend/api/v1/seeds.py`, StudyMember add/remove in `backend/src/backend/api/v1/groups.py`
+- [x] T127 Implement `backend/src/backend/api/v1/audit.py` — `GET /studies/{study_id}/audit` with pagination, optional `entity_type` and `actor_user_id` query filters, admin-only access guard (HTTP 403 for non-admins), returns paginated AuditRecord list per contracts/api-v1.md
+- [x] T128 Register `audit_router` in `backend/src/backend/api/v1/router.py`
 
 ### Admin Health Dashboard & Job Retry API (FR-045)
 
-- [X] T129 Implement `backend/src/backend/api/v1/admin.py` with: `GET /admin/health` (probe DB, Redis, ARQ worker, researcher-mcp; return `{status, services:[{name, status, latency_ms, detail?}], checked_at}`; admin-only; MUST NOT return any config secrets), `GET /admin/jobs` (cross-study BackgroundJob list with status filter + pagination), `POST /admin/jobs/{job_id}/retry` (re-enqueues a failed ARQ job; returns 409 if not in `failed` status)
-- [X] T130 Register `admin_router` in `backend/src/backend/api/v1/router.py`
+- [x] T129 Implement `backend/src/backend/api/v1/admin.py` with: `GET /admin/health` (probe DB, Redis, ARQ worker, researcher-mcp; return `{status, services:[{name, status, latency_ms, detail?}], checked_at}`; admin-only; MUST NOT return any config secrets), `GET /admin/jobs` (cross-study BackgroundJob list with status filter + pagination), `POST /admin/jobs/{job_id}/retry` (re-enqueues a failed ARQ job; returns 409 if not in `failed` status)
+- [x] T130 Register `admin_router` in `backend/src/backend/api/v1/router.py`
 
 ### Admin Dashboard Frontend (FR-045)
 
-- [X] T131 [P] Create `frontend/src/components/admin/ServiceHealthPanel.tsx` — polls `GET /admin/health` every 30s via TanStack Query; renders color-coded status cards (green/amber/red) per service with latency and last-checked timestamp
-- [X] T132 [P] Create `frontend/src/components/admin/JobRetryPanel.tsx` — lists failed jobs via `GET /admin/jobs?status=failed` with study name, job type, error message; retry button calls `POST /admin/jobs/{id}/retry`; shows success confirmation with new job ID
-- [X] T133 Create `frontend/src/pages/AdminPage.tsx` — admin-only page composing `ServiceHealthPanel` and `JobRetryPanel`; redirects non-admins to /groups with a 403 message
-- [X] T134 Add `/admin` route to `frontend/src/main.tsx` and `frontend/src/App.tsx` (protected by admin role check)
+- [x] T131 [P] Create `frontend/src/components/admin/ServiceHealthPanel.tsx` — polls `GET /admin/health` every 30s via TanStack Query; renders color-coded status cards (green/amber/red) per service with latency and last-checked timestamp
+- [x] T132 [P] Create `frontend/src/components/admin/JobRetryPanel.tsx` — lists failed jobs via `GET /admin/jobs?status=failed` with study name, job type, error message; retry button calls `POST /admin/jobs/{id}/retry`; shows success confirmation with new job ID
+- [x] T133 Create `frontend/src/pages/AdminPage.tsx` — admin-only page composing `ServiceHealthPanel` and `JobRetryPanel`; redirects non-admins to /groups with a 403 message
+- [x] T134 Add `/admin` route to `frontend/src/main.tsx` and `frontend/src/App.tsx` (protected by admin role check)
 
 ### Export Secrets Hygiene (FR-046)
 
-- [X] T135 [P] When implementing `backend/src/backend/services/export.py` (T098): add `_REDACTED_FIELDS = {"database_url", "secret_key", "anthropic_api_key", "redis_url"}` safelist and assert no Settings field names appear in any JSON/archive export payload; add structlog warning if a key is stripped
+- [x] T135 [P] When implementing `backend/src/backend/services/export.py` (T098): add `_REDACTED_FIELDS = {"database_url", "secret_key", "anthropic_api_key", "redis_url"}` safelist and assert no Settings field names appear in any JSON/archive export payload; add structlog warning if a key is stripped
 
 ### Testing: Phase 10 (Audit/Admin) Modules (Constitution Principle VI)
 
-- [X] T157 [P] [T] Write unit tests for `backend/src/backend/services/audit.py` in `backend/tests/unit/test_audit_service.py` (verify `AuditRecord` row created, ValueError raised when both actor fields None, structlog call made); write integration tests in `backend/tests/integration/test_audit_router.py` and `test_admin_router.py` covering: audit GET requires admin (403 for non-admin), entity_type filter applied, health endpoint returns all four services with status, retry 409 when job not failed, retry 404 when job not found
-- [X] T158 [P] [T] Write Vitest + Testing Library tests for `ServiceHealthPanel.tsx` and `JobRetryPanel.tsx` in `frontend/src/components/admin/__tests__/` — verify status card colors (green/amber/red), retry button triggers POST and shows confirmation with new job ID
+- [x] T157 [P] [T] Write unit tests for `backend/src/backend/services/audit.py` in `backend/tests/unit/test_audit_service.py` (verify `AuditRecord` row created, ValueError raised when both actor fields None, structlog call made); write integration tests in `backend/tests/integration/test_audit_router.py` and `test_admin_router.py` covering: audit GET requires admin (403 for non-admin), entity_type filter applied, health endpoint returns all four services with status, retry 409 when job not failed, retry 404 when job not found
+- [x] T158 [P] [T] Write Vitest + Testing Library tests for `ServiceHealthPanel.tsx` and `JobRetryPanel.tsx` in `frontend/src/components/admin/__tests__/` — verify status card colors (green/amber/red), retry button triggers POST and shows confirmation with new job ID
 
 **Checkpoint**: Study audit log accessible to admins; admin health dashboard shows service status; failed jobs retryable from UI; export bundles contain no secrets.
 
@@ -485,35 +486,35 @@ the browser without touching infrastructure.
 
 **Purpose**: Metrics display, agent evals, metamorphic tests, FastMCP style fix, quickstart validation.
 
-- [X] T115 [P] Create `frontend/src/components/phase2/MetricsDashboard.tsx` consuming `GET /studies/{study_id}/metrics` to display per-phase funnel (identified → accepted → rejected → duplicates)
-- [X] T116 [P] Verify all agent deepeval pipelines (T162: librarian+expert, T163: search_builder, T164: domain_modeler, T165: quality_judge, T173: validity, T139: screener, T140: extractor) are wired into the `agent-eval` CLI in `agent-eval/src/agent_eval/cli.py`; add an `eval all` subcommand that runs all pipelines in sequence and produces a combined pass/fail report (Principle VI — CI must run all eval pipelines on agent changes)
-- [X] T117 [P] Add `GET /studies/{study_id}/papers/{candidate_id}` audit trail section to `PaperCard.tsx` showing full `PaperDecision` history (reviewer, decision, timestamp, override chain)
-- [X] T118 Validate `quickstart.md` end-to-end: start all services per quickstart, create a group and study, confirm Phase 1–2 UI loads without errors; update quickstart if any steps are wrong; seed ≥500 `AuditRecord` rows and time the `GET /studies/{study_id}/audit` response — MUST be ≤3s per SC-012; record observed time in PR description
-- [X] T180 [P] [T] Write a performance regression test in `backend/tests/integration/test_audit_router.py` that inserts 500 `AuditRecord` rows via direct DB write and asserts that `GET /studies/{study_id}/audit` responds in under 3 000 ms (SC-012); mark as `@pytest.mark.slow` so it is excluded from the default test run but included in CI nightly
-- [X] T119 [P] Update `CLAUDE.md` Active Technologies with final resolved library choices (ARQ, matplotlib, networkx, plotly/kaleido, rapidfuzz, D3.js)
-- [X] T136 [P] Add metamorphic tests using `hypothesis` for `LibrarianAgent`, `ExpertAgent`, `SearchStringBuilderAgent` in `agents/tests/metamorphic/test_librarian.py`, `test_expert.py`, `test_search_builder.py` — define metamorphic relations (e.g., query expansion monotonicity, paraphrase consistency) (Principle VI — metamorphic tests required for every agent)
-- [X] T137 [P] Add metamorphic tests using `hypothesis` for `QualityJudgeAgent` and `DomainModelAgent` in `agents/tests/metamorphic/test_quality_judge.py` and `test_domain_modeler.py` — define relations for score monotonicity and concept-set stability (Principle VI)
-- [X] T174 [P] Add metamorphic tests using `hypothesis` for `ValidityAgent` in `agents/tests/metamorphic/test_validity.py` — define metamorphic relations: (1) **completeness monotonicity** — a study snapshot with more completed phases MUST produce validity text with equal or more specific detail than a less-complete snapshot; (2) **dimension independence** — modifying data relevant to one validity dimension MUST NOT change generated text for unrelated dimensions; (3) **paraphrase stability** — equivalent study descriptions phrased differently MUST produce semantically equivalent validity content (Principle VI — metamorphic tests MUST exist for every AI agent; MUST complete before T169 is marked done)
-- [X] T177 [P] Audit `frontend/src/components/studies/NewStudyWizard.tsx` for Principle IX.5 compliance: count related `useState` calls managing wizard step state; if >3 are found, write/update Vitest tests in `frontend/src/components/studies/__tests__/NewStudyWizard.test.tsx` that assert current step-state behavior (test-first, Principle IV), then refactor wizard step state into a single `useReducer` with a typed `WizardAction` discriminated union — each action variant must correspond to exactly one state transition; verify `useWatch` is used (not `watch()`) in any form-field subscriptions inside the wizard (Principle IX — >3 related useState MUST use useReducer; useWatch MUST replace watch())
-- [X] T138 [P] Verify that `mcp.add_tool(func)` in `researcher-mcp/src/researcher_mcp/server.py` satisfies FastMCP 2.0+ tool-registration requirements (docstrings present on all 4 functions ✅); if FastMCP 2.0+ requires the `@mcp.tool` Python decorator specifically, migrate `snowball.py` and `scraper.py` to use `@mcp.tool` and remove explicit `mcp.add_tool()` calls from `server.py`; confirm with FastMCP 2.0+ docs which form is canonical (Principle VII — must use approved FastMCP API pattern)
+- [x] T115 [P] Create `frontend/src/components/phase2/MetricsDashboard.tsx` consuming `GET /studies/{study_id}/metrics` to display per-phase funnel (identified → accepted → rejected → duplicates)
+- [x] T116 [P] Verify all agent deepeval pipelines (T162: librarian+expert, T163: search_builder, T164: domain_modeler, T165: quality_judge, T173: validity, T139: screener, T140: extractor) are wired into the `agent-eval` CLI in `agent-eval/src/agent_eval/cli.py`; add an `eval all` subcommand that runs all pipelines in sequence and produces a combined pass/fail report (Principle VI — CI must run all eval pipelines on agent changes)
+- [x] T117 [P] Add `GET /studies/{study_id}/papers/{candidate_id}` audit trail section to `PaperCard.tsx` showing full `PaperDecision` history (reviewer, decision, timestamp, override chain)
+- [x] T118 Validate `quickstart.md` end-to-end: start all services per quickstart, create a group and study, confirm Phase 1–2 UI loads without errors; update quickstart if any steps are wrong; seed ≥500 `AuditRecord` rows and time the `GET /studies/{study_id}/audit` response — MUST be ≤3s per SC-012; record observed time in PR description
+- [x] T180 [P] [T] Write a performance regression test in `backend/tests/integration/test_audit_router.py` that inserts 500 `AuditRecord` rows via direct DB write and asserts that `GET /studies/{study_id}/audit` responds in under 3 000 ms (SC-012); mark as `@pytest.mark.slow` so it is excluded from the default test run but included in CI nightly
+- [x] T119 [P] Update `CLAUDE.md` Active Technologies with final resolved library choices (ARQ, matplotlib, networkx, plotly/kaleido, rapidfuzz, D3.js)
+- [x] T136 [P] Add metamorphic tests using `hypothesis` for `LibrarianAgent`, `ExpertAgent`, `SearchStringBuilderAgent` in `agents/tests/metamorphic/test_librarian.py`, `test_expert.py`, `test_search_builder.py` — define metamorphic relations (e.g., query expansion monotonicity, paraphrase consistency) (Principle VI — metamorphic tests required for every agent)
+- [x] T137 [P] Add metamorphic tests using `hypothesis` for `QualityJudgeAgent` and `DomainModelAgent` in `agents/tests/metamorphic/test_quality_judge.py` and `test_domain_modeler.py` — define relations for score monotonicity and concept-set stability (Principle VI)
+- [x] T174 [P] Add metamorphic tests using `hypothesis` for `ValidityAgent` in `agents/tests/metamorphic/test_validity.py` — define metamorphic relations: (1) **completeness monotonicity** — a study snapshot with more completed phases MUST produce validity text with equal or more specific detail than a less-complete snapshot; (2) **dimension independence** — modifying data relevant to one validity dimension MUST NOT change generated text for unrelated dimensions; (3) **paraphrase stability** — equivalent study descriptions phrased differently MUST produce semantically equivalent validity content (Principle VI — metamorphic tests MUST exist for every AI agent; MUST complete before T169 is marked done)
+- [x] T177 [P] Audit `frontend/src/components/studies/NewStudyWizard.tsx` for Principle IX.5 compliance: count related `useState` calls managing wizard step state; if >3 are found, write/update Vitest tests in `frontend/src/components/studies/__tests__/NewStudyWizard.test.tsx` that assert current step-state behavior (test-first, Principle IV), then refactor wizard step state into a single `useReducer` with a typed `WizardAction` discriminated union — each action variant must correspond to exactly one state transition; verify `useWatch` is used (not `watch()`) in any form-field subscriptions inside the wizard (Principle IX — >3 related useState MUST use useReducer; useWatch MUST replace watch())
+- [x] T138 [P] Verify that `mcp.add_tool(func)` in `researcher-mcp/src/researcher_mcp/server.py` satisfies FastMCP 2.0+ tool-registration requirements (docstrings present on all 4 functions ✅); if FastMCP 2.0+ requires the `@mcp.tool` Python decorator specifically, migrate `snowball.py` and `scraper.py` to use `@mcp.tool` and remove explicit `mcp.add_tool()` calls from `server.py`; confirm with FastMCP 2.0+ docs which form is canonical (Principle VII — must use approved FastMCP API pattern)
 - [x] T178 [P] Normalize prompt file extensions for already-implemented agents to match the approved `.md`/`.md.j2` convention (Principle VII): rename `agents/src/agents/prompts/librarian/system.jinja2` → `system.md`, `agents/src/agents/prompts/librarian/user.jinja2` → `user.md.j2`; rename `agents/src/agents/prompts/expert/system.jinja2` → `system.md`, `agents/src/agents/prompts/expert/user.jinja2` → `user.md.j2`; rename `agents/src/agents/prompts/search_builder/system.jinja2` → `system.md`, `agents/src/agents/prompts/search_builder/user.jinja2` → `user.md.j2`; update any hardcoded extension references in `LibrarianAgent`, `ExpertAgent`, `SearchStringBuilderAgent` service files and in `agents/src/agents/core/prompt_loader.py` if the loader uses a fixed `.jinja2` suffix — after rename, confirm `PromptLoader` resolves each template correctly by running the existing agent unit tests
-- [X] T179 [P] Verify `SynthesiserAgent` meets Constitution VI eval requirements: check whether `agent-eval/src/agent_eval/evals/synthesiser_eval.py` and `agents/tests/metamorphic/test_synthesiser.py` exist with passing pipelines from prior feature work; if either is absent or empty, create it — deepeval pipeline MUST define a representative input dataset and at least one metric (e.g., faithfulness, answer relevancy); metamorphic tests MUST define at least two relations (e.g., summary completeness monotonicity, paraphrase stability). Add to T116's `eval all` subcommand once verified (Principle VI — every AI agent MUST have deepeval + metamorphic coverage)
-- [X] T139 [P] Add deepeval evaluation pipeline + metamorphic tests (`hypothesis`) for `ScreenerAgent` in `agent-eval/src/agent_eval/evals/screener_eval.py` and `agents/tests/metamorphic/test_screener.py` — define output criteria (inclusion/exclusion decisions ≥85% agreement with ground truth), metamorphic relations (decision stability under abstract paraphrase, consistent rejection when criteria unmet) (Principle VI)
-- [X] T140 [P] Add deepeval evaluation pipeline + metamorphic tests (`hypothesis`) for `ExtractorAgent` in `agent-eval/src/agent_eval/evals/extractor_eval.py` and `agents/tests/metamorphic/test_extractor.py` — define output criteria (research_type accuracy ≥80% per R1–R6 decision rules), metamorphic relations (field extraction consistency under equivalent phrasings, completeness monotonicity when full text available) (Principle VI)
+- [x] T179 [P] Verify `SynthesiserAgent` meets Constitution VI eval requirements: check whether `agent-eval/src/agent_eval/evals/synthesiser_eval.py` and `agents/tests/metamorphic/test_synthesiser.py` exist with passing pipelines from prior feature work; if either is absent or empty, create it — deepeval pipeline MUST define a representative input dataset and at least one metric (e.g., faithfulness, answer relevancy); metamorphic tests MUST define at least two relations (e.g., summary completeness monotonicity, paraphrase stability). Add to T116's `eval all` subcommand once verified (Principle VI — every AI agent MUST have deepeval + metamorphic coverage)
+- [x] T139 [P] Add deepeval evaluation pipeline + metamorphic tests (`hypothesis`) for `ScreenerAgent` in `agent-eval/src/agent_eval/evals/screener_eval.py` and `agents/tests/metamorphic/test_screener.py` — define output criteria (inclusion/exclusion decisions ≥85% agreement with ground truth), metamorphic relations (decision stability under abstract paraphrase, consistent rejection when criteria unmet) (Principle VI)
+- [x] T140 [P] Add deepeval evaluation pipeline + metamorphic tests (`hypothesis`) for `ExtractorAgent` in `agent-eval/src/agent_eval/evals/extractor_eval.py` and `agents/tests/metamorphic/test_extractor.py` — define output criteria (research_type accuracy ≥80% per R1–R6 decision rules), metamorphic relations (field extraction consistency under equivalent phrasings, completeness monotonicity when full text available) (Principle VI)
 
 ### Compliance Verification for Already-Implemented Code
 
 > These tasks remediate compliance notes that were added to already-completed ([x]) tasks. The
-> notes document *required* behaviour; these tasks verify the existing implementation satisfies
+> notes document _required_ behaviour; these tasks verify the existing implementation satisfies
 > it and patch it if not.
 
-- [X] T175 [P] Verify existing T049 implementation (`backend/src/backend/jobs/search_job.py` test-search job): confirm it creates a `BackgroundJob` record at job start with `status=running` and updates to `completed`/`failed` on exit, and that `T048` (`POST .../test`) returns the `job_id` in its response body (FR-027a). If not, patch the implementation and update the T048 endpoint response schema; add/update test coverage in `backend/tests/integration/test_search_strings_router.py` to assert `job_id` is present in the 202 response
-- [X] T176 [P] Verify existing T073 implementation (`frontend/src/services/jobs.ts` `useJobProgress` hook): confirm the `useEffect` that constructs the `EventSource` returns `() => eventSource.close()` as its cleanup function (Principle IX — mandatory cleanup for resource-acquiring effects). If not, patch the hook and add/update Vitest tests in `frontend/src/services/__tests__/` asserting the EventSource is closed when the hook unmounts (simulate with `cleanup()` from Testing Library)
+- [x] T175 [P] Verify existing T049 implementation (`backend/src/backend/jobs/search_job.py` test-search job): confirm it creates a `BackgroundJob` record at job start with `status=running` and updates to `completed`/`failed` on exit, and that `T048` (`POST .../test`) returns the `job_id` in its response body (FR-027a). If not, patch the implementation and update the T048 endpoint response schema; add/update test coverage in `backend/tests/integration/test_search_strings_router.py` to assert `job_id` is present in the 202 response
+- [x] T176 [P] Verify existing T073 implementation (`frontend/src/services/jobs.ts` `useJobProgress` hook): confirm the `useEffect` that constructs the `EventSource` returns `() => eventSource.close()` as its cleanup function (Principle IX — mandatory cleanup for resource-acquiring effects). If not, patch the hook and add/update Vitest tests in `frontend/src/services/__tests__/` asserting the EventSource is closed when the hook unmounts (simulate with `cleanup()` from Testing Library)
 
 ### Mutation Testing (Constitution Principle VI — Final Quality Gate)
 
-- [X] T159 [P] [T] Run `mutmut run --paths-to-mutate backend/src/backend/` and `mutmut run --paths-to-mutate agents/src/agents/` targeting the new modules added in this feature (dedup.py, phase_gate.py, audit.py services, screener.py extension, extractor.py extension); achieve **≥85% mutation kill rate** (Constitution Principle VI mandates 85%); add surviving mutants that indicate test gaps as additional test cases in the relevant unit test files
-- [X] T160 [P] [T] Run `npx stryker run` against the new React components added in this feature (phase2/, phase3/, results/, admin/ directories); achieve **≥85% mutation kill rate** (Constitution Principle VI mandates 85%); add surviving mutants as additional Vitest test cases
+- [x] T159 [P] [T] Run `mutmut run --paths-to-mutate backend/src/backend/` and `mutmut run --paths-to-mutate agents/src/agents/` targeting the new modules added in this feature (dedup.py, phase_gate.py, audit.py services, screener.py extension, extractor.py extension); achieve **≥85% mutation kill rate** (Constitution Principle VI mandates 85%); add surviving mutants that indicate test gaps as additional test cases in the relevant unit test files
+- [x] T160 [P] [T] Run `npx stryker run` against the new React components added in this feature (phase2/, phase3/, results/, admin/ directories); achieve **≥85% mutation kill rate** (Constitution Principle VI mandates 85%); add surviving mutants as additional Vitest test cases
 
 ---
 
@@ -582,6 +583,7 @@ the browser without touching infrastructure.
 ## Parallel Execution Examples
 
 ### Phase 3 (US1) — Models + Agent Prompts in Parallel
+
 ```
 Parallel set A (models):
   T024: Create pico.py model
@@ -593,6 +595,7 @@ Parallel set B (agent prompts, after A starts):
 ```
 
 ### Phase 5 (US3) — Models in Parallel
+
 ```
 Parallel set (all different files):
   T054: Extend Paper model

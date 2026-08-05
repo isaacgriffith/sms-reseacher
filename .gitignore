@@ -67,3 +67,5 @@ frontend/reports/
 frontend/test-results/
 frontend/coverage/
 frontend/playwright-report/
+# Vitest coverage temp output
+frontend/coverage-temp/

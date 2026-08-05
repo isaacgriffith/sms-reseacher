@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -523,11 +524,12 @@ async def test_run_expert_seed_suggestion_returns_error_when_job_not_found():
 # ---------------------------------------------------------------------------
 
 
-async def test_fetch_test_search_results_returns_empty_on_exception():
-    """_fetch_test_search_results returns (set(), 2) on network exception.
+async def test_fetch_test_search_results_raises_on_network_exception():
+    """_fetch_test_search_results raises when researcher-mcp is unreachable.
 
-    When the MCP HTTP call raises an exception the function should return an
-    empty set with a default count of 2.
+    A transport failure must surface as TestSearchUnavailableError so the
+    calling job records a FAILED status, rather than returning a fabricated
+    result set that is indistinguishable from a genuinely poor search string.
     """
     with patch("httpx.AsyncClient") as mock_client:
         mock_client.return_value.__aenter__.return_value.post = AsyncMock(
@@ -537,11 +539,67 @@ async def test_fetch_test_search_results_returns_empty_on_exception():
             "backend.core.config.get_settings",
             return_value=MagicMock(researcher_mcp_url="http://localhost:8002/sse"),
         ):
-            from backend.jobs.search_job import _fetch_test_search_results
+            from backend.jobs.search_job import (
+                TestSearchUnavailableError,
+                _fetch_test_search_results,
+            )
 
-            dois, count = await _fetch_test_search_results("TDD AND testing", ["acm"])
+            with pytest.raises(TestSearchUnavailableError):
+                await _fetch_test_search_results("TDD AND testing", ["acm"])
 
-    assert dois == set()
+
+async def test_fetch_test_search_results_raises_on_error_status():
+    """_fetch_test_search_results raises on a non-2xx MCP response.
+
+    A 500 must not be reported as an empty-but-valid result set; it is a
+    service failure and must be distinguishable from zero matches.
+    """
+    resp = MagicMock()
+    resp.status_code = 500
+    resp.json.return_value = {}
+
+    with (
+        patch("httpx.AsyncClient") as mock_client,
+        patch(
+            "backend.core.config.get_settings",
+            return_value=MagicMock(researcher_mcp_url="http://localhost:8002/sse"),
+        ),
+    ):
+        mock_client.return_value.__aenter__.return_value.post = AsyncMock(return_value=resp)
+
+        from backend.jobs.search_job import (
+            TestSearchUnavailableError,
+            _fetch_test_search_results,
+        )
+
+        with pytest.raises(TestSearchUnavailableError):
+            await _fetch_test_search_results("TDD", ["acm"])
+
+
+async def test_fetch_test_search_results_accepts_non_200_success_status():
+    """_fetch_test_search_results parses any 2xx response, not only 200.
+
+    A 201/202 from researcher-mcp is a successful response and its payload
+    must be parsed rather than discarded.
+    """
+    resp = MagicMock()
+    resp.status_code = 201
+    resp.json.return_value = {"papers": [{"doi": "10.1/paper1"}, {"doi": "10.1/paper2"}]}
+
+    with (
+        patch("httpx.AsyncClient") as mock_client,
+        patch(
+            "backend.core.config.get_settings",
+            return_value=MagicMock(researcher_mcp_url="http://localhost:8002/sse"),
+        ),
+    ):
+        mock_client.return_value.__aenter__.return_value.post = AsyncMock(return_value=resp)
+
+        from backend.jobs.search_job import _fetch_test_search_results
+
+        dois, count = await _fetch_test_search_results("TDD", ["acm"])
+
+    assert dois == {"10.1/paper1", "10.1/paper2"}
     assert count == 2
 
 

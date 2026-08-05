@@ -11,6 +11,7 @@
 Extend the research platform to support Rapid Reviews. A Rapid Review is a secondary study designed to provide timely, actionable evidence to support practitioner decision-making within tight time and resource constraints. Unlike a full SLR or SMS, a Rapid Review trades comprehensiveness for speed while maintaining a systematic, documented protocol.
 
 Rapid Reviews are:
+
 - Bounded to a specific practical problem defined in close collaboration with practitioners
 - Conducted within a practical context (days or weeks, not months)
 - Reported through practitioner-friendly mediums (Evidence Briefings, not academic papers)
@@ -57,16 +58,16 @@ Rapid Reviews are **not** ad-hoc literature reviews and are **not** an excuse fo
 
 ## Key Differences from SMS/SLR Workflows
 
-| Dimension | SLR/SMS | Rapid Review |
-|---|---|---|
-| Problem framing | Research gap / knowledge aggregation | Practical problem bounded to context |
-| Stakeholders | Researchers only | Researchers + practitioners (mandatory) |
-| Time frame | Months to years | Days to weeks |
-| Search sources | Multiple databases required | Single source allowed |
-| Reviewers | Multi-reviewer (with Kappa) | Single reviewer allowed |
-| Quality appraisal | Mandatory (SLR) / recommended | Optional or peer-review-only filter |
-| Synthesis | Meta-analysis, descriptive, qualitative | Narrative synthesis (primary) |
-| Output | Academic journal/conference paper | Evidence Briefing (one-page) + complementary material |
+| Dimension         | SLR/SMS                                 | Rapid Review                                          |
+| ----------------- | --------------------------------------- | ----------------------------------------------------- |
+| Problem framing   | Research gap / knowledge aggregation    | Practical problem bounded to context                  |
+| Stakeholders      | Researchers only                        | Researchers + practitioners (mandatory)               |
+| Time frame        | Months to years                         | Days to weeks                                         |
+| Search sources    | Multiple databases required             | Single source allowed                                 |
+| Reviewers         | Multi-reviewer (with Kappa)             | Single reviewer allowed                               |
+| Quality appraisal | Mandatory (SLR) / recommended           | Optional or peer-review-only filter                   |
+| Synthesis         | Meta-analysis, descriptive, qualitative | Narrative synthesis (primary)                         |
+| Output            | Academic journal/conference paper       | Evidence Briefing (one-page) + complementary material |
 
 ---
 

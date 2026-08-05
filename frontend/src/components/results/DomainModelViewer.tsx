@@ -78,7 +78,14 @@ export default function DomainModelViewer({ domainModel }: DomainModelViewerProp
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '0.75rem',
+        }}
+      >
         <Typography component="span" sx={{ fontSize: '0.8125rem', color: '#6b7280' }}>
           {concepts.length} concepts · {relationships.length} relationships · v{domainModel.version}
         </Typography>
@@ -107,12 +114,7 @@ export default function DomainModelViewer({ domainModel }: DomainModelViewerProp
           overflow: 'hidden',
         }}
       >
-        <svg
-          ref={svgRef}
-          width="100%"
-          height="480"
-          style={{ display: 'block' }}
-        />
+        <svg ref={svgRef} width="100%" height="480" style={{ display: 'block' }} />
       </Paper>
     </Box>
   );
@@ -155,7 +157,13 @@ async function renderGraph(
 
   const simulation = d3
     .forceSimulation(nodes)
-    .force('link', d3.forceLink<DomainNode, DomainLink>(links).id((d) => d.id).distance(120))
+    .force(
+      'link',
+      d3
+        .forceLink<DomainNode, DomainLink>(links)
+        .id((d) => d.id)
+        .distance(120),
+    )
     .force('charge', d3.forceManyBody().strength(-300))
     .force('center', d3.forceCenter(width / 2, height / 2))
     .force('collision', d3.forceCollide(40));
@@ -232,7 +240,7 @@ async function renderGraph(
 
   nodeGroup
     .append('text')
-    .text((d: DomainNode) => d.id.length > 12 ? d.id.slice(0, 11) + '…' : d.id)
+    .text((d: DomainNode) => (d.id.length > 12 ? d.id.slice(0, 11) + '…' : d.id))
     .attr('text-anchor', 'middle')
     .attr('dy', '0.35em')
     .attr('font-size', '9px')
@@ -248,8 +256,16 @@ async function renderGraph(
       .attr('y2', (d: DomainLink) => (d.target as DomainNode).y ?? 0);
 
     linkLabel
-      .attr('x', (d: DomainLink) => (((d.source as DomainNode).x ?? 0) + ((d.target as DomainNode).x ?? 0)) / 2)
-      .attr('y', (d: DomainLink) => (((d.source as DomainNode).y ?? 0) + ((d.target as DomainNode).y ?? 0)) / 2);
+      .attr(
+        'x',
+        (d: DomainLink) =>
+          (((d.source as DomainNode).x ?? 0) + ((d.target as DomainNode).x ?? 0)) / 2,
+      )
+      .attr(
+        'y',
+        (d: DomainLink) =>
+          (((d.source as DomainNode).y ?? 0) + ((d.target as DomainNode).y ?? 0)) / 2,
+      );
 
     nodeGroup.attr('transform', (d: DomainNode) => `translate(${d.x ?? 0},${d.y ?? 0})`);
   });

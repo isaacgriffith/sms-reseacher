@@ -53,7 +53,11 @@ export default function ResultsPage() {
 
   const [activeTab, setActiveTab] = useState<TabId>('charts');
 
-  const { data: results, isLoading, error } = useQuery<ResultsSummary>({
+  const {
+    data: results,
+    isLoading,
+    error,
+  } = useQuery<ResultsSummary>({
     queryKey: ['results', numericStudyId],
     queryFn: () => api.get<ResultsSummary>(`/api/v1/studies/${numericStudyId}/results`),
     enabled: !!numericStudyId,
@@ -75,8 +79,17 @@ export default function ResultsPage() {
   return (
     <Container maxWidth={false} sx={{ maxWidth: '72rem', margin: '0 auto', padding: '1.5rem' }}>
       {/* Page header */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-        <Typography variant="h5" sx={{ margin: 0, fontSize: '1.25rem', color: '#111827' }}>Results</Typography>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '1.5rem',
+        }}
+      >
+        <Typography variant="h5" sx={{ margin: 0, fontSize: '1.25rem', color: '#111827' }}>
+          Results
+        </Typography>
         <Button
           variant="contained"
           onClick={() => generateMutation.mutate()}
@@ -89,25 +102,34 @@ export default function ResultsPage() {
 
       {generateMutation.isSuccess && (
         <Alert severity="info" sx={{ marginBottom: '1rem' }}>
-          Result generation job queued (job #{generateMutation.data?.job_id}). Charts will appear shortly.
+          Result generation job queued (job #{generateMutation.data?.job_id}). Charts will appear
+          shortly.
         </Alert>
       )}
       {generateMutation.isError && (
-        <Alert severity="error" sx={{ marginBottom: '1rem' }}>Failed to enqueue generation job. Try again.</Alert>
+        <Alert severity="error" sx={{ marginBottom: '1rem' }}>
+          Failed to enqueue generation job. Try again.
+        </Alert>
       )}
 
-      {isLoading && <Typography sx={{ color: '#6b7280', fontSize: '0.875rem' }}>Loading results…</Typography>}
+      {isLoading && (
+        <Typography sx={{ color: '#6b7280', fontSize: '0.875rem' }}>Loading results…</Typography>
+      )}
       {error && (
-        <Typography sx={{ color: '#ef4444', fontSize: '0.875rem' }}>Failed to load results.</Typography>
+        <Typography sx={{ color: '#ef4444', fontSize: '0.875rem' }}>
+          Failed to load results.
+        </Typography>
       )}
 
       {/* Tabs */}
       <Box sx={{ display: 'flex', gap: '0.25rem', borderBottom: '1px solid #e2e8f0' }}>
-        {([
-          { id: 'charts', label: `Charts (${charts.length})` },
-          { id: 'domain_model', label: 'Domain Model' },
-          { id: 'export', label: 'Export' },
-        ] as Array<{ id: TabId; label: string }>).map((tab) => (
+        {(
+          [
+            { id: 'charts', label: `Charts (${charts.length})` },
+            { id: 'domain_model', label: 'Domain Model' },
+            { id: 'export', label: 'Export' },
+          ] as Array<{ id: TabId; label: string }>
+        ).map((tab) => (
           <Button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
@@ -133,9 +155,7 @@ export default function ResultsPage() {
 
       {/* Tab content */}
       <Box sx={{ marginTop: '1.25rem' }}>
-        {activeTab === 'charts' && (
-          <ChartGallery studyId={numericStudyId} charts={charts} />
-        )}
+        {activeTab === 'charts' && <ChartGallery studyId={numericStudyId} charts={charts} />}
 
         {activeTab === 'domain_model' && domainModel && (
           <DomainModelViewer domainModel={domainModel} />
@@ -155,9 +175,7 @@ export default function ResultsPage() {
           </Box>
         )}
 
-        {activeTab === 'export' && (
-          <ExportPanel studyId={numericStudyId} />
-        )}
+        {activeTab === 'export' && <ExportPanel studyId={numericStudyId} />}
       </Box>
     </Container>
   );

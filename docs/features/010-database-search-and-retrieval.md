@@ -33,6 +33,7 @@ During study creation (New Study Wizard, Phase 2 — Study Identification) and i
   - **Supplementary**: Google Scholar, Semantic Scholar
 
 Alongside the database selection, researchers can enable the following supplementary search modes:
+
 - **Snowball Sampling** (backward/forward) — always available; uses Semantic Scholar and CrossRef for citation/reference data
 - **Grey Literature** (for SLR/Tertiary studies) — enables scraping of author pages and journal proceedings pages
 
@@ -43,7 +44,7 @@ A separate section in the study settings controls how the system attempts to ret
 - **Unpaywall** (enabled by default): Retrieves open-access PDFs using the Unpaywall API. Requires an institutional email address configured globally in the admin settings.
 - **SciHub** (disabled by default, opt-in): Retrieves PDFs from SciHub for papers unavailable through open-access channels. This option is gated behind an explicit acknowledgment:
 
-  > *"SciHub distributes papers that may be subject to copyright restrictions. By enabling this option, you acknowledge that access to SciHub content may be legally restricted in your jurisdiction and that you take responsibility for compliance with applicable laws and your institution's policies. The system administrators are not liable for misuse."*
+  > _"SciHub distributes papers that may be subject to copyright restrictions. By enabling this option, you acknowledge that access to SciHub content may be legally restricted in your jurisdiction and that you take responsibility for compliance with applicable laws and your institution's policies. The system administrators are not liable for misuse."_
 
   SciHub can only be enabled if `SCIHUB_ENABLED=true` is set in the server environment (operator opt-in at the infrastructure level).
 
@@ -60,7 +61,13 @@ All integrations are implemented as MCP tools within `researcher-mcp` (FastMCP 2
   "doi": "string | null",
   "title": "string",
   "abstract": "string | null",
-  "authors": [{ "name": "string", "institution": "string | null", "orcid": "string | null" }],
+  "authors": [
+    {
+      "name": "string",
+      "institution": "string | null",
+      "orcid": "string | null"
+    }
+  ],
   "year": 2024,
   "venue": "string | null",
   "venue_type": "journal | conference | book | preprint | report | other | null",
@@ -80,12 +87,14 @@ All integrations are implemented as MCP tools within `researcher-mcp` (FastMCP 2
 **Library**: Official IEEE Python SDK (`xplore` / `xploreapi`) from `developer.ieee.org`.
 
 **MCP Tool: `search_ieee`**
+
 ```json
 Input:  { "query": "string", "max_results": 100, "year_from": 2010, "year_to": 2025, "content_type": ["Journals","Conference Publications","Books","Standards"] | null }
 Output: [PaperRecord]
 ```
 
 **MCP Tool: `get_ieee_paper`**
+
 ```json
 Input:  { "article_number": "string" }
 Output: PaperRecord
@@ -102,12 +111,13 @@ Output: PaperRecord
 **Approach**: Custom scraper using `httpx` and `BeautifulSoup`. Metadata (title, abstract, DOI, authors, venue) is extracted from ACM DL search result pages. Where institutional access is not available, abstract-only records are returned.
 
 **MCP Tool: `search_acm`**
+
 ```json
 Input:  { "query": "string", "max_results": 100, "year_from": 2010, "year_to": 2025 }
 Output: [PaperRecord]
 ```
 
-**Notes**: ACM scraping is subject to IP-based rate limiting. The tool implements exponential backoff and will return a partial result set with a `truncated: true` flag if rate limiting is encountered. No API key required; institutional network access improves metadata coverage. Explicit disclaimer in admin UI: *"ACM Digital Library access is provided via web scraping as no official API is available. Use in accordance with ACM's Terms of Service."*
+**Notes**: ACM scraping is subject to IP-based rate limiting. The tool implements exponential backoff and will return a partial result set with a `truncated: true` flag if rate limiting is encountered. No API key required; institutional network access improves metadata coverage. Explicit disclaimer in admin UI: _"ACM Digital Library access is provided via web scraping as no official API is available. Use in accordance with ACM's Terms of Service."_
 
 ---
 
@@ -118,6 +128,7 @@ Output: [PaperRecord]
 **Library**: `scholarly`
 
 **MCP Tool: `search_google_scholar`**
+
 ```json
 Input:  { "query": "string", "max_results": 100, "year_from": 2010, "year_to": 2025, "citations": false }
 Output: [PaperRecord]
@@ -125,7 +136,7 @@ Output: [PaperRecord]
 
 **Proxy Configuration**: `SCHOLARLY_PROXY_URL` environment variable (optional). If not configured, the tool operates without a proxy and may encounter CAPTCHAs after moderate query volumes. The admin panel displays a warning when Google Scholar is enabled without proxy configuration.
 
-**Notes**: Explicit disclaimer in admin UI: *"Google Scholar access relies on unofficial methods. Results may be incomplete or temporarily unavailable due to rate limiting. Use in accordance with Google's Terms of Service."*
+**Notes**: Explicit disclaimer in admin UI: _"Google Scholar access relies on unofficial methods. Results may be incomplete or temporarily unavailable due to rate limiting. Use in accordance with Google's Terms of Service."_
 
 ---
 
@@ -136,6 +147,7 @@ Output: [PaperRecord]
 **Library**: Direct `httpx` REST integration against the Elsevier Engineering Village API.
 
 **MCP Tool: `search_inspec`**
+
 ```json
 Input:  { "query": "string", "max_results": 100, "year_from": 2010, "year_to": 2025, "databases": ["INS", "CPX"] }
 Output: [PaperRecord]
@@ -154,12 +166,14 @@ Output: [PaperRecord]
 **Library**: `pybliometrics` (PyPI: `pybliometrics`) — the most feature-complete and actively maintained Python wrapper for the Scopus and ScienceDirect APIs.
 
 **MCP Tool: `search_scopus`**
+
 ```json
 Input:  { "query": "string", "max_results": 100, "year_from": 2010, "year_to": 2025, "subject_areas": ["COMP","ENGI"] | null }
 Output: [PaperRecord]
 ```
 
 **MCP Tool: `get_scopus_paper`**
+
 ```json
 Input:  { "doi": "string" } | { "eid": "string" }
 Output: PaperRecord
@@ -176,6 +190,7 @@ Output: PaperRecord
 **Library**: Official Clarivate Python client `wosstarter_python_client` (GitHub: `clarivate/wosstarter_python_client`).
 
 **MCP Tool: `search_wos`**
+
 ```json
 Input:  { "query": "string", "max_results": 100, "year_from": 2010, "year_to": 2025, "edition": "WOS" | "MEDLINE" | "BIOSIS" | null }
 Output: [PaperRecord]
@@ -192,6 +207,7 @@ Output: [PaperRecord]
 **Library**: `pybliometrics` or `elsapy` (GitHub: `ElsevierDev/elsapy`). Use `pybliometrics` as the primary implementation since it is already used for Scopus; fall back to `elsapy` if ScienceDirect-specific endpoints are needed.
 
 **MCP Tool: `search_sciencedirect`**
+
 ```json
 Input:  { "query": "string", "max_results": 100, "year_from": 2010, "year_to": 2025, "open_access_only": false }
 Output: [PaperRecord]
@@ -208,6 +224,7 @@ Output: [PaperRecord]
 **Library**: Official `springernature_api_client` (GitHub: `springernature/springernature_api_client`, requires Python 3.9+).
 
 **MCP Tool: `search_springer`**
+
 ```json
 Input:  { "query": "string", "max_results": 100, "year_from": 2010, "year_to": 2025, "open_access_only": false }
 Output: [PaperRecord]
@@ -226,39 +243,48 @@ Semantic Scholar provides a public Academic Graph API covering ~220 million pape
 **API Key Storage**: `SEMANTIC_SCHOLAR_API_KEY` environment variable (optional; increases rate limits from shared to per-key).
 
 ### Updated MCP Tool: `search_semantic_scholar`
+
 ```json
 Input:  { "query": "string", "max_results": 100, "year_from": 2010, "year_to": 2025, "fields_of_study": ["Computer Science","Artificial Intelligence"] | null, "open_access_only": false }
 Output: [PaperRecord]
 ```
 
 ### Updated MCP Tool: `get_references` (upgrade existing stub)
+
 Uses Semantic Scholar as the primary data source for reference lists, falling back to CrossRef.
+
 ```json
 Input:  { "doi": "string", "max_results": 200 }
 Output: [PaperRecord + { "intent": "methodology|background|result|unknown" }]
 ```
 
 ### Updated MCP Tool: `get_citations` (upgrade existing stub)
+
 Uses Semantic Scholar as the primary data source for citation lists.
+
 ```json
 Input:  { "doi": "string", "max_results": 200 }
 Output: [PaperRecord + { "citation_source": "semantic_scholar" }]
 ```
 
 ### New MCP Tool: `search_author_semantic_scholar`
+
 ```json
 Input:  { "name": "string", "institution": "string | null", "limit": 10 }
 Output: [{ "author_id": "string", "name": "string", "affiliations": ["string"], "paper_count": 42, "citation_count": 1234, "h_index": 12, "profile_url": "string", "fields_of_study": ["string"] }]
 ```
 
 ### New MCP Tool: `get_author_semantic_scholar`
+
 ```json
 Input:  { "author_id": "string" }
 Output: { "author_id": "string", "name": "string", "affiliations": ["string"], "papers": [PaperRecord] }
 ```
 
 ### New MCP Tool: `get_paper_semantic_scholar`
+
 Retrieves full metadata for a single paper including abstract, TLDRs, embedding vectors, and influential citation count.
+
 ```json
 Input:  { "doi": "string" } | { "semantic_scholar_id": "string" }
 Output: PaperRecord + { "tldr": "string | null", "influential_citation_count": 12, "is_open_access": true, "fields_of_study": ["string"] }
@@ -335,14 +361,14 @@ The credential management for all database integrations is centralised in the ad
 
 For each database integration, the admin panel shows:
 
-| Column | Content |
-|---|---|
-| Database | Name and logo |
-| Status | `configured` / `not configured` / `unreachable` |
+| Column      | Content                                                    |
+| ----------- | ---------------------------------------------------------- |
+| Database    | Name and logo                                              |
+| Status      | `configured` / `not configured` / `unreachable`            |
 | Access Type | Official API / Unofficial scraping / Subscription required |
-| API Key | Masked display of stored key; edit button |
-| Last Tested | Timestamp of last connectivity test |
-| Test Now | Button to run a lightweight probe (e.g., one-paper search) |
+| API Key     | Masked display of stored key; edit button                  |
+| Last Tested | Timestamp of last connectivity test                        |
+| Test Now    | Button to run a lightweight probe (e.g., one-paper search) |
 
 API keys are stored encrypted in the database. They are never returned in plaintext via any API response. The connectivity test for each integration runs a minimal query and reports success, rate-limit warning, or authentication failure.
 
@@ -352,28 +378,28 @@ API keys are stored encrypted in the database. They are never returned in plaint
 
 ## New and Updated MCP Tool Contracts Summary
 
-| Tool | Status | Primary Source |
-|---|---|---|
-| `search_ieee` | New | IEEE Xplore API (`xplore`/`xploreapi`) |
-| `get_ieee_paper` | New | IEEE Xplore API |
-| `search_acm` | New | Custom scraper (`httpx` + `BeautifulSoup`) |
-| `search_google_scholar` | New | `scholarly` |
-| `search_inspec` | New | Elsevier Engineering Village REST API |
-| `search_scopus` | New | `pybliometrics` |
-| `get_scopus_paper` | New | `pybliometrics` |
-| `search_wos` | New | `wosstarter_python_client` |
-| `search_sciencedirect` | New | `pybliometrics` / `elsapy` |
-| `search_springer` | New | `springernature_api_client` |
-| `search_semantic_scholar` | New | `semanticscholar` |
-| `search_author_semantic_scholar` | New | `semanticscholar` |
-| `get_author_semantic_scholar` | New | `semanticscholar` |
-| `get_paper_semantic_scholar` | New | `semanticscholar` |
-| `get_references` | Upgraded (was stub) | `semanticscholar` + CrossRef fallback |
-| `get_citations` | Upgraded (was stub) | `semanticscholar` + CrossRef fallback |
-| `fetch_paper_pdf` | Upgraded (was stub) | `unpywall` → direct → `scidownl` (opt-in) |
-| `convert_paper_to_markdown` | New | `markitdown[all]` (local) |
-| `get_paper_markdown` | New | Database cache |
-| `search_papers` | Upgraded | Fan-out across selected per-study indices |
+| Tool                             | Status              | Primary Source                             |
+| -------------------------------- | ------------------- | ------------------------------------------ |
+| `search_ieee`                    | New                 | IEEE Xplore API (`xplore`/`xploreapi`)     |
+| `get_ieee_paper`                 | New                 | IEEE Xplore API                            |
+| `search_acm`                     | New                 | Custom scraper (`httpx` + `BeautifulSoup`) |
+| `search_google_scholar`          | New                 | `scholarly`                                |
+| `search_inspec`                  | New                 | Elsevier Engineering Village REST API      |
+| `search_scopus`                  | New                 | `pybliometrics`                            |
+| `get_scopus_paper`               | New                 | `pybliometrics`                            |
+| `search_wos`                     | New                 | `wosstarter_python_client`                 |
+| `search_sciencedirect`           | New                 | `pybliometrics` / `elsapy`                 |
+| `search_springer`                | New                 | `springernature_api_client`                |
+| `search_semantic_scholar`        | New                 | `semanticscholar`                          |
+| `search_author_semantic_scholar` | New                 | `semanticscholar`                          |
+| `get_author_semantic_scholar`    | New                 | `semanticscholar`                          |
+| `get_paper_semantic_scholar`     | New                 | `semanticscholar`                          |
+| `get_references`                 | Upgraded (was stub) | `semanticscholar` + CrossRef fallback      |
+| `get_citations`                  | Upgraded (was stub) | `semanticscholar` + CrossRef fallback      |
+| `fetch_paper_pdf`                | Upgraded (was stub) | `unpywall` → direct → `scidownl` (opt-in)  |
+| `convert_paper_to_markdown`      | New                 | `markitdown[all]` (local)                  |
+| `get_paper_markdown`             | New                 | Database cache                             |
+| `search_papers`                  | Upgraded            | Fan-out across selected per-study indices  |
 
 The existing `search_papers` tool is updated to fan out to all per-study selected indices in parallel, merging and deduplicating results before returning.
 

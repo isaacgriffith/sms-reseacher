@@ -57,9 +57,7 @@ export function useStudyDatabaseSelection(studyId: number) {
   const { data, isLoading, error } = useQuery<DatabaseSelectionResponse>({
     queryKey,
     queryFn: () =>
-      api.get<DatabaseSelectionResponse>(
-        `/api/v1/studies/${studyId}/database-selection`
-      ),
+      api.get<DatabaseSelectionResponse>(`/api/v1/studies/${studyId}/database-selection`),
     enabled: studyId > 0,
   });
 
@@ -69,10 +67,7 @@ export function useStudyDatabaseSelection(studyId: number) {
     DatabaseSelectionUpdateRequest
   >({
     mutationFn: (body: DatabaseSelectionUpdateRequest) =>
-      api.put<DatabaseSelectionResponse>(
-        `/api/v1/studies/${studyId}/database-selection`,
-        body
-      ),
+      api.put<DatabaseSelectionResponse>(`/api/v1/studies/${studyId}/database-selection`, body),
     onSuccess: (updated) => {
       queryClient.setQueryData(queryKey, updated);
     },

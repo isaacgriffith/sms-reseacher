@@ -46,11 +46,7 @@ function FunnelPlotViewer({ funnelPlotSvg, isLoading = false }: FunnelPlotViewer
 
   if (!funnelPlotSvg) {
     return (
-      <Typography
-        variant="body2"
-        color="text.secondary"
-        data-testid="funnel-plot-empty"
-      >
+      <Typography variant="body2" color="text.secondary" data-testid="funnel-plot-empty">
         No funnel plot available. Run a meta-analysis synthesis to generate one.
       </Typography>
     );

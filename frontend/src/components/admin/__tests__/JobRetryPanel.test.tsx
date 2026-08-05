@@ -22,7 +22,12 @@ vi.mock('../../../services/api', () => ({
     post: vi.fn(),
   },
   ApiError: class ApiError extends Error {
-    constructor(public status: number, message: string) { super(message); }
+    constructor(
+      public status: number,
+      message: string,
+    ) {
+      super(message);
+    }
   },
 }));
 
@@ -32,7 +37,9 @@ import JobRetryPanel from '../JobRetryPanel';
 const mockApi = api as { get: ReturnType<typeof vi.fn>; post: ReturnType<typeof vi.fn> };
 
 function renderWithQuery(ui: React.ReactElement) {
-  const qc = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
+  const qc = new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+  });
   return render(<QueryClientProvider client={qc}>{ui}</QueryClientProvider>);
 }
 

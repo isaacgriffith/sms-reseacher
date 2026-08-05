@@ -45,26 +45,17 @@ export default function ReviewerPanel({
 
   const { data: inclusion = [] } = useQuery<Criterion[]>({
     queryKey: ['criteria', studyId, 'inclusion'],
-    queryFn: () =>
-      api.get<Criterion[]>(`/api/v1/studies/${studyId}/criteria/inclusion`),
+    queryFn: () => api.get<Criterion[]>(`/api/v1/studies/${studyId}/criteria/inclusion`),
   });
 
   const { data: exclusion = [] } = useQuery<Criterion[]>({
     queryKey: ['criteria', studyId, 'exclusion'],
-    queryFn: () =>
-      api.get<Criterion[]>(`/api/v1/studies/${studyId}/criteria/exclusion`),
+    queryFn: () => api.get<Criterion[]>(`/api/v1/studies/${studyId}/criteria/exclusion`),
   });
 
   const submitDecision = useMutation({
-    mutationFn: (body: {
-      reviewer_id: number;
-      decision: string;
-      reasons: object[];
-    }) =>
-      api.post(
-        `/api/v1/studies/${studyId}/papers/${candidateId}/decisions`,
-        body
-      ),
+    mutationFn: (body: { reviewer_id: number; decision: string; reasons: object[] }) =>
+      api.post(`/api/v1/studies/${studyId}/papers/${candidateId}/decisions`, body),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['decisions', studyId, candidateId] });
       qc.invalidateQueries({ queryKey: ['papers', studyId] });
@@ -98,14 +89,11 @@ export default function ReviewerPanel({
 
   const toggleReason = (id: number) => {
     setSelectedReasons((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
     );
   };
 
-  const canSubmit =
-    selectedDecision !== null &&
-    reviewerId !== null &&
-    !submitDecision.isPending;
+  const canSubmit = selectedDecision !== null && reviewerId !== null && !submitDecision.isPending;
 
   return (
     <Box
@@ -116,13 +104,25 @@ export default function ReviewerPanel({
         background: '#f8fafc',
       }}
     >
-      <Typography variant="subtitle2" sx={{ margin: '0 0 0.875rem', fontSize: '0.9375rem', color: '#111827' }}>
+      <Typography
+        variant="subtitle2"
+        sx={{ margin: '0 0 0.875rem', fontSize: '0.9375rem', color: '#111827' }}
+      >
         Submit Decision
       </Typography>
 
       {/* Reviewer ID input (simplified — in real use would be populated from auth context) */}
       <Box sx={{ marginBottom: '0.875rem' }}>
-        <Typography component="label" sx={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: '#374151', marginBottom: '0.375rem' }}>
+        <Typography
+          component="label"
+          sx={{
+            display: 'block',
+            fontSize: '0.8125rem',
+            fontWeight: 600,
+            color: '#374151',
+            marginBottom: '0.375rem',
+          }}
+        >
           Reviewer ID
         </Typography>
         <TextField
@@ -137,7 +137,16 @@ export default function ReviewerPanel({
 
       {/* Decision buttons */}
       <Box sx={{ marginBottom: '0.875rem' }}>
-        <Typography component="label" sx={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: '#374151', marginBottom: '0.375rem' }}>
+        <Typography
+          component="label"
+          sx={{
+            display: 'block',
+            fontSize: '0.8125rem',
+            fontWeight: 600,
+            color: '#374151',
+            marginBottom: '0.375rem',
+          }}
+        >
           Decision
         </Typography>
         <Box sx={{ display: 'flex', gap: '0.5rem' }}>
@@ -173,13 +182,41 @@ export default function ReviewerPanel({
       {/* Criteria reason selector */}
       {selectedDecision && (inclusion.length > 0 || exclusion.length > 0) && (
         <Box sx={{ marginBottom: '0.875rem' }}>
-          <Typography component="label" sx={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: '#374151', marginBottom: '0.375rem' }}>
+          <Typography
+            component="label"
+            sx={{
+              display: 'block',
+              fontSize: '0.8125rem',
+              fontWeight: 600,
+              color: '#374151',
+              marginBottom: '0.375rem',
+            }}
+          >
             Reasons (select criteria)
           </Typography>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: '0.375rem', maxHeight: '160px', overflowY: 'auto' }}>
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.375rem',
+              maxHeight: '160px',
+              overflowY: 'auto',
+            }}
+          >
             {inclusion.length > 0 && (
               <Box>
-                <Typography sx={{ fontSize: '0.6875rem', fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', padding: '0.25rem 0' }}>Inclusion Criteria</Typography>
+                <Typography
+                  sx={{
+                    fontSize: '0.6875rem',
+                    fontWeight: 700,
+                    color: '#9ca3af',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    padding: '0.25rem 0',
+                  }}
+                >
+                  Inclusion Criteria
+                </Typography>
                 {inclusion.map((c) => (
                   <CriterionCheckbox
                     key={c.id}
@@ -192,7 +229,18 @@ export default function ReviewerPanel({
             )}
             {exclusion.length > 0 && (
               <Box>
-                <Typography sx={{ fontSize: '0.6875rem', fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', padding: '0.25rem 0' }}>Exclusion Criteria</Typography>
+                <Typography
+                  sx={{
+                    fontSize: '0.6875rem',
+                    fontWeight: 700,
+                    color: '#9ca3af',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    padding: '0.25rem 0',
+                  }}
+                >
+                  Exclusion Criteria
+                </Typography>
                 {exclusion.map((c) => (
                   <CriterionCheckbox
                     key={c.id}
@@ -209,7 +257,16 @@ export default function ReviewerPanel({
 
       {/* Override annotation */}
       <Box sx={{ marginBottom: '0.875rem' }}>
-        <Typography component="label" sx={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: '#374151', marginBottom: '0.375rem' }}>
+        <Typography
+          component="label"
+          sx={{
+            display: 'block',
+            fontSize: '0.8125rem',
+            fontWeight: 600,
+            color: '#374151',
+            marginBottom: '0.375rem',
+          }}
+        >
           Additional notes / override annotation
         </Typography>
         <TextField

@@ -34,18 +34,18 @@ uv run mypy researcher-mcp/src
 
 ## MCP Tools
 
-| Tool | Description |
-|------|-------------|
-| `search_papers` | Fan-out search across up to 9 academic databases; merged + deduplicated |
-| `get_paper` | Retrieve full metadata by DOI or source ID from a specific database |
-| `search_authors` | Search authors by name (Semantic Scholar) |
-| `get_author` | Retrieve author profile and publication list |
-| `fetch_paper_pdf` | Download full-text PDF via Unpaywall (OA) or Sci-Hub (opt-in) and convert to Markdown |
-| `convert_pdf_to_markdown` | Convert PDF bytes to Markdown via MarkItDown |
-| `convert_url_to_markdown` | Fetch a URL and convert its content to Markdown |
-| `fetch_stored_markdown` | Retrieve previously stored full-text Markdown for a paper |
-| `snowball_references` | Backward snowballing: find papers cited by a given paper |
-| `snowball_citations` | Forward snowballing: find papers that cite a given paper |
+| Tool                      | Description                                                                           |
+| ------------------------- | ------------------------------------------------------------------------------------- |
+| `search_papers`           | Fan-out search across up to 9 academic databases; merged + deduplicated               |
+| `get_paper`               | Retrieve full metadata by DOI or source ID from a specific database                   |
+| `search_authors`          | Search authors by name (Semantic Scholar)                                             |
+| `get_author`              | Retrieve author profile and publication list                                          |
+| `fetch_paper_pdf`         | Download full-text PDF via Unpaywall (OA) or Sci-Hub (opt-in) and convert to Markdown |
+| `convert_pdf_to_markdown` | Convert PDF bytes to Markdown via MarkItDown                                          |
+| `convert_url_to_markdown` | Fetch a URL and convert its content to Markdown                                       |
+| `fetch_stored_markdown`   | Retrieve previously stored full-text Markdown for a paper                             |
+| `snowball_references`     | Backward snowballing: find papers cited by a given paper                              |
+| `snowball_citations`      | Forward snowballing: find papers that cite a given paper                              |
 
 ### `search_papers`
 
@@ -72,33 +72,33 @@ Cascade order: **Unpaywall** (open access) → **arXiv** (preprint) → **SciHub
 
 ## Environment Variables
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `SEMANTIC_SCHOLAR_RPM` | `100` | Semantic Scholar requests/minute |
-| `OPEN_ALEX_RPM` | `300` | OpenAlex requests/minute |
-| `SCIHUB_ENABLED` | `false` | Enable SciHub PDF fetching (read legal notice above) |
-| `SCIHUB_URL` | `https://sci-hub.se` | SciHub mirror URL |
-| `UNPAYWALL_EMAIL` | `researcher@example.com` | Required by Unpaywall API |
-| `IEEE_XPLORE_API_KEY` | — | IEEE Xplore REST API key |
-| `ELSEVIER_API_KEY` | — | Elsevier API key (Scopus, Inspec, ScienceDirect) |
-| `ELSEVIER_INST_TOKEN` | — | Elsevier institutional token (optional) |
-| `WOS_API_KEY` | — | Web of Science Expanded API key |
-| `SPRINGER_API_KEY` | — | SpringerNature API key |
-| `SCHOLARLY_PROXY_URL` | — | Proxy URL for scholarly (Google Scholar; optional) |
+| Variable               | Default                  | Description                                          |
+| ---------------------- | ------------------------ | ---------------------------------------------------- |
+| `SEMANTIC_SCHOLAR_RPM` | `100`                    | Semantic Scholar requests/minute                     |
+| `OPEN_ALEX_RPM`        | `300`                    | OpenAlex requests/minute                             |
+| `SCIHUB_ENABLED`       | `false`                  | Enable SciHub PDF fetching (read legal notice above) |
+| `SCIHUB_URL`           | `https://sci-hub.se`     | SciHub mirror URL                                    |
+| `UNPAYWALL_EMAIL`      | `researcher@example.com` | Required by Unpaywall API                            |
+| `IEEE_XPLORE_API_KEY`  | —                        | IEEE Xplore REST API key                             |
+| `ELSEVIER_API_KEY`     | —                        | Elsevier API key (Scopus, Inspec, ScienceDirect)     |
+| `ELSEVIER_INST_TOKEN`  | —                        | Elsevier institutional token (optional)              |
+| `WOS_API_KEY`          | —                        | Web of Science Expanded API key                      |
+| `SPRINGER_API_KEY`     | —                        | SpringerNature API key                               |
+| `SCHOLARLY_PROXY_URL`  | —                        | Proxy URL for scholarly (Google Scholar; optional)   |
 
 ## Supported Database Sources
 
-| Source | Adapter | Credential |
-|--------|---------|------------|
-| IEEE Xplore | `IEEESource` | `IEEE_XPLORE_API_KEY` |
-| ACM Digital Library | `ACMSource` | *(none required)* |
-| Scopus | `ScopusSource` | `ELSEVIER_API_KEY` |
-| Web of Science | `WoSSource` | `WOS_API_KEY` |
-| Inspec | `InspecSource` | `ELSEVIER_API_KEY` |
-| ScienceDirect | `ScienceDirectSource` | `ELSEVIER_API_KEY` |
-| SpringerNature | `SpringerSource` | `SPRINGER_API_KEY` |
-| Google Scholar | `GoogleScholarSource` | `SCHOLARLY_PROXY_URL` (optional) |
-| Semantic Scholar | `SemanticScholarSource` | `SEMANTIC_SCHOLAR_API_KEY` (optional) |
+| Source              | Adapter                 | Credential                            |
+| ------------------- | ----------------------- | ------------------------------------- |
+| IEEE Xplore         | `IEEESource`            | `IEEE_XPLORE_API_KEY`                 |
+| ACM Digital Library | `ACMSource`             | _(none required)_                     |
+| Scopus              | `ScopusSource`          | `ELSEVIER_API_KEY`                    |
+| Web of Science      | `WoSSource`             | `WOS_API_KEY`                         |
+| Inspec              | `InspecSource`          | `ELSEVIER_API_KEY`                    |
+| ScienceDirect       | `ScienceDirectSource`   | `ELSEVIER_API_KEY`                    |
+| SpringerNature      | `SpringerSource`        | `SPRINGER_API_KEY`                    |
+| Google Scholar      | `GoogleScholarSource`   | `SCHOLARLY_PROXY_URL` (optional)      |
+| Semantic Scholar    | `SemanticScholarSource` | `SEMANTIC_SCHOLAR_API_KEY` (optional) |
 
 ## Project Structure
 

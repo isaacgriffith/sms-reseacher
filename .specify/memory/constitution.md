@@ -163,7 +163,7 @@ Every module, class, and function MUST conform to the five SOLID principles:
   modules. Both MUST depend on abstractions. Concrete implementations MUST be injected, not
   instantiated inside business logic.
 
-*Rationale*: SOLID principles prevent coupling rot, enable independent unit testing, and keep
+_Rationale_: SOLID principles prevent coupling rot, enable independent unit testing, and keep
 the codebase open to the iterative requirements of a research platform.
 
 ### II. Structural Quality Principles
@@ -183,7 +183,7 @@ Code structure MUST reflect the following quality axioms at every layer:
 - **Separation of Concerns (SoC)**: Data access, business logic, presentation, and I/O MUST
   occupy distinct layers with no cross-cutting bleed.
 
-*Rationale*: These axioms collectively bound complexity growth and ensure that each component
+_Rationale_: These axioms collectively bound complexity growth and ensure that each component
 can be understood, tested, and replaced in isolation — critical for a long-lived research tool.
 
 ### III. Code Clarity & Anti-Pattern Avoidance
@@ -221,7 +221,7 @@ All generated and modified code MUST avoid the following anti-patterns:
     the command, but MUST NOT document parameters or return values (these are self-described
     by the CLI framework's help text and would create maintenance duplication).
 
-*Rationale*: Clean, navigable code is a prerequisite for AI-assisted development, peer review,
+_Rationale_: Clean, navigable code is a prerequisite for AI-assisted development, peer review,
 and long-term maintainability of the SMS research platform.
 
 ### IV. Refactoring Discipline
@@ -239,7 +239,7 @@ Before writing any new code or modifying existing code, the following MUST be pe
 4. **Refactoring isolation**: Refactoring commits MUST be separate from feature commits.
    A single commit MUST NOT mix behavioral change with structural change.
 
-*Rationale*: Disciplined refactoring preserves correctness, keeps the test suite meaningful,
+_Rationale_: Disciplined refactoring preserves correctness, keeps the test suite meaningful,
 and prevents incremental quality degradation under deadline pressure.
 
 ### V. GRASP Principles & Design Patterns
@@ -256,7 +256,7 @@ Patterns) and well-known GoF/architectural design patterns where applicable:
 - Pattern application MUST be justified in the plan or code comment. Applying a pattern for
   its own sake (pattern over-engineering) is itself a violation of YAGNI.
 
-*Rationale*: Shared pattern vocabulary reduces cognitive load during code review and AI-
+_Rationale_: Shared pattern vocabulary reduces cognitive load during code review and AI-
 assisted generation, and ensures design intent is explicit and auditable.
 
 ### VI. Testing Discipline
@@ -329,7 +329,7 @@ task list.
   before merging to `main`.
 - Evaluation results MUST be stored as artifacts and referenced in the PR description.
 
-*Rationale*: High coverage, mutation-validated tests, and agent evaluation pipelines are the
+_Rationale_: High coverage, mutation-validated tests, and agent evaluation pipelines are the
 primary safeguards against regression in a research platform where correctness and
 reproducibility are non-negotiable. Metamorphic testing is essential for agents whose outputs
 cannot be oracle-checked deterministically.
@@ -417,7 +417,7 @@ without amending this document is a blocking violation.
 - **Frontend forms**: `react-hook-form` with `zod` validation schemas MUST be used for all
   user-input forms. Uncontrolled or manual `onChange` form patterns are forbidden.
 
-*Rationale*: A fixed, approved stack eliminates "dependency sprawl", ensures every developer
+_Rationale_: A fixed, approved stack eliminates "dependency sprawl", ensures every developer
 and AI agent operates with consistent tooling, and makes the CI/pre-commit configuration
 authoritative rather than advisory.
 
@@ -482,7 +482,7 @@ behaviour across development, staging, and production environments.
   secrets. No credentials, tokens, or API keys may appear in Dockerfiles or
   docker-compose.yml values (only `${VAR}` references are permitted).
 
-*Rationale*: Consistent logging, configuration, model conventions, and container standards
+_Rationale_: Consistent logging, configuration, model conventions, and container standards
 reduce operational surprises, simplify onboarding, and make security audits tractable on a
 research platform that handles sensitive academic data and external API credentials.
 
@@ -695,7 +695,7 @@ avoided:
   pattern (e.g., route paths, event names) MUST be typed with template literal types
   (`type Route = \`/studies/\${string}\``) rather than plain `string`.
 
-*Rationale*: Language-specific gotchas are responsible for a disproportionate share of
+_Rationale_: Language-specific gotchas are responsible for a disproportionate share of
 production bugs and developer confusion. Encoding them here as non-negotiable rules—rather
 than leaving them to tribal knowledge—ensures consistent quality across AI-assisted and human
 contributions.
@@ -704,47 +704,47 @@ contributions.
 
 The following gates apply at specification, planning, and implementation time:
 
-| Standard | Requirement |
-|----------|-------------|
-| Cyclomatic complexity | MUST be ≤ 10 per function/method |
-| Method length | SHOULD be ≤ 20 logical lines; MUST NOT exceed 40 |
-| Class responsibility | MUST satisfy SRP — one primary reason to change |
-| Code smell audit | MUST be performed before submitting any PR |
-| Duplication | MUST be eliminated before merge; no copy-paste tolerance |
-| Test coverage for refactors | MUST reach 100% on changed units before refactoring |
-| Pattern justification | MUST be documented in plan or inline comment |
-| Dependency direction | MUST flow inward (domain ← application ← infrastructure) |
-| Pre-commit / linting | MUST pass `pre-commit run --all-files` clean after every phase |
-| Unit test coverage | MUST be ≥ 85% line/branch coverage per module |
-| Integration test coverage | MUST be ≥ 85% coverage across integrated paths |
-| UI/UX test coverage | MUST cover all user-facing flows and component states |
-| Mutation score | MUST be ≥ 85% mutants killed (cosmic-ray / stryker) |
-| Agent metamorphic tests | MUST be present in agents/tests/metamorphic/ for every agent |
-| Agent deepeval pipeline | MUST exist in agent-eval/ for every agent at creation time |
-| Ruff (Python) | MUST pass with line-length 100; no D203/D213; zero violations |
-| MyPy (Python) | MUST pass strict mode, zero errors, python_version 3.14 |
-| ESLint + Prettier (TS) | MUST pass; Prettier printWidth 100, singleQuote, trailingComma |
-| TypeScript compiler | MUST pass strict + noUnusedLocals + noUnusedParameters |
-| Audit fields | Every DB model MUST have created_at / updated_at columns |
-| Settings pattern | Config MUST use Pydantic BaseSettings + lru_cache get_settings() |
-| Logging | MUST use structlog; no print() in production paths |
-| Docker health checks | Every compose service MUST have a healthcheck block |
-| Documentation | All source files MUST have a module-level doc comment (Python module docstring / TS file-level JSDoc); all functions/methods/classes MUST have Google-style (Python) or JSDoc (TS) doc comments; CLI handlers: brief command description only — no Args/Returns/params |
-| Feature completion docs | `CLAUDE.md`, root `README.md`, affected subproject `README.md`s, root `CHANGELOG.md`, and affected subproject `CHANGELOG.md`s MUST all be updated before merge |
-| React components | MUST be functional; MUST have named props interface; MUST be ≤ 100 JSX lines |
-| React hooks | MUST follow Rules of Hooks (top-level only); complete dep arrays; no inline refs in deps |
-| React state | MUST be treated as immutable; >3 related useState → useReducer |
-| React effects | MUST return cleanup function when subscribing to any external resource |
-| React.memo | SHOULD be applied to expensive pure children; MUST NOT be applied speculatively |
-| useImperativeHandle | MUST use forwardRef + useImperativeHandle for imperative child APIs |
-| react-hook-form | MUST use useWatch (not watch) for reactive field subscriptions in render |
-| Vite env vars | Client vars MUST use VITE_ prefix; accessed via import.meta.env only |
-| Python data objects | Domain entities MUST use Pydantic/dataclass/TypedDict — not plain dict |
-| Python paths | MUST use pathlib.Path; os.path string manipulation forbidden in new code |
-| Python exceptions | MUST catch specific types; bare except/except Exception forbidden |
-| TypeScript any | MUST NOT appear; use unknown + narrowing at all external boundaries |
-| TypeScript enum | MUST NOT be used; use string literal unions or as const object maps |
-| TypeScript non-null (!) | MUST NOT be used without inline justification comment |
+| Standard                    | Requirement                                                                                                                                                                                                                                                            |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Cyclomatic complexity       | MUST be ≤ 10 per function/method                                                                                                                                                                                                                                       |
+| Method length               | SHOULD be ≤ 20 logical lines; MUST NOT exceed 40                                                                                                                                                                                                                       |
+| Class responsibility        | MUST satisfy SRP — one primary reason to change                                                                                                                                                                                                                        |
+| Code smell audit            | MUST be performed before submitting any PR                                                                                                                                                                                                                             |
+| Duplication                 | MUST be eliminated before merge; no copy-paste tolerance                                                                                                                                                                                                               |
+| Test coverage for refactors | MUST reach 100% on changed units before refactoring                                                                                                                                                                                                                    |
+| Pattern justification       | MUST be documented in plan or inline comment                                                                                                                                                                                                                           |
+| Dependency direction        | MUST flow inward (domain ← application ← infrastructure)                                                                                                                                                                                                               |
+| Pre-commit / linting        | MUST pass `pre-commit run --all-files` clean after every phase                                                                                                                                                                                                         |
+| Unit test coverage          | MUST be ≥ 85% line/branch coverage per module                                                                                                                                                                                                                          |
+| Integration test coverage   | MUST be ≥ 85% coverage across integrated paths                                                                                                                                                                                                                         |
+| UI/UX test coverage         | MUST cover all user-facing flows and component states                                                                                                                                                                                                                  |
+| Mutation score              | MUST be ≥ 85% mutants killed (cosmic-ray / stryker)                                                                                                                                                                                                                    |
+| Agent metamorphic tests     | MUST be present in agents/tests/metamorphic/ for every agent                                                                                                                                                                                                           |
+| Agent deepeval pipeline     | MUST exist in agent-eval/ for every agent at creation time                                                                                                                                                                                                             |
+| Ruff (Python)               | MUST pass with line-length 100; no D203/D213; zero violations                                                                                                                                                                                                          |
+| MyPy (Python)               | MUST pass strict mode, zero errors, python_version 3.14                                                                                                                                                                                                                |
+| ESLint + Prettier (TS)      | MUST pass; Prettier printWidth 100, singleQuote, trailingComma                                                                                                                                                                                                         |
+| TypeScript compiler         | MUST pass strict + noUnusedLocals + noUnusedParameters                                                                                                                                                                                                                 |
+| Audit fields                | Every DB model MUST have created_at / updated_at columns                                                                                                                                                                                                               |
+| Settings pattern            | Config MUST use Pydantic BaseSettings + lru_cache get_settings()                                                                                                                                                                                                       |
+| Logging                     | MUST use structlog; no print() in production paths                                                                                                                                                                                                                     |
+| Docker health checks        | Every compose service MUST have a healthcheck block                                                                                                                                                                                                                    |
+| Documentation               | All source files MUST have a module-level doc comment (Python module docstring / TS file-level JSDoc); all functions/methods/classes MUST have Google-style (Python) or JSDoc (TS) doc comments; CLI handlers: brief command description only — no Args/Returns/params |
+| Feature completion docs     | `CLAUDE.md`, root `README.md`, affected subproject `README.md`s, root `CHANGELOG.md`, and affected subproject `CHANGELOG.md`s MUST all be updated before merge                                                                                                         |
+| React components            | MUST be functional; MUST have named props interface; MUST be ≤ 100 JSX lines                                                                                                                                                                                           |
+| React hooks                 | MUST follow Rules of Hooks (top-level only); complete dep arrays; no inline refs in deps                                                                                                                                                                               |
+| React state                 | MUST be treated as immutable; >3 related useState → useReducer                                                                                                                                                                                                         |
+| React effects               | MUST return cleanup function when subscribing to any external resource                                                                                                                                                                                                 |
+| React.memo                  | SHOULD be applied to expensive pure children; MUST NOT be applied speculatively                                                                                                                                                                                        |
+| useImperativeHandle         | MUST use forwardRef + useImperativeHandle for imperative child APIs                                                                                                                                                                                                    |
+| react-hook-form             | MUST use useWatch (not watch) for reactive field subscriptions in render                                                                                                                                                                                               |
+| Vite env vars               | Client vars MUST use VITE\_ prefix; accessed via import.meta.env only                                                                                                                                                                                                  |
+| Python data objects         | Domain entities MUST use Pydantic/dataclass/TypedDict — not plain dict                                                                                                                                                                                                 |
+| Python paths                | MUST use pathlib.Path; os.path string manipulation forbidden in new code                                                                                                                                                                                               |
+| Python exceptions           | MUST catch specific types; bare except/except Exception forbidden                                                                                                                                                                                                      |
+| TypeScript any              | MUST NOT appear; use unknown + narrowing at all external boundaries                                                                                                                                                                                                    |
+| TypeScript enum             | MUST NOT be used; use string literal unions or as const object maps                                                                                                                                                                                                    |
+| TypeScript non-null (!)     | MUST NOT be used without inline justification comment                                                                                                                                                                                                                  |
 
 These standards apply to Python (backend, agents, db, researcher-mcp) and TypeScript
 (frontend) code equally. Language-idiomatic implementations are preferred (e.g., Python
@@ -789,14 +789,14 @@ The following workflow MUST be followed for every task in the implementation pla
      subproject is modified if any file under its `src/` directory was added, changed, or
      deleted. Mutation score MUST be ≥ 85% on each modified subproject. (Verified via the
      manually-triggered or speckit end-of-feature mutation workflow, not per-commit.)
-   Pre-commit checks are non-negotiable gates — bypassing them with `--no-verify` is
-   forbidden except in an emergency, and ANY such bypass MUST be documented in the PR with
-   a follow-up remediation task.
+     Pre-commit checks are non-negotiable gates — bypassing them with `--no-verify` is
+     forbidden except in an emergency, and ANY such bypass MUST be documented in the PR with
+     a follow-up remediation task.
 
 7. **Agent tasks**: When implementing or modifying an agent, the task list MUST include:
    - Metamorphic test tasks in `agents/tests/metamorphic/`.
    - A deepeval evaluation pipeline task in `agent-eval/`.
-   These tasks MUST be completed before the agent task is marked done.
+     These tasks MUST be completed before the agent task is marked done.
 
 8. **New dependencies**: Any addition of a new Python or TypeScript dependency MUST be
    reviewed against Principles VII, VIII, and IX. If the dependency introduces a tool that
@@ -818,9 +818,9 @@ The following workflow MUST be followed for every task in the implementation pla
      version/date recording what was added, changed, fixed, or removed by the feature.
    - **Subproject `CHANGELOG.md`**: Any subproject whose source code was modified MUST
      have its own `CHANGELOG.md` updated with the same level of detail.
-   These documentation tasks MUST appear as explicit tasks in the feature's `tasks.md`
-   and MUST be completed before the feature task is marked done. Omitting or deferring
-   documentation updates is a blocking violation.
+     These documentation tasks MUST appear as explicit tasks in the feature's `tasks.md`
+     and MUST be completed before the feature task is marked done. Omitting or deferring
+     documentation updates is a blocking violation.
 
 ## Governance
 
@@ -829,6 +829,7 @@ verbal agreements within the SMS Researcher project. It is binding on all human 
 and AI coding agents operating within this repository.
 
 **Amendment procedure**:
+
 - Amendments MUST be proposed as a pull request modifying this file.
 - The version line MUST be incremented following semantic versioning (see below).
 - Dependent templates (plan-template.md, spec-template.md, tasks-template.md) MUST be
@@ -836,11 +837,13 @@ and AI coding agents operating within this repository.
 - A Sync Impact Report HTML comment MUST be prepended to this file on each amendment.
 
 **Versioning policy**:
+
 - MAJOR: Removal or redefinition of an existing principle.
 - MINOR: Addition of a new principle, section, or materially expanded guidance.
 - PATCH: Clarification, wording correction, or non-semantic refinement.
 
 **Compliance review**:
+
 - All PRs MUST verify compliance with Principles I–IX before merging.
 - AI agents MUST apply the Constitution Check gate in plan.md before generating code.
 - Complexity Tracking in plan.md MUST record any justified violations with rationale.

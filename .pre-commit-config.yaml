@@ -5,7 +5,14 @@ repos:
         name: ruff check (Python lint)
         language: system
         entry: uv run ruff check
-        args: ["backend/src", "agents/src", "db/src", "agent-eval/src", "researcher-mcp/src"]
+        args:
+          [
+            "backend/src",
+            "agents/src",
+            "db/src",
+            "agent-eval/src",
+            "researcher-mcp/src",
+          ]
         pass_filenames: false
         types: [python]
 
@@ -13,7 +20,14 @@ repos:
         name: ruff format (Python format check)
         language: system
         entry: uv run ruff format --check
-        args: ["backend/src", "agents/src", "db/src", "agent-eval/src", "researcher-mcp/src"]
+        args:
+          [
+            "backend/src",
+            "agents/src",
+            "db/src",
+            "agent-eval/src",
+            "researcher-mcp/src",
+          ]
         pass_filenames: false
         types: [python]
 
@@ -21,7 +35,14 @@ repos:
         name: mypy (type check)
         language: system
         entry: uv run mypy
-        args: ["backend/src", "agents/src", "db/src", "agent-eval/src", "researcher-mcp/src"]
+        args:
+          [
+            "backend/src",
+            "agents/src",
+            "db/src",
+            "agent-eval/src",
+            "researcher-mcp/src",
+          ]
         pass_filenames: false
         types: [python]
 

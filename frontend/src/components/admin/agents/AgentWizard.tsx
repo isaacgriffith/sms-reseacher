@@ -23,7 +23,12 @@ import Stepper from '@mui/material/Stepper';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import SystemMessageEditor from './SystemMessageEditor';
-import { useAgentTaskTypes, useCreateAgent, useGeneratePersonaSvg, useGenerateSystemMessage } from '../../../services/agentsApi';
+import {
+  useAgentTaskTypes,
+  useCreateAgent,
+  useGeneratePersonaSvg,
+  useGenerateSystemMessage,
+} from '../../../services/agentsApi';
 import { useProviders, useProviderModels } from '../../../services/providersApi';
 
 const DEFAULT_TEMPLATE =
@@ -169,8 +174,7 @@ export default function AgentWizard({ open, onClose }: AgentWizardProps) {
     onClose();
   }
 
-  const isBusy =
-    createAgent.isPending || generateSvg.isPending || generateSysMsg.isPending;
+  const isBusy = createAgent.isPending || generateSvg.isPending || generateSysMsg.isPending;
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
@@ -193,7 +197,9 @@ export default function AgentWizard({ open, onClose }: AgentWizardProps) {
             fullWidth
           >
             {taskTypes.map((t) => (
-              <MenuItem key={t} value={t}>{t}</MenuItem>
+              <MenuItem key={t} value={t}>
+                {t}
+              </MenuItem>
             ))}
           </TextField>
         )}
@@ -208,7 +214,9 @@ export default function AgentWizard({ open, onClose }: AgentWizardProps) {
               fullWidth
             >
               {providers.map((p) => (
-                <MenuItem key={p.id} value={p.id}>{p.display_name}</MenuItem>
+                <MenuItem key={p.id} value={p.id}>
+                  {p.display_name}
+                </MenuItem>
               ))}
             </TextField>
             <TextField
@@ -219,29 +227,72 @@ export default function AgentWizard({ open, onClose }: AgentWizardProps) {
               fullWidth
               disabled={!state.provider_id}
             >
-              {models.filter((m) => m.is_enabled).map((m) => (
-                <MenuItem key={m.id} value={m.id}>{m.display_name}</MenuItem>
-              ))}
+              {models
+                .filter((m) => m.is_enabled)
+                .map((m) => (
+                  <MenuItem key={m.id} value={m.id}>
+                    {m.display_name}
+                  </MenuItem>
+                ))}
             </TextField>
           </Box>
         )}
 
         {state.step === 2 && (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <TextField label="Role Name" value={state.role_name} onChange={(e) => dispatch({ type: 'SET_FIELD', field: 'role_name', value: e.target.value })} fullWidth />
-            <TextField label="Role Description" value={state.role_description} onChange={(e) => dispatch({ type: 'SET_FIELD', field: 'role_description', value: e.target.value })} multiline minRows={3} fullWidth />
-            <TextField label="Persona Name" value={state.persona_name} onChange={(e) => dispatch({ type: 'SET_FIELD', field: 'persona_name', value: e.target.value })} fullWidth />
-            <TextField label="Persona Description" value={state.persona_description} onChange={(e) => dispatch({ type: 'SET_FIELD', field: 'persona_description', value: e.target.value })} multiline minRows={3} fullWidth />
+            <TextField
+              label="Role Name"
+              value={state.role_name}
+              onChange={(e) =>
+                dispatch({ type: 'SET_FIELD', field: 'role_name', value: e.target.value })
+              }
+              fullWidth
+            />
+            <TextField
+              label="Role Description"
+              value={state.role_description}
+              onChange={(e) =>
+                dispatch({ type: 'SET_FIELD', field: 'role_description', value: e.target.value })
+              }
+              multiline
+              minRows={3}
+              fullWidth
+            />
+            <TextField
+              label="Persona Name"
+              value={state.persona_name}
+              onChange={(e) =>
+                dispatch({ type: 'SET_FIELD', field: 'persona_name', value: e.target.value })
+              }
+              fullWidth
+            />
+            <TextField
+              label="Persona Description"
+              value={state.persona_description}
+              onChange={(e) =>
+                dispatch({ type: 'SET_FIELD', field: 'persona_description', value: e.target.value })
+              }
+              multiline
+              minRows={3}
+              fullWidth
+            />
           </Box>
         )}
 
         {state.step === 3 && (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <Button variant="outlined" onClick={handleGenerateSvg} disabled={isBusy || !state.persona_name}>
+            <Button
+              variant="outlined"
+              onClick={handleGenerateSvg}
+              disabled={isBusy || !state.persona_name}
+            >
               {generateSvg.isPending ? <CircularProgress size={20} /> : 'Generate SVG'}
             </Button>
             {state.generatedSvg && (
-              <Box dangerouslySetInnerHTML={{ __html: state.generatedSvg }} sx={{ width: 100, height: 100 }} />
+              <Box
+                dangerouslySetInnerHTML={{ __html: state.generatedSvg }}
+                sx={{ width: 100, height: 100 }}
+              />
             )}
             <Typography variant="caption" color="text.secondary">
               SVG generation is optional — you can skip this step.
@@ -258,12 +309,16 @@ export default function AgentWizard({ open, onClose }: AgentWizardProps) {
               canUndo={state.system_message_template !== DEFAULT_TEMPLATE}
               disabled={isBusy}
             />
-            <Button variant="outlined" onClick={handleGenerateAndSave} disabled={isBusy || !state.role_name || !state.model_id}>
+            <Button
+              variant="outlined"
+              onClick={handleGenerateAndSave}
+              disabled={isBusy || !state.role_name || !state.model_id}
+            >
               {isBusy ? <CircularProgress size={20} /> : 'Generate System Message (saves agent)'}
             </Button>
             {(createAgent.isError || generateSysMsg.isError) && (
               <Typography color="error" variant="caption">
-                {String((createAgent.error ?? generateSysMsg.error) ?? 'An error occurred')}
+                {String(createAgent.error ?? generateSysMsg.error ?? 'An error occurred')}
               </Typography>
             )}
           </Box>
@@ -274,13 +329,25 @@ export default function AgentWizard({ open, onClose }: AgentWizardProps) {
             Back
           </Button>
           <Box sx={{ display: 'flex', gap: 1 }}>
-            <Button onClick={onClose} disabled={isBusy}>Cancel</Button>
+            <Button onClick={onClose} disabled={isBusy}>
+              Cancel
+            </Button>
             {isLastStep ? (
-              <Button variant="contained" onClick={handleSave} disabled={isBusy || !state.role_name || !state.model_id}>
+              <Button
+                variant="contained"
+                onClick={handleSave}
+                disabled={isBusy || !state.role_name || !state.model_id}
+              >
                 {createAgent.isPending ? <CircularProgress size={20} /> : 'Save'}
               </Button>
             ) : (
-              <Button variant="contained" onClick={handleNext} disabled={state.step === 0 && !state.task_type || state.step === 1 && !state.model_id}>
+              <Button
+                variant="contained"
+                onClick={handleNext}
+                disabled={
+                  (state.step === 0 && !state.task_type) || (state.step === 1 && !state.model_id)
+                }
+              >
                 Next
               </Button>
             )}

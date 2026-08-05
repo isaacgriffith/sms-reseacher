@@ -73,7 +73,11 @@ export default function ExtractionView({ studyId, extractionId, onConflict }: Ex
   const queryClient = useQueryClient();
   const [editingField, setEditingField] = useState<string | null>(null);
 
-  const { data: extraction, isLoading, error } = useQuery<Extraction>({
+  const {
+    data: extraction,
+    isLoading,
+    error,
+  } = useQuery<Extraction>({
     queryKey: ['extraction', studyId, extractionId],
     queryFn: () => api.get<Extraction>(`/api/v1/studies/${studyId}/extractions/${extractionId}`),
   });
@@ -106,19 +110,46 @@ export default function ExtractionView({ studyId, extractionId, onConflict }: Ex
     reset();
   };
 
-  if (isLoading) return <Typography sx={{ color: '#6b7280', fontSize: '0.875rem' }}>Loading extraction…</Typography>;
-  if (error || !extraction) return <Typography sx={{ color: '#ef4444', fontSize: '0.875rem' }}>Failed to load extraction.</Typography>;
+  if (isLoading)
+    return (
+      <Typography sx={{ color: '#6b7280', fontSize: '0.875rem' }}>Loading extraction…</Typography>
+    );
+  if (error || !extraction)
+    return (
+      <Typography sx={{ color: '#ef4444', fontSize: '0.875rem' }}>
+        Failed to load extraction.
+      </Typography>
+    );
 
   const statusColor = STATUS_COLORS[extraction.extraction_status] ?? '#6b7280';
 
   return (
     <Box sx={{ fontFamily: 'inherit' }}>
       {/* Header */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-        <Typography variant="subtitle1" sx={{ margin: 0, fontSize: '1rem', color: '#111827' }}>Data Extraction</Typography>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '1.25rem',
+        }}
+      >
+        <Typography variant="subtitle1" sx={{ margin: 0, fontSize: '1rem', color: '#111827' }}>
+          Data Extraction
+        </Typography>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           {extraction.conflict_flag && (
-            <Typography component="span" sx={{ padding: '0.125rem 0.5rem', background: '#fef2f2', color: '#dc2626', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 600 }}>
+            <Typography
+              component="span"
+              sx={{
+                padding: '0.125rem 0.5rem',
+                background: '#fef2f2',
+                color: '#dc2626',
+                borderRadius: '9999px',
+                fontSize: '0.75rem',
+                fontWeight: 600,
+              }}
+            >
               Conflict
             </Typography>
           )}
@@ -149,7 +180,11 @@ export default function ExtractionView({ studyId, extractionId, onConflict }: Ex
             onEdit={setEditingField}
             onCancel={handleCancel}
             onSave={handleSave}
-            display={<Typography component="span" sx={{ textTransform: 'capitalize' }}>{extraction.research_type.replace('_', ' ')}</Typography>}
+            display={
+              <Typography component="span" sx={{ textTransform: 'capitalize' }}>
+                {extraction.research_type.replace('_', ' ')}
+              </Typography>
+            }
             input={
               <select
                 {...register('research_type')}
@@ -157,7 +192,9 @@ export default function ExtractionView({ studyId, extractionId, onConflict }: Ex
                 style={selectStyle}
               >
                 {RESEARCH_TYPES.map((rt) => (
-                  <option key={rt} value={rt}>{rt.replace('_', ' ')}</option>
+                  <option key={rt} value={rt}>
+                    {rt.replace('_', ' ')}
+                  </option>
                 ))}
               </select>
             }
@@ -208,7 +245,9 @@ export default function ExtractionView({ studyId, extractionId, onConflict }: Ex
             onCancel={handleCancel}
             onSave={handleSave}
             display={
-              <Typography sx={{ margin: 0, fontSize: '0.875rem', color: '#374151', lineHeight: 1.6 }}>
+              <Typography
+                sx={{ margin: 0, fontSize: '0.875rem', color: '#374151', lineHeight: 1.6 }}
+              >
                 {extraction.summary ?? '—'}
               </Typography>
             }
@@ -233,14 +272,34 @@ export default function ExtractionView({ studyId, extractionId, onConflict }: Ex
             display={
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem' }}>
                 {extraction.keywords?.map((kw) => (
-                  <Typography component="span" key={kw} sx={{ padding: '0.125rem 0.5rem', background: '#eff6ff', color: '#1d4ed8', borderRadius: '9999px', fontSize: '0.75rem' }}>{kw}</Typography>
-                )) ?? <Typography component="span" sx={{ color: '#9ca3af' }}>—</Typography>}
+                  <Typography
+                    component="span"
+                    key={kw}
+                    sx={{
+                      padding: '0.125rem 0.5rem',
+                      background: '#eff6ff',
+                      color: '#1d4ed8',
+                      borderRadius: '9999px',
+                      fontSize: '0.75rem',
+                    }}
+                  >
+                    {kw}
+                  </Typography>
+                )) ?? (
+                  <Typography component="span" sx={{ color: '#9ca3af' }}>
+                    —
+                  </Typography>
+                )}
               </Box>
             }
             input={
               <input
                 {...register('keywords', {
-                  setValueAs: (v: string) => v.split(',').map((s) => s.trim()).filter(Boolean),
+                  setValueAs: (v: string) =>
+                    v
+                      .split(',')
+                      .map((s) => s.trim())
+                      .filter(Boolean),
                 })}
                 defaultValue={extraction.keywords?.join(', ') ?? ''}
                 placeholder="comma-separated keywords"
@@ -250,36 +309,115 @@ export default function ExtractionView({ studyId, extractionId, onConflict }: Ex
           />
 
           {/* Open Codings — read-only list */}
-          <Paper variant="outlined" sx={{ padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '0.5rem', background: '#fff' }}>
-            <Typography component="label" sx={{ fontSize: '0.75rem', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Open Codings</Typography>
+          <Paper
+            variant="outlined"
+            sx={{
+              padding: '0.75rem',
+              border: '1px solid #e2e8f0',
+              borderRadius: '0.5rem',
+              background: '#fff',
+            }}
+          >
+            <Typography
+              component="label"
+              sx={{
+                fontSize: '0.75rem',
+                fontWeight: 600,
+                color: '#6b7280',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+              }}
+            >
+              Open Codings
+            </Typography>
             <Box sx={{ marginTop: '0.375rem' }}>
               {extraction.open_codings?.length ? (
                 extraction.open_codings.map((oc, i) => (
-                  <Box key={i} sx={{ marginBottom: '0.625rem', padding: '0.625rem', background: '#f8fafc', borderRadius: '0.375rem' }}>
-                    <Typography sx={{ fontWeight: 600, fontSize: '0.8125rem', color: '#1e293b' }}>{oc.code}</Typography>
-                    <Typography sx={{ fontSize: '0.8125rem', color: '#475569', marginTop: '0.25rem' }}>{oc.definition}</Typography>
+                  <Box
+                    key={i}
+                    sx={{
+                      marginBottom: '0.625rem',
+                      padding: '0.625rem',
+                      background: '#f8fafc',
+                      borderRadius: '0.375rem',
+                    }}
+                  >
+                    <Typography sx={{ fontWeight: 600, fontSize: '0.8125rem', color: '#1e293b' }}>
+                      {oc.code}
+                    </Typography>
+                    <Typography
+                      sx={{ fontSize: '0.8125rem', color: '#475569', marginTop: '0.25rem' }}
+                    >
+                      {oc.definition}
+                    </Typography>
                     {oc.evidence_quote && (
-                      <blockquote style={{ margin: '0.375rem 0 0', padding: '0.375rem 0.625rem', borderLeft: '3px solid #cbd5e1', color: '#64748b', fontSize: '0.8125rem', fontStyle: 'italic' }}>
+                      <blockquote
+                        style={{
+                          margin: '0.375rem 0 0',
+                          padding: '0.375rem 0.625rem',
+                          borderLeft: '3px solid #cbd5e1',
+                          color: '#64748b',
+                          fontSize: '0.8125rem',
+                          fontStyle: 'italic',
+                        }}
+                      >
                         {oc.evidence_quote}
                       </blockquote>
                     )}
                   </Box>
                 ))
               ) : (
-                <Typography component="span" sx={{ color: '#9ca3af', fontSize: '0.875rem' }}>No open codings yet.</Typography>
+                <Typography component="span" sx={{ color: '#9ca3af', fontSize: '0.875rem' }}>
+                  No open codings yet.
+                </Typography>
               )}
             </Box>
           </Paper>
 
           {/* Question Data — read-only table */}
           {extraction.question_data && Object.keys(extraction.question_data).length > 0 && (
-            <Paper variant="outlined" sx={{ padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '0.5rem', background: '#fff' }}>
-              <Typography component="label" sx={{ fontSize: '0.75rem', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Research Question Answers</Typography>
+            <Paper
+              variant="outlined"
+              sx={{
+                padding: '0.75rem',
+                border: '1px solid #e2e8f0',
+                borderRadius: '0.5rem',
+                background: '#fff',
+              }}
+            >
+              <Typography
+                component="label"
+                sx={{
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  color: '#6b7280',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                }}
+              >
+                Research Question Answers
+              </Typography>
               <Box sx={{ marginTop: '0.375rem' }}>
                 {Object.entries(extraction.question_data).map(([qid, answer]) => (
-                  <Box key={qid} sx={{ display: 'grid', gridTemplateColumns: '8rem 1fr', gap: '0.5rem', marginBottom: '0.5rem', fontSize: '0.875rem' }}>
-                    <Typography component="span" sx={{ fontWeight: 600, color: '#374151', fontSize: '0.875rem' }}>{qid}</Typography>
-                    <Typography component="span" sx={{ color: '#4b5563', fontSize: '0.875rem' }}>{answer != null ? String(answer) : '—'}</Typography>
+                  <Box
+                    key={qid}
+                    sx={{
+                      display: 'grid',
+                      gridTemplateColumns: '8rem 1fr',
+                      gap: '0.5rem',
+                      marginBottom: '0.5rem',
+                      fontSize: '0.875rem',
+                    }}
+                  >
+                    <Typography
+                      component="span"
+                      sx={{ fontWeight: 600, color: '#374151', fontSize: '0.875rem' }}
+                    >
+                      {qid}
+                    </Typography>
+                    <Typography component="span" sx={{ color: '#4b5563', fontSize: '0.875rem' }}>
+                      {answer != null ? String(answer) : '—'}
+                    </Typography>
                   </Box>
                 ))}
               </Box>
@@ -287,9 +425,12 @@ export default function ExtractionView({ studyId, extractionId, onConflict }: Ex
           )}
         </Box>
 
-        {mutation.isError && !(mutation.error instanceof ApiError && (mutation.error as ApiError).status === 409) && (
-          <Typography sx={{ color: '#ef4444', fontSize: '0.8125rem', marginTop: '0.5rem' }}>Save failed. Please try again.</Typography>
-        )}
+        {mutation.isError &&
+          !(mutation.error instanceof ApiError && (mutation.error as ApiError).status === 409) && (
+            <Typography sx={{ color: '#ef4444', fontSize: '0.8125rem', marginTop: '0.5rem' }}>
+              Save failed. Please try again.
+            </Typography>
+          )}
       </form>
 
       {extraction.extracted_by_agent && (
@@ -316,19 +457,59 @@ interface FieldProps {
   input: React.ReactNode;
 }
 
-function Field({ label, fieldKey, editingField, onEdit, onCancel, onSave, display, input }: FieldProps) {
+function Field({
+  label,
+  fieldKey,
+  editingField,
+  onEdit,
+  onCancel,
+  onSave,
+  display,
+  input,
+}: FieldProps) {
   const isEditing = editingField === fieldKey;
   return (
-    <Paper variant="outlined" sx={{ padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '0.5rem', background: '#fff' }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
-        <Typography component="label" sx={{ fontSize: '0.75rem', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</Typography>
+    <Paper
+      variant="outlined"
+      sx={{
+        padding: '0.75rem',
+        border: '1px solid #e2e8f0',
+        borderRadius: '0.5rem',
+        background: '#fff',
+      }}
+    >
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '0.25rem',
+        }}
+      >
+        <Typography
+          component="label"
+          sx={{
+            fontSize: '0.75rem',
+            fontWeight: 600,
+            color: '#6b7280',
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em',
+          }}
+        >
+          {label}
+        </Typography>
         {!isEditing && (
           <Button
             type="button"
             variant="outlined"
             size="small"
             onClick={() => onEdit(fieldKey)}
-            sx={{ padding: '0.125rem 0.5rem', fontSize: '0.75rem', color: '#374151', borderColor: '#d1d5db' }}
+            sx={{
+              padding: '0.125rem 0.5rem',
+              fontSize: '0.75rem',
+              color: '#374151',
+              borderColor: '#d1d5db',
+            }}
           >
             Edit
           </Button>
@@ -352,7 +533,12 @@ function Field({ label, fieldKey, editingField, onEdit, onCancel, onSave, displa
               variant="outlined"
               size="small"
               onClick={onCancel}
-              sx={{ padding: '0.25rem 0.75rem', color: '#374151', borderColor: '#d1d5db', fontSize: '0.8125rem' }}
+              sx={{
+                padding: '0.25rem 0.75rem',
+                color: '#374151',
+                borderColor: '#d1d5db',
+                fontSize: '0.8125rem',
+              }}
             >
               Cancel
             </Button>

@@ -1,13 +1,5 @@
-/**
- * Unit tests for useExtractions hooks (feature 009).
- *
- * Covers:
- * - Query key stability.
- * - Hook instantiation without throwing.
- */
-
 import { describe, it, expect, vi } from 'vitest';
-import { renderHook, waitFor } from '@testing-library/react';
+import { renderHook, waitFor, act } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
 import {
@@ -18,7 +10,7 @@ import {
 } from '../useExtractions';
 
 vi.mock('../../../services/tertiary/extractionApi', () => ({
-  listExtractions: vi.fn().mockRejectedValue(new Error('not found')),
+  listExtractions: vi.fn().mockResolvedValue([]),
   updateExtraction: vi.fn().mockResolvedValue({ id: 1, extraction_status: 'human_reviewed' }),
   triggerAiAssist: vi.fn().mockResolvedValue({ job_id: 'ai-1', status: 'queued', paper_count: 2 }),
 }));
@@ -36,10 +28,9 @@ describe('extractionsKey', () => {
 });
 
 describe('useExtractions', () => {
-  it('returns a query result with data property', async () => {
+  it('fetches data', async () => {
     const { result } = renderHook(() => useExtractions(10), { wrapper: makeWrapper() });
-    await waitFor(() => !result.current.isLoading);
-    expect(result.current).toHaveProperty('data');
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
   });
 
   it('is disabled when studyId is 0', () => {
@@ -49,15 +40,21 @@ describe('useExtractions', () => {
 });
 
 describe('useUpdateExtraction', () => {
-  it('returns a mutation with mutate function', () => {
+  it('executes mutation', async () => {
     const { result } = renderHook(() => useUpdateExtraction(10), { wrapper: makeWrapper() });
-    expect(typeof result.current.mutate).toBe('function');
+    await act(async () => {
+      result.current.mutate({ paperId: 1, updates: { extraction_status: 'human_reviewed' } });
+    });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
   });
 });
 
 describe('useAiAssist', () => {
-  it('returns a mutation with mutate function', () => {
+  it('executes mutation', async () => {
     const { result } = renderHook(() => useAiAssist(10), { wrapper: makeWrapper() });
-    expect(typeof result.current.mutate).toBe('function');
+    await act(async () => {
+      result.current.mutate();
+    });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
   });
 });

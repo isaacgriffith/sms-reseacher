@@ -106,8 +106,13 @@ describe('SearchStringEditor', () => {
     it('calls api.post with string_text on Save String click', async () => {
       mockApi.get.mockResolvedValueOnce([]);
       mockApi.post.mockResolvedValueOnce({
-        id: 3, study_id: 1, version: 1, string_text: 'manual string',
-        is_active: false, created_by_agent: null, iterations: [],
+        id: 3,
+        study_id: 1,
+        version: 1,
+        string_text: 'manual string',
+        is_active: false,
+        created_by_agent: null,
+        iterations: [],
       });
 
       renderWithQuery(<SearchStringEditor studyId={1} />);
@@ -119,10 +124,9 @@ describe('SearchStringEditor', () => {
       fireEvent.click(saveButton);
 
       await waitFor(() => {
-        expect(mockApi.post).toHaveBeenCalledWith(
-          '/api/v1/studies/1/search-strings',
-          { string_text: 'manual string' },
-        );
+        expect(mockApi.post).toHaveBeenCalledWith('/api/v1/studies/1/search-strings', {
+          string_text: 'manual string',
+        });
       });
     });
 
@@ -157,7 +161,7 @@ describe('SearchStringEditor', () => {
         ...MOCK_ACTIVE_STRING,
         iterations: [
           { ...MOCK_ACTIVE_STRING.iterations[0], id: 5, iteration_number: 1 },
-          { ...MOCK_ACTIVE_STRING.iterations[0], id: 6, iteration_number: 2, test_set_recall: 0.90 },
+          { ...MOCK_ACTIVE_STRING.iterations[0], id: 6, iteration_number: 2, test_set_recall: 0.9 },
         ],
       };
       mockApi.get.mockResolvedValueOnce([multiIteration]);
@@ -182,8 +186,13 @@ describe('SearchStringEditor', () => {
       const onCreated = vi.fn();
       mockApi.get.mockResolvedValueOnce([]);
       mockApi.post.mockResolvedValueOnce({
-        id: 99, study_id: 1, version: 1, string_text: 'test string',
-        is_active: false, created_by_agent: null, iterations: [],
+        id: 99,
+        study_id: 1,
+        version: 1,
+        string_text: 'test string',
+        is_active: false,
+        created_by_agent: null,
+        iterations: [],
       });
 
       renderWithQuery(<SearchStringEditor studyId={1} onSearchStringCreated={onCreated} />);
@@ -200,8 +209,13 @@ describe('SearchStringEditor', () => {
     it('clears manual text after successful save', async () => {
       mockApi.get.mockResolvedValueOnce([]);
       mockApi.post.mockResolvedValueOnce({
-        id: 88, study_id: 1, version: 1, string_text: 'cleared after save',
-        is_active: false, created_by_agent: null, iterations: [],
+        id: 88,
+        study_id: 1,
+        version: 1,
+        string_text: 'cleared after save',
+        is_active: false,
+        created_by_agent: null,
+        iterations: [],
       });
 
       renderWithQuery(<SearchStringEditor studyId={1} />);
@@ -220,8 +234,13 @@ describe('SearchStringEditor', () => {
     it('calls POST /search-strings/generate when Generate with AI is clicked', async () => {
       mockApi.get.mockResolvedValueOnce([]);
       mockApi.post.mockResolvedValueOnce({
-        id: 4, study_id: 1, version: 1, string_text: 'AI generated string',
-        is_active: false, created_by_agent: 'search-builder', iterations: [],
+        id: 4,
+        study_id: 1,
+        version: 1,
+        string_text: 'AI generated string',
+        is_active: false,
+        created_by_agent: 'search-builder',
+        iterations: [],
       });
 
       renderWithQuery(<SearchStringEditor studyId={1} />);
@@ -230,10 +249,7 @@ describe('SearchStringEditor', () => {
       fireEvent.click(generateButton);
 
       await waitFor(() => {
-        expect(mockApi.post).toHaveBeenCalledWith(
-          '/api/v1/studies/1/search-strings/generate',
-          {},
-        );
+        expect(mockApi.post).toHaveBeenCalledWith('/api/v1/studies/1/search-strings/generate', {});
       });
     });
 
@@ -248,9 +264,7 @@ describe('SearchStringEditor', () => {
       fireEvent.click(screen.getByRole('button', { name: /generate with ai/i }));
 
       await waitFor(() => {
-        expect(
-          screen.getByText(/search string builder agent unavailable/i)
-        ).toBeTruthy();
+        expect(screen.getByText(/search string builder agent unavailable/i)).toBeTruthy();
       });
     });
 
@@ -270,8 +284,13 @@ describe('SearchStringEditor', () => {
       const onCreated = vi.fn();
       mockApi.get.mockResolvedValueOnce([]);
       mockApi.post.mockResolvedValueOnce({
-        id: 77, study_id: 1, version: 1, string_text: 'AI string',
-        is_active: false, created_by_agent: 'search-builder', iterations: [],
+        id: 77,
+        study_id: 1,
+        version: 1,
+        string_text: 'AI string',
+        is_active: false,
+        created_by_agent: 'search-builder',
+        iterations: [],
       });
 
       renderWithQuery(<SearchStringEditor studyId={1} onSearchStringCreated={onCreated} />);
@@ -305,14 +324,22 @@ describe('SearchStringEditor', () => {
     it('shows string_text in full view for the selected string', async () => {
       const TWO_STRINGS = [
         {
-          id: 1, study_id: 1, version: 1,
+          id: 1,
+          study_id: 1,
+          version: 1,
           string_text: 'string-alpha',
-          is_active: false, created_by_agent: null, iterations: [],
+          is_active: false,
+          created_by_agent: null,
+          iterations: [],
         },
         {
-          id: 2, study_id: 1, version: 2,
+          id: 2,
+          study_id: 1,
+          version: 2,
           string_text: 'string-beta',
-          is_active: false, created_by_agent: null, iterations: [],
+          is_active: false,
+          created_by_agent: null,
+          iterations: [],
         },
       ];
       mockApi.get.mockResolvedValueOnce(TWO_STRINGS);
@@ -322,9 +349,7 @@ describe('SearchStringEditor', () => {
 
       // Full view shows the first (selected by default) string's text
       const codeBlocks = container.querySelectorAll('code');
-      const fullViewBlock = Array.from(codeBlocks).find(el =>
-        el.textContent === 'string-alpha'
-      );
+      const fullViewBlock = Array.from(codeBlocks).find((el) => el.textContent === 'string-alpha');
       expect(fullViewBlock).toBeTruthy();
     });
   });
@@ -371,9 +396,7 @@ describe('SearchStringEditor', () => {
     it('shows 90% when test_set_recall is 0.90', async () => {
       const highRecall = {
         ...MOCK_ACTIVE_STRING,
-        iterations: [
-          { ...MOCK_ACTIVE_STRING.iterations[0], test_set_recall: 0.90 },
-        ],
+        iterations: [{ ...MOCK_ACTIVE_STRING.iterations[0], test_set_recall: 0.9 }],
       };
       mockApi.get.mockResolvedValueOnce([highRecall]);
       renderWithQuery(<SearchStringEditor studyId={1} />);
@@ -386,8 +409,13 @@ describe('SearchStringEditor', () => {
       const twoIterations = {
         ...MOCK_ACTIVE_STRING,
         iterations: [
-          { ...MOCK_ACTIVE_STRING.iterations[0], id: 1, iteration_number: 1, test_set_recall: 0.50 },
-          { ...MOCK_ACTIVE_STRING.iterations[0], id: 2, iteration_number: 2, test_set_recall: 0.95 },
+          { ...MOCK_ACTIVE_STRING.iterations[0], id: 1, iteration_number: 1, test_set_recall: 0.5 },
+          {
+            ...MOCK_ACTIVE_STRING.iterations[0],
+            id: 2,
+            iteration_number: 2,
+            test_set_recall: 0.95,
+          },
         ],
       };
       mockApi.get.mockResolvedValueOnce([twoIterations]);
@@ -422,8 +450,13 @@ describe('SearchStringEditor', () => {
       // After generate, get returns strings WITHOUT the generated string
       mockApi.get.mockResolvedValueOnce([MOCK_SEARCH_STRINGS[0]]);
       mockApi.post.mockResolvedValueOnce({
-        id: 999, study_id: 1, version: 3, string_text: 'AI string',
-        is_active: false, created_by_agent: 'search-builder', iterations: [],
+        id: 999,
+        study_id: 1,
+        version: 3,
+        string_text: 'AI string',
+        is_active: false,
+        created_by_agent: 'search-builder',
+        iterations: [],
       });
 
       renderWithQuery(<SearchStringEditor studyId={1} />);
@@ -520,14 +553,22 @@ describe('SearchStringEditor', () => {
   describe('Version history item selection styles', () => {
     const TWO_STRINGS = [
       {
-        id: 1, study_id: 1, version: 1,
+        id: 1,
+        study_id: 1,
+        version: 1,
         string_text: 'first-string',
-        is_active: false, created_by_agent: null, iterations: [],
+        is_active: false,
+        created_by_agent: null,
+        iterations: [],
       },
       {
-        id: 2, study_id: 1, version: 2,
+        id: 2,
+        study_id: 1,
+        version: 2,
         string_text: 'second-string',
-        is_active: false, created_by_agent: null, iterations: [],
+        is_active: false,
+        created_by_agent: null,
+        iterations: [],
       },
     ];
 
@@ -537,20 +578,24 @@ describe('SearchStringEditor', () => {
       await waitFor(() => screen.getByText(/version history/i));
 
       // Find all version history item divs by their style attributes
-      const historyDivs = Array.from(
-        container.querySelectorAll('div[style]')
-      ) as HTMLElement[];
+      const historyDivs = Array.from(container.querySelectorAll('div[style]')) as HTMLElement[];
 
       const selectedItem = historyDivs.find(
-        el => el.style.background === 'rgb(239, 246, 255)' || el.style.backgroundColor === 'rgb(239, 246, 255)'
+        (el) =>
+          el.style.background === 'rgb(239, 246, 255)' ||
+          el.style.backgroundColor === 'rgb(239, 246, 255)',
       );
       expect(selectedItem).toBeTruthy();
 
       const unselectedItem = historyDivs.find(
-        el => el.style.background === 'rgb(255, 255, 255)' || el.style.backgroundColor === 'rgb(255, 255, 255)'
+        (el) =>
+          el.style.background === 'rgb(255, 255, 255)' ||
+          el.style.backgroundColor === 'rgb(255, 255, 255)',
       );
       // At least one unselected item exists
-      expect(unselectedItem || historyDivs.some(el => el.style.background === '#fff')).toBeTruthy();
+      expect(
+        unselectedItem || historyDivs.some((el) => el.style.background === '#fff'),
+      ).toBeTruthy();
     });
 
     it('clicking second item gives it the selected background color', async () => {
@@ -559,19 +604,17 @@ describe('SearchStringEditor', () => {
       await waitFor(() => screen.getByText(/version history/i));
 
       // Click on v2 item
-      const v2Label = screen.getAllByText(/^v\d+$/).find(el => el.textContent === 'v2');
+      const v2Label = screen.getAllByText(/^v\d+$/).find((el) => el.textContent === 'v2');
       fireEvent.click(v2Label!);
 
       await waitFor(() => {
-        const historyDivs = Array.from(
-          container.querySelectorAll('div[style]')
-        ) as HTMLElement[];
+        const historyDivs = Array.from(container.querySelectorAll('div[style]')) as HTMLElement[];
         // After clicking v2, there should still be exactly one selected (blue) item
         const selectedItems = historyDivs.filter(
-          el =>
+          (el) =>
             el.style.background === 'rgb(239, 246, 255)' ||
             el.style.backgroundColor === 'rgb(239, 246, 255)' ||
-            el.style.background === '#eff6ff'
+            el.style.background === '#eff6ff',
         );
         expect(selectedItems.length).toBeGreaterThanOrEqual(1);
       });
@@ -602,7 +645,7 @@ describe('SearchStringEditor', () => {
       expect(screen.queryByText(/generation failed/i)).toBeNull();
       // Also verify no error-styled paragraph exists (catches && → || mutations)
       const errorPs = Array.from(container.querySelectorAll('p')).filter(
-        el => (el as HTMLElement).style.color === 'rgb(239, 68, 68)'
+        (el) => (el as HTMLElement).style.color === 'rgb(239, 68, 68)',
       );
       expect(errorPs.length).toBe(0);
     });
@@ -621,14 +664,22 @@ describe('SearchStringEditor', () => {
     it('clicking second string in history switches the full view to that string', async () => {
       const TWO_STRINGS = [
         {
-          id: 1, study_id: 1, version: 1,
+          id: 1,
+          study_id: 1,
+          version: 1,
           string_text: 'string-alpha',
-          is_active: false, created_by_agent: null, iterations: [],
+          is_active: false,
+          created_by_agent: null,
+          iterations: [],
         },
         {
-          id: 2, study_id: 1, version: 2,
+          id: 2,
+          study_id: 1,
+          version: 2,
           string_text: 'string-beta',
-          is_active: false, created_by_agent: null, iterations: [],
+          is_active: false,
+          created_by_agent: null,
+          iterations: [],
         },
       ];
       mockApi.get.mockResolvedValueOnce(TWO_STRINGS);
@@ -642,7 +693,7 @@ describe('SearchStringEditor', () => {
       const versionLabels = screen.getAllByText(/^v\d+$/);
       // versionLabels[0] = "v1" in history list, versionLabels[1] = "v2" in history list
       // (the full view shows "v1 — Full String" not just "v1")
-      const v2Label = versionLabels.find(el => el.textContent === 'v2');
+      const v2Label = versionLabels.find((el) => el.textContent === 'v2');
       expect(v2Label).toBeTruthy();
       fireEvent.click(v2Label!);
 
@@ -654,14 +705,22 @@ describe('SearchStringEditor', () => {
     it('clicking first string after selecting second restores first string in full view', async () => {
       const TWO_STRINGS = [
         {
-          id: 1, study_id: 1, version: 1,
+          id: 1,
+          study_id: 1,
+          version: 1,
           string_text: 'first-string-text',
-          is_active: false, created_by_agent: null, iterations: [],
+          is_active: false,
+          created_by_agent: null,
+          iterations: [],
         },
         {
-          id: 2, study_id: 1, version: 2,
+          id: 2,
+          study_id: 1,
+          version: 2,
           string_text: 'second-string-text',
-          is_active: false, created_by_agent: null, iterations: [],
+          is_active: false,
+          created_by_agent: null,
+          iterations: [],
         },
       ];
       mockApi.get.mockResolvedValueOnce(TWO_STRINGS);
@@ -669,12 +728,12 @@ describe('SearchStringEditor', () => {
       await waitFor(() => screen.getByText(/version history/i));
 
       // Click v2
-      const v2Label = screen.getAllByText(/^v\d+$/).find(el => el.textContent === 'v2');
+      const v2Label = screen.getAllByText(/^v\d+$/).find((el) => el.textContent === 'v2');
       fireEvent.click(v2Label!);
       await waitFor(() => expect(screen.getByText('v2 — Full String')).toBeTruthy());
 
       // Click v1 to go back
-      const v1Label = screen.getAllByText(/^v\d+$/).find(el => el.textContent === 'v1');
+      const v1Label = screen.getAllByText(/^v\d+$/).find((el) => el.textContent === 'v1');
       fireEvent.click(v1Label!);
       await waitFor(() => {
         expect(screen.getByText('v1 — Full String')).toBeTruthy();

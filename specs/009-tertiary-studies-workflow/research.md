@@ -13,6 +13,7 @@
 **Rationale**: `ReviewProtocol` carries SLR-specific fields (PICO/S, `synthesis_approach` enum tied to `SynthesisApproach`) and is already `UNIQUE` to `study_id` with SLR semantics. Tertiary protocols need different fields: secondary study scope definition, recency constraints, and criteria for evaluating secondary study types. Sharing the model would violate SRP (the model would have two reasons to change).
 
 **Alternatives considered**:
+
 - Subclass ReviewProtocol via SQLAlchemy single-table inheritance — rejected because it would require nullable columns or a discriminator on the existing table, complicating SLR queries.
 - Add nullable tertiary-specific columns to `ReviewProtocol` — rejected; this is Data Clumps smell and violates SRP.
 
@@ -25,6 +26,7 @@
 **Rationale**: The existing models are deliberately generic: checklist items are stored as text with a scoring method. A Tertiary Study can populate the checklist with secondary-study-quality questions (protocol documentation, search strategy, etc.) through the same upsert endpoint already used by SLR. No structural difference exists.
 
 **Alternatives considered**:
+
 - New `TertiaryQualityChecklist` model — unnecessary duplication; rejected (YAGNI).
 
 ---
@@ -36,6 +38,7 @@
 **Rationale**: The existing `DataExtraction` model uses a `ResearchType` enum and `question_data` JSON blob suited to primary empirical studies. Secondary study extraction requires strongly typed fields (study type, primary study count, databases searched) that would be awkward as opaque JSON and would corrupt the semantics of `ResearchType`. A separate model maintains SRP and LSP.
 
 **Alternatives considered**:
+
 - Extend `DataExtraction` with nullable columns — rejected; Tertiary studies would always have NULL on those columns, creating confusion.
 - Use `question_data` JSON for all secondary fields — rejected; untyped JSON prevents querying and synthesis aggregation.
 
@@ -48,6 +51,7 @@
 **Rationale**: This approach leverages the existing `CandidatePaper` pipeline for screening, QA, and extraction without creating parallel code paths. The `SecondaryStudySeedImport` record provides deduplication tracking (added count, skipped count) and audit trail.
 
 **Alternatives considered**:
+
 - Copy-on-write at the paper level only (no import record) — rejected; loses audit trail and makes deduplication reporting impossible.
 - Import directly from an external file — deferred; out of scope for this feature (spec FR-003 specifies platform studies).
 
@@ -60,6 +64,7 @@
 **Rationale**: The SLR phase gate is already extracted into its own module and injected via the dispatch dict — the OCP extension point exists and MUST be used. Copy-pasting and modifying inline would violate DRY and Shotgun Surgery.
 
 **Phase gate sequence for Tertiary Studies**:
+
 - Phase 1: Protocol editor (always accessible)
 - Phase 2: Database search / seed import (requires validated `TertiaryStudyProtocol`)
 - Phase 3: Screening (requires ≥1 completed `SearchExecution` or ≥1 seeded `CandidatePaper`)
@@ -75,6 +80,7 @@
 **Rationale**: The `SynthesisResult` model is generic (approach-agnostic fields + JSON blobs for computed statistics). New strategies follow the existing Strategy pattern already established by `MetaAnalysisSynthesizer`, `DescriptiveSynthesizer`, and `QualitativeSynthesizer`. The tertiary-specific landscape section is generated as part of the report, not the synthesis result.
 
 **Alternatives considered**:
+
 - New `TertiarySynthesisResult` model — YAGNI; the existing model is sufficiently generic.
 
 ---
@@ -98,6 +104,7 @@
 ## Decision 9: Alembic Migration
 
 **Decision**: New migration `0017_tertiary_studies_workflow` creates three tables:
+
 1. `tertiary_study_protocol` — protocol record (one per Tertiary study)
 2. `secondary_study_seed_import` — seed import records
 3. `tertiary_data_extraction` — secondary-study-specific extraction data

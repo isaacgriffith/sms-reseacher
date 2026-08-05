@@ -3,7 +3,12 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { getChecklist, upsertChecklist, getQualityScores, submitQualityScores } from '../qualityApi';
+import {
+  getChecklist,
+  upsertChecklist,
+  getQualityScores,
+  submitQualityScores,
+} from '../qualityApi';
 import { api } from '../../api';
 
 vi.mock('../../api', () => ({ api: { get: vi.fn(), put: vi.fn(), post: vi.fn() } }));
@@ -15,9 +20,7 @@ const CHECKLIST = {
   study_id: 42,
   name: 'Standard QA',
   description: null,
-  items: [
-    { id: 1, order: 1, question: 'Q1', scoring_method: 'binary', weight: 1.0 },
-  ],
+  items: [{ id: 1, order: 1, question: 'Q1', scoring_method: 'binary', weight: 1.0 }],
 };
 
 const QUALITY_SCORES = {
@@ -52,7 +55,10 @@ describe('upsertChecklist', () => {
       description: null,
       items: [{ question: 'Q1', scoring_method: 'binary', weight: 1.0, order: 1 }],
     });
-    expect(mockApi.put).toHaveBeenCalledWith('/api/v1/slr/studies/42/quality-checklist', expect.any(Object));
+    expect(mockApi.put).toHaveBeenCalledWith(
+      '/api/v1/slr/studies/42/quality-checklist',
+      expect.any(Object),
+    );
     expect(result.name).toBe('Standard QA');
   });
 });
@@ -77,7 +83,10 @@ describe('submitQualityScores', () => {
       reviewer_id: 3,
       scores: [{ checklist_item_id: 1, score_value: 1.0, notes: null }],
     });
-    expect(mockApi.put).toHaveBeenCalledWith('/api/v1/slr/papers/7/quality-scores', expect.any(Object));
+    expect(mockApi.put).toHaveBeenCalledWith(
+      '/api/v1/slr/papers/7/quality-scores',
+      expect.any(Object),
+    );
     expect(result.candidate_paper_id).toBe(7);
   });
 });

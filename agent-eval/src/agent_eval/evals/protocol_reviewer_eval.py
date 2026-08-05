@@ -131,7 +131,9 @@ PROTOCOL_TEST_INPUTS: list[dict[str, Any]] = [
         "protocol": {
             "background": "Investigating agile adoption in safety-critical systems.",
             "rationale": "Little evidence on agile in safety-critical domains.",
-            "research_questions": ["RQ1: Can agile methods be applied in safety-critical software?"],
+            "research_questions": [
+                "RQ1: Can agile methods be applied in safety-critical software?"
+            ],
             "pico_population": "Safety-critical software teams",
             "pico_intervention": "Agile methods (Scrum, Kanban)",
             "pico_comparison": "Waterfall development",
@@ -154,7 +156,9 @@ PROTOCOL_TEST_INPUTS: list[dict[str, Any]] = [
         "protocol": {
             "background": "Survey of static analysis tool adoption in Python projects.",
             "rationale": "Static analysis tool usage is anecdotally increasing but data are scarce.",
-            "research_questions": ["RQ1: How widely are static analysis tools adopted in Python OSS?"],
+            "research_questions": [
+                "RQ1: How widely are static analysis tools adopted in Python OSS?"
+            ],
             "pico_population": "Python open-source project maintainers",
             "pico_intervention": "Static analysis tool adoption",
             "pico_comparison": "Projects without static analysis",
@@ -250,6 +254,7 @@ def build_test_cases(run_agent: bool = False) -> list[LLMTestCase]:
     for inp in PROTOCOL_TEST_INPUTS:
         if run_agent:
             import asyncio
+
             actual_output = asyncio.run(_invoke_reviewer(inp))
         else:
             # Stub: produce the ideal output based on known_issues
@@ -262,25 +267,31 @@ def build_test_cases(run_agent: bool = False) -> list[LLMTestCase]:
                 }
                 for section in inp.get("known_issues", [])
             ]
-            actual_output = json.dumps({
-                "issues": stub_issues,
-                "overall_assessment": f"Stub assessment for {inp['case_id']}.",
-            })
+            actual_output = json.dumps(
+                {
+                    "issues": stub_issues,
+                    "overall_assessment": f"Stub assessment for {inp['case_id']}.",
+                }
+            )
 
-        input_text = json.dumps({
-            "case_id": inp["case_id"],
-            "description": inp["description"],
-            "protocol": inp["protocol"],
-        })
+        input_text = json.dumps(
+            {
+                "case_id": inp["case_id"],
+                "description": inp["description"],
+                "protocol": inp["protocol"],
+            }
+        )
 
         cases.append(
             LLMTestCase(
                 input=input_text,
                 actual_output=actual_output,
-                expected_output=json.dumps({
-                    "expected_issue_count": inp["expected_issue_count"],
-                    "known_issues": inp.get("known_issues", []),
-                }),
+                expected_output=json.dumps(
+                    {
+                        "expected_issue_count": inp["expected_issue_count"],
+                        "known_issues": inp.get("known_issues", []),
+                    }
+                ),
                 context=[
                     "ProtocolReviewerAgent must return JSON with 'issues' and 'overall_assessment'.",
                     "Each issue must have section, severity, description, and suggestion.",
@@ -315,9 +326,7 @@ async def _invoke_reviewer(inp: dict[str, Any]) -> str:
 # ---------------------------------------------------------------------------
 
 
-def run_protocol_reviewer_eval(
-    run_agent: bool = False, threshold: float = 0.7
-) -> dict[str, Any]:
+def run_protocol_reviewer_eval(run_agent: bool = False, threshold: float = 0.7) -> dict[str, Any]:
     """Execute the ProtocolReviewerAgent deepeval pipeline.
 
     Validates:

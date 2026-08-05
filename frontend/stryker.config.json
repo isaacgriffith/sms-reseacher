@@ -4,10 +4,7 @@
   "reporters": ["html", "clear-text", "progress"],
   "testRunner": "vitest",
   "coverageAnalysis": "perTest",
-  "mutate": [
-    "src/services/**/*.ts",
-    "!src/services/**/*.test.ts"
-  ],
+  "mutate": ["src/services/**/*.ts", "!src/services/**/*.test.ts"],
   "mutator": {
     "excludedMutations": []
   },

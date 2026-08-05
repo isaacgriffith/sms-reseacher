@@ -28,21 +28,21 @@ describe('downloadSLRReport', () => {
     vi.spyOn(Storage.prototype, 'getItem').mockReturnValue('test-token');
 
     // Mock fetch
-    fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response('file-content', { status: 200 }),
-    );
+    fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(new Response('file-content', { status: 200 }));
 
     // Mock URL methods
     createObjectURLSpy = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:test-url');
     revokeObjectURLSpy = vi.spyOn(URL, 'revokeObjectURL').mockReturnValue(undefined);
 
     // Mock DOM methods
-    appendChildSpy = vi.spyOn(document.body, 'appendChild').mockReturnValue(
-      document.createElement('a'),
-    );
-    removeChildSpy = vi.spyOn(document.body, 'removeChild').mockReturnValue(
-      document.createElement('a'),
-    );
+    appendChildSpy = vi
+      .spyOn(document.body, 'appendChild')
+      .mockReturnValue(document.createElement('a'));
+    removeChildSpy = vi
+      .spyOn(document.body, 'removeChild')
+      .mockReturnValue(document.createElement('a'));
 
     // Mock click
     vi.spyOn(HTMLAnchorElement.prototype, 'click').mockReturnValue(undefined);
@@ -56,7 +56,9 @@ describe('downloadSLRReport', () => {
     await downloadSLRReport(42, 'markdown');
     expect(fetchSpy).toHaveBeenCalledWith(
       '/api/v1/slr/studies/42/export/slr-report?format=markdown',
-      expect.objectContaining({ headers: expect.objectContaining({ Authorization: 'Bearer test-token' }) }),
+      expect.objectContaining({
+        headers: expect.objectContaining({ Authorization: 'Bearer test-token' }),
+      }),
     );
   });
 

@@ -37,7 +37,11 @@ export default function ExtractionPage() {
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [conflict, setConflict] = useState<ConflictPayload | null>(null);
 
-  const { data: extractions = [], isLoading, error } = useQuery<Extraction[]>({
+  const {
+    data: extractions = [],
+    isLoading,
+    error,
+  } = useQuery<Extraction[]>({
     queryKey: ['extractions', numericStudyId],
     queryFn: () => api.get<Extraction[]>(`/api/v1/studies/${numericStudyId}/extractions`),
     enabled: !!numericStudyId,
@@ -65,17 +69,38 @@ export default function ExtractionPage() {
         Data Extraction
       </Typography>
 
-      <Box sx={{ display: 'grid', gridTemplateColumns: '18rem 1fr', gap: '1.5rem', alignItems: 'start' }}>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: '18rem 1fr',
+          gap: '1.5rem',
+          alignItems: 'start',
+        }}
+      >
         {/* Sidebar: extraction list */}
-        <Paper variant="outlined" sx={{ border: '1px solid #e2e8f0', borderRadius: '0.5rem', overflow: 'hidden' }}>
-          <Box sx={{ padding: '0.75rem 1rem', background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-            <Typography variant="subtitle2" sx={{ margin: 0, fontSize: '0.875rem', fontWeight: 600, color: '#374151' }}>
+        <Paper
+          variant="outlined"
+          sx={{ border: '1px solid #e2e8f0', borderRadius: '0.5rem', overflow: 'hidden' }}
+        >
+          <Box
+            sx={{
+              padding: '0.75rem 1rem',
+              background: '#f8fafc',
+              borderBottom: '1px solid #e2e8f0',
+            }}
+          >
+            <Typography
+              variant="subtitle2"
+              sx={{ margin: 0, fontSize: '0.875rem', fontWeight: 600, color: '#374151' }}
+            >
               Papers ({extractions.length})
             </Typography>
           </Box>
 
           {isLoading && (
-            <Typography sx={{ padding: '1rem', color: '#6b7280', fontSize: '0.875rem' }}>Loading…</Typography>
+            <Typography sx={{ padding: '1rem', color: '#6b7280', fontSize: '0.875rem' }}>
+              Loading…
+            </Typography>
           )}
           {error && (
             <Typography sx={{ padding: '1rem', color: '#ef4444', fontSize: '0.875rem' }}>
@@ -109,7 +134,9 @@ export default function ExtractionPage() {
                 <Box sx={{ fontSize: '0.8125rem', fontWeight: 500, color: '#111827' }}>
                   Paper #{ex.candidate_paper_id}
                 </Box>
-                <Box sx={{ display: 'flex', gap: '0.375rem', marginTop: '0.25rem', flexWrap: 'wrap' }}>
+                <Box
+                  sx={{ display: 'flex', gap: '0.375rem', marginTop: '0.25rem', flexWrap: 'wrap' }}
+                >
                   <StatusBadge status={ex.extraction_status} />
                   <Typography component="span" sx={{ fontSize: '0.6875rem', color: '#9ca3af' }}>
                     {ex.research_type.replace('_', ' ')}
@@ -123,7 +150,10 @@ export default function ExtractionPage() {
         {/* Main: extraction detail */}
         <Box>
           {selectedId ? (
-            <Paper variant="outlined" sx={{ border: '1px solid #e2e8f0', borderRadius: '0.5rem', padding: '1.25rem' }}>
+            <Paper
+              variant="outlined"
+              sx={{ border: '1px solid #e2e8f0', borderRadius: '0.5rem', padding: '1.25rem' }}
+            >
               <ExtractionView
                 studyId={numericStudyId}
                 extractionId={selectedId}

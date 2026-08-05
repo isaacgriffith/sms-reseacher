@@ -34,9 +34,7 @@ describe('TwoFactorSetupDialog', () => {
     vi.spyOn(prefs, 'setup2fa').mockResolvedValue(SETUP_DATA);
     wrap(<TwoFactorSetupDialog onEnabled={vi.fn()} />);
     fireEvent.click(screen.getByRole('button', { name: /enable 2fa/i }));
-    await waitFor(() =>
-      expect(screen.getByAltText('TOTP QR code')).toBeInTheDocument(),
-    );
+    await waitFor(() => expect(screen.getByAltText('TOTP QR code')).toBeInTheDocument());
     expect(screen.getByLabelText('manual key')).toHaveTextContent(SETUP_DATA.manual_key);
   });
 
@@ -59,9 +57,7 @@ describe('TwoFactorSetupDialog', () => {
     const input = screen.getByLabelText(/authentication code/i);
     fireEvent.change(input, { target: { value: '123456' } });
     fireEvent.click(screen.getByRole('button', { name: /verify/i }));
-    await waitFor(() =>
-      expect(screen.getByText('AAAA111111')).toBeInTheDocument(),
-    );
+    await waitFor(() => expect(screen.getByText('AAAA111111')).toBeInTheDocument());
   });
 
   it('calls onEnabled and closes dialog after acknowledging backup codes', async () => {
@@ -90,8 +86,6 @@ describe('TwoFactorSetupDialog', () => {
     const input = screen.getByLabelText(/authentication code/i);
     fireEvent.change(input, { target: { value: '000000' } });
     fireEvent.click(screen.getByRole('button', { name: /verify/i }));
-    await waitFor(() =>
-      expect(screen.getByText(/invalid totp code/i)).toBeInTheDocument(),
-    );
+    await waitFor(() => expect(screen.getByText(/invalid totp code/i)).toBeInTheDocument());
   });
 });

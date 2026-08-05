@@ -133,16 +133,18 @@ def build_test_cases(run_agent: bool = False) -> list[LLMTestCase]:
         if run_agent:
             actual_output = asyncio.run(_invoke_expert(inp))
         else:
-            actual_output = json.dumps([
-                {
-                    "title": "Stub Paper for " + inp["topic"],
-                    "authors": ["Stub Author"],
-                    "year": 2024,
-                    "venue": "Stub Venue",
-                    "doi": "10.0000/stub",
-                    "rationale": "Stub rationale: directly relevant to the study topic.",
-                }
-            ])
+            actual_output = json.dumps(
+                [
+                    {
+                        "title": "Stub Paper for " + inp["topic"],
+                        "authors": ["Stub Author"],
+                        "year": 2024,
+                        "venue": "Stub Venue",
+                        "doi": "10.0000/stub",
+                        "rationale": "Stub rationale: directly relevant to the study topic.",
+                    }
+                ]
+            )
 
         input_text = json.dumps({k: v for k, v in inp.items() if k != "case_id"})
 

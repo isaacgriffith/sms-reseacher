@@ -29,7 +29,7 @@ appraisal, synthesis, and reporting capabilities alongside the existing SMS/SLR 
 - Q: How are Evidence Briefing regenerations handled — overwrite or versioned? → A: Explicit versioning (Option C) — each regeneration creates a new numbered version; the researcher manually promotes one version to "published"; the shareable link always serves the published version.
 - Q: Can a Rapid Review be converted to a full SLR in-app? → A: Out of scope (Option A) — no conversion path; researcher creates a new SLR study manually if broader coverage is needed.
 
-## User Scenarios & Testing *(mandatory)*
+## User Scenarios & Testing _(mandatory)_
 
 ### User Story 1 - Create and Configure a Rapid Review Protocol (Priority: P1)
 
@@ -210,7 +210,7 @@ story's individual components needing to be re-tested.
 - Can a Rapid Review be converted to a full SLR? **Out of scope** — no in-app conversion
   path exists. The researcher must create a new SLR study manually.
 
-## Requirements *(mandatory)*
+## Requirements _(mandatory)_
 
 ### Functional Requirements
 
@@ -328,7 +328,7 @@ story's individual components needing to be re-tested.
   Contains: research question reference, researcher-authored narrative text, AI-draft content
   (before acceptance), and completion status.
 
-## Success Criteria *(mandatory)*
+## Success Criteria _(mandatory)_
 
 ### Measurable Outcomes
 

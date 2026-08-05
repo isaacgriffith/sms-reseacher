@@ -57,7 +57,12 @@ export default function PaperQueue({ studyId }: PaperQueueProps) {
   params.set('offset', String(offset));
   params.set('limit', String(PAGE_SIZE));
 
-  const { data: papers = [], isLoading, error, refetch } = useQuery<CandidatePaper[]>({
+  const {
+    data: papers = [],
+    isLoading,
+    error,
+    refetch,
+  } = useQuery<CandidatePaper[]>({
     queryKey: ['papers', studyId, statusFilter, phaseFilter, page],
     queryFn: () =>
       api.get<CandidatePaper[]>(`/api/v1/studies/${studyId}/papers?${params.toString()}`),
@@ -79,7 +84,9 @@ export default function PaperQueue({ studyId }: PaperQueueProps) {
           marginBottom: '1rem',
         }}
       >
-        <Typography variant="subtitle1" sx={{ margin: 0, fontSize: '1rem', color: '#111827' }}>Paper Queue</Typography>
+        <Typography variant="subtitle1" sx={{ margin: 0, fontSize: '1rem', color: '#111827' }}>
+          Paper Queue
+        </Typography>
         <Button
           variant="outlined"
           onClick={() => refetch()}
@@ -94,7 +101,10 @@ export default function PaperQueue({ studyId }: PaperQueueProps) {
       <Box sx={{ display: 'flex', gap: '0.75rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
         <select
           value={statusFilter}
-          onChange={(e) => { setStatusFilter(e.target.value); setPage(0); }}
+          onChange={(e) => {
+            setStatusFilter(e.target.value);
+            setPage(0);
+          }}
           style={{
             padding: '0.375rem 0.625rem',
             border: '1px solid #d1d5db',
@@ -113,22 +123,38 @@ export default function PaperQueue({ studyId }: PaperQueueProps) {
 
         <TextField
           value={phaseFilter}
-          onChange={(e) => { setPhaseFilter(e.target.value); setPage(0); }}
+          onChange={(e) => {
+            setPhaseFilter(e.target.value);
+            setPage(0);
+          }}
           placeholder="Filter by phase tag…"
           size="small"
           sx={{ minWidth: '180px' }}
         />
 
         {(statusFilter || phaseFilter) && (
-          <Button variant="outlined" size="small" onClick={handleResetFilters} sx={{ fontSize: '0.8125rem', color: '#374151' }}>
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={handleResetFilters}
+            sx={{ fontSize: '0.8125rem', color: '#374151' }}
+          >
             Clear filters
           </Button>
         )}
       </Box>
 
       {/* Paper list */}
-      {isLoading && <Typography style={{ color: 'rgb(107, 114, 128)' }} sx={{ fontSize: '0.875rem' }}>Loading papers…</Typography>}
-      {error && <Typography style={{ color: 'rgb(239, 68, 68)' }} sx={{ fontSize: '0.875rem' }}>Failed to load papers.</Typography>}
+      {isLoading && (
+        <Typography style={{ color: 'rgb(107, 114, 128)' }} sx={{ fontSize: '0.875rem' }}>
+          Loading papers…
+        </Typography>
+      )}
+      {error && (
+        <Typography style={{ color: 'rgb(239, 68, 68)' }} sx={{ fontSize: '0.875rem' }}>
+          Failed to load papers.
+        </Typography>
+      )}
 
       {!isLoading && papers.length === 0 && (
         <Typography sx={{ color: '#9ca3af', fontSize: '0.875rem' }}>
@@ -195,9 +221,21 @@ export default function PaperQueue({ studyId }: PaperQueueProps) {
                 flexWrap: 'wrap',
               }}
             >
-              {cp.paper.year && <Typography component="span" sx={{ fontSize: '0.75rem', color: '#6b7280' }}>{cp.paper.year}</Typography>}
-              {cp.paper.venue && <Typography component="span" sx={{ fontSize: '0.75rem', color: '#6b7280' }}>{cp.paper.venue}</Typography>}
-              {cp.paper.doi && <Typography component="span" sx={{ fontSize: '0.75rem', color: '#6b7280' }}>DOI: {cp.paper.doi}</Typography>}
+              {cp.paper.year && (
+                <Typography component="span" sx={{ fontSize: '0.75rem', color: '#6b7280' }}>
+                  {cp.paper.year}
+                </Typography>
+              )}
+              {cp.paper.venue && (
+                <Typography component="span" sx={{ fontSize: '0.75rem', color: '#6b7280' }}>
+                  {cp.paper.venue}
+                </Typography>
+              )}
+              {cp.paper.doi && (
+                <Typography component="span" sx={{ fontSize: '0.75rem', color: '#6b7280' }}>
+                  DOI: {cp.paper.doi}
+                </Typography>
+              )}
               <Typography
                 component="span"
                 sx={{
@@ -246,12 +284,18 @@ export default function PaperQueue({ studyId }: PaperQueueProps) {
             size="small"
             onClick={() => setPage((p) => Math.max(0, p - 1))}
             disabled={page === 0}
-            style={{ cursor: page === 0 ? 'not-allowed' : 'pointer', opacity: page === 0 ? 0.6 : 1 }}
+            style={{
+              cursor: page === 0 ? 'not-allowed' : 'pointer',
+              opacity: page === 0 ? 0.6 : 1,
+            }}
             sx={{ fontSize: '0.875rem', color: page === 0 ? '#9ca3af' : '#374151' }}
           >
             ← Previous
           </Button>
-          <Typography component="span" sx={{ padding: '0.375rem 0.625rem', fontSize: '0.875rem', color: '#374151' }}>
+          <Typography
+            component="span"
+            sx={{ padding: '0.375rem 0.625rem', fontSize: '0.875rem', color: '#374151' }}
+          >
             Page {page + 1}
           </Typography>
           <Button
@@ -259,7 +303,10 @@ export default function PaperQueue({ studyId }: PaperQueueProps) {
             size="small"
             onClick={() => setPage((p) => p + 1)}
             disabled={papers.length < PAGE_SIZE}
-            style={{ cursor: papers.length < PAGE_SIZE ? 'not-allowed' : 'pointer', opacity: papers.length < PAGE_SIZE ? 0.6 : 1 }}
+            style={{
+              cursor: papers.length < PAGE_SIZE ? 'not-allowed' : 'pointer',
+              opacity: papers.length < PAGE_SIZE ? 0.6 : 1,
+            }}
             sx={{ fontSize: '0.875rem', color: papers.length < PAGE_SIZE ? '#9ca3af' : '#374151' }}
           >
             Next →

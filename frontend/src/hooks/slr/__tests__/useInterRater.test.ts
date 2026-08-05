@@ -1,21 +1,13 @@
-/**
- * Unit tests for useInterRater hooks (feature 007).
- */
-
 import { describe, it, expect, vi } from 'vitest';
-import { renderHook, waitFor } from '@testing-library/react';
+import { renderHook, waitFor, act } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
-import {
-  useInterRaterRecords,
-  useComputeKappa,
-  usePostDiscussionKappa,
-} from '../useInterRater';
+import { interRaterKey, useInterRaterRecords, useComputeKappa, usePostDiscussionKappa } from '../useInterRater';
 
 vi.mock('../../../services/slr/interRaterApi', () => ({
-  getInterRaterRecords: vi.fn().mockRejectedValue(new Error('network')),
-  computeKappa: vi.fn().mockResolvedValue({ id: 1 }),
-  recordPostDiscussionKappa: vi.fn().mockResolvedValue({ id: 2 }),
+  getInterRaterRecords: vi.fn().mockResolvedValue([]),
+  computeKappa: vi.fn().mockResolvedValue({ kappa: 0.8 }),
+  recordPostDiscussionKappa: vi.fn().mockResolvedValue({ kappa: 0.9 }),
 }));
 
 function makeWrapper() {
@@ -24,24 +16,35 @@ function makeWrapper() {
     React.createElement(QueryClientProvider, { client: qc }, children);
 }
 
+describe('interRaterKey', () => {
+  it('returns stable key', () => {
+    expect(interRaterKey(42)).toEqual(['slr-inter-rater', 42]);
+  });
+});
+
 describe('useInterRaterRecords', () => {
-  it('returns a query result object', async () => {
+  it('fetches data', async () => {
     const { result } = renderHook(() => useInterRaterRecords(42), { wrapper: makeWrapper() });
-    await waitFor(() => !result.current.isLoading);
-    expect(result.current).toHaveProperty('error');
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
   });
 });
 
 describe('useComputeKappa', () => {
-  it('returns a mutation object', () => {
+  it('executes mutation', async () => {
     const { result } = renderHook(() => useComputeKappa(42), { wrapper: makeWrapper() });
-    expect(typeof result.current.mutate).toBe('function');
+    await act(async () => {
+      result.current.mutate();
+    });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
   });
 });
 
 describe('usePostDiscussionKappa', () => {
-  it('returns a mutation object', () => {
+  it('executes mutation', async () => {
     const { result } = renderHook(() => usePostDiscussionKappa(42), { wrapper: makeWrapper() });
-    expect(typeof result.current.mutate).toBe('function');
+    await act(async () => {
+      result.current.mutate({ kappa: 0.9 });
+    });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
   });
 });

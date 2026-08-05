@@ -82,7 +82,10 @@ function arrayToText(arr: string[] | null | undefined): string {
 }
 
 function textToArray(text: string): string[] {
-  return text.split('\n').map((s) => s.trim()).filter(Boolean);
+  return text
+    .split('\n')
+    .map((s) => s.trim())
+    .filter(Boolean);
 }
 
 // ---------------------------------------------------------------------------
@@ -131,7 +134,8 @@ export default function ProtocolForm({ protocol, isSaving = false, onSave }: Pro
       inclusion_criteria: arrayToText(protocol?.inclusion_criteria),
       exclusion_criteria: arrayToText(protocol?.exclusion_criteria),
       data_extraction_strategy: protocol?.data_extraction_strategy ?? '',
-      synthesis_approach: (protocol?.synthesis_approach as ProtocolFormValues['synthesis_approach']) ?? 'descriptive',
+      synthesis_approach:
+        (protocol?.synthesis_approach as ProtocolFormValues['synthesis_approach']) ?? 'descriptive',
       dissemination_strategy: protocol?.dissemination_strategy ?? '',
       timetable: protocol?.timetable ?? '',
     },
@@ -153,7 +157,9 @@ export default function ProtocolForm({ protocol, isSaving = false, onSave }: Pro
         inclusion_criteria: arrayToText(protocol.inclusion_criteria),
         exclusion_criteria: arrayToText(protocol.exclusion_criteria),
         data_extraction_strategy: protocol.data_extraction_strategy ?? '',
-        synthesis_approach: (protocol.synthesis_approach as ProtocolFormValues['synthesis_approach']) ?? 'descriptive',
+        synthesis_approach:
+          (protocol.synthesis_approach as ProtocolFormValues['synthesis_approach']) ??
+          'descriptive',
         dissemination_strategy: protocol.dissemination_strategy ?? '',
         timetable: protocol.timetable ?? '',
       });
@@ -457,12 +463,7 @@ export default function ProtocolForm({ protocol, isSaving = false, onSave }: Pro
       </ProtocolSection>
 
       {!isReadOnly && (
-        <Button
-          type="submit"
-          variant="contained"
-          disabled={isSaving}
-          sx={{ mt: 1 }}
-        >
+        <Button type="submit" variant="contained" disabled={isSaving} sx={{ mt: 1 }}>
           {isSaving ? 'Saving…' : 'Save Protocol'}
         </Button>
       )}

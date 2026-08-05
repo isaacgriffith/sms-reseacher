@@ -16,7 +16,11 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 import Divider from '@mui/material/Divider';
 import Typography from '@mui/material/Typography';
-import { useCreateSeedImport, useSeedImports, useGroupStudies } from '../../hooks/tertiary/useSeedImports';
+import {
+  useCreateSeedImport,
+  useSeedImports,
+  useGroupStudies,
+} from '../../hooks/tertiary/useSeedImports';
 import type { StudySummary } from '../../services/tertiary/seedImportApi';
 
 // ---------------------------------------------------------------------------
@@ -68,8 +72,8 @@ export default function SeedImportPanel({ studyId, groupId }: SeedImportPanelPro
 
       {imports.length === 0 ? (
         <Alert severity="info">
-          No seed imports yet. Use the button above to import included papers from an existing
-          SMS, SLR, or Rapid Review study.
+          No seed imports yet. Use the button above to import included papers from an existing SMS,
+          SLR, or Rapid Review study.
         </Alert>
       ) : (
         <ImportTable imports={imports} />
@@ -212,9 +216,7 @@ function ImportDialog({
         {studiesLoading ? (
           <CircularProgress size={24} />
         ) : importableStudies.length === 0 ? (
-          <Alert severity="info">
-            No SMS, SLR, or Rapid Review studies found in this group.
-          </Alert>
+          <Alert severity="info">No SMS, SLR, or Rapid Review studies found in this group.</Alert>
         ) : (
           <StudySelectList
             studies={importableStudies}
@@ -259,7 +261,12 @@ interface StudySelectListProps {
  * @param selectedId - Currently selected study ID.
  * @param onSelect - Callback when user selects a study.
  */
-function StudySelectList({ studies, existingSourceIds, selectedId, onSelect }: StudySelectListProps) {
+function StudySelectList({
+  studies,
+  existingSourceIds,
+  selectedId,
+  onSelect,
+}: StudySelectListProps) {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, mt: 1 }}>
       {studies.map((s, idx) => {

@@ -98,8 +98,16 @@ export default function PasswordChangeForm({ onSuccess }: PasswordChangeFormProp
 
   return (
     <Box component="form" onSubmit={handleSubmit(onSubmit)} sx={{ maxWidth: 420 }}>
-      {success && <Alert severity="success" sx={{ mb: 2 }}>Password changed successfully.</Alert>}
-      {serverError && <Alert severity="error" sx={{ mb: 2 }}>{serverError}</Alert>}
+      {success && (
+        <Alert severity="success" sx={{ mb: 2 }}>
+          Password changed successfully.
+        </Alert>
+      )}
+      {serverError && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {serverError}
+        </Alert>
+      )}
 
       <TextField
         {...register('currentPassword')}

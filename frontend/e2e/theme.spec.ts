@@ -33,8 +33,8 @@ test.describe('Theme preference', () => {
     await page.getByRole('tab', { name: /theme/i }).click();
     await page.getByRole('button', { name: /dark/i }).click();
     // MUI dark palette sets the root background to a dark colour
-    const bgColor = await page.evaluate(() =>
-      window.getComputedStyle(document.body).backgroundColor,
+    const bgColor = await page.evaluate(
+      () => window.getComputedStyle(document.body).backgroundColor,
     );
     // Should not be the default white background
     expect(bgColor).not.toBe('rgb(255, 255, 255)');

@@ -42,7 +42,6 @@
 
 - Change from using inline styles to using a consolidated style within the component
 
-
 # Paper Metadata
 
 - If possible during the search extract the necessary paper metadata and the abstract, if available from the index used.

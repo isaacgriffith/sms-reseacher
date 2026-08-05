@@ -5,11 +5,19 @@ import App from './App';
 
 describe('App', () => {
   it('renders without crashing', () => {
-    render(<MemoryRouter><App /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <App />
+      </MemoryRouter>,
+    );
   });
 
   it('displays the application title', () => {
-    render(<MemoryRouter><App /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <App />
+      </MemoryRouter>,
+    );
     expect(screen.getAllByRole('heading', { level: 4 }).length).toBeGreaterThan(0);
   });
 });

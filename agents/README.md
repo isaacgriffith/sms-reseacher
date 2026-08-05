@@ -25,20 +25,20 @@ uv run mypy agents/src
 
 ## Agents
 
-| Agent | Purpose |
-|-------|---------|
-| `ScreenerAgent` | Decides include/exclude for a paper abstract given inclusion/exclusion criteria |
-| `ExtractorAgent` | Extracts structured data fields from full paper text |
-| `SynthesiserAgent` | Synthesises a research answer from multiple paper summaries |
-| `AgentGeneratorAgent` | Generates a Jinja2 system message template given role and persona inputs |
-| `LibrarianAgent` | Searches and retrieves relevant literature |
-| `ExpertAgent` | Provides domain-expert analysis on research topics |
-| `QualityJudgeAgent` | Assesses methodological quality of included papers |
-| `DomainModelerAgent` | Models research domain concepts and relationships |
-| `ValidityAgent` | Assesses internal and external validity threats |
-| `ProtocolReviewerAgent` | Structured review of SLR protocol sections with strengths/weaknesses/recommendations |
-| `NarrativeSynthesiserAgent` | Generates narrative draft text for a Rapid Review research question section |
-| `TertiaryExtractionAgent` | AI pre-fills `TertiaryDataExtraction` fields from full-text Markdown of a secondary study paper |
+| Agent                       | Purpose                                                                                         |
+| --------------------------- | ----------------------------------------------------------------------------------------------- |
+| `ScreenerAgent`             | Decides include/exclude for a paper abstract given inclusion/exclusion criteria                 |
+| `ExtractorAgent`            | Extracts structured data fields from full paper text                                            |
+| `SynthesiserAgent`          | Synthesises a research answer from multiple paper summaries                                     |
+| `AgentGeneratorAgent`       | Generates a Jinja2 system message template given role and persona inputs                        |
+| `LibrarianAgent`            | Searches and retrieves relevant literature                                                      |
+| `ExpertAgent`               | Provides domain-expert analysis on research topics                                              |
+| `QualityJudgeAgent`         | Assesses methodological quality of included papers                                              |
+| `DomainModelerAgent`        | Models research domain concepts and relationships                                               |
+| `ValidityAgent`             | Assesses internal and external validity threats                                                 |
+| `ProtocolReviewerAgent`     | Structured review of SLR protocol sections with strengths/weaknesses/recommendations            |
+| `NarrativeSynthesiserAgent` | Generates narrative draft text for a Rapid Review research question section                     |
+| `TertiaryExtractionAgent`   | AI pre-fills `TertiaryDataExtraction` fields from full-text Markdown of a secondary study paper |
 
 All agents accept an optional `provider_config` parameter to override the default
 environment-based LLM settings on a per-call basis.
@@ -119,13 +119,13 @@ tools = client.to_litellm_tools()
 
 ## Environment Variables
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `LLM_PROVIDER` | `anthropic` | `anthropic`, `openai`, or `ollama` |
-| `LLM_MODEL` | `claude-sonnet-4-6` | Model ID |
-| `ANTHROPIC_API_KEY` | — | Required when `LLM_PROVIDER=anthropic` |
-| `OPENAI_API_KEY` | — | Required when `LLM_PROVIDER=openai` |
-| `OLLAMA_BASE_URL` | `http://localhost:11434` | Ollama server URL |
-| `RESEARCHER_MCP_URL` | `http://localhost:8002/sse` | MCP server SSE endpoint |
+| Variable             | Default                     | Description                            |
+| -------------------- | --------------------------- | -------------------------------------- |
+| `LLM_PROVIDER`       | `anthropic`                 | `anthropic`, `openai`, or `ollama`     |
+| `LLM_MODEL`          | `claude-sonnet-4-6`         | Model ID                               |
+| `ANTHROPIC_API_KEY`  | —                           | Required when `LLM_PROVIDER=anthropic` |
+| `OPENAI_API_KEY`     | —                           | Required when `LLM_PROVIDER=openai`    |
+| `OLLAMA_BASE_URL`    | `http://localhost:11434`    | Ollama server URL                      |
+| `RESEARCHER_MCP_URL` | `http://localhost:8002/sse` | MCP server SSE endpoint                |
 
 When a `ProviderConfig` is passed directly to an agent, it takes precedence over these environment variables for that specific call.

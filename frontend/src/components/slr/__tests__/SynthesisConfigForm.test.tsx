@@ -45,7 +45,9 @@ describe('SynthesisConfigForm', () => {
       renderForm();
       await userEvent.click(screen.getByLabelText(/meta-analysis/i));
       await waitFor(() => {
-        expect(screen.getByLabelText(/model type/i, { selector: '[role="combobox"]' })).toBeInTheDocument();
+        expect(
+          screen.getByLabelText(/model type/i, { selector: '[role="combobox"]' }),
+        ).toBeInTheDocument();
       });
     });
 
@@ -54,7 +56,9 @@ describe('SynthesisConfigForm', () => {
       await userEvent.click(screen.getByLabelText(/meta-analysis/i));
       await userEvent.click(screen.getByLabelText(/qualitative/i));
       await waitFor(() => {
-        expect(screen.queryByLabelText(/model type/i, { selector: '[role="combobox"]' })).not.toBeInTheDocument();
+        expect(
+          screen.queryByLabelText(/model type/i, { selector: '[role="combobox"]' }),
+        ).not.toBeInTheDocument();
       });
     });
 

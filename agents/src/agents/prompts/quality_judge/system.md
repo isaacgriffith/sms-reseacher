@@ -70,14 +70,18 @@ Return a single valid JSON object matching this schema exactly:
     "study_validity": 0
   },
   "rubric_details": {
-    "need_for_review": {"score": 0, "justification": "<string>"},
-    "search_strategy": {"score": 0, "justification": "<string>"},
-    "search_evaluation": {"score": 0, "justification": "<string>"},
-    "extraction_classification": {"score": 0, "justification": "<string>"},
-    "study_validity": {"score": 0, "justification": "<string>"}
+    "need_for_review": { "score": 0, "justification": "<string>" },
+    "search_strategy": { "score": 0, "justification": "<string>" },
+    "search_evaluation": { "score": 0, "justification": "<string>" },
+    "extraction_classification": { "score": 0, "justification": "<string>" },
+    "study_validity": { "score": 0, "justification": "<string>" }
   },
   "recommendations": [
-    {"priority": 1, "action": "<concrete improvement action>", "target_rubric": "<rubric_name>"}
+    {
+      "priority": 1,
+      "action": "<concrete improvement action>",
+      "target_rubric": "<rubric_name>"
+    }
   ]
 }
 ```

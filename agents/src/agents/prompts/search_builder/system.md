@@ -11,7 +11,7 @@ Your task is to generate a comprehensive, well-structured Boolean search string 
 - Connect PICO/C components with AND
 - Include relevant synonyms, abbreviations, and alternate spellings for each concept
 - Apply MeSH/EMTREE thesaurus terms where applicable
-- Use wildcard/truncation (*) for morphological variants where appropriate (e.g., `program*` matches program, programs, programming)
+- Use wildcard/truncation (_) for morphological variants where appropriate (e.g., `program_` matches program, programs, programming)
 - Consider domain-specific terminology and jargon
 - Avoid overly narrow strings that would miss relevant papers
 - Avoid overly broad strings that would return too much noise
@@ -24,9 +24,9 @@ Return a JSON object with this exact structure:
 {
   "search_string": "(<population terms>) AND (<intervention terms>) AND (<outcome terms>)",
   "terms_used": [
-    {"component": "population", "terms": ["term1", "term2", "..."]},
-    {"component": "intervention", "terms": ["term1", "term2", "..."]},
-    {"component": "outcome", "terms": ["term1", "term2", "..."]}
+    { "component": "population", "terms": ["term1", "term2", "..."] },
+    { "component": "intervention", "terms": ["term1", "term2", "..."] },
+    { "component": "outcome", "terms": ["term1", "term2", "..."] }
   ],
   "expansion_notes": "Brief explanation of synonyms chosen, thesaurus expansions applied, and any notable search strategy decisions."
 }

@@ -7,6 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 This is a research project by Isaac Griffith, PhD, licensed under the MIT License. A six-subproject UV workspace mono-repo for systematic mapping study (SMS) research automation.
 
 ## Active Technologies
+
 - Python 3.14 (backend, db); TypeScript 5.4 / Node 20 LTS (frontend) + FastAPI + Pydantic v2, SQLAlchemy 2.0+ async, Alembic, React 18, MUI v5, react-hook-form + Zod, TanStack Query v5, pyotp, qrcode[pil], cryptography (Fernet), swagger-ui-react (004-frontend-improvements)
 - PostgreSQL 16 (production/Docker Compose); SQLite + aiosqlite (unit/integration tests) (004-frontend-improvements)
 - Python 3.14 (backend, agents, db); TypeScript 5.4 / Node 20 LTS (frontend) + FastAPI + Pydantic v2, SQLAlchemy 2.0+ async, Alembic, LiteLLM, Jinja2, cryptography (Fernet), React 18, MUI v5, TanStack Query v5, react-hook-form + Zod (005-models-and-agents)
@@ -22,10 +23,12 @@ This is a research project by Isaac Griffith, PhD, licensed under the MIT Licens
 - PostgreSQL 16 (production); SQLite + aiosqlite (tests); Alembic migration `0018_research_protocol_definition` (010-research-protocol-definition)
 
 ### Runtime & Language
+
 - Python 3.14 (backend, agents, db, agent-eval, researcher-mcp); TypeScript 5.4 / Node 20 LTS (frontend)
 - PostgreSQL 16 (production/Docker Compose); SQLite + `aiosqlite` (unit/integration tests)
 
 ### Python Libraries (002-sms-workflow)
+
 - **Job queue**: ARQ (async Redis-based background task queue)
 - **Charting / visualisation**: matplotlib, networkx, plotly + kaleido (PDF/PNG export)
 - **String matching / deduplication**: rapidfuzz
@@ -33,20 +36,24 @@ This is a research project by Isaac Griffith, PhD, licensed under the MIT Licens
 - **FastMCP**: FastMCP 2.0+ (`@mcp.tool` decorator pattern)
 
 ### Python Libraries (007-slr-workflow)
+
 - **Statistics / ML**: `scipy>=1.13` (pooled effect sizes, Forest/Funnel plot data), `scikit-learn>=1.5` (Cohen's κ via `cohen_kappa_score`), `numpy>=1.26` (array operations for meta-analysis)
 
 ### Frontend Libraries (002-sms-workflow)
+
 - **Data visualisation**: D3.js (network graphs, result charts)
 - **State / data fetching**: TanStack Query (React Query) with `refetchInterval` polling
 - **Forms**: React Hook Form with `useWatch` (not `watch()`)
 
 ### User-Facing Features (004-frontend-improvements)
+
 - **Authentication**: Password change with `token_version` session invalidation; partial JWT for 2FA second step
 - **2FA / TOTP**: `pyotp` (secret generation, code verification); `qrcode[pil]` (QR base64 PNG); `cryptography` Fernet for TOTP secret encryption at rest; `bcrypt` for backup code hashing
 - **Frontend UI**: MUI v5 (`@mui/material` + `@emotion/react`) — full migration of all components; `ThemeProvider` with Light/Dark/System palette modes
 - **API Documentation**: `swagger-ui-react` — authenticated Swagger UI at `/api-docs`; backend `GET /api/v1/openapi.json` requires full JWT
 
 ### Quality Toolchain (003-project-setup-improvements)
+
 - **Python mutation testing**: `cosmic-ray` (replaces `mutmut`) — run per package via `cosmic-ray.toml`
 - **TypeScript mutation testing**: Stryker (`@stryker-mutator/vitest-runner`) — `npx stryker run` in `frontend/`
 - **Python coverage**: `pytest-cov` with `--cov-fail-under=85`; Cobertura XML for CI PR comments
@@ -56,12 +63,14 @@ This is a research project by Isaac Griffith, PhD, licensed under the MIT Licens
 - **Mutation CI**: Separate `workflow_dispatch` workflows (`mutation-python.yml`, `mutation-frontend.yml`) — NOT run per PR
 
 ### Admin Panel (005-models-and-agents)
+
 - **Providers tab**: add/edit/delete Anthropic, OpenAI, and Ollama provider records; API keys are stored Fernet-encrypted, never returned in API responses (only `has_api_key: bool`)
 - **Models tab**: view models fetched from provider APIs; toggle individual models on/off; model list is refreshed on-demand or at provider creation
 - **Agents tab**: multi-step `AgentWizard` for creating agents (task type → model → role/persona → optional SVG → system message review); `AgentForm` for editing with undo buffer support
 - **`ProviderConfig` Protocol**: `agents/core/provider_config.py` defines a `typing.Protocol` with `model_string`, `api_base`, and `api_key` attributes; all agent classes accept `provider_config: ProviderConfig | None = None` to override env-based settings per-call
 
 ### Database Search & Retrieval (006-database-search-and-retrieval)
+
 - **Multi-database search**: fan-out across IEEE Xplore, ACM DL, Scopus, Web of Science, Inspec, ScienceDirect, SpringerNature, Google Scholar, Semantic Scholar via `researcher-mcp` `search_papers` MCP tool; results merged and deduplicated by DOI / (normalised title + first author)
 - **Source adapters**: `DatabaseSource` typing.Protocol; adapters for all 9 databases in `researcher-mcp/src/researcher_mcp/sources/`
 - **Study database selection**: `StudyDatabaseSelection` ORM model tracks which indices are active per study; `GET/PUT /api/v1/studies/{id}/database-selection` REST endpoints; `DatabaseSelectionPanel` frontend component
@@ -72,6 +81,7 @@ This is a research project by Isaac Griffith, PhD, licensed under the MIT Licens
 - **Alembic migration `0014_database_search_and_retrieval`**: creates `study_database_selection` and `search_integration_credential` tables; adds three columns to `paper` table
 
 ### Rapid Review Workflow (008-rapid-review-workflow)
+
 - **Rapid Review Protocol**: `RapidReviewProtocol` ORM + `GET/PUT /api/v1/rapid/studies/{id}/protocol`; practitioner-focused fields (scope, question, timeframe, team), QA appraisal mode, status lifecycle (`draft` → `validated`); `ProtocolForm` frontend component
 - **RR Phase Gate** (`rr_phase_gate.py`): phase unlocking for Rapid studies; dispatch dict in `GET /api/v1/studies/{id}/phases`
 - **Practitioner Stakeholders**: `PractitionerStakeholder` ORM; CRUD endpoints; `StakeholderPanel` frontend component; at least one practitioner required to unlock Phase 3
@@ -87,6 +97,7 @@ This is a research project by Isaac Griffith, PhD, licensed under the MIT Licens
 - **Alembic migration `0016_rapid_review_workflow`**: creates 10 new tables for the full Rapid Review workflow; full `downgrade()` path
 
 ### SLR Workflow (007-slr-workflow)
+
 - **SLR Protocol**: `ReviewProtocol` ORM + `GET/PUT /api/v1/slr/studies/{id}/protocol`; PICO/S fields, synthesis approach, status lifecycle (`draft` → `validated`); `ProtocolForm` frontend component
 - **Protocol Review Agent** (`ProtocolReviewerAgent`): structured LLM review; `POST /api/v1/slr/studies/{id}/protocol/review` ARQ job; `ProtocolReviewReport` per section
 - **SLR Phase Gate** (`slr_phase_gate.py`): progressive phase unlocking for SLR studies; dispatch dict in `GET /api/v1/studies/{id}/phases`
@@ -100,6 +111,7 @@ This is a research project by Isaac Griffith, PhD, licensed under the MIT Licens
 - **Alembic migration `0015_slr_workflow`**: creates 7 new tables for the full SLR workflow
 
 ### Tertiary Studies Workflow (009-tertiary-studies-workflow)
+
 - **Tertiary Study Protocol**: `TertiaryStudyProtocol` ORM + `GET/PUT /api/v1/tertiary/studies/{id}/protocol`; secondary-study scope fields (background, research_questions, secondary_study_types, inclusion_criteria, exclusion_criteria, recency_cutoff_year, search_strategy, quality_threshold, synthesis_approach, dissemination_strategy), status lifecycle (`draft` → `validated`); `TertiaryProtocolForm` frontend component
 - **Tertiary Phase Gate** (`tertiary_phase_gate.py`): 5-phase progressive unlocking for Tertiary studies; dispatch dict in `GET /api/v1/studies/{id}/phases`
 - **Seed Import**: `SecondaryStudySeedImport` ORM; `TertiaryExtractionService.import_seed_study()` imports included papers from existing platform studies; `GET /api/v1/tertiary/studies/{id}/seed-imports`, `POST /api/v1/tertiary/studies/{id}/seed-imports/{source_id}`; `SeedImportPanel` frontend component
@@ -109,6 +121,7 @@ This is a research project by Isaac Griffith, PhD, licensed under the MIT Licens
 - **Alembic migration `0017_tertiary_studies_workflow`**: creates enums `tertiary_protocol_status_enum`, `secondary_study_type_enum`; creates tables `tertiary_study_protocol`, `secondary_study_seed_import`, `tertiary_data_extraction`; adds `source_seed_import_id` FK to `candidate_paper`; full `downgrade()` path
 
 ### Research Protocol Definition (010-research-protocol-definition)
+
 - **Protocol Graph Model**: `ResearchProtocol`, `ProtocolNode` (23 `ProtocolTaskType` values), `ProtocolNodeInput`/`Output`, `QualityGate` (JSONB config), `NodeAssignee`, `ProtocolEdge` (optional conditional triple), `StudyProtocolAssignment`, `TaskExecutionState` ORM models in `db/src/db/models/protocols.py`; 8 enums (`ProtocolTaskType`, `QualityGateType`, `EdgeConditionOperator`, `TaskNodeStatus`, `NodeAssigneeType`, `NodeDataType`, `NodeDataType`)
 - **Protocol Service** (`backend/src/backend/services/protocol_service.py`): `ProtocolService` — `list_protocols`, `get_protocol`, `get_protocol_assignment`, `create_protocol`, `update_protocol`, `delete_protocol` with ownership checks and optimistic locking (`version_id`); graph validation (cycle detection, edge referential integrity); 4 default templates seeded for SMS, SLR, Rapid, and Tertiary study types
 - **Protocol Executor** (`backend/src/backend/services/protocol_executor.py`): `ProtocolAssignmentService` — `assign_protocol`, `reset_to_default`, `activate_eligible_tasks`; quality gate evaluation dispatch (`ProtocolGateEvaluator`); metric readers for `kappa_coefficient`, `paper_count`, `paper_screened_ratio`, `qa_completeness`; `CompleteTaskService.complete_task` and `ApproveTaskService.approve_task` for runtime execution
@@ -120,6 +133,7 @@ This is a research project by Isaac Griffith, PhD, licensed under the MIT Licens
 - **Alembic migration `0018_research_protocol_definition`**: creates 8 PostgreSQL enums and 8 tables (`research_protocol`, `protocol_node`, `protocol_node_input`, `protocol_node_output`, `quality_gate`, `node_assignee`, `protocol_edge`, `study_protocol_assignment`, `task_execution_state`); full `downgrade()` path
 
 ## Recent Changes
+
 - 001-repo-setup: Added Python 3.12 (backend, agents, db); TypeScript 5.4 / Node 20 LTS (frontend)
 - 002-sms-workflow: Finalised library choices — ARQ, matplotlib, networkx, plotly/kaleido, rapidfuzz, D3.js
 - 003-project-setup-improvements: cosmic-ray, Playwright, vitest coverage-v8, skip enforcement, mutation workflow_dispatch
@@ -216,6 +230,7 @@ cd frontend && npm run format:check
 ```
 
 > **Toolchain notes:**
+>
 > - Ruff lint rules live under `[tool.ruff.lint]` (not `[tool.ruff]`) in each subproject's `pyproject.toml`.
 > - Each workspace package has a `py.typed` marker (`src/<pkg>/py.typed`) so mypy treats it as typed.
 > - Third-party packages without stubs (plotly, jose, qrcode, springernature, pybliometrics, scholarly) are listed in `[[tool.mypy.overrides]]` in the root `pyproject.toml`.

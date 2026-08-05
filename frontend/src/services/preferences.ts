@@ -109,10 +109,7 @@ export async function regenerateBackupCodes(
  * @throws {ApiError} On 400 (wrong current password or same password) or
  *   422 (complexity failure).
  */
-export async function changePassword(
-  currentPassword: string,
-  newPassword: string,
-): Promise<void> {
+export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
   try {
     await api.put<{ message: string }>('/api/v1/me/password', {
       current_password: currentPassword,

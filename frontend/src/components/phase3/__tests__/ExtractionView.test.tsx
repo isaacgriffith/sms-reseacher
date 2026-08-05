@@ -75,9 +75,7 @@ describe('ExtractionView', () => {
   describe('Rendering', () => {
     it('renders extraction status badge', async () => {
       mockApi.get.mockResolvedValueOnce(MOCK_EXTRACTION);
-      renderWithQuery(
-        <ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />
-      );
+      renderWithQuery(<ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />);
       await waitFor(() => {
         const badges = screen.getAllByText(/ai complete/i);
         expect(badges.length).toBeGreaterThan(0);
@@ -86,9 +84,7 @@ describe('ExtractionView', () => {
 
     it('renders venue name from API data', async () => {
       mockApi.get.mockResolvedValueOnce(MOCK_EXTRACTION);
-      renderWithQuery(
-        <ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />
-      );
+      renderWithQuery(<ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />);
       await waitFor(() => {
         expect(screen.getByText('ICSE 2023')).toBeTruthy();
       });
@@ -96,9 +92,7 @@ describe('ExtractionView', () => {
 
     it('renders paper summary', async () => {
       mockApi.get.mockResolvedValueOnce(MOCK_EXTRACTION);
-      renderWithQuery(
-        <ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />
-      );
+      renderWithQuery(<ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />);
       await waitFor(() => {
         expect(screen.getByText(/empirical study of TDD/i)).toBeTruthy();
       });
@@ -106,9 +100,7 @@ describe('ExtractionView', () => {
 
     it('renders keyword tags', async () => {
       mockApi.get.mockResolvedValueOnce(MOCK_EXTRACTION);
-      renderWithQuery(
-        <ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />
-      );
+      renderWithQuery(<ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />);
       await waitFor(() => {
         expect(screen.getByText('TDD')).toBeTruthy();
         expect(screen.getByText('agile')).toBeTruthy();
@@ -117,9 +109,7 @@ describe('ExtractionView', () => {
 
     it('renders conflict badge when conflict_flag is true', async () => {
       mockApi.get.mockResolvedValueOnce({ ...MOCK_EXTRACTION, conflict_flag: true });
-      renderWithQuery(
-        <ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />
-      );
+      renderWithQuery(<ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />);
       await waitFor(() => {
         expect(screen.getByText(/conflict/i)).toBeTruthy();
       });
@@ -127,9 +117,7 @@ describe('ExtractionView', () => {
 
     it('does not show conflict badge when conflict_flag is false', async () => {
       mockApi.get.mockResolvedValueOnce({ ...MOCK_EXTRACTION, conflict_flag: false });
-      renderWithQuery(
-        <ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />
-      );
+      renderWithQuery(<ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />);
       await waitFor(() => {
         // status badge exists but 'Conflict' badge should not
         expect(screen.queryByText(/^Conflict$/i)).toBeNull();
@@ -140,9 +128,7 @@ describe('ExtractionView', () => {
   describe('Inline editing', () => {
     it('clicking Edit shows an input field for venue_type', async () => {
       mockApi.get.mockResolvedValueOnce(MOCK_EXTRACTION);
-      renderWithQuery(
-        <ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />
-      );
+      renderWithQuery(<ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />);
       await waitFor(() => screen.getByText('conference'));
 
       const editButtons = screen.getAllByRole('button', { name: /edit/i });
@@ -158,9 +144,7 @@ describe('ExtractionView', () => {
 
     it('clicking Cancel after Edit hides the input', async () => {
       mockApi.get.mockResolvedValueOnce(MOCK_EXTRACTION);
-      renderWithQuery(
-        <ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />
-      );
+      renderWithQuery(<ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />);
       await waitFor(() => screen.getByText('conference'));
 
       const editButtons = screen.getAllByRole('button', { name: /edit/i });
@@ -179,17 +163,13 @@ describe('ExtractionView', () => {
     it('shows "Loading extraction…" while data is loading', () => {
       // Never resolves → stays loading
       mockApi.get.mockReturnValue(new Promise(() => {}));
-      renderWithQuery(
-        <ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />
-      );
+      renderWithQuery(<ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />);
       expect(screen.getByText(/loading extraction/i)).toBeTruthy();
     });
 
     it('shows "Failed to load extraction" on API error', async () => {
       mockApi.get.mockRejectedValueOnce(new Error('Network error'));
-      renderWithQuery(
-        <ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />
-      );
+      renderWithQuery(<ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />);
       await waitFor(() => {
         expect(screen.getByText(/failed to load extraction/i)).toBeTruthy();
       });
@@ -199,9 +179,7 @@ describe('ExtractionView', () => {
   describe('Conditional field rendering', () => {
     it('shows em-dash (—) when venue_type is empty string', async () => {
       mockApi.get.mockResolvedValueOnce({ ...MOCK_EXTRACTION, venue_type: '' });
-      renderWithQuery(
-        <ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />
-      );
+      renderWithQuery(<ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />);
       await waitFor(() => {
         expect(screen.getAllByText('—').length).toBeGreaterThan(0);
       });
@@ -209,9 +187,7 @@ describe('ExtractionView', () => {
 
     it('shows em-dash (—) when venue_name is null', async () => {
       mockApi.get.mockResolvedValueOnce({ ...MOCK_EXTRACTION, venue_name: null });
-      renderWithQuery(
-        <ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />
-      );
+      renderWithQuery(<ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />);
       await waitFor(() => {
         expect(screen.getAllByText('—').length).toBeGreaterThan(0);
       });
@@ -219,9 +195,7 @@ describe('ExtractionView', () => {
 
     it('shows em-dash (—) when summary is null', async () => {
       mockApi.get.mockResolvedValueOnce({ ...MOCK_EXTRACTION, summary: null });
-      renderWithQuery(
-        <ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />
-      );
+      renderWithQuery(<ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />);
       await waitFor(() => {
         expect(screen.getAllByText('—').length).toBeGreaterThan(0);
       });
@@ -229,9 +203,7 @@ describe('ExtractionView', () => {
 
     it('shows extracted_by_agent attribution when set', async () => {
       mockApi.get.mockResolvedValueOnce(MOCK_EXTRACTION);
-      renderWithQuery(
-        <ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />
-      );
+      renderWithQuery(<ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />);
       await waitFor(() => {
         expect(screen.getByText(/extracted by: ExtractorAgent/i)).toBeTruthy();
       });
@@ -239,18 +211,14 @@ describe('ExtractionView', () => {
 
     it('does not show agent attribution when extracted_by_agent is null', async () => {
       mockApi.get.mockResolvedValueOnce({ ...MOCK_EXTRACTION, extracted_by_agent: null });
-      renderWithQuery(
-        <ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />
-      );
+      renderWithQuery(<ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />);
       await waitFor(() => screen.getByText(/data extraction/i));
       expect(screen.queryByText(/extracted by/i)).toBeNull();
     });
 
     it('shows version_id in agent attribution line', async () => {
       mockApi.get.mockResolvedValueOnce({ ...MOCK_EXTRACTION, version_id: 7 });
-      renderWithQuery(
-        <ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />
-      );
+      renderWithQuery(<ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />);
       await waitFor(() => {
         expect(screen.getByText(/version 7/i)).toBeTruthy();
       });
@@ -258,9 +226,7 @@ describe('ExtractionView', () => {
 
     it('shows "No open codings yet." when open_codings is null', async () => {
       mockApi.get.mockResolvedValueOnce({ ...MOCK_EXTRACTION, open_codings: null });
-      renderWithQuery(
-        <ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />
-      );
+      renderWithQuery(<ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />);
       await waitFor(() => {
         expect(screen.getByText(/no open codings yet/i)).toBeTruthy();
       });
@@ -268,9 +234,7 @@ describe('ExtractionView', () => {
 
     it('shows "No open codings yet." when open_codings is empty array', async () => {
       mockApi.get.mockResolvedValueOnce({ ...MOCK_EXTRACTION, open_codings: [] });
-      renderWithQuery(
-        <ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />
-      );
+      renderWithQuery(<ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />);
       await waitFor(() => {
         expect(screen.getByText(/no open codings yet/i)).toBeTruthy();
       });
@@ -278,9 +242,7 @@ describe('ExtractionView', () => {
 
     it('shows open coding code when open_codings has entries', async () => {
       mockApi.get.mockResolvedValueOnce(MOCK_EXTRACTION);
-      renderWithQuery(
-        <ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />
-      );
+      renderWithQuery(<ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />);
       await waitFor(() => {
         expect(screen.getByText('productivity')).toBeTruthy();
       });
@@ -288,9 +250,7 @@ describe('ExtractionView', () => {
 
     it('shows evidence_quote in blockquote when present', async () => {
       mockApi.get.mockResolvedValueOnce(MOCK_EXTRACTION);
-      renderWithQuery(
-        <ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />
-      );
+      renderWithQuery(<ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />);
       await waitFor(() => {
         expect(screen.getByText('faster')).toBeTruthy();
       });
@@ -302,18 +262,14 @@ describe('ExtractionView', () => {
         open_codings: [{ code: 'test-code', definition: 'test-def', evidence_quote: '' }],
       };
       mockApi.get.mockResolvedValueOnce(extractionNoQuote);
-      renderWithQuery(
-        <ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />
-      );
+      renderWithQuery(<ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />);
       await waitFor(() => screen.getByText('test-code'));
       expect(screen.queryByRole('blockquote')).toBeNull();
     });
 
     it('renders question_data table when question_data has entries', async () => {
       mockApi.get.mockResolvedValueOnce(MOCK_EXTRACTION);
-      renderWithQuery(
-        <ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />
-      );
+      renderWithQuery(<ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />);
       await waitFor(() => {
         expect(screen.getByText('RQ1')).toBeTruthy();
         expect(screen.getByText('Teams adopted TDD in 60% of cases')).toBeTruthy();
@@ -322,18 +278,14 @@ describe('ExtractionView', () => {
 
     it('does not render question_data section when question_data is null', async () => {
       mockApi.get.mockResolvedValueOnce({ ...MOCK_EXTRACTION, question_data: null });
-      renderWithQuery(
-        <ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />
-      );
+      renderWithQuery(<ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />);
       await waitFor(() => screen.getByText(/data extraction/i));
       expect(screen.queryByText('RQ1')).toBeNull();
     });
 
     it('does not render question_data section when question_data is empty object', async () => {
       mockApi.get.mockResolvedValueOnce({ ...MOCK_EXTRACTION, question_data: {} });
-      renderWithQuery(
-        <ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />
-      );
+      renderWithQuery(<ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />);
       await waitFor(() => screen.getByText(/data extraction/i));
       expect(screen.queryByText('RQ1')).toBeNull();
     });
@@ -344,9 +296,7 @@ describe('ExtractionView', () => {
         question_data: { RQ_null: null },
       };
       mockApi.get.mockResolvedValueOnce(extractionNullAnswer);
-      renderWithQuery(
-        <ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />
-      );
+      renderWithQuery(<ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />);
       await waitFor(() => {
         expect(screen.getByText('RQ_null')).toBeTruthy();
         expect(screen.getAllByText('—').length).toBeGreaterThan(0);
@@ -359,9 +309,7 @@ describe('ExtractionView', () => {
         question_data: { RQ_num: 42 },
       };
       mockApi.get.mockResolvedValueOnce(extractionNumAnswer);
-      renderWithQuery(
-        <ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />
-      );
+      renderWithQuery(<ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />);
       await waitFor(() => {
         expect(screen.getByText('42')).toBeTruthy();
       });
@@ -369,9 +317,7 @@ describe('ExtractionView', () => {
 
     it('shows em-dash (—) for keywords when keywords is null', async () => {
       mockApi.get.mockResolvedValueOnce({ ...MOCK_EXTRACTION, keywords: null });
-      renderWithQuery(
-        <ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />
-      );
+      renderWithQuery(<ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />);
       await waitFor(() => {
         expect(screen.getAllByText('—').length).toBeGreaterThan(0);
       });
@@ -379,9 +325,7 @@ describe('ExtractionView', () => {
 
     it('shows keywords as tag spans when present', async () => {
       mockApi.get.mockResolvedValueOnce(MOCK_EXTRACTION);
-      renderWithQuery(
-        <ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />
-      );
+      renderWithQuery(<ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />);
       await waitFor(() => {
         expect(screen.getByText('TDD')).toBeTruthy();
         expect(screen.getByText('agile')).toBeTruthy();
@@ -394,9 +338,7 @@ describe('ExtractionView', () => {
       mockApi.get.mockResolvedValueOnce(MOCK_EXTRACTION);
       mockApi.patch.mockRejectedValueOnce(new Error('Server error'));
 
-      renderWithQuery(
-        <ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />
-      );
+      renderWithQuery(<ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />);
       await waitFor(() => screen.getByText('conference'));
 
       const editButtons = screen.getAllByRole('button', { name: /edit/i });
@@ -419,9 +361,7 @@ describe('ExtractionView', () => {
       const err = new ApiError(409, conflictDetail);
       mockApi.patch.mockRejectedValueOnce(err);
 
-      renderWithQuery(
-        <ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />
-      );
+      renderWithQuery(<ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />);
       await waitFor(() => screen.getByText('conference'));
 
       const editButtons = screen.getAllByRole('button', { name: /edit/i });
@@ -437,9 +377,7 @@ describe('ExtractionView', () => {
   describe('Edit mode pre-populated values', () => {
     it('edit mode for venue_name shows current value in input', async () => {
       mockApi.get.mockResolvedValueOnce(MOCK_EXTRACTION);
-      renderWithQuery(
-        <ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />
-      );
+      renderWithQuery(<ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />);
       await waitFor(() => screen.getByText('ICSE 2023'));
 
       // Click Edit on Venue Name (third Edit button — Research Type, Venue Type, Venue Name)
@@ -448,16 +386,14 @@ describe('ExtractionView', () => {
 
       await waitFor(() => {
         const inputs = screen.queryAllByRole('textbox') as HTMLInputElement[];
-        const venueNameInput = inputs.find(el => el.defaultValue === 'ICSE 2023');
+        const venueNameInput = inputs.find((el) => el.defaultValue === 'ICSE 2023');
         expect(venueNameInput).toBeTruthy();
       });
     });
 
     it('edit mode for summary shows current value in textarea', async () => {
       mockApi.get.mockResolvedValueOnce(MOCK_EXTRACTION);
-      renderWithQuery(
-        <ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />
-      );
+      renderWithQuery(<ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />);
       await waitFor(() => screen.getByText(/empirical study of TDD/i));
 
       // Click Edit on Summary (4th Edit button)
@@ -466,8 +402,8 @@ describe('ExtractionView', () => {
 
       await waitFor(() => {
         const textareas = screen.queryAllByRole('textbox') as HTMLTextAreaElement[];
-        const summaryArea = textareas.find(el =>
-          el.defaultValue?.includes('empirical study of TDD')
+        const summaryArea = textareas.find((el) =>
+          el.defaultValue?.includes('empirical study of TDD'),
         );
         expect(summaryArea).toBeTruthy();
       });
@@ -475,9 +411,7 @@ describe('ExtractionView', () => {
 
     it('edit mode for venue_name shows empty input when venue_name is null', async () => {
       mockApi.get.mockResolvedValueOnce({ ...MOCK_EXTRACTION, venue_name: null });
-      renderWithQuery(
-        <ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />
-      );
+      renderWithQuery(<ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />);
       await waitFor(() => screen.getAllByText('—'));
 
       const editButtons = screen.getAllByRole('button', { name: /edit/i });
@@ -486,25 +420,21 @@ describe('ExtractionView', () => {
       await waitFor(() => {
         const inputs = screen.queryAllByRole('textbox') as HTMLInputElement[];
         // When venue_name is null, defaultValue should be '' (empty string)
-        const emptyInput = inputs.find(el => el.defaultValue === '');
+        const emptyInput = inputs.find((el) => el.defaultValue === '');
         expect(emptyInput).toBeTruthy();
       });
     });
 
     it('Conflict badge NOT shown initially when conflict_flag is false', async () => {
       mockApi.get.mockResolvedValueOnce({ ...MOCK_EXTRACTION, conflict_flag: false });
-      renderWithQuery(
-        <ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />
-      );
+      renderWithQuery(<ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />);
       await waitFor(() => screen.getByText(/data extraction/i));
       expect(screen.queryByText('Conflict')).toBeNull();
     });
 
     it('Save failed message NOT shown before any edit attempt', async () => {
       mockApi.get.mockResolvedValueOnce(MOCK_EXTRACTION);
-      renderWithQuery(
-        <ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />
-      );
+      renderWithQuery(<ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />);
       await waitFor(() => screen.getByText(/data extraction/i));
       expect(screen.queryByText(/save failed/i)).toBeNull();
     });
@@ -513,11 +443,13 @@ describe('ExtractionView', () => {
   describe('PATCH with version_id', () => {
     it('saving a field calls api.patch with the extraction version_id', async () => {
       mockApi.get.mockResolvedValueOnce(MOCK_EXTRACTION);
-      mockApi.patch.mockResolvedValueOnce({ ...MOCK_EXTRACTION, venue_type: 'journal', version_id: 2 });
+      mockApi.patch.mockResolvedValueOnce({
+        ...MOCK_EXTRACTION,
+        venue_type: 'journal',
+        version_id: 2,
+      });
 
-      renderWithQuery(
-        <ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />
-      );
+      renderWithQuery(<ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />);
       await waitFor(() => screen.getByText('conference'));
 
       // Click Edit for the first field (Research Type)
@@ -547,9 +479,7 @@ describe('ExtractionView', () => {
       const err = new ApiError(409, conflictDetail);
       mockApi.patch.mockRejectedValueOnce(err);
 
-      renderWithQuery(
-        <ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />
-      );
+      renderWithQuery(<ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />);
       await waitFor(() => screen.getByText('conference'));
 
       const editButtons = screen.getAllByRole('button', { name: /edit/i });

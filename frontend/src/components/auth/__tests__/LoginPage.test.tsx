@@ -80,9 +80,7 @@ describe('LoginPage', () => {
     fireEvent.change(screen.getByLabelText(/email/i), { target: { value: 'a@b.com' } });
     fireEvent.change(screen.getByLabelText(/password/i), { target: { value: 'pass' } });
     fireEvent.submit(screen.getByRole('button', { name: /sign in/i }).closest('form')!);
-    await waitFor(() =>
-      expect(screen.getByLabelText(/authentication code/i)).toBeInTheDocument(),
-    );
+    await waitFor(() => expect(screen.getByLabelText(/authentication code/i)).toBeInTheDocument());
   });
 
   it('shows error for unexpected non-api errors', async () => {
@@ -169,7 +167,9 @@ describe('LoginPage', () => {
       target: { value: '999999' },
     });
     fireEvent.submit(screen.getByRole('button', { name: /verify/i }).closest('form')!);
-    await waitFor(() => expect(screen.getByText(/account temporarily locked/i)).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByText(/account temporarily locked/i)).toBeInTheDocument(),
+    );
     vi.unstubAllGlobals();
   });
 

@@ -18,32 +18,32 @@ Models with domain-specific timestamp names (e.g., `generated_at`, `queued_at`) 
 the standard pair alongside those domain fields. The table below lists models requiring
 an `updated_at` addition vs. those that already comply:
 
-| Model | `created_at` | `updated_at` | Action required |
-|-------|:---:|:---:|-----------------|
-| `Study` (extended) | ✅ | ✅ (existing) | None |
-| `ResearchGroup` | ✅ | ➕ add | Add `updated_at` |
-| `User` | ✅ | ➕ add | Add `updated_at` |
-| `GroupMembership` | (`joined_at`) | ➕ add | Alias `joined_at` → `created_at`; add `updated_at` |
-| `StudyMember` | (`joined_at`) | ➕ add | Same as above |
-| `Reviewer` | ✅ | ➕ add | Add `updated_at` |
-| `PICOComponent` | ➕ add | ✅ | Add `created_at` |
-| `SeedPaper` | ✅ | ➕ add | Add `updated_at` |
-| `SeedAuthor` | ✅ | ➕ add | Add `updated_at` |
-| `InclusionCriterion` | ✅ | ➕ add | Add `updated_at` |
-| `ExclusionCriterion` | ✅ | ➕ add | Add `updated_at` |
-| `SearchString` | ✅ | ➕ add | Add `updated_at` |
-| `SearchStringIteration` | ✅ | ➕ add | Add `updated_at` |
-| `SearchExecution` | ➕ add | ➕ add | Add both (domain fields retained) |
-| `CandidatePaper` | ✅ | ✅ | None |
-| `PaperDecision` | ✅ | ➕ add | Add `updated_at` |
-| `DataExtraction` | ✅ | ✅ | None |
-| `ExtractionFieldAudit` | ✅ (`changed_at`) | ➕ add | Add `updated_at` (immutable in practice; add for consistency) |
-| `BackgroundJob` | ✅ (`queued_at`) | ➕ add | Add `updated_at` (domain timestamps retained) |
-| `SearchMetrics` | ✅ (`computed_at`) | ➕ add | Add `updated_at` |
-| `DomainModel` | ✅ (`generated_at`) | ➕ add | Add `updated_at` |
-| `ClassificationScheme` | ✅ (`generated_at`) | ➕ add | Add `updated_at` |
-| `QualityReport` | ✅ (`generated_at`) | ➕ add | Add `updated_at` |
-| `AuditRecord` | ✅ | N/A (immutable) | Append-only; no `updated_at` by design |
+| Model                   |    `created_at`     |  `updated_at`   | Action required                                               |
+| ----------------------- | :-----------------: | :-------------: | ------------------------------------------------------------- |
+| `Study` (extended)      |         ✅          |  ✅ (existing)  | None                                                          |
+| `ResearchGroup`         |         ✅          |     ➕ add      | Add `updated_at`                                              |
+| `User`                  |         ✅          |     ➕ add      | Add `updated_at`                                              |
+| `GroupMembership`       |    (`joined_at`)    |     ➕ add      | Alias `joined_at` → `created_at`; add `updated_at`            |
+| `StudyMember`           |    (`joined_at`)    |     ➕ add      | Same as above                                                 |
+| `Reviewer`              |         ✅          |     ➕ add      | Add `updated_at`                                              |
+| `PICOComponent`         |       ➕ add        |       ✅        | Add `created_at`                                              |
+| `SeedPaper`             |         ✅          |     ➕ add      | Add `updated_at`                                              |
+| `SeedAuthor`            |         ✅          |     ➕ add      | Add `updated_at`                                              |
+| `InclusionCriterion`    |         ✅          |     ➕ add      | Add `updated_at`                                              |
+| `ExclusionCriterion`    |         ✅          |     ➕ add      | Add `updated_at`                                              |
+| `SearchString`          |         ✅          |     ➕ add      | Add `updated_at`                                              |
+| `SearchStringIteration` |         ✅          |     ➕ add      | Add `updated_at`                                              |
+| `SearchExecution`       |       ➕ add        |     ➕ add      | Add both (domain fields retained)                             |
+| `CandidatePaper`        |         ✅          |       ✅        | None                                                          |
+| `PaperDecision`         |         ✅          |     ➕ add      | Add `updated_at`                                              |
+| `DataExtraction`        |         ✅          |       ✅        | None                                                          |
+| `ExtractionFieldAudit`  |  ✅ (`changed_at`)  |     ➕ add      | Add `updated_at` (immutable in practice; add for consistency) |
+| `BackgroundJob`         |  ✅ (`queued_at`)   |     ➕ add      | Add `updated_at` (domain timestamps retained)                 |
+| `SearchMetrics`         | ✅ (`computed_at`)  |     ➕ add      | Add `updated_at`                                              |
+| `DomainModel`           | ✅ (`generated_at`) |     ➕ add      | Add `updated_at`                                              |
+| `ClassificationScheme`  | ✅ (`generated_at`) |     ➕ add      | Add `updated_at`                                              |
+| `QualityReport`         | ✅ (`generated_at`) |     ➕ add      | Add `updated_at`                                              |
+| `AuditRecord`           |         ✅          | N/A (immutable) | Append-only; no `updated_at` by design                        |
 
 All `updated_at` columns MUST use `onupdate=func.now()` so SQLAlchemy auto-refreshes them.
 This will be addressed in a dedicated migration (see migration step 9 below).
@@ -52,21 +52,22 @@ This will be addressed in a dedicated migration (see migration step 9 below).
 
 ## Existing Models (Extended)
 
-### `Study` *(extend)*
+### `Study` _(extend)_
 
 Existing fields retained. New fields added:
 
-| Field | Type | Notes |
-|-------|------|-------|
-| `topic` | `Text` | Brief topic description |
-| `motivation` | `Text \| None` | Research motivation narrative |
-| `current_phase` | `SmallInt` | 1–5; controlled by soft-gate logic |
-| `research_group_id` | `FK → ResearchGroup` | Owning group |
-| `snowball_threshold` | `SmallInt` | Min new papers to continue snowball; default 5 |
+| Field                | Type                 | Notes                                          |
+| -------------------- | -------------------- | ---------------------------------------------- |
+| `topic`              | `Text`               | Brief topic description                        |
+| `motivation`         | `Text \| None`       | Research motivation narrative                  |
+| `current_phase`      | `SmallInt`           | 1–5; controlled by soft-gate logic             |
+| `research_group_id`  | `FK → ResearchGroup` | Owning group                                   |
+| `snowball_threshold` | `SmallInt`           | Min new papers to continue snowball; default 5 |
 
 State machine (existing `StudyStatus`): `draft → active → completed / archived` — no change.
 
 Phase unlock rules (enforced at service layer, not DB):
+
 - Phase 1: always accessible
 - Phase 2: `pico_components` non-empty
 - Phase 3: at least one `SearchExecution` with `status=completed`
@@ -74,17 +75,17 @@ Phase unlock rules (enforced at service layer, not DB):
 
 ---
 
-### `Paper` *(extend)*
+### `Paper` _(extend)_
 
 Existing fields retained. New fields added:
 
-| Field | Type | Notes |
-|-------|------|-------|
-| `authors` | `JSON` | `[{name, institution, locale}]` |
-| `year` | `SmallInt \| None` | Publication year |
-| `venue` | `String(512) \| None` | Journal/conference name |
-| `source_url` | `Text \| None` | URL where paper was found |
-| `full_text_available` | `Boolean` | True if PDF retrieved |
+| Field                 | Type                  | Notes                           |
+| --------------------- | --------------------- | ------------------------------- |
+| `authors`             | `JSON`                | `[{name, institution, locale}]` |
+| `year`                | `SmallInt \| None`    | Publication year                |
+| `venue`               | `String(512) \| None` | Journal/conference name         |
+| `source_url`          | `Text \| None`        | URL where paper was found       |
+| `full_text_available` | `Boolean`             | True if PDF retrieved           |
 
 ---
 
@@ -98,35 +99,35 @@ The existing `StudyPaper` join table is superseded by the richer `CandidatePaper
 
 ### `ResearchGroup`
 
-| Field | Type | Notes |
-|-------|------|-------|
-| `id` | `Integer PK` | |
-| `name` | `String(255)` | Unique |
-| `created_at` | `DateTime(tz)` | |
+| Field        | Type           | Notes  |
+| ------------ | -------------- | ------ |
+| `id`         | `Integer PK`   |        |
+| `name`       | `String(255)`  | Unique |
+| `created_at` | `DateTime(tz)` |        |
 
 ---
 
 ### `User`
 
-| Field | Type | Notes |
-|-------|------|-------|
-| `id` | `Integer PK` | |
-| `email` | `String(255)` | Unique, indexed |
-| `hashed_password` | `String(255)` | bcrypt |
-| `display_name` | `String(255)` | |
-| `created_at` | `DateTime(tz)` | |
-| `last_login_at` | `DateTime(tz) \| None` | |
+| Field             | Type                   | Notes           |
+| ----------------- | ---------------------- | --------------- |
+| `id`              | `Integer PK`           |                 |
+| `email`           | `String(255)`          | Unique, indexed |
+| `hashed_password` | `String(255)`          | bcrypt          |
+| `display_name`    | `String(255)`          |                 |
+| `created_at`      | `DateTime(tz)`         |                 |
+| `last_login_at`   | `DateTime(tz) \| None` |                 |
 
 ---
 
 ### `GroupMembership`
 
-| Field | Type | Notes |
-|-------|------|-------|
-| `group_id` | `FK → ResearchGroup PK` | |
-| `user_id` | `FK → User PK` | |
-| `role` | `Enum(admin, member)` | |
-| `joined_at` | `DateTime(tz)` | |
+| Field       | Type                    | Notes |
+| ----------- | ----------------------- | ----- |
+| `group_id`  | `FK → ResearchGroup PK` |       |
+| `user_id`   | `FK → User PK`          |       |
+| `role`      | `Enum(admin, member)`   |       |
+| `joined_at` | `DateTime(tz)`          |       |
 
 Unique constraint: `(group_id, user_id)`.
 
@@ -134,12 +135,12 @@ Unique constraint: `(group_id, user_id)`.
 
 ### `StudyMember`
 
-| Field | Type | Notes |
-|-------|------|-------|
-| `study_id` | `FK → Study PK` | |
-| `user_id` | `FK → User PK` | |
-| `role` | `Enum(lead, member)` | |
-| `joined_at` | `DateTime(tz)` | |
+| Field       | Type                 | Notes |
+| ----------- | -------------------- | ----- |
+| `study_id`  | `FK → Study PK`      |       |
+| `user_id`   | `FK → User PK`       |       |
+| `role`      | `Enum(lead, member)` |       |
+| `joined_at` | `DateTime(tz)`       |       |
 
 Unique constraint: `(study_id, user_id)`.
 
@@ -149,15 +150,15 @@ Unique constraint: `(study_id, user_id)`.
 
 A reviewer is either a human study member or a named AI agent configuration. Each study has a set of reviewers that evaluate papers and extractions.
 
-| Field | Type | Notes |
-|-------|------|-------|
-| `id` | `Integer PK` | |
-| `study_id` | `FK → Study` | |
-| `reviewer_type` | `Enum(human, ai_agent)` | |
-| `user_id` | `FK → User \| None` | Set if human |
-| `agent_name` | `String(255) \| None` | Set if AI agent (e.g., `"screener-v2"`) |
-| `agent_config` | `JSON \| None` | LLM model, temperature, prompt variant |
-| `created_at` | `DateTime(tz)` | |
+| Field           | Type                    | Notes                                   |
+| --------------- | ----------------------- | --------------------------------------- |
+| `id`            | `Integer PK`            |                                         |
+| `study_id`      | `FK → Study`            |                                         |
+| `reviewer_type` | `Enum(human, ai_agent)` |                                         |
+| `user_id`       | `FK → User \| None`     | Set if human                            |
+| `agent_name`    | `String(255) \| None`   | Set if AI agent (e.g., `"screener-v2"`) |
+| `agent_config`  | `JSON \| None`          | LLM model, temperature, prompt variant  |
+| `created_at`    | `DateTime(tz)`          |                                         |
 
 Constraint: exactly one of `user_id` or `agent_name` must be non-null (enforced at service layer).
 
@@ -165,47 +166,47 @@ Constraint: exactly one of `user_id` or `agent_name` must be non-null (enforced 
 
 ### `PICOComponent`
 
-| Field | Type | Notes |
-|-------|------|-------|
-| `id` | `Integer PK` | |
-| `study_id` | `FK → Study` | One per study (upsert semantics) |
-| `variant` | `Enum(PICO, PICOS, PICOT, SPIDER, PCC)` | |
-| `population` | `Text \| None` | |
-| `intervention` | `Text \| None` | |
-| `comparison` | `Text \| None` | |
-| `outcome` | `Text \| None` | |
-| `context` | `Text \| None` | |
-| `extra_fields` | `JSON \| None` | Variant-specific fields (S, T, Spider components) |
-| `ai_suggestions` | `JSON \| None` | Last AI refinement suggestions per component |
-| `updated_at` | `DateTime(tz)` | |
+| Field            | Type                                    | Notes                                             |
+| ---------------- | --------------------------------------- | ------------------------------------------------- |
+| `id`             | `Integer PK`                            |                                                   |
+| `study_id`       | `FK → Study`                            | One per study (upsert semantics)                  |
+| `variant`        | `Enum(PICO, PICOS, PICOT, SPIDER, PCC)` |                                                   |
+| `population`     | `Text \| None`                          |                                                   |
+| `intervention`   | `Text \| None`                          |                                                   |
+| `comparison`     | `Text \| None`                          |                                                   |
+| `outcome`        | `Text \| None`                          |                                                   |
+| `context`        | `Text \| None`                          |                                                   |
+| `extra_fields`   | `JSON \| None`                          | Variant-specific fields (S, T, Spider components) |
+| `ai_suggestions` | `JSON \| None`                          | Last AI refinement suggestions per component      |
+| `updated_at`     | `DateTime(tz)`                          |                                                   |
 
 ---
 
 ### `SeedPaper`
 
-| Field | Type | Notes |
-|-------|------|-------|
-| `id` | `Integer PK` | |
-| `study_id` | `FK → Study` | |
-| `paper_id` | `FK → Paper` | |
-| `added_by_user_id` | `FK → User \| None` | Null if added by Librarian/Expert agent |
-| `added_by_agent` | `String(255) \| None` | Agent name if AI-provided |
-| `created_at` | `DateTime(tz)` | |
+| Field              | Type                  | Notes                                   |
+| ------------------ | --------------------- | --------------------------------------- |
+| `id`               | `Integer PK`          |                                         |
+| `study_id`         | `FK → Study`          |                                         |
+| `paper_id`         | `FK → Paper`          |                                         |
+| `added_by_user_id` | `FK → User \| None`   | Null if added by Librarian/Expert agent |
+| `added_by_agent`   | `String(255) \| None` | Agent name if AI-provided               |
+| `created_at`       | `DateTime(tz)`        |                                         |
 
 ---
 
 ### `SeedAuthor`
 
-| Field | Type | Notes |
-|-------|------|-------|
-| `id` | `Integer PK` | |
-| `study_id` | `FK → Study` | |
-| `author_name` | `String(255)` | |
-| `institution` | `String(255) \| None` | |
-| `profile_url` | `Text \| None` | |
-| `added_by_user_id` | `FK → User \| None` | |
-| `added_by_agent` | `String(255) \| None` | |
-| `created_at` | `DateTime(tz)` | |
+| Field              | Type                  | Notes |
+| ------------------ | --------------------- | ----- |
+| `id`               | `Integer PK`          |       |
+| `study_id`         | `FK → Study`          |       |
+| `author_name`      | `String(255)`         |       |
+| `institution`      | `String(255) \| None` |       |
+| `profile_url`      | `Text \| None`        |       |
+| `added_by_user_id` | `FK → User \| None`   |       |
+| `added_by_agent`   | `String(255) \| None` |       |
+| `created_at`       | `DateTime(tz)`        |       |
 
 ---
 
@@ -213,28 +214,28 @@ Constraint: exactly one of `user_id` or `agent_name` must be non-null (enforced 
 
 Both have identical shape (separate tables for clarity):
 
-| Field | Type | Notes |
-|-------|------|-------|
-| `id` | `Integer PK` | |
-| `study_id` | `FK → Study` | |
-| `description` | `Text` | Human-readable criterion text |
-| `order_index` | `SmallInt` | Evaluation order |
-| `created_at` | `DateTime(tz)` | |
+| Field         | Type           | Notes                         |
+| ------------- | -------------- | ----------------------------- |
+| `id`          | `Integer PK`   |                               |
+| `study_id`    | `FK → Study`   |                               |
+| `description` | `Text`         | Human-readable criterion text |
+| `order_index` | `SmallInt`     | Evaluation order              |
+| `created_at`  | `DateTime(tz)` |                               |
 
 ---
 
 ### `SearchString`
 
-| Field | Type | Notes |
-|-------|------|-------|
-| `id` | `Integer PK` | |
-| `study_id` | `FK → Study` | |
-| `version` | `SmallInt` | Increments on each refinement |
-| `string_text` | `Text` | The actual search query |
-| `is_active` | `Boolean` | Only one active per study |
-| `created_at` | `DateTime(tz)` | |
-| `created_by_user_id` | `FK → User \| None` | Null if AI-generated |
-| `created_by_agent` | `String(255) \| None` | |
+| Field                | Type                  | Notes                         |
+| -------------------- | --------------------- | ----------------------------- |
+| `id`                 | `Integer PK`          |                               |
+| `study_id`           | `FK → Study`          |                               |
+| `version`            | `SmallInt`            | Increments on each refinement |
+| `string_text`        | `Text`                | The actual search query       |
+| `is_active`          | `Boolean`             | Only one active per study     |
+| `created_at`         | `DateTime(tz)`        |                               |
+| `created_by_user_id` | `FK → User \| None`   | Null if AI-generated          |
+| `created_by_agent`   | `String(255) \| None` |                               |
 
 ---
 
@@ -242,16 +243,16 @@ Both have identical shape (separate tables for clarity):
 
 Records each test-retest cycle comparing a search string against the test set.
 
-| Field | Type | Notes |
-|-------|------|-------|
-| `id` | `Integer PK` | |
-| `search_string_id` | `FK → SearchString` | |
-| `iteration_number` | `SmallInt` | |
-| `result_set_count` | `Integer` | Total papers found |
-| `test_set_recall` | `Float` | Fraction of seed papers found (0–1) |
-| `ai_adequacy_judgment` | `Text \| None` | AI agent verdict |
-| `human_approved` | `Boolean \| None` | Null until reviewed |
-| `created_at` | `DateTime(tz)` | |
+| Field                  | Type                | Notes                               |
+| ---------------------- | ------------------- | ----------------------------------- |
+| `id`                   | `Integer PK`        |                                     |
+| `search_string_id`     | `FK → SearchString` |                                     |
+| `iteration_number`     | `SmallInt`          |                                     |
+| `result_set_count`     | `Integer`           | Total papers found                  |
+| `test_set_recall`      | `Float`             | Fraction of seed papers found (0–1) |
+| `ai_adequacy_judgment` | `Text \| None`      | AI agent verdict                    |
+| `human_approved`       | `Boolean \| None`   | Null until reviewed                 |
+| `created_at`           | `DateTime(tz)`      |                                     |
 
 ---
 
@@ -259,17 +260,17 @@ Records each test-retest cycle comparing a search string against the test set.
 
 Represents one full execution of the active search string across all databases.
 
-| Field | Type | Notes |
-|-------|------|-------|
-| `id` | `Integer PK` | |
-| `study_id` | `FK → Study` | |
-| `search_string_id` | `FK → SearchString` | |
-| `status` | `Enum(pending, running, completed, failed)` | |
-| `phase_tag` | `String(64)` | e.g., `initial-search`, `backward-search-1`, `forward-search-2` |
-| `databases_queried` | `JSON` | `["acm", "ieee", "scopus", ...]` |
-| `started_at` | `DateTime(tz) \| None` | |
-| `completed_at` | `DateTime(tz) \| None` | |
-| `job_id` | `String(255) \| None` | ARQ background job ID |
+| Field               | Type                                        | Notes                                                           |
+| ------------------- | ------------------------------------------- | --------------------------------------------------------------- |
+| `id`                | `Integer PK`                                |                                                                 |
+| `study_id`          | `FK → Study`                                |                                                                 |
+| `search_string_id`  | `FK → SearchString`                         |                                                                 |
+| `status`            | `Enum(pending, running, completed, failed)` |                                                                 |
+| `phase_tag`         | `String(64)`                                | e.g., `initial-search`, `backward-search-1`, `forward-search-2` |
+| `databases_queried` | `JSON`                                      | `["acm", "ieee", "scopus", ...]`                                |
+| `started_at`        | `DateTime(tz) \| None`                      |                                                                 |
+| `completed_at`      | `DateTime(tz) \| None`                      |                                                                 |
+| `job_id`            | `String(255) \| None`                       | ARQ background job ID                                           |
 
 ---
 
@@ -277,18 +278,18 @@ Represents one full execution of the active search string across all databases.
 
 Central join entity: one row per (study, paper) pair discovered during any search phase.
 
-| Field | Type | Notes |
-|-------|------|-------|
-| `id` | `Integer PK` | |
-| `study_id` | `FK → Study` | |
-| `paper_id` | `FK → Paper` | |
-| `search_execution_id` | `FK → SearchExecution` | Which search round found it |
-| `phase_tag` | `String(64)` | Mirrors `SearchExecution.phase_tag` for fast queries |
-| `current_status` | `Enum(pending, accepted, rejected, duplicate)` | Latest resolved status |
-| `duplicate_of_id` | `FK → CandidatePaper \| None` | If duplicate |
-| `version_id` | `Integer` | Optimistic lock counter |
-| `created_at` | `DateTime(tz)` | |
-| `updated_at` | `DateTime(tz)` | |
+| Field                 | Type                                           | Notes                                                |
+| --------------------- | ---------------------------------------------- | ---------------------------------------------------- |
+| `id`                  | `Integer PK`                                   |                                                      |
+| `study_id`            | `FK → Study`                                   |                                                      |
+| `paper_id`            | `FK → Paper`                                   |                                                      |
+| `search_execution_id` | `FK → SearchExecution`                         | Which search round found it                          |
+| `phase_tag`           | `String(64)`                                   | Mirrors `SearchExecution.phase_tag` for fast queries |
+| `current_status`      | `Enum(pending, accepted, rejected, duplicate)` | Latest resolved status                               |
+| `duplicate_of_id`     | `FK → CandidatePaper \| None`                  | If duplicate                                         |
+| `version_id`          | `Integer`                                      | Optimistic lock counter                              |
+| `created_at`          | `DateTime(tz)`                                 |                                                      |
+| `updated_at`          | `DateTime(tz)`                                 |                                                      |
 
 Unique constraint: `(study_id, paper_id)`.
 
@@ -298,16 +299,16 @@ Unique constraint: `(study_id, paper_id)`.
 
 Audit log of every decision (AI or human) made on a `CandidatePaper`.
 
-| Field | Type | Notes |
-|-------|------|-------|
-| `id` | `Integer PK` | |
-| `candidate_paper_id` | `FK → CandidatePaper` | |
-| `reviewer_id` | `FK → Reviewer` | |
-| `decision` | `Enum(accepted, rejected, duplicate)` | |
-| `reasons` | `JSON` | `[{criterion_id, criterion_type, text}]` |
-| `is_override` | `Boolean` | True if overriding a prior decision |
-| `overrides_decision_id` | `FK → PaperDecision \| None` | |
-| `created_at` | `DateTime(tz)` | |
+| Field                   | Type                                  | Notes                                    |
+| ----------------------- | ------------------------------------- | ---------------------------------------- |
+| `id`                    | `Integer PK`                          |                                          |
+| `candidate_paper_id`    | `FK → CandidatePaper`                 |                                          |
+| `reviewer_id`           | `FK → Reviewer`                       |                                          |
+| `decision`              | `Enum(accepted, rejected, duplicate)` |                                          |
+| `reasons`               | `JSON`                                | `[{criterion_id, criterion_type, text}]` |
+| `is_override`           | `Boolean`                             | True if overriding a prior decision      |
+| `overrides_decision_id` | `FK → PaperDecision \| None`          |                                          |
+| `created_at`            | `DateTime(tz)`                        |                                          |
 
 Conflict detection: when `len(decisions where reviewer_type='human') > 1` and decisions disagree → flag for resolution.
 
@@ -317,25 +318,25 @@ Conflict detection: when `len(decisions where reviewer_type='human') > 1` and de
 
 Structured extraction for one accepted paper within a study.
 
-| Field | Type | Notes |
-|-------|------|-------|
-| `id` | `Integer PK` | |
-| `candidate_paper_id` | `FK → CandidatePaper` | Unique per CP |
-| `research_type` | `Enum(evaluation, solution_proposal, validation, philosophical, opinion, personal_experience, unknown)` | Decision rule R1–R6 applied |
-| `venue_type` | `String(128)` | Normalized venue type category |
-| `venue_name` | `String(512) \| None` | |
-| `author_details` | `JSON` | `[{name, institution, locale}]` |
-| `summary` | `Text \| None` | Structured paper summary |
-| `open_codings` | `JSON` | `[{code, definition, evidence_quote}]` |
-| `keywords` | `JSON` | `[string]` |
-| `question_data` | `JSON` | `{research_question_id: extracted_value}` |
-| `extraction_status` | `Enum(pending, ai_complete, validated, human_reviewed)` | |
-| `version_id` | `Integer` | Optimistic lock counter |
-| `extracted_by_agent` | `String(255) \| None` | Primary extractor agent name |
-| `validated_by_reviewer_id` | `FK → Reviewer \| None` | |
-| `conflict_flag` | `Boolean` | True if reviewers disagree |
-| `created_at` | `DateTime(tz)` | |
-| `updated_at` | `DateTime(tz)` | |
+| Field                      | Type                                                                                                    | Notes                                     |
+| -------------------------- | ------------------------------------------------------------------------------------------------------- | ----------------------------------------- |
+| `id`                       | `Integer PK`                                                                                            |                                           |
+| `candidate_paper_id`       | `FK → CandidatePaper`                                                                                   | Unique per CP                             |
+| `research_type`            | `Enum(evaluation, solution_proposal, validation, philosophical, opinion, personal_experience, unknown)` | Decision rule R1–R6 applied               |
+| `venue_type`               | `String(128)`                                                                                           | Normalized venue type category            |
+| `venue_name`               | `String(512) \| None`                                                                                   |                                           |
+| `author_details`           | `JSON`                                                                                                  | `[{name, institution, locale}]`           |
+| `summary`                  | `Text \| None`                                                                                          | Structured paper summary                  |
+| `open_codings`             | `JSON`                                                                                                  | `[{code, definition, evidence_quote}]`    |
+| `keywords`                 | `JSON`                                                                                                  | `[string]`                                |
+| `question_data`            | `JSON`                                                                                                  | `{research_question_id: extracted_value}` |
+| `extraction_status`        | `Enum(pending, ai_complete, validated, human_reviewed)`                                                 |                                           |
+| `version_id`               | `Integer`                                                                                               | Optimistic lock counter                   |
+| `extracted_by_agent`       | `String(255) \| None`                                                                                   | Primary extractor agent name              |
+| `validated_by_reviewer_id` | `FK → Reviewer \| None`                                                                                 |                                           |
+| `conflict_flag`            | `Boolean`                                                                                               | True if reviewers disagree                |
+| `created_at`               | `DateTime(tz)`                                                                                          |                                           |
+| `updated_at`               | `DateTime(tz)`                                                                                          |                                           |
 
 ---
 
@@ -348,15 +349,15 @@ non-overlapping with** the general `AuditRecord` table (see below). Extraction f
 edits are recorded here; `AuditRecord` does NOT record extraction edits to avoid
 duplication (per FR-044 and NFR-002).
 
-| Field | Type | Notes |
-|-------|------|-------|
-| `id` | `Integer PK` | |
-| `extraction_id` | `FK → DataExtraction` | |
-| `field_name` | `String(128)` | Which field was changed |
-| `original_value` | `JSON` | AI-generated value before edit |
-| `new_value` | `JSON` | Human-provided replacement |
-| `changed_by_user_id` | `FK → User` | |
-| `changed_at` | `DateTime(tz)` | |
+| Field                | Type                  | Notes                          |
+| -------------------- | --------------------- | ------------------------------ |
+| `id`                 | `Integer PK`          |                                |
+| `extraction_id`      | `FK → DataExtraction` |                                |
+| `field_name`         | `String(128)`         | Which field was changed        |
+| `original_value`     | `JSON`                | AI-generated value before edit |
+| `new_value`          | `JSON`                | Human-provided replacement     |
+| `changed_by_user_id` | `FK → User`           |                                |
+| `changed_at`         | `DateTime(tz)`        |                                |
 
 ---
 
@@ -364,18 +365,18 @@ duplication (per FR-044 and NFR-002).
 
 Tracks async ARQ background jobs with their progress state.
 
-| Field | Type | Notes |
-|-------|------|-------|
-| `id` | `String(255) PK` | ARQ job ID |
-| `study_id` | `FK → Study` | |
-| `job_type` | `Enum(full_search, snowball_search, batch_extraction, quality_eval)` | |
-| `status` | `Enum(queued, running, completed, failed)` | |
-| `progress_pct` | `SmallInt` | 0–100 |
-| `progress_detail` | `JSON` | `{phase, papers_found, current_database, ...}` |
-| `error_message` | `Text \| None` | Set on failure |
-| `queued_at` | `DateTime(tz)` | |
-| `started_at` | `DateTime(tz) \| None` | |
-| `completed_at` | `DateTime(tz) \| None` | |
+| Field             | Type                                                                 | Notes                                          |
+| ----------------- | -------------------------------------------------------------------- | ---------------------------------------------- |
+| `id`              | `String(255) PK`                                                     | ARQ job ID                                     |
+| `study_id`        | `FK → Study`                                                         |                                                |
+| `job_type`        | `Enum(full_search, snowball_search, batch_extraction, quality_eval)` |                                                |
+| `status`          | `Enum(queued, running, completed, failed)`                           |                                                |
+| `progress_pct`    | `SmallInt`                                                           | 0–100                                          |
+| `progress_detail` | `JSON`                                                               | `{phase, papers_found, current_database, ...}` |
+| `error_message`   | `Text \| None`                                                       | Set on failure                                 |
+| `queued_at`       | `DateTime(tz)`                                                       |                                                |
+| `started_at`      | `DateTime(tz) \| None`                                               |                                                |
+| `completed_at`    | `DateTime(tz) \| None`                                               |                                                |
 
 ---
 
@@ -383,64 +384,64 @@ Tracks async ARQ background jobs with their progress state.
 
 Aggregate counts per search execution (one row per `SearchExecution`).
 
-| Field | Type | Notes |
-|-------|------|-------|
-| `id` | `Integer PK` | |
-| `search_execution_id` | `FK → SearchExecution` | Unique |
-| `total_identified` | `Integer` | |
-| `accepted` | `Integer` | |
-| `rejected` | `Integer` | |
-| `duplicates` | `Integer` | |
-| `computed_at` | `DateTime(tz)` | Updated incrementally |
+| Field                 | Type                   | Notes                 |
+| --------------------- | ---------------------- | --------------------- |
+| `id`                  | `Integer PK`           |                       |
+| `search_execution_id` | `FK → SearchExecution` | Unique                |
+| `total_identified`    | `Integer`              |                       |
+| `accepted`            | `Integer`              |                       |
+| `rejected`            | `Integer`              |                       |
+| `duplicates`          | `Integer`              |                       |
+| `computed_at`         | `DateTime(tz)`         | Updated incrementally |
 
 ---
 
 ### `DomainModel`
 
-| Field | Type | Notes |
-|-------|------|-------|
-| `id` | `Integer PK` | |
-| `study_id` | `FK → Study` | One active per study |
-| `version` | `SmallInt` | Increments on regeneration |
-| `concepts` | `JSON` | `[{name, definition, attributes:[]}]` |
-| `relationships` | `JSON` | `[{from, to, label, type}]` |
-| `svg_content` | `Text \| None` | Rendered SVG |
-| `generated_at` | `DateTime(tz)` | |
+| Field           | Type           | Notes                                 |
+| --------------- | -------------- | ------------------------------------- |
+| `id`            | `Integer PK`   |                                       |
+| `study_id`      | `FK → Study`   | One active per study                  |
+| `version`       | `SmallInt`     | Increments on regeneration            |
+| `concepts`      | `JSON`         | `[{name, definition, attributes:[]}]` |
+| `relationships` | `JSON`         | `[{from, to, label, type}]`           |
+| `svg_content`   | `Text \| None` | Rendered SVG                          |
+| `generated_at`  | `DateTime(tz)` |                                       |
 
 ---
 
 ### `ClassificationScheme`
 
-| Field | Type | Notes |
-|-------|------|-------|
-| `id` | `Integer PK` | |
-| `study_id` | `FK → Study` | |
-| `chart_type` | `Enum(venue, author, locale, institution, year, subtopic, research_type, research_method)` | One row per chart |
-| `version` | `SmallInt` | |
-| `chart_data` | `JSON` | Vega-Lite / Altair spec or raw data |
-| `svg_content` | `Text \| None` | Rendered SVG |
-| `generated_at` | `DateTime(tz)` | |
+| Field          | Type                                                                                       | Notes                               |
+| -------------- | ------------------------------------------------------------------------------------------ | ----------------------------------- |
+| `id`           | `Integer PK`                                                                               |                                     |
+| `study_id`     | `FK → Study`                                                                               |                                     |
+| `chart_type`   | `Enum(venue, author, locale, institution, year, subtopic, research_type, research_method)` | One row per chart                   |
+| `version`      | `SmallInt`                                                                                 |                                     |
+| `chart_data`   | `JSON`                                                                                     | Vega-Lite / Altair spec or raw data |
+| `svg_content`  | `Text \| None`                                                                             | Rendered SVG                        |
+| `generated_at` | `DateTime(tz)`                                                                             |                                     |
 
 ---
 
 ### `QualityReport`
 
-| Field | Type | Notes |
-|-------|------|-------|
-| `id` | `Integer PK` | |
-| `study_id` | `FK → Study` | |
-| `version` | `SmallInt` | |
-| `score_need_for_review` | `SmallInt` | 0–2 |
-| `score_search_strategy` | `SmallInt` | 0–2 |
-| `score_search_evaluation` | `SmallInt` | 0–3 |
-| `score_extraction_classification` | `SmallInt` | 0–3 |
-| `score_study_validity` | `SmallInt` | 0–1 |
-| `total_score` | `SmallInt` | Sum of above (0–11) |
-| `rubric_details` | `JSON` | `{rubric_name: {score, justification}}` |
-| `recommendations` | `JSON` | `[{priority, action, target_rubric}]` |
-| `generated_at` | `DateTime(tz)` | |
+| Field                             | Type           | Notes                                   |
+| --------------------------------- | -------------- | --------------------------------------- |
+| `id`                              | `Integer PK`   |                                         |
+| `study_id`                        | `FK → Study`   |                                         |
+| `version`                         | `SmallInt`     |                                         |
+| `score_need_for_review`           | `SmallInt`     | 0–2                                     |
+| `score_search_strategy`           | `SmallInt`     | 0–2                                     |
+| `score_search_evaluation`         | `SmallInt`     | 0–3                                     |
+| `score_extraction_classification` | `SmallInt`     | 0–3                                     |
+| `score_study_validity`            | `SmallInt`     | 0–1                                     |
+| `total_score`                     | `SmallInt`     | Sum of above (0–11)                     |
+| `rubric_details`                  | `JSON`         | `{rubric_name: {score, justification}}` |
+| `recommendations`                 | `JSON`         | `[{priority, action, target_rubric}]`   |
+| `generated_at`                    | `DateTime(tz)` |                                         |
 
-### `AuditRecord` *(new — FR-044, NFR-002)*
+### `AuditRecord` _(new — FR-044, NFR-002)_
 
 Immutable, append-only record of study-level data mutations **excluding** data extraction
 field edits (which are handled by `ExtractionFieldAudit`). Written by the
@@ -452,19 +453,19 @@ field edits (which are handled by `ExtractionFieldAudit`). Written by the
 conflict resolutions, `StudyMember` (add/remove). `DataExtraction` field edits are
 explicitly excluded (tracked by `ExtractionFieldAudit`).
 
-| Field | Type | Notes |
-|-------|------|-------|
-| `id` | `Integer PK` | |
-| `study_id` | `FK → Study` | Which study this mutation belongs to |
-| `actor_user_id` | `FK → User \| None` | Null for AI/system-initiated mutations |
-| `actor_agent` | `String(255) \| None` | Agent name for AI-initiated mutations |
-| `entity_type` | `String(64)` | e.g., `"PICOComponent"`, `"SearchString"`, `"CandidatePaper"` |
-| `entity_id` | `Integer` | PK of the mutated row |
-| `action` | `Enum(create, update, delete)` | |
-| `field_name` | `String(128) \| None` | Null for create/delete; specific field name for updates |
-| `before_value` | `JSON \| None` | Previous value (serialized); null for creates |
-| `after_value` | `JSON \| None` | New value (serialized); null for deletes |
-| `created_at` | `DateTime(tz)` | Immutable record timestamp |
+| Field           | Type                           | Notes                                                         |
+| --------------- | ------------------------------ | ------------------------------------------------------------- |
+| `id`            | `Integer PK`                   |                                                               |
+| `study_id`      | `FK → Study`                   | Which study this mutation belongs to                          |
+| `actor_user_id` | `FK → User \| None`            | Null for AI/system-initiated mutations                        |
+| `actor_agent`   | `String(255) \| None`          | Agent name for AI-initiated mutations                         |
+| `entity_type`   | `String(64)`                   | e.g., `"PICOComponent"`, `"SearchString"`, `"CandidatePaper"` |
+| `entity_id`     | `Integer`                      | PK of the mutated row                                         |
+| `action`        | `Enum(create, update, delete)` |                                                               |
+| `field_name`    | `String(128) \| None`          | Null for create/delete; specific field name for updates       |
+| `before_value`  | `JSON \| None`                 | Previous value (serialized); null for creates                 |
+| `after_value`   | `JSON \| None`                 | New value (serialized); null for deletes                      |
+| `created_at`    | `DateTime(tz)`                 | Immutable record timestamp                                    |
 
 Indexes: `(study_id, created_at DESC)` for study admin audit log queries;
 `(entity_type, entity_id)` for entity-specific history.
@@ -519,6 +520,7 @@ Implemented in `backend/src/backend/services/dedup.py`.
 ## Optimistic Locking
 
 Tables with concurrent edit risk use `version_id_col` (SQLAlchemy built-in):
+
 - `CandidatePaper.version_id`
 - `DataExtraction.version_id`
 

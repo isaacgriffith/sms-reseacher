@@ -13,14 +13,14 @@ for each Jinja2 variable placeholder.
 
 Your output **must** use only the following six variables. Do not invent additional variables.
 
-| Placeholder | Description | Example value |
-|---|---|---|
-| `{{ role_name }}` | The agent's functional role | `Screener` |
-| `{{ role_description }}` | Plain-text description of what the role does | `Determines whether a paper meets inclusion criteria` |
-| `{{ persona_name }}` | The persona's human-readable name | `Dr. Aria` |
+| Placeholder                 | Description                                                  | Example value                                                   |
+| --------------------------- | ------------------------------------------------------------ | --------------------------------------------------------------- |
+| `{{ role_name }}`           | The agent's functional role                                  | `Screener`                                                      |
+| `{{ role_description }}`    | Plain-text description of what the role does                 | `Determines whether a paper meets inclusion criteria`           |
+| `{{ persona_name }}`        | The persona's human-readable name                            | `Dr. Aria`                                                      |
 | `{{ persona_description }}` | Narrative description of the persona's background and traits | `A meticulous systematic reviewer with ten years of experience` |
-| `{{ domain }}` | The research domain for this study | `Software Engineering and Artificial Intelligence` |
-| `{{ study_type }}` | The type of systematic study being conducted | `Systematic Mapping Study` |
+| `{{ domain }}`              | The research domain for this study                           | `Software Engineering and Artificial Intelligence`              |
+| `{{ study_type }}`          | The type of systematic study being conducted                 | `Systematic Mapping Study`                                      |
 
 ---
 
@@ -47,6 +47,7 @@ Your output **must** use only the following six variables. Do not invent additio
 ## Quality Criteria
 
 A high-quality template will:
+
 - Be specific to the task type requested
 - Provide clear instructions that constrain the agent's behaviour during screening,
   extraction, summarisation, or whichever role it fulfils

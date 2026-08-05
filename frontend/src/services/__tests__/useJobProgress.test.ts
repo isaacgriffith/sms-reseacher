@@ -72,9 +72,7 @@ describe('useJobProgress', () => {
 
   it('creates an EventSource when jobId is provided', () => {
     renderHook(() => useJobProgress('job-123'));
-    expect(MockEventSourceClass).toHaveBeenCalledWith(
-      expect.stringContaining('job-123')
-    );
+    expect(MockEventSourceClass).toHaveBeenCalledWith(expect.stringContaining('job-123'));
   });
 
   it('closes EventSource on unmount (Principle IX cleanup)', () => {
@@ -215,7 +213,9 @@ describe('useJobProgress', () => {
     const { result } = renderHook(() => useJobProgress('job-complete-detail'));
 
     act(() => {
-      mockEventSource.emit('complete', { detail: { download_url: '/exports/file.zip', size_bytes: 1024 } });
+      mockEventSource.emit('complete', {
+        detail: { download_url: '/exports/file.zip', size_bytes: 1024 },
+      });
     });
 
     expect(result.current.status).toBe('completed');

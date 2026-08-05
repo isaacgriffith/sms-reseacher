@@ -1,12 +1,10 @@
-/**
- * Unit tests for useQualityAssessment hooks (feature 007).
- */
-
 import { describe, it, expect, vi } from 'vitest';
-import { renderHook, waitFor } from '@testing-library/react';
+import { renderHook, waitFor, act } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
 import {
+  checklistKey,
+  qualityScoresKey,
   useChecklist,
   useQualityScores,
   useUpsertChecklist,
@@ -14,8 +12,8 @@ import {
 } from '../useQualityAssessment';
 
 vi.mock('../../../services/slr/qualityApi', () => ({
-  getChecklist: vi.fn().mockRejectedValue(new Error('not found')),
-  getQualityScores: vi.fn().mockRejectedValue(new Error('not found')),
+  getChecklist: vi.fn().mockResolvedValue({ id: 1, items: [] }),
+  getQualityScores: vi.fn().mockResolvedValue([]),
   upsertChecklist: vi.fn().mockResolvedValue({ id: 1 }),
   submitQualityScores: vi.fn().mockResolvedValue([]),
 }));
@@ -26,32 +24,48 @@ function makeWrapper() {
     React.createElement(QueryClientProvider, { client: qc }, children);
 }
 
+describe('checklistKey', () => {
+  it('returns stable key', () => {
+    expect(checklistKey(42)).toEqual(['slr-quality-checklist', 42]);
+  });
+});
+
+describe('qualityScoresKey', () => {
+  it('returns stable key', () => {
+    expect(qualityScoresKey(7)).toEqual(['slr-quality-scores', 7]);
+  });
+});
+
 describe('useChecklist', () => {
-  it('returns a query result object', async () => {
+  it('fetches data', async () => {
     const { result } = renderHook(() => useChecklist(42), { wrapper: makeWrapper() });
-    await waitFor(() => !result.current.isLoading);
-    expect(result.current).toHaveProperty('error');
+    await waitFor(() => expect(result.current.data).toBeDefined());
   });
 });
 
 describe('useQualityScores', () => {
-  it('returns a query result object', async () => {
+  it('fetches data', async () => {
     const { result } = renderHook(() => useQualityScores(7), { wrapper: makeWrapper() });
-    await waitFor(() => !result.current.isLoading);
-    expect(result.current).toHaveProperty('error');
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
   });
 });
 
 describe('useUpsertChecklist', () => {
-  it('returns a mutation object', () => {
+  it('executes mutation', async () => {
     const { result } = renderHook(() => useUpsertChecklist(42), { wrapper: makeWrapper() });
-    expect(typeof result.current.mutate).toBe('function');
+    await act(async () => {
+      result.current.mutate({ items: [] });
+    });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
   });
 });
 
 describe('useSubmitScores', () => {
-  it('returns a mutation object', () => {
+  it('executes mutation', async () => {
     const { result } = renderHook(() => useSubmitScores(7), { wrapper: makeWrapper() });
-    expect(typeof result.current.mutate).toBe('function');
+    await act(async () => {
+      result.current.mutate([]);
+    });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
   });
 });

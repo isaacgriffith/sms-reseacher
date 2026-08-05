@@ -26,40 +26,40 @@ Deliver four independent improvements to the SMS Researcher application: (1) a u
 
 ## Constitution Check
 
-*GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
+_GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 
-| Gate | Status | Notes |
-|------|--------|-------|
-| SOLID — no SRP violations in target modules | Pass | Each new service file (password_service, totp_service, audit_service) has a single responsibility |
-| SOLID — extension points exist (OCP) where variation expected | Pass | ThemeContext and encryption module are interface-stable; swapping providers doesn't touch callers |
-| Structural — no DRY violations (duplication) | Pass | Shared `audit_service` centralises all security event writing; shared `encryption.py` owns Fernet logic |
-| Structural — no YAGNI violations (speculative generality) | Pass | No hooks or abstractions beyond current requirements |
-| Code clarity — no long methods (>20 lines) in touched code | Pass | Service functions are scoped to single operations; enforce during implementation |
-| Code clarity — no switch/if-chain smells in touched code | Pass | Theme resolution uses a dict map, not if-chain; event type is an enum |
-| Code clarity — no common code smells identified | Pass | Pre-implementation review completed against existing auth.py and users.py |
-| Refactoring — pre-implementation review completed | Pass | `get_current_user` signature change (add `db` param) is backward-compatible via FastAPI `Depends` |
-| Refactoring — any found refactors added to task list with tests | Pass | token_version check added to existing `get_current_user` — tests updated accordingly |
-| GRASP/patterns — responsibility assignments reviewed | Pass | Controllers → Services → DB layer maintained; no business logic in route handlers |
-| Test coverage — existing tests pass; refactor tests written first | Pass | Existing auth tests must be updated before adding token_version logic |
-| Toolchain (VII) — no unapproved deps or tool substitutions introduced | Pass | pyotp, qrcode[pil], cryptography, MUI v5, swagger-ui-react are all approved additions |
-| Toolchain (VII) — FastAPI/SQLAlchemy 2.x/ARQ/LiteLLM patterns followed | Pass | All new routes use `async def`, `Depends()`, `HTTPException`; SQLAlchemy 2.0 Mapped[] style |
-| Observability (VIII) — new models have audit fields + structlog used | Pass | BackupCode and SecurityAuditEvent have `created_at`/`updated_at`; User gains `updated_at`; audit_service uses structlog |
-| Observability (VIII) — config via Pydantic BaseSettings + lru_cache | Pass | TOTP lockout constants added to existing Settings class |
-| Infrastructure (VIII) — Docker services have healthchecks if added | N/A | No new Docker services introduced |
-| Language (IX) — React components functional, props typed, ≤100 JSX lines | Pass | All new components follow this constraint; enforce during MUI migration |
-| Language (IX) — Hooks called at top level only (Rules of Hooks); no inline refs in deps | Pass | useColorMode and useTotp designed with stable dep arrays |
-| Language (IX) — No React state mutation; no array-index keys in lists | Pass | Backup codes list uses code value as key (unique per batch) |
-| Language (IX) — >3 related useState → useReducer; useCallback only when justified | Pass | TwoFactorSetupDialog uses useReducer for setup step state |
-| Language (IX) — useEffect returns cleanup for all resource-acquiring effects | Pass | useColorMode's matchMedia listener is cleaned up on unmount |
-| Language (IX) — React.memo applied deliberately; useImperativeHandle used for imperative APIs | Pass | No speculative React.memo; no imperative child APIs in scope |
-| Language (IX) — useWatch used (not watch) for reactive form field subscriptions | Pass | All react-hook-form usage in new forms uses useWatch |
-| Language (IX) — Vite env vars use VITE_ prefix + import.meta.env | Pass | No new env vars exposed to frontend bundle |
-| Language (IX) — Python: no plain dict for domain data; pathlib used | Pass | All service return types use Pydantic response models |
-| Language (IX) — Python: no mutable defaults; specific exception handling | Pass | Service functions raise HTTPException with specific status codes |
-| Language (IX) — TypeScript: no any/enum/non-null(!) without justification | Pass | ThemePreference represented as `'light' | 'dark' | 'system'` string literal union |
-| Language (IX) — TypeScript: unknown + Zod at all external boundaries | Pass | API responses validated with Zod schemas in services/preferences.ts |
-| Code clarity — all functions/methods/classes have doc comments | Pass | Enforce during implementation; all new Python uses Google-style, TS uses JSDoc |
-| Feature completion docs (X) — CLAUDE.md, README, CHANGELOG updates in task list | Pass | TDOC tasks included in tasks.md |
+| Gate                                                                                          | Status | Notes                                                                                                                   |
+| --------------------------------------------------------------------------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------- | ------ | ------------------------------ |
+| SOLID — no SRP violations in target modules                                                   | Pass   | Each new service file (password_service, totp_service, audit_service) has a single responsibility                       |
+| SOLID — extension points exist (OCP) where variation expected                                 | Pass   | ThemeContext and encryption module are interface-stable; swapping providers doesn't touch callers                       |
+| Structural — no DRY violations (duplication)                                                  | Pass   | Shared `audit_service` centralises all security event writing; shared `encryption.py` owns Fernet logic                 |
+| Structural — no YAGNI violations (speculative generality)                                     | Pass   | No hooks or abstractions beyond current requirements                                                                    |
+| Code clarity — no long methods (>20 lines) in touched code                                    | Pass   | Service functions are scoped to single operations; enforce during implementation                                        |
+| Code clarity — no switch/if-chain smells in touched code                                      | Pass   | Theme resolution uses a dict map, not if-chain; event type is an enum                                                   |
+| Code clarity — no common code smells identified                                               | Pass   | Pre-implementation review completed against existing auth.py and users.py                                               |
+| Refactoring — pre-implementation review completed                                             | Pass   | `get_current_user` signature change (add `db` param) is backward-compatible via FastAPI `Depends`                       |
+| Refactoring — any found refactors added to task list with tests                               | Pass   | token_version check added to existing `get_current_user` — tests updated accordingly                                    |
+| GRASP/patterns — responsibility assignments reviewed                                          | Pass   | Controllers → Services → DB layer maintained; no business logic in route handlers                                       |
+| Test coverage — existing tests pass; refactor tests written first                             | Pass   | Existing auth tests must be updated before adding token_version logic                                                   |
+| Toolchain (VII) — no unapproved deps or tool substitutions introduced                         | Pass   | pyotp, qrcode[pil], cryptography, MUI v5, swagger-ui-react are all approved additions                                   |
+| Toolchain (VII) — FastAPI/SQLAlchemy 2.x/ARQ/LiteLLM patterns followed                        | Pass   | All new routes use `async def`, `Depends()`, `HTTPException`; SQLAlchemy 2.0 Mapped[] style                             |
+| Observability (VIII) — new models have audit fields + structlog used                          | Pass   | BackupCode and SecurityAuditEvent have `created_at`/`updated_at`; User gains `updated_at`; audit_service uses structlog |
+| Observability (VIII) — config via Pydantic BaseSettings + lru_cache                           | Pass   | TOTP lockout constants added to existing Settings class                                                                 |
+| Infrastructure (VIII) — Docker services have healthchecks if added                            | N/A    | No new Docker services introduced                                                                                       |
+| Language (IX) — React components functional, props typed, ≤100 JSX lines                      | Pass   | All new components follow this constraint; enforce during MUI migration                                                 |
+| Language (IX) — Hooks called at top level only (Rules of Hooks); no inline refs in deps       | Pass   | useColorMode and useTotp designed with stable dep arrays                                                                |
+| Language (IX) — No React state mutation; no array-index keys in lists                         | Pass   | Backup codes list uses code value as key (unique per batch)                                                             |
+| Language (IX) — >3 related useState → useReducer; useCallback only when justified             | Pass   | TwoFactorSetupDialog uses useReducer for setup step state                                                               |
+| Language (IX) — useEffect returns cleanup for all resource-acquiring effects                  | Pass   | useColorMode's matchMedia listener is cleaned up on unmount                                                             |
+| Language (IX) — React.memo applied deliberately; useImperativeHandle used for imperative APIs | Pass   | No speculative React.memo; no imperative child APIs in scope                                                            |
+| Language (IX) — useWatch used (not watch) for reactive form field subscriptions               | Pass   | All react-hook-form usage in new forms uses useWatch                                                                    |
+| Language (IX) — Vite env vars use VITE\_ prefix + import.meta.env                             | Pass   | No new env vars exposed to frontend bundle                                                                              |
+| Language (IX) — Python: no plain dict for domain data; pathlib used                           | Pass   | All service return types use Pydantic response models                                                                   |
+| Language (IX) — Python: no mutable defaults; specific exception handling                      | Pass   | Service functions raise HTTPException with specific status codes                                                        |
+| Language (IX) — TypeScript: no any/enum/non-null(!) without justification                     | Pass   | ThemePreference represented as `'light'                                                                                 | 'dark' | 'system'` string literal union |
+| Language (IX) — TypeScript: unknown + Zod at all external boundaries                          | Pass   | API responses validated with Zod schemas in services/preferences.ts                                                     |
+| Code clarity — all functions/methods/classes have doc comments                                | Pass   | Enforce during implementation; all new Python uses Google-style, TS uses JSDoc                                          |
+| Feature completion docs (X) — CLAUDE.md, README, CHANGELOG updates in task list               | Pass   | TDOC tasks included in tasks.md                                                                                         |
 
 ---
 
@@ -149,9 +149,9 @@ frontend/
 
 ## Complexity Tracking
 
-| Item | Type | Why Accepted / Resolution |
-|------|------|--------------------------|
-| `get_current_user` gains DB param | Refactor | Required for token_version security check; all callers use `Depends()` so no manual call-site changes needed |
-| MUI migration touches ~30 components | Scope | Specified in requirements (FR-022–024); no alternative; mitigated by systematic component-by-component approach |
-| TwoFactorSetupDialog multi-step state | UI complexity | 4-step wizard (initiate → QR → confirm → backup codes); managed with `useReducer` to avoid >3 useState — constitution compliant |
-| Fernet key derivation from SECRET_KEY | Security design | Avoids new secret management; uses HKDF-SHA256 which is standard and safe; documented in research.md Decision 2 |
+| Item                                  | Type            | Why Accepted / Resolution                                                                                                       |
+| ------------------------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `get_current_user` gains DB param     | Refactor        | Required for token_version security check; all callers use `Depends()` so no manual call-site changes needed                    |
+| MUI migration touches ~30 components  | Scope           | Specified in requirements (FR-022–024); no alternative; mitigated by systematic component-by-component approach                 |
+| TwoFactorSetupDialog multi-step state | UI complexity   | 4-step wizard (initiate → QR → confirm → backup codes); managed with `useReducer` to avoid >3 useState — constitution compliant |
+| Fernet key derivation from SECRET_KEY | Security design | Avoids new secret management; uses HKDF-SHA256 which is standard and safe; documented in research.md Decision 2                 |

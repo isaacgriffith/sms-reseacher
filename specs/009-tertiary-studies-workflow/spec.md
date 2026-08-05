@@ -5,7 +5,7 @@
 **Status**: Draft
 **Input**: User description: "number 9 tertiary-studies-workflow using @docs/features/005-tertiary-studies-workflow.md"
 
-## User Scenarios & Testing *(mandatory)*
+## User Scenarios & Testing _(mandatory)_
 
 ### User Story 1 - Create Tertiary Study (Priority: P1)
 
@@ -95,7 +95,7 @@ After quality assessment and data extraction are complete, the lead researcher g
 - How does the system handle quality assessment when only one reviewer is assigned to a study (inter-rater reliability not computable)?
 - What happens when the researcher tries to initiate synthesis before any secondary studies have completed data extraction?
 
-## Requirements *(mandatory)*
+## Requirements _(mandatory)_
 
 ### Functional Requirements
 
@@ -120,7 +120,7 @@ After quality assessment and data extraction are complete, the lead researcher g
 - **SecondaryStudySeedImport**: Records the relationship between a source platform study (SMS/SLR/RR) and a Tertiary Study; tracks import date, number of records added, and number of duplicates skipped.
 - **SecondaryStudyExtraction**: Data extraction record for an included secondary study; stores study type, research questions addressed, databases searched, study period, primary study count, synthesis approach, key findings, research gaps, and reviewer quality rating.
 
-## Success Criteria *(mandatory)*
+## Success Criteria _(mandatory)_
 
 ### Measurable Outcomes
 

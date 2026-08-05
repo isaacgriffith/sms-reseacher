@@ -53,12 +53,16 @@ describe('ThreatToValidityList', () => {
   });
 
   it('renders a chip with the known label for single_reviewer', () => {
-    render(<ThreatToValidityList threats={[makeThreat({ threat_type: 'single_reviewer', id: 4 })]} />);
+    render(
+      <ThreatToValidityList threats={[makeThreat({ threat_type: 'single_reviewer', id: 4 })]} />,
+    );
     expect(screen.getByText('Single Reviewer')).toBeTruthy();
   });
 
   it('falls back to raw threat_type when not in label map', () => {
-    render(<ThreatToValidityList threats={[makeThreat({ threat_type: 'custom_unknown', id: 5 })]} />);
+    render(
+      <ThreatToValidityList threats={[makeThreat({ threat_type: 'custom_unknown', id: 5 })]} />,
+    );
     expect(screen.getByText('custom_unknown')).toBeTruthy();
   });
 
@@ -98,7 +102,11 @@ describe('ThreatToValidityList', () => {
   });
 
   it('renders known label for context_restriction', () => {
-    render(<ThreatToValidityList threats={[makeThreat({ threat_type: 'context_restriction', id: 7 })]} />);
+    render(
+      <ThreatToValidityList
+        threats={[makeThreat({ threat_type: 'context_restriction', id: 7 })]}
+      />,
+    );
     expect(screen.getByText('Context Restriction')).toBeTruthy();
   });
 });

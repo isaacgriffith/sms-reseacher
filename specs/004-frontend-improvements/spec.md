@@ -15,7 +15,7 @@
 - Q: What clock-drift tolerance should TOTP verification apply? → A: ±1 window — accept current, previous, and next 30-second codes (90-second total tolerance).
 - Q: Is 2FA mandatory for any user role, or optional for all? → A: Optional for all users — any user may enable or skip 2FA.
 
-## User Scenarios & Testing *(mandatory)*
+## User Scenarios & Testing _(mandatory)_
 
 ### User Story 1 - User Changes Password (Priority: P1)
 
@@ -82,7 +82,7 @@ A developer integrating with the research platform needs to understand the avail
 **Acceptance Scenarios**:
 
 1. **Given** an authenticated user or developer, **When** they navigate to the API documentation URL, **Then** they see an interactive page listing all backend API endpoints with request/response schemas, authentication requirements, and error codes.
-1a. **Given** an unauthenticated visitor, **When** they navigate to the API documentation URL, **Then** they are redirected to the login page.
+   1a. **Given** an unauthenticated visitor, **When** they navigate to the API documentation URL, **Then** they are redirected to the login page.
 2. **Given** the backend API has been updated with a new endpoint, **When** a user views the API documentation, **Then** the new endpoint appears automatically without any manual documentation update.
 3. **Given** a user browsing the application, **When** they look for the API documentation, **Then** a visible link or navigation item leads them to the documentation page.
 
@@ -97,7 +97,7 @@ A developer integrating with the research platform needs to understand the avail
 - How does the API documentation page behave if the backend is temporarily unavailable?
 - What happens when a user submits N consecutive failed TOTP codes — they are locked out temporarily (see FR-014b).
 
-## Requirements *(mandatory)*
+## Requirements _(mandatory)_
 
 ### Functional Requirements
 
@@ -150,7 +150,7 @@ A developer integrating with the research platform needs to understand the avail
 - **Session**: An authenticated user session. Multiple sessions may exist per user; all non-current sessions are invalidated on password change.
 - **Security Audit Event**: An immutable record of a security-sensitive action (password change, 2FA enabled, 2FA disabled, backup codes regenerated). Attributes: user identity, event type, timestamp.
 
-## Success Criteria *(mandatory)*
+## Success Criteria _(mandatory)_
 
 ### Measurable Outcomes
 

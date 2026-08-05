@@ -33,7 +33,9 @@ export default function GroupCard({ group }: GroupCardProps) {
       variant="outlined"
     >
       <CardContent sx={{ padding: '1.25rem' }}>
-        <Typography variant="h6" sx={{ margin: '0 0 0.5rem', fontSize: '1.125rem' }}>{group.name}</Typography>
+        <Typography variant="h6" sx={{ margin: '0 0 0.5rem', fontSize: '1.125rem' }}>
+          {group.name}
+        </Typography>
         <Typography sx={{ margin: '0 0 0.25rem', color: '#475569', fontSize: '0.875rem' }}>
           {group.study_count} {group.study_count === 1 ? 'study' : 'studies'}
         </Typography>

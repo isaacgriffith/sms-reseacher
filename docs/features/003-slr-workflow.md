@@ -11,6 +11,7 @@
 Extend the existing research platform to support Systematic Literature Reviews (SLRs). An SLR is the most rigorous form of secondary study, aimed at aggregating and synthesizing empirical evidence (experiments, case studies, controlled trials) on a specific research question. It follows a strict 3-phase process: Planning, Conducting, and Reporting.
 
 SLRs differ from Systematic Mapping Studies primarily in:
+
 - Deeper focus on empirical study quality and evidence strength
 - Formal study quality assessment using published checklists
 - Advanced data synthesis techniques (meta-analysis, descriptive synthesis, qualitative approaches)
@@ -66,15 +67,15 @@ A sensitivity analysis must be performed for any synthesis approach, evaluating 
 
 ## Key Differences from the SMS Workflow
 
-| Dimension | SMS Workflow (002) | SLR Workflow (003) |
-|---|---|---|
-| Study type | Broad mapping | Focused empirical synthesis |
-| Protocol | Informal/light | Formal, must be validated before search |
-| Quality assessment | Not required | Mandatory, per-study checklists |
-| Inter-rater agreement | Optional | Required; Cohen's Kappa reported |
-| Data synthesis | Classification scheme, domain model | Meta-analysis, descriptive synthesis, or qualitative |
-| Grey literature | Not tracked | Tracked to address publication bias |
-| Visualizations | Bubble charts, domain model | Forest plots, funnel plots, plus inherited visualizations |
+| Dimension             | SMS Workflow (002)                  | SLR Workflow (003)                                        |
+| --------------------- | ----------------------------------- | --------------------------------------------------------- |
+| Study type            | Broad mapping                       | Focused empirical synthesis                               |
+| Protocol              | Informal/light                      | Formal, must be validated before search                   |
+| Quality assessment    | Not required                        | Mandatory, per-study checklists                           |
+| Inter-rater agreement | Optional                            | Required; Cohen's Kappa reported                          |
+| Data synthesis        | Classification scheme, domain model | Meta-analysis, descriptive synthesis, or qualitative      |
+| Grey literature       | Not tracked                         | Tracked to address publication bias                       |
+| Visualizations        | Bubble charts, domain model         | Forest plots, funnel plots, plus inherited visualizations |
 
 ---
 

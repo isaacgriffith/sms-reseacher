@@ -44,7 +44,14 @@ const TertiaryProtocolFormSchema = z.object({
   recency_cutoff_year: z.number().int().min(1900).max(2100).nullable(),
   search_strategy: z.string().optional(),
   quality_threshold: z.number().min(0).max(1).nullable(),
-  synthesis_approach: z.enum(['narrative', 'thematic', 'meta_analysis', 'descriptive', 'qualitative', '']),
+  synthesis_approach: z.enum([
+    'narrative',
+    'thematic',
+    'meta_analysis',
+    'descriptive',
+    'qualitative',
+    '',
+  ]),
   dissemination_strategy: z.string().optional(),
 });
 
@@ -59,7 +66,10 @@ function arrayToText(arr: string[] | null | undefined): string {
 }
 
 function textToArray(text: string): string[] {
-  return text.split('\n').map((s) => s.trim()).filter(Boolean);
+  return text
+    .split('\n')
+    .map((s) => s.trim())
+    .filter(Boolean);
 }
 
 // ---------------------------------------------------------------------------
@@ -130,7 +140,8 @@ export default function TertiaryProtocolForm({
       recency_cutoff_year: protocol?.recency_cutoff_year ?? null,
       search_strategy: protocol?.search_strategy ?? '',
       quality_threshold: protocol?.quality_threshold ?? 0.6,
-      synthesis_approach: (protocol?.synthesis_approach ?? '') as TertiaryProtocolFormValues['synthesis_approach'],
+      synthesis_approach: (protocol?.synthesis_approach ??
+        '') as TertiaryProtocolFormValues['synthesis_approach'],
       dissemination_strategy: protocol?.dissemination_strategy ?? '',
     },
   });
@@ -147,7 +158,8 @@ export default function TertiaryProtocolForm({
         recency_cutoff_year: protocol.recency_cutoff_year ?? null,
         search_strategy: protocol.search_strategy ?? '',
         quality_threshold: protocol.quality_threshold ?? 0.6,
-        synthesis_approach: (protocol.synthesis_approach ?? '') as TertiaryProtocolFormValues['synthesis_approach'],
+        synthesis_approach: (protocol.synthesis_approach ??
+          '') as TertiaryProtocolFormValues['synthesis_approach'],
         dissemination_strategy: protocol.dissemination_strategy ?? '',
       });
     }

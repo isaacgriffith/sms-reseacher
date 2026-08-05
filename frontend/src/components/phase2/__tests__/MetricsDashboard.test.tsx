@@ -90,7 +90,14 @@ const TWO_PHASE_RESPONSE = {
 const EMPTY_RESPONSE = {
   study_id: 1,
   phases: [],
-  totals: { phase_tag: 'all', search_execution_id: 0, total_identified: 0, accepted: 0, rejected: 0, duplicates: 0 },
+  totals: {
+    phase_tag: 'all',
+    search_execution_id: 0,
+    total_identified: 0,
+    accepted: 0,
+    rejected: 0,
+    duplicates: 0,
+  },
 };
 
 describe('MetricsDashboard', () => {
@@ -262,7 +269,14 @@ describe('MetricsDashboard', () => {
             duplicates: 0,
           },
         ],
-        totals: { phase_tag: 'all', search_execution_id: 0, total_identified: 0, accepted: 0, rejected: 0, duplicates: 0 },
+        totals: {
+          phase_tag: 'all',
+          search_execution_id: 0,
+          total_identified: 0,
+          accepted: 0,
+          rejected: 0,
+          duplicates: 0,
+        },
       };
       mockApi.get.mockResolvedValue(zeroData);
       renderWithQuery(<MetricsDashboard studyId={1} />);
@@ -286,7 +300,14 @@ describe('MetricsDashboard', () => {
             duplicates: 0,
           },
         ],
-        totals: { phase_tag: 'all', search_execution_id: 0, total_identified: 3, accepted: 1, rejected: 2, duplicates: 0 },
+        totals: {
+          phase_tag: 'all',
+          search_execution_id: 0,
+          total_identified: 3,
+          accepted: 1,
+          rejected: 2,
+          duplicates: 0,
+        },
       };
       mockApi.get.mockResolvedValue(data);
       renderWithQuery(<MetricsDashboard studyId={1} />);

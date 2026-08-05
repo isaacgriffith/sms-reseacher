@@ -124,16 +124,18 @@ describe('TertiaryExtractionForm', () => {
 
   describe('Null value rendering', () => {
     it('renders without crashing when numeric fields are null', () => {
-      renderForm(makeExtraction({
-        study_period_start: null,
-        study_period_end: null,
-        primary_study_count: null,
-      }));
+      renderForm(
+        makeExtraction({
+          study_period_start: null,
+          study_period_end: null,
+          primary_study_count: null,
+        }),
+      );
       expect(screen.getByLabelText('Key Findings')).toBeInTheDocument();
     });
 
     it('shows quality rating numeric value when reviewer_quality_rating is provided', () => {
-      renderForm(makeExtraction({ reviewer_quality_rating: 0.80 }));
+      renderForm(makeExtraction({ reviewer_quality_rating: 0.8 }));
       expect(screen.getByText(/Reviewer Quality Rating/)).toHaveTextContent('0.80');
     });
 
@@ -144,11 +146,13 @@ describe('TertiaryExtractionForm', () => {
     });
 
     it('renders without crashing when text fields are null', () => {
-      renderForm(makeExtraction({
-        synthesis_approach_used: null,
-        key_findings: null,
-        research_gaps: null,
-      }));
+      renderForm(
+        makeExtraction({
+          synthesis_approach_used: null,
+          key_findings: null,
+          research_gaps: null,
+        }),
+      );
       expect(screen.getByLabelText('Key Findings')).toBeInTheDocument();
     });
   });

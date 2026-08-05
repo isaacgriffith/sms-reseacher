@@ -40,7 +40,9 @@ test.describe('Create study', () => {
     await page.goto(`/groups/${TEST_GROUP_ID}/studies`);
     await page.getByRole('button', { name: /new study/i }).click();
     // The wizard should be visible — look for its first step heading or form field
-    await expect(page.getByRole('dialog').or(page.locator('[data-testid="new-study-wizard"]'))).toBeVisible();
+    await expect(
+      page.getByRole('dialog').or(page.locator('[data-testid="new-study-wizard"]')),
+    ).toBeVisible();
   });
 
   test('shows validation error when submitting empty study name', async ({ page }) => {
@@ -76,7 +78,13 @@ test.describe('Create study', () => {
       if (await nextBtn.isVisible()) {
         await nextBtn.click();
         // If we've reached the list (wizard closed), stop
-        if (await page.getByText(studyName).isVisible().catch(() => false)) break;
+        if (
+          await page
+            .getByText(studyName)
+            .isVisible()
+            .catch(() => false)
+        )
+          break;
       } else {
         break;
       }

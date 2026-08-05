@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [0.5.0] — 2026-03-17 — feature/005-models-and-agents
 
 ### Added
+
 - **`pipelines/agent_generator_eval.py`**: DeepEval evaluation pipeline for
   `AgentGeneratorAgent`; dataset of 5 representative role/persona inputs; metrics:
   `AnswerRelevancyMetric` (generated message must reference role name) and
@@ -17,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [0.3.0] — 2026-03-16 — feature/003-project-setup-improvements
 
 ### Changed
+
 - Coverage command documented in `CLAUDE.md`:
   `uv run pytest agent-eval/tests/ --cov=agent_eval`
 - Mutation testing tool updated to `cosmic-ray` (was `mutmut`); run via manual GitHub
@@ -28,6 +30,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [0.2.0] — 2026-03-12 — feature/002-sms-workflow
 
 ### Added
+
 - `evaluate` command — runs a JSONL test suite against a named agent with a pass/fail
   threshold; exits `0` (all pass), `1` (cases fail), or `2` (config error)
 - `report` command — displays a saved evaluation report in `table`, `markdown`, or `json`
@@ -45,5 +48,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [0.1.0] — 2026-03-11 — feature/001-repo-setup
 
 ### Added
+
 - Initial `pyproject.toml` (`sms-agent-eval`) as UV workspace member
 - Ruff, MyPy strict, pytest + pytest-asyncio configuration

@@ -1,19 +1,11 @@
-/**
- * Unit tests for useGreyLiterature hooks (feature 007).
- */
-
 import { describe, it, expect, vi } from 'vitest';
-import { renderHook, waitFor } from '@testing-library/react';
+import { renderHook, waitFor, act } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
-import {
-  useGreyLiterature,
-  useAddSource,
-  useDeleteSource,
-} from '../useGreyLiterature';
+import { greyLiteratureKey, useGreyLiterature, useAddSource, useDeleteSource } from '../useGreyLiterature';
 
 vi.mock('../../../services/slr/greyLiteratureApi', () => ({
-  listGreyLiterature: vi.fn().mockRejectedValue(new Error('network')),
+  listGreyLiterature: vi.fn().mockResolvedValue([]),
   addGreyLiteratureSource: vi.fn().mockResolvedValue({ id: 1 }),
   deleteGreyLiteratureSource: vi.fn().mockResolvedValue(undefined),
 }));
@@ -24,28 +16,35 @@ function makeWrapper() {
     React.createElement(QueryClientProvider, { client: qc }, children);
 }
 
+describe('greyLiteratureKey', () => {
+  it('returns stable key', () => {
+    expect(greyLiteratureKey(42)).toEqual(['slr-grey-literature', 42]);
+  });
+});
+
 describe('useGreyLiterature', () => {
-  it('returns a query result object', async () => {
+  it('fetches data', async () => {
     const { result } = renderHook(() => useGreyLiterature(42), { wrapper: makeWrapper() });
-    await waitFor(() => !result.current.isLoading);
-    expect(result.current).toHaveProperty('error');
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
   });
 });
 
 describe('useAddSource', () => {
-  it('returns a mutation object', () => {
-    const { result } = renderHook(() => useAddSource(42), {
-      wrapper: makeWrapper(),
+  it('executes mutation', async () => {
+    const { result } = renderHook(() => useAddSource(42), { wrapper: makeWrapper() });
+    await act(async () => {
+      result.current.mutate({ title: 'Test', url: 'http://test.com', source_type: 'report' });
     });
-    expect(typeof result.current.mutate).toBe('function');
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
   });
 });
 
 describe('useDeleteSource', () => {
-  it('returns a mutation object', () => {
-    const { result } = renderHook(() => useDeleteSource(42), {
-      wrapper: makeWrapper(),
+  it('executes mutation', async () => {
+    const { result } = renderHook(() => useDeleteSource(42), { wrapper: makeWrapper() });
+    await act(async () => {
+      result.current.mutate(1);
     });
-    expect(typeof result.current.mutate).toBe('function');
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
   });
 });

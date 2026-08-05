@@ -66,10 +66,7 @@ describe('validateProtocol', () => {
   it('calls POST /api/v1/tertiary/studies/{id}/protocol/validate', async () => {
     mockApi.post.mockResolvedValue({ job_id: 'job-abc', status: 'queued' });
     const result = await validateProtocol(42);
-    expect(mockApi.post).toHaveBeenCalledWith(
-      '/api/v1/tertiary/studies/42/protocol/validate',
-      {},
-    );
+    expect(mockApi.post).toHaveBeenCalledWith('/api/v1/tertiary/studies/42/protocol/validate', {});
     expect(result.job_id).toBe('job-abc');
     expect(result.status).toBe('queued');
   });

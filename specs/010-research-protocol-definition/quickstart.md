@@ -47,6 +47,7 @@ asyncio.run(check())
 ```
 
 Expected output:
+
 ```
 SMS: Default SMS Protocol (10 nodes)
 SLR: Default SLR Protocol (12 nodes)
@@ -84,32 +85,32 @@ cd frontend && npm run test:coverage
 
 ### Backend
 
-| File | Purpose |
-|------|---------|
-| `db/src/db/models/protocols.py` | ORM models: ResearchProtocol, ProtocolNode, ProtocolEdge, QualityGate, TaskExecutionState, etc. |
-| `db/alembic/versions/0018_research_protocol_definition.py` | Migration + default template seeding |
-| `backend/src/backend/services/protocol_service.py` | CRUD + graph validation (cycle, dangling inputs) |
-| `backend/src/backend/services/protocol_executor.py` | Runtime task activation + quality gate evaluation |
-| `backend/src/backend/services/protocol_yaml.py` | YAML export/import (serialize/deserialize graph) |
-| `backend/src/backend/api/v1/protocols/__init__.py` | Protocol library endpoints (GET/POST/PUT/DELETE/export/import) |
-| `backend/src/backend/api/v1/studies/protocol_assignment.py` | Study assignment endpoints |
-| `backend/src/backend/api/v1/studies/execution_state.py` | Execution state endpoints (get, complete, approve) |
+| File                                                        | Purpose                                                                                         |
+| ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `db/src/db/models/protocols.py`                             | ORM models: ResearchProtocol, ProtocolNode, ProtocolEdge, QualityGate, TaskExecutionState, etc. |
+| `db/alembic/versions/0018_research_protocol_definition.py`  | Migration + default template seeding                                                            |
+| `backend/src/backend/services/protocol_service.py`          | CRUD + graph validation (cycle, dangling inputs)                                                |
+| `backend/src/backend/services/protocol_executor.py`         | Runtime task activation + quality gate evaluation                                               |
+| `backend/src/backend/services/protocol_yaml.py`             | YAML export/import (serialize/deserialize graph)                                                |
+| `backend/src/backend/api/v1/protocols/__init__.py`          | Protocol library endpoints (GET/POST/PUT/DELETE/export/import)                                  |
+| `backend/src/backend/api/v1/studies/protocol_assignment.py` | Study assignment endpoints                                                                      |
+| `backend/src/backend/api/v1/studies/execution_state.py`     | Execution state endpoints (get, complete, approve)                                              |
 
 ### Frontend
 
-| File | Purpose |
-|------|---------|
-| `frontend/src/services/protocols/protocolsApi.ts` | API client (protocol library + assignment + execution state) |
-| `frontend/src/hooks/protocols/useProtocol.ts` | TanStack Query hooks for protocol data |
-| `frontend/src/hooks/protocols/useExecutionState.ts` | Polling hook for task execution state |
-| `frontend/src/components/protocols/ProtocolGraph.tsx` | D3.js visual graph editor |
-| `frontend/src/components/protocols/ProtocolTextEditor.tsx` | YAML text editor with syntax highlight |
-| `frontend/src/components/protocols/ProtocolNodePanel.tsx` | Node detail + edit panel (inputs, outputs, assignees, gates) |
-| `frontend/src/components/protocols/EdgeConditionBuilder.tsx` | Point-and-click condition builder |
-| `frontend/src/components/protocols/QualityGateEditor.tsx` | Gate type selector + config form |
-| `frontend/src/components/protocols/ExecutionStateView.tsx` | Study runtime task status board |
-| `frontend/src/pages/protocols/ProtocolLibraryPage.tsx` | List + manage researcher's protocols |
-| `frontend/src/pages/protocols/ProtocolEditorPage.tsx` | Dual visual/text editor for one protocol |
+| File                                                         | Purpose                                                      |
+| ------------------------------------------------------------ | ------------------------------------------------------------ |
+| `frontend/src/services/protocols/protocolsApi.ts`            | API client (protocol library + assignment + execution state) |
+| `frontend/src/hooks/protocols/useProtocol.ts`                | TanStack Query hooks for protocol data                       |
+| `frontend/src/hooks/protocols/useExecutionState.ts`          | Polling hook for task execution state                        |
+| `frontend/src/components/protocols/ProtocolGraph.tsx`        | D3.js visual graph editor                                    |
+| `frontend/src/components/protocols/ProtocolTextEditor.tsx`   | YAML text editor with syntax highlight                       |
+| `frontend/src/components/protocols/ProtocolNodePanel.tsx`    | Node detail + edit panel (inputs, outputs, assignees, gates) |
+| `frontend/src/components/protocols/EdgeConditionBuilder.tsx` | Point-and-click condition builder                            |
+| `frontend/src/components/protocols/QualityGateEditor.tsx`    | Gate type selector + config form                             |
+| `frontend/src/components/protocols/ExecutionStateView.tsx`   | Study runtime task status board                              |
+| `frontend/src/pages/protocols/ProtocolLibraryPage.tsx`       | List + manage researcher's protocols                         |
+| `frontend/src/pages/protocols/ProtocolEditorPage.tsx`        | Dual visual/text editor for one protocol                     |
 
 ---
 

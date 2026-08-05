@@ -121,7 +121,7 @@ describe('ReviewerPanel', () => {
             reviewer_id: 5,
             decision: 'accepted',
             reasons: expect.any(Array),
-          })
+          }),
         );
       });
     });
@@ -142,7 +142,7 @@ describe('ReviewerPanel', () => {
       await waitFor(() => {
         const callBody = mockApi.post.mock.calls[0][1] as { reasons: object[] };
         expect(callBody.reasons).toContainEqual(
-          expect.objectContaining({ text: 'Override note here' })
+          expect.objectContaining({ text: 'Override note here' }),
         );
       });
     });
@@ -157,9 +157,7 @@ describe('ReviewerPanel', () => {
       });
       fireEvent.click(screen.getByRole('button', { name: /submit decision/i }));
 
-      await waitFor(() =>
-        expect(screen.getByText(/decision submitted/i)).toBeTruthy()
-      );
+      await waitFor(() => expect(screen.getByText(/decision submitted/i)).toBeTruthy());
     });
 
     it('shows error message when submission fails', async () => {
@@ -172,9 +170,7 @@ describe('ReviewerPanel', () => {
       });
       fireEvent.click(screen.getByRole('button', { name: /submit decision/i }));
 
-      await waitFor(() =>
-        expect(screen.getByText(/failed to submit decision/i)).toBeTruthy()
-      );
+      await waitFor(() => expect(screen.getByText(/failed to submit decision/i)).toBeTruthy());
     });
   });
 
@@ -190,9 +186,7 @@ describe('ReviewerPanel', () => {
       renderWithQuery(<ReviewerPanel {...BASE_PROPS} />);
       fireEvent.click(screen.getByRole('button', { name: /^accepted$/i }));
 
-      await waitFor(() =>
-        expect(screen.getByText('Must be peer-reviewed')).toBeTruthy()
-      );
+      await waitFor(() => expect(screen.getByText('Must be peer-reviewed')).toBeTruthy());
     });
 
     it('shows "Inclusion Criteria" group label when criteria are available', async () => {
@@ -206,9 +200,7 @@ describe('ReviewerPanel', () => {
       renderWithQuery(<ReviewerPanel {...BASE_PROPS} />);
       fireEvent.click(screen.getByRole('button', { name: /^accepted$/i }));
 
-      await waitFor(() =>
-        expect(screen.getByText(/inclusion criteria/i)).toBeTruthy()
-      );
+      await waitFor(() => expect(screen.getByText(/inclusion criteria/i)).toBeTruthy());
     });
 
     it('shows "Exclusion Criteria" group label when exclusion criteria available', async () => {
@@ -222,9 +214,7 @@ describe('ReviewerPanel', () => {
       renderWithQuery(<ReviewerPanel {...BASE_PROPS} />);
       fireEvent.click(screen.getByRole('button', { name: /^rejected$/i }));
 
-      await waitFor(() =>
-        expect(screen.getByText(/exclusion criteria/i)).toBeTruthy()
-      );
+      await waitFor(() => expect(screen.getByText(/exclusion criteria/i)).toBeTruthy());
     });
 
     it('includes criterion type exclusion in reasons when exclusion criterion selected', async () => {
@@ -246,7 +236,9 @@ describe('ReviewerPanel', () => {
       fireEvent.click(screen.getByRole('button', { name: /submit decision/i }));
 
       await waitFor(() => {
-        const body = mockApi.post.mock.calls[0][1] as { reasons: Array<{ criterion_type: string }> };
+        const body = mockApi.post.mock.calls[0][1] as {
+          reasons: Array<{ criterion_type: string }>;
+        };
         const excReason = body.reasons.find((r) => r.criterion_type === 'exclusion');
         expect(excReason).toBeTruthy();
       });
@@ -297,9 +289,7 @@ describe('ReviewerPanel', () => {
       const onSubmitted = vi.fn();
       mockApi.post.mockResolvedValue({ id: 1, decision: 'accepted' });
 
-      renderWithQuery(
-        <ReviewerPanel {...BASE_PROPS} onDecisionSubmitted={onSubmitted} />
-      );
+      renderWithQuery(<ReviewerPanel {...BASE_PROPS} onDecisionSubmitted={onSubmitted} />);
 
       fireEvent.click(screen.getByRole('button', { name: /^accepted$/i }));
       fireEvent.change(screen.getByPlaceholderText(/reviewer id/i), { target: { value: '1' } });
@@ -318,7 +308,7 @@ describe('ReviewerPanel', () => {
       fireEvent.change(screen.getByPlaceholderText(/reviewer id/i), { target: { value: '2' } });
 
       expect(() =>
-        fireEvent.click(screen.getByRole('button', { name: /submit decision/i }))
+        fireEvent.click(screen.getByRole('button', { name: /submit decision/i })),
       ).not.toThrow();
     });
   });
@@ -369,7 +359,9 @@ describe('ReviewerPanel', () => {
       fireEvent.click(screen.getByRole('button', { name: /submit decision/i }));
 
       await waitFor(() => {
-        const body = mockApi.post.mock.calls[0][1] as { reasons: Array<{ criterion_type: string; criterion_id: number; text: string }> };
+        const body = mockApi.post.mock.calls[0][1] as {
+          reasons: Array<{ criterion_type: string; criterion_id: number; text: string }>;
+        };
         expect(body.reasons).toHaveLength(1);
         expect(body.reasons[0]).toMatchObject({
           criterion_id: 4,
@@ -469,9 +461,11 @@ describe('ReviewerPanel', () => {
       fireEvent.click(screen.getByRole('button', { name: /submit decision/i }));
 
       await waitFor(() => {
-        const body = mockApi.post.mock.calls[0][1] as { reasons: Array<{ criterion_type: string; criterion_id: number }> };
+        const body = mockApi.post.mock.calls[0][1] as {
+          reasons: Array<{ criterion_type: string; criterion_id: number }>;
+        };
         expect(body.reasons).toContainEqual(
-          expect.objectContaining({ criterion_type: 'inclusion', criterion_id: 7 })
+          expect.objectContaining({ criterion_type: 'inclusion', criterion_id: 7 }),
         );
       });
     });
@@ -488,7 +482,9 @@ describe('ReviewerPanel', () => {
       fireEvent.click(screen.getByRole('button', { name: /submit decision/i }));
 
       await waitFor(() => {
-        const body = mockApi.post.mock.calls[0][1] as { reasons: Array<{ criterion_type: string }> };
+        const body = mockApi.post.mock.calls[0][1] as {
+          reasons: Array<{ criterion_type: string }>;
+        };
         const annotationReason = body.reasons.find((r) => r.criterion_type === 'annotation');
         expect(annotationReason).toBeUndefined();
       });
@@ -506,7 +502,9 @@ describe('ReviewerPanel', () => {
       fireEvent.click(screen.getByRole('button', { name: /submit decision/i }));
 
       await waitFor(() => {
-        const body = mockApi.post.mock.calls[0][1] as { reasons: Array<{ criterion_type: string }> };
+        const body = mockApi.post.mock.calls[0][1] as {
+          reasons: Array<{ criterion_type: string }>;
+        };
         const annotationReason = body.reasons.find((r) => r.criterion_type === 'annotation');
         expect(annotationReason).toBeUndefined();
       });

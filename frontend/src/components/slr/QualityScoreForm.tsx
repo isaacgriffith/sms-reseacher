@@ -28,10 +28,7 @@ import type { ChecklistItem } from '../../services/slr/qualityApi';
 // Helper: compute aggregate score from form values
 // ---------------------------------------------------------------------------
 
-function computeAggregate(
-  values: Record<string, number>,
-  items: ChecklistItem[],
-): number {
+function computeAggregate(values: Record<string, number>, items: ChecklistItem[]): number {
   let weightedSum = 0;
   let totalWeight = 0;
   for (const item of items) {
@@ -80,12 +77,12 @@ export default function QualityScoreForm({
 
   // Build default values from existing scores
   const defaultValues: Record<string, number | string> = {};
-  const existingItems = scores?.reviewer_scores.find(
-    (r) => r.reviewer_id === reviewerId,
-  )?.items ?? [];
+  const existingItems =
+    scores?.reviewer_scores.find((r) => r.reviewer_id === reviewerId)?.items ?? [];
   for (const item of items) {
     const existing = existingItems.find((s) => s.checklist_item_id === item.id);
-    defaultValues[`score_${item.id}`] = existing?.score_value ?? (item.scoring_method === 'binary' ? 0 : 1);
+    defaultValues[`score_${item.id}`] =
+      existing?.score_value ?? (item.scoring_method === 'binary' ? 0 : 1);
     defaultValues[`notes_${item.id}`] = existing?.notes ?? '';
   }
 

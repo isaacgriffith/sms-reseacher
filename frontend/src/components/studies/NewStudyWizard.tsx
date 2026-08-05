@@ -154,10 +154,16 @@ export default function NewStudyWizard({ groupId, onClose, onCreated }: Props) {
         study_type: data.study_type,
         motivation: data.motivation || null,
         research_objectives: data.research_objectives
-          ? data.research_objectives.split('\n').map((s) => s.trim()).filter(Boolean)
+          ? data.research_objectives
+              .split('\n')
+              .map((s) => s.trim())
+              .filter(Boolean)
           : [],
         research_questions: data.research_questions
-          ? data.research_questions.split('\n').map((s) => s.trim()).filter(Boolean)
+          ? data.research_questions
+              .split('\n')
+              .map((s) => s.trim())
+              .filter(Boolean)
           : [],
         member_ids: [],
         reviewers,
@@ -174,7 +180,13 @@ export default function NewStudyWizard({ groupId, onClose, onCreated }: Props) {
     }
   });
 
-  const inputStyle: React.CSSProperties = { width: '100%', padding: '0.5rem', boxSizing: 'border-box', borderRadius: '0.25rem', border: '1px solid #cbd5e1' };
+  const inputStyle: React.CSSProperties = {
+    width: '100%',
+    padding: '0.5rem',
+    boxSizing: 'border-box',
+    borderRadius: '0.25rem',
+    border: '1px solid #cbd5e1',
+  };
 
   return (
     <Box
@@ -209,26 +221,59 @@ export default function NewStudyWizard({ groupId, onClose, onCreated }: Props) {
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '1.5rem',
+          }}
+        >
           <Box>
-            <Typography variant="h5" sx={{ margin: 0, fontSize: '1.25rem' }}>New Study</Typography>
+            <Typography variant="h5" sx={{ margin: 0, fontSize: '1.25rem' }}>
+              New Study
+            </Typography>
             <Typography sx={{ margin: '0.25rem 0 0', color: '#64748b', fontSize: '0.875rem' }}>
               Step {step} of {TOTAL_STEPS}
             </Typography>
           </Box>
-          <Button onClick={onClose} aria-label="Close" sx={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: '#64748b', minWidth: 'auto', padding: 0 }}>×</Button>
+          <Button
+            onClick={onClose}
+            aria-label="Close"
+            sx={{
+              background: 'none',
+              border: 'none',
+              fontSize: '1.5rem',
+              cursor: 'pointer',
+              color: '#64748b',
+              minWidth: 'auto',
+              padding: 0,
+            }}
+          >
+            ×
+          </Button>
         </Box>
 
         {/* Progress bar */}
         <Box sx={{ height: 4, background: '#e2e8f0', borderRadius: 2, marginBottom: '1.5rem' }}>
-          <Box sx={{ height: '100%', width: `${(step / TOTAL_STEPS) * 100}%`, background: '#2563eb', borderRadius: 2, transition: 'width 0.3s' }} />
+          <Box
+            sx={{
+              height: '100%',
+              width: `${(step / TOTAL_STEPS) * 100}%`,
+              background: '#2563eb',
+              borderRadius: 2,
+              transition: 'width 0.3s',
+            }}
+          />
         </Box>
 
         <form onSubmit={onSubmit}>
           {/* Step 1: Name + Type */}
           {step === 1 && (
             <Box>
-              <Typography variant="h6" sx={{ margin: '0 0 1rem' }}>Study Name & Type</Typography>
+              <Typography variant="h6" sx={{ margin: '0 0 1rem' }}>
+                Study Name & Type
+              </Typography>
               <Box sx={{ marginBottom: '1rem' }}>
                 <TextField
                   id="wizard-name"
@@ -254,9 +299,22 @@ export default function NewStudyWizard({ groupId, onClose, onCreated }: Props) {
                 />
               </Box>
               <Box sx={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', marginBottom: '0.25rem', fontWeight: 500, fontSize: '0.9rem' }}>Study type *</label>
+                <label
+                  style={{
+                    display: 'block',
+                    marginBottom: '0.25rem',
+                    fontWeight: 500,
+                    fontSize: '0.9rem',
+                  }}
+                >
+                  Study type *
+                </label>
                 <select style={inputStyle} {...register('study_type')}>
-                  {STUDY_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+                  {STUDY_TYPES.map((t) => (
+                    <option key={t} value={t}>
+                      {t}
+                    </option>
+                  ))}
                 </select>
                 {selectedStudyType === 'Tertiary' && (
                   <Box
@@ -277,8 +335,23 @@ export default function NewStudyWizard({ groupId, onClose, onCreated }: Props) {
                 )}
               </Box>
               <Box sx={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', marginBottom: '0.25rem', fontWeight: 500, fontSize: '0.9rem' }}>Snowball threshold</label>
-                <input type="number" min={1} max={50} style={inputStyle} {...register('snowball_threshold', { valueAsNumber: true })} />
+                <label
+                  style={{
+                    display: 'block',
+                    marginBottom: '0.25rem',
+                    fontWeight: 500,
+                    fontSize: '0.9rem',
+                  }}
+                >
+                  Snowball threshold
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  max={50}
+                  style={inputStyle}
+                  {...register('snowball_threshold', { valueAsNumber: true })}
+                />
               </Box>
             </Box>
           )}
@@ -286,9 +359,12 @@ export default function NewStudyWizard({ groupId, onClose, onCreated }: Props) {
           {/* Step 2: Assign members (simplified — IDs only) */}
           {step === 2 && (
             <Box>
-              <Typography variant="h6" sx={{ margin: '0 0 1rem' }}>Assign Members</Typography>
+              <Typography variant="h6" sx={{ margin: '0 0 1rem' }}>
+                Assign Members
+              </Typography>
               <Typography sx={{ color: '#64748b', fontSize: '0.875rem' }}>
-                You are automatically added as the study lead. Additional members can be invited after creation via the group member management page.
+                You are automatically added as the study lead. Additional members can be invited
+                after creation via the group member management page.
               </Typography>
             </Box>
           )}
@@ -296,21 +372,45 @@ export default function NewStudyWizard({ groupId, onClose, onCreated }: Props) {
           {/* Step 3: Configure reviewers */}
           {step === 3 && (
             <Box>
-              <Typography variant="h6" sx={{ margin: '0 0 1rem' }}>Configure Reviewers</Typography>
+              <Typography variant="h6" sx={{ margin: '0 0 1rem' }}>
+                Configure Reviewers
+              </Typography>
               <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 1rem' }}>
                 {reviewers.map((r, i) => (
-                  <li key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 0', borderBottom: '1px solid #e2e8f0' }}>
+                  <li
+                    key={i}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      padding: '0.5rem 0',
+                      borderBottom: '1px solid #e2e8f0',
+                    }}
+                  >
                     <span style={{ fontSize: '0.875rem' }}>
                       {r.type === 'ai_agent' ? `🤖 ${r.agent_name}` : `👤 User ${r.user_id}`}
                     </span>
-                    <button type="button" onClick={() => removeReviewer(i)} style={{ background: 'none', border: 'none', color: '#dc2626', cursor: 'pointer' }}>Remove</button>
+                    <button
+                      type="button"
+                      onClick={() => removeReviewer(i)}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#dc2626',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Remove
+                    </button>
                   </li>
                 ))}
               </ul>
               <Box sx={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                 <input
                   value={newAgentName}
-                  onChange={(e) => dispatch({ type: 'SET_NEW_AGENT_NAME', payload: e.target.value })}
+                  onChange={(e) =>
+                    dispatch({ type: 'SET_NEW_AGENT_NAME', payload: e.target.value })
+                  }
                   placeholder="Agent name (e.g. screener-v2)"
                   style={{ flex: 1, ...inputStyle }}
                 />
@@ -329,18 +429,62 @@ export default function NewStudyWizard({ groupId, onClose, onCreated }: Props) {
           {/* Step 4: Motivation + Objectives + Questions */}
           {step === 4 && (
             <Box>
-              <Typography variant="h6" sx={{ margin: '0 0 1rem' }}>Research Context</Typography>
+              <Typography variant="h6" sx={{ margin: '0 0 1rem' }}>
+                Research Context
+              </Typography>
               <Box sx={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', marginBottom: '0.25rem', fontWeight: 500, fontSize: '0.9rem' }}>Motivation</label>
-                <textarea rows={3} style={{ ...inputStyle, resize: 'vertical' }} placeholder="Why is this study needed?" {...register('motivation')} />
+                <label
+                  style={{
+                    display: 'block',
+                    marginBottom: '0.25rem',
+                    fontWeight: 500,
+                    fontSize: '0.9rem',
+                  }}
+                >
+                  Motivation
+                </label>
+                <textarea
+                  rows={3}
+                  style={{ ...inputStyle, resize: 'vertical' }}
+                  placeholder="Why is this study needed?"
+                  {...register('motivation')}
+                />
               </Box>
               <Box sx={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', marginBottom: '0.25rem', fontWeight: 500, fontSize: '0.9rem' }}>Research objectives (one per line)</label>
-                <textarea rows={4} style={{ ...inputStyle, resize: 'vertical' }} placeholder="RO1: Identify…&#10;RO2: Characterise…" {...register('research_objectives')} />
+                <label
+                  style={{
+                    display: 'block',
+                    marginBottom: '0.25rem',
+                    fontWeight: 500,
+                    fontSize: '0.9rem',
+                  }}
+                >
+                  Research objectives (one per line)
+                </label>
+                <textarea
+                  rows={4}
+                  style={{ ...inputStyle, resize: 'vertical' }}
+                  placeholder="RO1: Identify…&#10;RO2: Characterise…"
+                  {...register('research_objectives')}
+                />
               </Box>
               <Box sx={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', marginBottom: '0.25rem', fontWeight: 500, fontSize: '0.9rem' }}>Research questions (one per line)</label>
-                <textarea rows={4} style={{ ...inputStyle, resize: 'vertical' }} placeholder="RQ1: What…&#10;RQ2: How…" {...register('research_questions')} />
+                <label
+                  style={{
+                    display: 'block',
+                    marginBottom: '0.25rem',
+                    fontWeight: 500,
+                    fontSize: '0.9rem',
+                  }}
+                >
+                  Research questions (one per line)
+                </label>
+                <textarea
+                  rows={4}
+                  style={{ ...inputStyle, resize: 'vertical' }}
+                  placeholder="RQ1: What…&#10;RQ2: How…"
+                  {...register('research_questions')}
+                />
               </Box>
             </Box>
           )}
@@ -348,21 +492,43 @@ export default function NewStudyWizard({ groupId, onClose, onCreated }: Props) {
           {/* Step 5: PICO/C variant */}
           {step === 5 && (
             <Box>
-              <Typography variant="h6" sx={{ margin: '0 0 1rem' }}>PICO/C Framework</Typography>
+              <Typography variant="h6" sx={{ margin: '0 0 1rem' }}>
+                PICO/C Framework
+              </Typography>
               <Typography sx={{ color: '#64748b', fontSize: '0.875rem', marginBottom: '1rem' }}>
-                Choose the framework variant. You can fill in the components after the study is created.
+                Choose the framework variant. You can fill in the components after the study is
+                created.
               </Typography>
               <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}>
                 {PICO_VARIANTS.map((v) => (
-                  <label key={v} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem', border: `2px solid ${selectedPicoVariant === v ? '#2563eb' : '#e2e8f0'}`, borderRadius: '0.375rem', cursor: 'pointer', fontSize: '0.875rem' }}>
-                    <input type="radio" value={v} {...register('pico_variant')} style={{ accentColor: '#2563eb' }} />
+                  <label
+                    key={v}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      padding: '0.75rem',
+                      border: `2px solid ${selectedPicoVariant === v ? '#2563eb' : '#e2e8f0'}`,
+                      borderRadius: '0.375rem',
+                      cursor: 'pointer',
+                      fontSize: '0.875rem',
+                    }}
+                  >
+                    <input
+                      type="radio"
+                      value={v}
+                      {...register('pico_variant')}
+                      style={{ accentColor: '#2563eb' }}
+                    />
                     {v}
                   </label>
                 ))}
               </Box>
 
               {submitError && (
-                <Typography sx={{ color: 'red', marginTop: '1rem', fontSize: '0.875rem' }}>{submitError}</Typography>
+                <Typography sx={{ color: 'red', marginTop: '1rem', fontSize: '0.875rem' }}>
+                  {submitError}
+                </Typography>
               )}
             </Box>
           )}
@@ -398,7 +564,11 @@ export default function NewStudyWizard({ groupId, onClose, onCreated }: Props) {
                 type="submit"
                 variant="contained"
                 disabled={isSubmitting}
-                sx={{ padding: '0.5rem 1.25rem', background: '#16a34a', '&:hover': { background: '#15803d' } }}
+                sx={{
+                  padding: '0.5rem 1.25rem',
+                  background: '#16a34a',
+                  '&:hover': { background: '#15803d' },
+                }}
               >
                 {isSubmitting ? 'Creating…' : 'Create Study'}
               </Button>

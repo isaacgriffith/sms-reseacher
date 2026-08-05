@@ -22,7 +22,10 @@ import Select from '@mui/material/Select';
 import Slider from '@mui/material/Slider';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
-import type { TertiaryExtraction, TertiaryExtractionUpdate } from '../../services/tertiary/extractionApi';
+import type {
+  TertiaryExtraction,
+  TertiaryExtractionUpdate,
+} from '../../services/tertiary/extractionApi';
 
 // ---------------------------------------------------------------------------
 // Zod schema
@@ -128,7 +131,11 @@ export default function TertiaryExtractionForm({
   }
 
   return (
-    <Box component="form" onSubmit={handleSubmit(handleSave)} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+    <Box
+      component="form"
+      onSubmit={handleSubmit(handleSave)}
+      sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}
+    >
       {isAiComplete && (
         <Alert severity="info" icon={false}>
           <Chip label="AI Pre-filled" color="primary" size="small" sx={{ mr: 1 }} />
@@ -175,7 +182,9 @@ function TypeAndPeriodRow({ control }: SubProps) {
             <Select {...field} size="small" fullWidth displayEmpty>
               <MenuItem value="">Unknown</MenuItem>
               {['SLR', 'SMS', 'RAPID_REVIEW', 'UNKNOWN'].map((t) => (
-                <MenuItem key={t} value={t}>{t}</MenuItem>
+                <MenuItem key={t} value={t}>
+                  {t}
+                </MenuItem>
               ))}
             </Select>
           </Box>
@@ -315,7 +324,11 @@ function QualityRow({ control, qualityRating }: QualitySubProps) {
             min={0}
             max={1}
             step={0.05}
-            marks={[{ value: 0, label: '0' }, { value: 0.5, label: '0.5' }, { value: 1, label: '1' }]}
+            marks={[
+              { value: 0, label: '0' },
+              { value: 0.5, label: '0.5' },
+              { value: 1, label: '1' },
+            ]}
           />
         )}
       />

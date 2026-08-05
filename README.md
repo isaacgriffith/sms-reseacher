@@ -4,14 +4,14 @@ A six-sub-project UV workspace mono-repo for systematic mapping study (SMS) rese
 
 ## Sub-projects
 
-| Sub-project | Language | Purpose |
-|-------------|----------|---------|
-| [`backend/`](backend/README.md) | Python 3.14 / FastAPI | REST API gateway; orchestrates agents |
-| [`agents/`](agents/README.md) | Python 3.14 | LLM-powered research agents (screener, extractor, synthesiser, agent-generator) |
-| [`db/`](db/README.md) | Python 3.14 / SQLAlchemy | Shared database models + Alembic migrations |
-| [`agent-eval/`](agent-eval/README.md) | Python 3.14 / Typer | CLI for evaluating agent quality with LLM-as-a-Judge |
-| [`researcher-mcp/`](researcher-mcp/README.md) | Python 3.14 / FastMCP | MCP server for paper search and PDF fetching |
-| [`frontend/`](frontend/) | TypeScript 5 / React 18 | Researcher-facing SPA (Vite + Vitest) |
+| Sub-project                                   | Language                 | Purpose                                                                         |
+| --------------------------------------------- | ------------------------ | ------------------------------------------------------------------------------- |
+| [`backend/`](backend/README.md)               | Python 3.14 / FastAPI    | REST API gateway; orchestrates agents                                           |
+| [`agents/`](agents/README.md)                 | Python 3.14              | LLM-powered research agents (screener, extractor, synthesiser, agent-generator) |
+| [`db/`](db/README.md)                         | Python 3.14 / SQLAlchemy | Shared database models + Alembic migrations                                     |
+| [`agent-eval/`](agent-eval/README.md)         | Python 3.14 / Typer      | CLI for evaluating agent quality with LLM-as-a-Judge                            |
+| [`researcher-mcp/`](researcher-mcp/README.md) | Python 3.14 / FastMCP    | MCP server for paper search and PDF fetching                                    |
+| [`frontend/`](frontend/)                      | TypeScript 5 / React 18  | Researcher-facing SPA (Vite + Vitest)                                           |
 
 ## Quick Start
 
@@ -45,41 +45,41 @@ See [quickstart.md](specs/001-repo-setup/quickstart.md#docker-local-deployment) 
 
 ## Supported Study Types
 
-| Study Type | Description |
-|-----------|-------------|
-| **SMS** | Systematic Mapping Study — scoping, search, screening, extraction, visualisation |
-| **SLR** | Systematic Literature Review — full PICO protocol, quality assessment, meta-analysis/synthesis, grey literature, report export |
-| **Rapid** | Rapid Review — accelerated protocol with stakeholder involvement, narrative synthesis, and Evidence Briefing export |
+| Study Type   | Description                                                                                                                                                         |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **SMS**      | Systematic Mapping Study — scoping, search, screening, extraction, visualisation                                                                                    |
+| **SLR**      | Systematic Literature Review — full PICO protocol, quality assessment, meta-analysis/synthesis, grey literature, report export                                      |
+| **Rapid**    | Rapid Review — accelerated protocol with stakeholder involvement, narrative synthesis, and Evidence Briefing export                                                 |
 | **Tertiary** | Tertiary Study — aggregates secondary studies (SLRs, SMSs, Rapid Reviews); seed import, structured data extraction, landscape synthesis, and tertiary report export |
 
 All study types share the **Protocol** tab (Phase 0) — a reusable, versioned research protocol graph visualised with D3.js. Researchers can view the default template, copy and customise it in the dual-pane editor (visual graph + YAML), assign it to a study, and track task execution state in real time.
 
 ## Frontend Routes
 
-| Route | Description | Auth required |
-|-------|-------------|---------------|
-| `/login` | Sign in (password + optional TOTP second step) | No |
-| `/groups` | Research groups list | Yes |
-| `/groups/:id/studies` | Studies for a group | Yes |
-| `/studies/:id` | Study workspace | Yes |
-| `/studies/:id/slr/protocol` | SLR protocol editor with AI review | Yes |
-| `/studies/:id/slr/quality` | Quality assessment checklists and scoring | Yes |
-| `/studies/:id/slr/synthesis` | Synthesis results (meta-analysis / descriptive / qualitative) | Yes |
-| `/studies/:id/slr/grey-literature` | Grey literature source tracking | Yes |
-| `/studies/:id/slr/report` | Structured SLR report export | Yes |
-| `/studies/:id/rr/protocol` | Rapid Review protocol editor | Yes |
-| `/studies/:id/rr/search-config` | Search restriction configuration | Yes |
-| `/studies/:id/rr/qa-config` | Quality appraisal mode and checklist configuration | Yes |
-| `/studies/:id/rr/stakeholders` | Practitioner stakeholder management | Yes |
-| `/studies/:id/rr/narrative` | Narrative synthesis (per-RQ sections, AI drafts) | Yes |
-| `/studies/:id/rr/briefing` | Evidence Briefing generation, versioning, and export | Yes |
-| `/public/briefings/:token` | Public Evidence Briefing view (unauthenticated, share token) | No |
-| `/studies/:id/tertiary` | Tertiary Study workspace (5-phase tab layout) | Yes |
-| `/studies/:id/tertiary/report` | Tertiary report — landscape section, synthesis, recommendations | Yes |
-| `/protocols` | Protocol Library — browse, copy, import, assign, and export research protocols | Yes |
-| `/protocols/:id` | Protocol detail / editor — dual-pane D3 graph + YAML editor with Save | Yes |
-| `/preferences` | Password change, theme selector, 2FA management | Yes |
-| `/api-docs` | Interactive Swagger UI (auto-generated from backend) | Yes |
+| Route                              | Description                                                                    | Auth required |
+| ---------------------------------- | ------------------------------------------------------------------------------ | ------------- |
+| `/login`                           | Sign in (password + optional TOTP second step)                                 | No            |
+| `/groups`                          | Research groups list                                                           | Yes           |
+| `/groups/:id/studies`              | Studies for a group                                                            | Yes           |
+| `/studies/:id`                     | Study workspace                                                                | Yes           |
+| `/studies/:id/slr/protocol`        | SLR protocol editor with AI review                                             | Yes           |
+| `/studies/:id/slr/quality`         | Quality assessment checklists and scoring                                      | Yes           |
+| `/studies/:id/slr/synthesis`       | Synthesis results (meta-analysis / descriptive / qualitative)                  | Yes           |
+| `/studies/:id/slr/grey-literature` | Grey literature source tracking                                                | Yes           |
+| `/studies/:id/slr/report`          | Structured SLR report export                                                   | Yes           |
+| `/studies/:id/rr/protocol`         | Rapid Review protocol editor                                                   | Yes           |
+| `/studies/:id/rr/search-config`    | Search restriction configuration                                               | Yes           |
+| `/studies/:id/rr/qa-config`        | Quality appraisal mode and checklist configuration                             | Yes           |
+| `/studies/:id/rr/stakeholders`     | Practitioner stakeholder management                                            | Yes           |
+| `/studies/:id/rr/narrative`        | Narrative synthesis (per-RQ sections, AI drafts)                               | Yes           |
+| `/studies/:id/rr/briefing`         | Evidence Briefing generation, versioning, and export                           | Yes           |
+| `/public/briefings/:token`         | Public Evidence Briefing view (unauthenticated, share token)                   | No            |
+| `/studies/:id/tertiary`            | Tertiary Study workspace (5-phase tab layout)                                  | Yes           |
+| `/studies/:id/tertiary/report`     | Tertiary report — landscape section, synthesis, recommendations                | Yes           |
+| `/protocols`                       | Protocol Library — browse, copy, import, assign, and export research protocols | Yes           |
+| `/protocols/:id`                   | Protocol detail / editor — dual-pane D3 graph + YAML editor with Save          | Yes           |
+| `/preferences`                     | Password change, theme selector, 2FA management                                | Yes           |
+| `/api-docs`                        | Interactive Swagger UI (auto-generated from backend)                           | Yes           |
 
 > MUI v5 migration complete — all components use `@mui/material`.
 
@@ -87,20 +87,20 @@ All study types share the **Protocol** tab (Phase 0) — a reusable, versioned r
 
 The admin panel (`/admin`) provides management tabs for:
 
-| Tab | Description |
-|-----|-------------|
-| **Providers** | Add/edit/delete LLM provider credentials (Anthropic, OpenAI, Ollama) |
-| **Models** | View and enable/disable individual models fetched from each provider |
-| **Agents** | Create, edit, and manage AI agent definitions via a multi-step wizard |
+| Tab                     | Description                                                                                                  |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------ |
+| **Providers**           | Add/edit/delete LLM provider credentials (Anthropic, OpenAI, Ollama)                                         |
+| **Models**              | View and enable/disable individual models fetched from each provider                                         |
+| **Agents**              | Create, edit, and manage AI agent definitions via a multi-step wizard                                        |
 | **Search Integrations** | Configure and test API credentials for academic database sources (IEEE Xplore, Scopus, Web of Science, etc.) |
 
 ### Supported LLM Provider Types
 
-| Type | Auth | Model source |
-|------|------|-------------|
-| `anthropic` | API key | `GET https://api.anthropic.com/v1/models` |
-| `openai` | API key | `GET https://api.openai.com/v1/models` |
-| `ollama` | Base URL only | `GET {base_url}/api/tags` |
+| Type        | Auth          | Model source                              |
+| ----------- | ------------- | ----------------------------------------- |
+| `anthropic` | API key       | `GET https://api.anthropic.com/v1/models` |
+| `openai`    | API key       | `GET https://api.openai.com/v1/models`    |
+| `ollama`    | Base URL only | `GET {base_url}/api/tags`                 |
 
 Agent system messages are Jinja2 templates rendered at invocation time with `{{ domain }}` and `{{ study_type }}` variables injected from the active study context.
 
@@ -108,27 +108,27 @@ Agent system messages are Jinja2 templates rendered at invocation time with `{{ 
 
 The `researcher-mcp` server provides MCP tools for multi-database academic paper search:
 
-| MCP Tool | Description |
-|----------|-------------|
-| `search_papers` | Fan-out search across up to 9 databases; merged + deduplicated results |
-| `fetch_paper_pdf` | Retrieve full-text PDF via Unpaywall (OA) or Sci-Hub (opt-in) |
-| `convert_pdf_to_markdown` | Convert PDF bytes to Markdown via MarkItDown |
-| `convert_url_to_markdown` | Fetch a URL and convert content to Markdown |
-| `fetch_stored_markdown` | Retrieve previously stored full-text Markdown for a paper |
+| MCP Tool                  | Description                                                            |
+| ------------------------- | ---------------------------------------------------------------------- |
+| `search_papers`           | Fan-out search across up to 9 databases; merged + deduplicated results |
+| `fetch_paper_pdf`         | Retrieve full-text PDF via Unpaywall (OA) or Sci-Hub (opt-in)          |
+| `convert_pdf_to_markdown` | Convert PDF bytes to Markdown via MarkItDown                           |
+| `convert_url_to_markdown` | Fetch a URL and convert content to Markdown                            |
+| `fetch_stored_markdown`   | Retrieve previously stored full-text Markdown for a paper              |
 
 ### Supported Database Sources
 
-| Source | Credential env var |
-|--------|-------------------|
-| IEEE Xplore | `IEEE_XPLORE_API_KEY` |
-| ACM Digital Library | *(no key required)* |
-| Scopus | `ELSEVIER_API_KEY`, `ELSEVIER_INST_TOKEN` |
-| Web of Science | `WOS_API_KEY` |
-| Inspec | `ELSEVIER_API_KEY`, `ELSEVIER_INST_TOKEN` |
-| ScienceDirect | `ELSEVIER_API_KEY`, `ELSEVIER_INST_TOKEN` |
-| SpringerNature | `SPRINGER_API_KEY` |
-| Google Scholar | `SCHOLARLY_PROXY_URL` (optional) |
-| Semantic Scholar | `SEMANTIC_SCHOLAR_API_KEY` (optional) |
+| Source              | Credential env var                        |
+| ------------------- | ----------------------------------------- |
+| IEEE Xplore         | `IEEE_XPLORE_API_KEY`                     |
+| ACM Digital Library | _(no key required)_                       |
+| Scopus              | `ELSEVIER_API_KEY`, `ELSEVIER_INST_TOKEN` |
+| Web of Science      | `WOS_API_KEY`                             |
+| Inspec              | `ELSEVIER_API_KEY`, `ELSEVIER_INST_TOKEN` |
+| ScienceDirect       | `ELSEVIER_API_KEY`, `ELSEVIER_INST_TOKEN` |
+| SpringerNature      | `SPRINGER_API_KEY`                        |
+| Google Scholar      | `SCHOLARLY_PROXY_URL` (optional)          |
+| Semantic Scholar    | `SEMANTIC_SCHOLAR_API_KEY` (optional)     |
 
 Full-text retrieval also uses `UNPAYWALL_EMAIL` and `SCIHUB_ENABLED` env vars.
 

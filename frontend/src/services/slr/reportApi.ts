@@ -16,12 +16,9 @@
  */
 export async function downloadSLRReport(studyId: number, format: string): Promise<void> {
   const token = localStorage.getItem('access_token') || '';
-  const resp = await fetch(
-    `/api/v1/slr/studies/${studyId}/export/slr-report?format=${format}`,
-    {
-      headers: { Authorization: `Bearer ${token}` },
-    },
-  );
+  const resp = await fetch(`/api/v1/slr/studies/${studyId}/export/slr-report?format=${format}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
   if (!resp.ok) throw new Error(`Download failed: ${resp.status}`);
   const blob = await resp.blob();
   const url = URL.createObjectURL(blob);

@@ -74,7 +74,7 @@ describe('PaperQueue', () => {
       mockApi.get.mockResolvedValue([MOCK_PAPER]);
       renderWithQuery(<PaperQueue studyId={1} />);
       await waitFor(() =>
-        expect(screen.getByText('Test-Driven Development: A Systematic Review')).toBeTruthy()
+        expect(screen.getByText('Test-Driven Development: A Systematic Review')).toBeTruthy(),
       );
     });
 
@@ -104,17 +104,13 @@ describe('PaperQueue', () => {
     it('shows "No candidate papers found" when list is empty', async () => {
       mockApi.get.mockResolvedValue([]);
       renderWithQuery(<PaperQueue studyId={1} />);
-      await waitFor(() =>
-        expect(screen.getByText(/no candidate papers found/i)).toBeTruthy()
-      );
+      await waitFor(() => expect(screen.getByText(/no candidate papers found/i)).toBeTruthy());
     });
 
     it('hints to run a search when no filters applied', async () => {
       mockApi.get.mockResolvedValue([]);
       renderWithQuery(<PaperQueue studyId={1} />);
-      await waitFor(() =>
-        expect(screen.getByText(/run a full search/i)).toBeTruthy()
-      );
+      await waitFor(() => expect(screen.getByText(/run a full search/i)).toBeTruthy());
     });
   });
 
@@ -127,9 +123,7 @@ describe('PaperQueue', () => {
       fireEvent.change(select, { target: { value: 'accepted' } });
 
       await waitFor(() => {
-        expect(mockApi.get).toHaveBeenCalledWith(
-          expect.stringContaining('status=accepted')
-        );
+        expect(mockApi.get).toHaveBeenCalledWith(expect.stringContaining('status=accepted'));
       });
     });
 
@@ -142,7 +136,7 @@ describe('PaperQueue', () => {
 
       await waitFor(() => {
         expect(mockApi.get).toHaveBeenCalledWith(
-          expect.stringContaining('phase_tag=backward-search-1')
+          expect.stringContaining('phase_tag=backward-search-1'),
         );
       });
     });
@@ -154,9 +148,7 @@ describe('PaperQueue', () => {
       const select = screen.getByRole('combobox');
       fireEvent.change(select, { target: { value: 'rejected' } });
 
-      await waitFor(() =>
-        expect(screen.getByText(/clear filters/i)).toBeTruthy()
-      );
+      await waitFor(() => expect(screen.getByText(/clear filters/i)).toBeTruthy());
     });
 
     it('clear filters button resets filter state and hides itself', async () => {
@@ -182,9 +174,7 @@ describe('PaperQueue', () => {
       const select = screen.getByRole('combobox');
       fireEvent.change(select, { target: { value: 'duplicate' } });
 
-      await waitFor(() =>
-        expect(screen.getByText(/try adjusting your filters/i)).toBeTruthy()
-      );
+      await waitFor(() => expect(screen.getByText(/try adjusting your filters/i)).toBeTruthy());
     });
   });
 
@@ -274,7 +264,7 @@ describe('PaperQueue', () => {
       mockApi.get.mockResolvedValue([MOCK_PAPER]);
       renderWithQuery(<PaperQueue studyId={1} />);
       await waitFor(() =>
-        expect(screen.getByText('A comprehensive review of TDD practices.')).toBeTruthy()
+        expect(screen.getByText('A comprehensive review of TDD practices.')).toBeTruthy(),
       );
     });
 
@@ -337,9 +327,7 @@ describe('PaperQueue', () => {
 
     it('clicking Next advances to page 2 and sends correct offset', async () => {
       // First call: 20 papers (enabling next). Second call after click: 0 papers.
-      mockApi.get
-        .mockResolvedValueOnce(makePapers(20))
-        .mockResolvedValueOnce([]);
+      mockApi.get.mockResolvedValueOnce(makePapers(20)).mockResolvedValueOnce([]);
 
       renderWithQuery(<PaperQueue studyId={1} />);
       await waitFor(() => screen.getByText('Paper 0'));
@@ -348,9 +336,7 @@ describe('PaperQueue', () => {
       fireEvent.click(next);
 
       await waitFor(() => {
-        expect(mockApi.get).toHaveBeenCalledWith(
-          expect.stringContaining('offset=20')
-        );
+        expect(mockApi.get).toHaveBeenCalledWith(expect.stringContaining('offset=20'));
       });
     });
 
@@ -363,9 +349,7 @@ describe('PaperQueue', () => {
 
     it('shows pagination even when page > 0 and fewer than PAGE_SIZE papers', async () => {
       // First page: 20 papers. Second page: only 5 papers (but page > 0 so still show pagination).
-      mockApi.get
-        .mockResolvedValueOnce(makePapers(20))
-        .mockResolvedValueOnce(makePapers(5));
+      mockApi.get.mockResolvedValueOnce(makePapers(20)).mockResolvedValueOnce(makePapers(5));
 
       renderWithQuery(<PaperQueue studyId={1} />);
       await waitFor(() => screen.getByText('Paper 0'));
@@ -380,9 +364,7 @@ describe('PaperQueue', () => {
     });
 
     it('clicking Previous goes back to page 1 and Previous is disabled', async () => {
-      mockApi.get
-        .mockResolvedValueOnce(makePapers(20))
-        .mockResolvedValueOnce(makePapers(5));
+      mockApi.get.mockResolvedValueOnce(makePapers(20)).mockResolvedValueOnce(makePapers(5));
 
       renderWithQuery(<PaperQueue studyId={1} />);
       await waitFor(() => screen.getByText('Paper 0'));
@@ -413,9 +395,7 @@ describe('PaperQueue', () => {
     });
 
     it('Next IS disabled on page 2 when fewer than PAGE_SIZE papers returned', async () => {
-      mockApi.get
-        .mockResolvedValueOnce(makePapers(20))
-        .mockResolvedValueOnce(makePapers(5));
+      mockApi.get.mockResolvedValueOnce(makePapers(20)).mockResolvedValueOnce(makePapers(5));
 
       renderWithQuery(<PaperQueue studyId={1} />);
       await waitFor(() => screen.getByText('Paper 0'));
@@ -428,9 +408,7 @@ describe('PaperQueue', () => {
     });
 
     it('shows Page 2 text after clicking Next once', async () => {
-      mockApi.get
-        .mockResolvedValueOnce(makePapers(20))
-        .mockResolvedValueOnce(makePapers(5));
+      mockApi.get.mockResolvedValueOnce(makePapers(20)).mockResolvedValueOnce(makePapers(5));
 
       renderWithQuery(<PaperQueue studyId={1} />);
       await waitFor(() => screen.getByText('Paper 0'));
@@ -448,7 +426,7 @@ describe('PaperQueue', () => {
       mockApi.get.mockReturnValue(new Promise(() => {}));
       const { container } = renderWithQuery(<PaperQueue studyId={1} />);
       const grayPs = Array.from(container.querySelectorAll('p')).filter(
-        (el) => (el as HTMLElement).style.color === 'rgb(107, 114, 128)'
+        (el) => (el as HTMLElement).style.color === 'rgb(107, 114, 128)',
       );
       expect(grayPs.length).toBeGreaterThan(0);
     });
@@ -464,7 +442,7 @@ describe('PaperQueue', () => {
       const { container } = renderWithQuery(<PaperQueue studyId={1} />);
       await waitFor(() => {
         const redPs = Array.from(container.querySelectorAll('p')).filter(
-          (el) => (el as HTMLElement).style.color === 'rgb(239, 68, 68)'
+          (el) => (el as HTMLElement).style.color === 'rgb(239, 68, 68)',
         );
         expect(redPs.length).toBeGreaterThan(0);
       });
@@ -475,7 +453,7 @@ describe('PaperQueue', () => {
       const { container } = renderWithQuery(<PaperQueue studyId={1} />);
       await waitFor(() => screen.getByText('Test-Driven Development: A Systematic Review'));
       const grayPs = Array.from(container.querySelectorAll('p')).filter(
-        (el) => (el as HTMLElement).style.color === 'rgb(107, 114, 128)'
+        (el) => (el as HTMLElement).style.color === 'rgb(107, 114, 128)',
       );
       expect(grayPs.length).toBe(0);
     });
@@ -523,9 +501,7 @@ describe('PaperQueue', () => {
     });
 
     it('Previous button has pointer cursor on page 2 (enabled)', async () => {
-      mockApi.get
-        .mockResolvedValueOnce(makePagPapers(20))
-        .mockResolvedValueOnce(makePagPapers(5));
+      mockApi.get.mockResolvedValueOnce(makePagPapers(20)).mockResolvedValueOnce(makePagPapers(5));
       renderWithQuery(<PaperQueue studyId={1} />);
       await waitFor(() => screen.getByText('Paper 0'));
       fireEvent.click(screen.getByRole('button', { name: /next →/i }));
@@ -535,9 +511,7 @@ describe('PaperQueue', () => {
     });
 
     it('Previous button has opacity 1 on page 2 (enabled)', async () => {
-      mockApi.get
-        .mockResolvedValueOnce(makePagPapers(20))
-        .mockResolvedValueOnce(makePagPapers(5));
+      mockApi.get.mockResolvedValueOnce(makePagPapers(20)).mockResolvedValueOnce(makePagPapers(5));
       renderWithQuery(<PaperQueue studyId={1} />);
       await waitFor(() => screen.getByText('Paper 0'));
       fireEvent.click(screen.getByRole('button', { name: /next →/i }));
@@ -547,9 +521,7 @@ describe('PaperQueue', () => {
     });
 
     it('Next button has not-allowed cursor on page 2 with fewer than PAGE_SIZE papers (disabled)', async () => {
-      mockApi.get
-        .mockResolvedValueOnce(makePagPapers(20))
-        .mockResolvedValueOnce(makePagPapers(5));
+      mockApi.get.mockResolvedValueOnce(makePagPapers(20)).mockResolvedValueOnce(makePagPapers(5));
       renderWithQuery(<PaperQueue studyId={1} />);
       await waitFor(() => screen.getByText('Paper 0'));
       fireEvent.click(screen.getByRole('button', { name: /next →/i }));
@@ -559,9 +531,7 @@ describe('PaperQueue', () => {
     });
 
     it('Next button has opacity 0.6 on page 2 with fewer than PAGE_SIZE papers (disabled)', async () => {
-      mockApi.get
-        .mockResolvedValueOnce(makePagPapers(20))
-        .mockResolvedValueOnce(makePagPapers(5));
+      mockApi.get.mockResolvedValueOnce(makePagPapers(20)).mockResolvedValueOnce(makePagPapers(5));
       renderWithQuery(<PaperQueue studyId={1} />);
       await waitFor(() => screen.getByText('Paper 0'));
       fireEvent.click(screen.getByRole('button', { name: /next →/i }));
@@ -576,12 +546,8 @@ describe('PaperQueue', () => {
       mockApi.get.mockResolvedValue([]);
       renderWithQuery(<PaperQueue studyId={1} />);
       await waitFor(() => {
-        expect(mockApi.get).toHaveBeenCalledWith(
-          expect.stringContaining('offset=0')
-        );
-        expect(mockApi.get).toHaveBeenCalledWith(
-          expect.stringContaining('limit=20')
-        );
+        expect(mockApi.get).toHaveBeenCalledWith(expect.stringContaining('offset=0'));
+        expect(mockApi.get).toHaveBeenCalledWith(expect.stringContaining('limit=20'));
       });
     });
 

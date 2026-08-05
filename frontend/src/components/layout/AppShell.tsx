@@ -10,7 +10,10 @@ export default function AppShell() {
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh' }}>
       <SideNav />
-      <Box component="main" sx={{ flex: 1, padding: '2rem', boxSizing: 'border-box', overflowY: 'auto' }}>
+      <Box
+        component="main"
+        sx={{ flex: 1, padding: '2rem', boxSizing: 'border-box', overflowY: 'auto' }}
+      >
         <Outlet />
       </Box>
     </Box>

@@ -33,7 +33,10 @@ interface SearchStringEditorProps {
   onSearchStringCreated?: (id: number) => void;
 }
 
-export default function SearchStringEditor({ studyId, onSearchStringCreated }: SearchStringEditorProps) {
+export default function SearchStringEditor({
+  studyId,
+  onSearchStringCreated,
+}: SearchStringEditorProps) {
   const qc = useQueryClient();
   const [manualText, setManualText] = useState('');
   const [generateError, setGenerateError] = useState<string | null>(null);
@@ -72,13 +75,22 @@ export default function SearchStringEditor({ studyId, onSearchStringCreated }: S
   });
 
   const selected = selectedId
-    ? strings.find((s) => s.id === selectedId) ?? strings[0]
+    ? (strings.find((s) => s.id === selectedId) ?? strings[0])
     : strings[0];
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-        <Typography variant="subtitle1" sx={{ margin: 0, fontSize: '1rem', color: '#111827' }}>Search String</Typography>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '1rem',
+        }}
+      >
+        <Typography variant="subtitle1" sx={{ margin: 0, fontSize: '1rem', color: '#111827' }}>
+          Search String
+        </Typography>
         <Button
           variant="contained"
           onClick={() => generateAI.mutate()}
@@ -95,7 +107,9 @@ export default function SearchStringEditor({ studyId, onSearchStringCreated }: S
       </Box>
 
       {generateError && (
-        <Typography sx={{ color: '#ef4444', fontSize: '0.875rem', margin: '0 0 0.75rem' }}>{generateError}</Typography>
+        <Typography sx={{ color: '#ef4444', fontSize: '0.875rem', margin: '0 0 0.75rem' }}>
+          {generateError}
+        </Typography>
       )}
 
       {/* Manual entry */}
@@ -131,10 +145,15 @@ export default function SearchStringEditor({ studyId, onSearchStringCreated }: S
       </Box>
 
       {/* Version history */}
-      {isLoading && <Typography sx={{ color: '#64748b', fontSize: '0.875rem' }}>Loading…</Typography>}
+      {isLoading && (
+        <Typography sx={{ color: '#64748b', fontSize: '0.875rem' }}>Loading…</Typography>
+      )}
       {strings.length > 0 && (
         <Box>
-          <Typography variant="subtitle2" sx={{ margin: '0 0 0.5rem', fontSize: '0.875rem', color: '#374151' }}>
+          <Typography
+            variant="subtitle2"
+            sx={{ margin: '0 0 0.5rem', fontSize: '0.875rem', color: '#374151' }}
+          >
             Version History ({strings.length})
           </Typography>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
@@ -150,44 +169,64 @@ export default function SearchStringEditor({ studyId, onSearchStringCreated }: S
                   cursor: 'pointer',
                 }}
               >
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
-                  <Typography component="span" sx={{ fontSize: '0.8125rem', fontWeight: 600, color: '#374151' }}>
+                <Box
+                  sx={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}
+                >
+                  <Typography
+                    component="span"
+                    sx={{ fontSize: '0.8125rem', fontWeight: 600, color: '#374151' }}
+                  >
                     v{ss.version}
                   </Typography>
                   <Box sx={{ display: 'flex', gap: '0.5rem' }}>
                     {ss.created_by_agent && (
-                      <Typography component="span" sx={{
-                        fontSize: '0.75rem', background: '#f3e8ff', color: '#7c3aed',
-                        padding: '1px 6px', borderRadius: '999px',
-                      }}>
+                      <Typography
+                        component="span"
+                        sx={{
+                          fontSize: '0.75rem',
+                          background: '#f3e8ff',
+                          color: '#7c3aed',
+                          padding: '1px 6px',
+                          borderRadius: '999px',
+                        }}
+                      >
                         AI
                       </Typography>
                     )}
                     {ss.is_active && (
-                      <Typography component="span" sx={{
-                        fontSize: '0.75rem', background: '#dcfce7', color: '#16a34a',
-                        padding: '1px 6px', borderRadius: '999px',
-                      }}>
+                      <Typography
+                        component="span"
+                        sx={{
+                          fontSize: '0.75rem',
+                          background: '#dcfce7',
+                          color: '#16a34a',
+                          padding: '1px 6px',
+                          borderRadius: '999px',
+                        }}
+                      >
                         Active
                       </Typography>
                     )}
                   </Box>
                 </Box>
-                <code style={{
-                  display: 'block',
-                  fontSize: '0.75rem',
-                  color: '#1e293b',
-                  whiteSpace: 'pre-wrap',
-                  wordBreak: 'break-word',
-                  maxHeight: '4rem',
-                  overflow: 'hidden',
-                }}>
+                <code
+                  style={{
+                    display: 'block',
+                    fontSize: '0.75rem',
+                    color: '#1e293b',
+                    whiteSpace: 'pre-wrap',
+                    wordBreak: 'break-word',
+                    maxHeight: '4rem',
+                    overflow: 'hidden',
+                  }}
+                >
                   {ss.string_text}
                 </code>
                 {ss.iterations.length > 0 && (
                   <Typography sx={{ marginTop: '0.375rem', fontSize: '0.75rem', color: '#64748b' }}>
                     {ss.iterations.length} test iteration{ss.iterations.length !== 1 ? 's' : ''} •{' '}
-                    Last recall: {(ss.iterations[ss.iterations.length - 1].test_set_recall * 100).toFixed(0)}%
+                    Last recall:{' '}
+                    {(ss.iterations[ss.iterations.length - 1].test_set_recall * 100).toFixed(0)}%
                   </Typography>
                 )}
               </Box>
@@ -198,17 +237,29 @@ export default function SearchStringEditor({ studyId, onSearchStringCreated }: S
 
       {/* Selected string full view */}
       {selected && (
-        <Box sx={{ marginTop: '1rem', padding: '0.75rem', background: '#f8fafc', borderRadius: '0.5rem' }}>
-          <Typography variant="subtitle2" sx={{ margin: '0 0 0.5rem', fontSize: '0.875rem', color: '#374151' }}>
+        <Box
+          sx={{
+            marginTop: '1rem',
+            padding: '0.75rem',
+            background: '#f8fafc',
+            borderRadius: '0.5rem',
+          }}
+        >
+          <Typography
+            variant="subtitle2"
+            sx={{ margin: '0 0 0.5rem', fontSize: '0.875rem', color: '#374151' }}
+          >
             v{selected.version} — Full String
           </Typography>
-          <code style={{
-            display: 'block',
-            fontSize: '0.8125rem',
-            color: '#1e293b',
-            whiteSpace: 'pre-wrap',
-            wordBreak: 'break-word',
-          }}>
+          <code
+            style={{
+              display: 'block',
+              fontSize: '0.8125rem',
+              color: '#1e293b',
+              whiteSpace: 'pre-wrap',
+              wordBreak: 'break-word',
+            }}
+          >
             {selected.string_text}
           </code>
         </Box>

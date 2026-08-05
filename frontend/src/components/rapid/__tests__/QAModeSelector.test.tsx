@@ -65,7 +65,11 @@ describe('QAModeSelector', () => {
 
   it('calls mutate with selected mode when Save is clicked', () => {
     const mutate = vi.fn();
-    vi.mocked(useSetQAMode).mockReturnValue({ mutate, isPending: false, isError: false } as ReturnType<typeof useSetQAMode>);
+    vi.mocked(useSetQAMode).mockReturnValue({
+      mutate,
+      isPending: false,
+      isError: false,
+    } as ReturnType<typeof useSetQAMode>);
 
     renderWithQuery(<QAModeSelector studyId={42} currentMode="full" />);
     fireEvent.click(screen.getByRole('button', { name: /save mode/i }));
@@ -86,7 +90,11 @@ describe('QAModeSelector', () => {
   });
 
   it('shows error alert when mutation isError is true', () => {
-    vi.mocked(useSetQAMode).mockReturnValue({ mutate: vi.fn(), isPending: false, isError: true } as ReturnType<typeof useSetQAMode>);
+    vi.mocked(useSetQAMode).mockReturnValue({
+      mutate: vi.fn(),
+      isPending: false,
+      isError: true,
+    } as ReturnType<typeof useSetQAMode>);
     renderWithQuery(<QAModeSelector studyId={42} currentMode="full" />);
     expect(screen.getByText(/failed to save quality appraisal mode/i)).toBeTruthy();
   });
@@ -94,7 +102,14 @@ describe('QAModeSelector', () => {
   it('shows QA threats list when mode is not full and threats exist', () => {
     vi.mocked(useRRThreats).mockReturnValue({
       data: [
-        { id: 1, study_id: 42, threat_type: 'QA_SKIPPED', description: 'No QA performed', source_detail: null, created_at: '2026-01-01T00:00:00Z' },
+        {
+          id: 1,
+          study_id: 42,
+          threat_type: 'QA_SKIPPED',
+          description: 'No QA performed',
+          source_detail: null,
+          created_at: '2026-01-01T00:00:00Z',
+        },
       ],
     } as ReturnType<typeof useRRThreats>);
 
@@ -105,7 +120,14 @@ describe('QAModeSelector', () => {
   it('does not show QA threats list when mode is full', () => {
     vi.mocked(useRRThreats).mockReturnValue({
       data: [
-        { id: 1, study_id: 42, threat_type: 'QA_SKIPPED', description: 'No QA', source_detail: null, created_at: '2026-01-01T00:00:00Z' },
+        {
+          id: 1,
+          study_id: 42,
+          threat_type: 'QA_SKIPPED',
+          description: 'No QA',
+          source_detail: null,
+          created_at: '2026-01-01T00:00:00Z',
+        },
       ],
     } as ReturnType<typeof useRRThreats>);
 

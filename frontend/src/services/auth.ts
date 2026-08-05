@@ -85,7 +85,11 @@ function getAuthSnapshot(): AuthState {
   if (!tokenChanged && !userChanged) return _snapshot;
   let user: AuthUser | null = null;
   if (userRaw) {
-    try { user = JSON.parse(userRaw) as AuthUser; } catch { /* ignore */ }
+    try {
+      user = JSON.parse(userRaw) as AuthUser;
+    } catch {
+      /* ignore */
+    }
   }
   _snapshot = { token, user, setSession, clearSession };
   return _snapshot;

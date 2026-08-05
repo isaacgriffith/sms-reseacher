@@ -35,7 +35,8 @@ async function loginAsAdmin(page: Page): Promise<void> {
 async function navigateToAdminProviders(page: Page): Promise<void> {
   await page.goto('/admin');
   // The Admin page should contain a Providers tab or section
-  const providersTab = page.getByRole('tab', { name: /providers/i })
+  const providersTab = page
+    .getByRole('tab', { name: /providers/i })
     .or(page.getByRole('button', { name: /providers/i }))
     .or(page.getByText('Providers').first());
   await providersTab.click();
@@ -61,17 +62,17 @@ test.describe('Admin — Provider Management', () => {
     await expect(page).not.toHaveURL(/login/);
     // Should show some admin content (heading or nav item)
     await expect(
-      page.getByRole('heading', { name: /admin/i })
+      page
+        .getByRole('heading', { name: /admin/i })
         .or(page.getByText(/admin panel/i).first())
-        .or(page.getByText(/providers/i).first())
+        .or(page.getByText(/providers/i).first()),
     ).toBeVisible({ timeout: 10_000 });
   });
 
   test('providers tab or section is visible in admin panel', async ({ page }) => {
     await page.goto('/admin');
     await expect(
-      page.getByRole('tab', { name: /providers/i })
-        .or(page.getByText(/providers/i).first())
+      page.getByRole('tab', { name: /providers/i }).or(page.getByText(/providers/i).first()),
     ).toBeVisible({ timeout: 10_000 });
   });
 
@@ -83,10 +84,11 @@ test.describe('Admin — Provider Management', () => {
     await navigateToAdminProviders(page);
     // Should not show an error state — look for an empty state message or a table/list
     await expect(
-      page.getByText(/no providers/i)
+      page
+        .getByText(/no providers/i)
         .or(page.getByRole('table'))
         .or(page.getByRole('list'))
-        .or(page.getByText(/provider/i).first())
+        .or(page.getByText(/provider/i).first()),
     ).toBeVisible({ timeout: 10_000 });
   });
 
@@ -98,13 +100,17 @@ test.describe('Admin — Provider Management', () => {
     await navigateToAdminProviders(page);
 
     // Click an "Add Provider" or similar button
-    await page.getByRole('button', { name: /add provider|new provider|add/i }).first().click();
+    await page
+      .getByRole('button', { name: /add provider|new provider|add/i })
+      .first()
+      .click();
 
     // Dialog or modal should appear
     await expect(
-      page.getByRole('dialog')
+      page
+        .getByRole('dialog')
         .or(page.getByText(/add provider/i).first())
-        .or(page.getByLabel(/display name/i))
+        .or(page.getByLabel(/display name/i)),
     ).toBeVisible({ timeout: 5_000 });
   });
 
@@ -114,15 +120,18 @@ test.describe('Admin — Provider Management', () => {
     const providerName = `E2E Ollama ${Date.now()}`;
 
     // Open the add provider dialog
-    await page.getByRole('button', { name: /add provider|new provider|add/i }).first().click();
+    await page
+      .getByRole('button', { name: /add provider|new provider|add/i })
+      .first()
+      .click();
 
     // Fill in the form
     const dialog = page.getByRole('dialog');
 
     // Select provider type (Ollama)
-    const typeSelect = dialog.getByLabel(/provider type|type/i).or(
-      dialog.getByRole('combobox', { name: /type/i })
-    );
+    const typeSelect = dialog
+      .getByLabel(/provider type|type/i)
+      .or(dialog.getByRole('combobox', { name: /type/i }));
     if (await typeSelect.isVisible()) {
       await typeSelect.selectOption({ label: /ollama/i });
     }
@@ -154,16 +163,17 @@ test.describe('Admin — Provider Management', () => {
     await navigateToAdminProviders(page);
 
     // Look for any edit action (pencil icon, "Edit" button, or kebab menu)
-    const editButton = page.getByRole('button', { name: /edit/i }).first()
+    const editButton = page
+      .getByRole('button', { name: /edit/i })
+      .first()
       .or(page.getByTitle(/edit/i).first())
       .or(page.locator('[aria-label*="edit" i]').first());
 
     if (await editButton.isVisible({ timeout: 3_000 })) {
       await editButton.click();
-      await expect(
-        page.getByRole('dialog')
-          .or(page.getByLabel(/display name/i))
-      ).toBeVisible({ timeout: 5_000 });
+      await expect(page.getByRole('dialog').or(page.getByLabel(/display name/i))).toBeVisible({
+        timeout: 5_000,
+      });
     } else {
       // If no providers exist, the test is a no-op (handled by prior test)
       test.skip();
@@ -177,7 +187,9 @@ test.describe('Admin — Provider Management', () => {
   test('refresh models button is visible for each provider', async ({ page }) => {
     await navigateToAdminProviders(page);
 
-    const refreshButton = page.getByRole('button', { name: /refresh models|refresh/i }).first()
+    const refreshButton = page
+      .getByRole('button', { name: /refresh models|refresh/i })
+      .first()
       .or(page.getByTitle(/refresh/i).first());
 
     // Only assert if there are providers in the list

@@ -138,7 +138,9 @@ export default function SeedPapers({ studyId }: Props) {
 
   return (
     <Box>
-      <Typography variant="h6" sx={{ margin: '0 0 1rem' }}>Seed Papers</Typography>
+      <Typography variant="h6" sx={{ margin: '0 0 1rem' }}>
+        Seed Papers
+      </Typography>
 
       {/* Add by DOI */}
       <Box sx={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem' }}>
@@ -180,7 +182,11 @@ export default function SeedPapers({ studyId }: Props) {
         </Button>
       </Box>
 
-      {addError && <Typography sx={{ color: 'red', fontSize: '0.875rem', marginBottom: '0.75rem' }}>{addError}</Typography>}
+      {addError && (
+        <Typography sx={{ color: 'red', fontSize: '0.875rem', marginBottom: '0.75rem' }}>
+          {addError}
+        </Typography>
+      )}
 
       {/* AI agent buttons */}
       <Box sx={{ display: 'flex', gap: '0.75rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
@@ -200,7 +206,7 @@ export default function SeedPapers({ studyId }: Props) {
           onClick={handleExpert}
           disabled={expertJobId !== null && expertSuggestions === null}
           sx={{
-            background: (expertJobId !== null && expertSuggestions === null) ? '#94a3b8' : '#0f766e',
+            background: expertJobId !== null && expertSuggestions === null ? '#94a3b8' : '#0f766e',
             '&:hover': { background: '#0d6561' },
           }}
         >
@@ -220,24 +226,66 @@ export default function SeedPapers({ studyId }: Props) {
 
       {/* Librarian suggestions */}
       {suggestions !== null && (
-        <Box sx={{ marginBottom: '1.5rem', padding: '1rem', background: '#f5f3ff', borderRadius: '0.5rem' }}>
-          <Typography variant="subtitle2" sx={{ margin: '0 0 0.75rem', color: '#6d28d9' }}>Librarian Suggestions</Typography>
+        <Box
+          sx={{
+            marginBottom: '1.5rem',
+            padding: '1rem',
+            background: '#f5f3ff',
+            borderRadius: '0.5rem',
+          }}
+        >
+          <Typography variant="subtitle2" sx={{ margin: '0 0 0.75rem', color: '#6d28d9' }}>
+            Librarian Suggestions
+          </Typography>
           {suggestions.length === 0 ? (
-            <Typography sx={{ color: '#64748b', fontSize: '0.875rem' }}>No suggestions available.</Typography>
+            <Typography sx={{ color: '#64748b', fontSize: '0.875rem' }}>
+              No suggestions available.
+            </Typography>
           ) : (
             <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
               {suggestions.map((p, i) => (
-                <li key={i} style={{ marginBottom: '0.75rem', paddingBottom: '0.75rem', borderBottom: i < suggestions.length - 1 ? '1px solid #ddd6fe' : 'none' }}>
-                  <Typography sx={{ margin: '0 0 0.25rem', fontWeight: 500, fontSize: '0.875rem' }}>{p.title}</Typography>
-                  <Typography sx={{ margin: '0 0 0.125rem', color: '#64748b', fontSize: '0.8125rem' }}>
-                    {p.authors.join(', ')} {p.year ? `(${p.year})` : ''} {p.venue ? `— ${p.venue}` : ''}
+                <li
+                  key={i}
+                  style={{
+                    marginBottom: '0.75rem',
+                    paddingBottom: '0.75rem',
+                    borderBottom: i < suggestions.length - 1 ? '1px solid #ddd6fe' : 'none',
+                  }}
+                >
+                  <Typography sx={{ margin: '0 0 0.25rem', fontWeight: 500, fontSize: '0.875rem' }}>
+                    {p.title}
                   </Typography>
-                  <Typography sx={{ margin: '0 0 0.25rem', color: '#4b5563', fontSize: '0.8125rem', fontStyle: 'italic' }}>{p.rationale}</Typography>
+                  <Typography
+                    sx={{ margin: '0 0 0.125rem', color: '#64748b', fontSize: '0.8125rem' }}
+                  >
+                    {p.authors.join(', ')} {p.year ? `(${p.year})` : ''}{' '}
+                    {p.venue ? `— ${p.venue}` : ''}
+                  </Typography>
+                  <Typography
+                    sx={{
+                      margin: '0 0 0.25rem',
+                      color: '#4b5563',
+                      fontSize: '0.8125rem',
+                      fontStyle: 'italic',
+                    }}
+                  >
+                    {p.rationale}
+                  </Typography>
                   <Button
                     size="small"
                     variant="contained"
-                    onClick={() => addMutation.mutate(p.doi ? { doi: p.doi } : { title: p.title, authors: p.authors, year: p.year, venue: p.venue })}
-                    sx={{ background: '#7c3aed', '&:hover': { background: '#6d28d9' }, fontSize: '0.75rem' }}
+                    onClick={() =>
+                      addMutation.mutate(
+                        p.doi
+                          ? { doi: p.doi }
+                          : { title: p.title, authors: p.authors, year: p.year, venue: p.venue },
+                      )
+                    }
+                    sx={{
+                      background: '#7c3aed',
+                      '&:hover': { background: '#6d28d9' },
+                      fontSize: '0.75rem',
+                    }}
                   >
                     + Add as Seed
                   </Button>
@@ -250,24 +298,66 @@ export default function SeedPapers({ studyId }: Props) {
 
       {/* Expert suggestions */}
       {expertSuggestions !== null && (
-        <Box sx={{ marginBottom: '1.5rem', padding: '1rem', background: '#f0fdfa', borderRadius: '0.5rem' }}>
-          <Typography variant="subtitle2" sx={{ margin: '0 0 0.75rem', color: '#0f766e' }}>Expert AI Suggestions</Typography>
+        <Box
+          sx={{
+            marginBottom: '1.5rem',
+            padding: '1rem',
+            background: '#f0fdfa',
+            borderRadius: '0.5rem',
+          }}
+        >
+          <Typography variant="subtitle2" sx={{ margin: '0 0 0.75rem', color: '#0f766e' }}>
+            Expert AI Suggestions
+          </Typography>
           {expertSuggestions.length === 0 ? (
-            <Typography sx={{ color: '#64748b', fontSize: '0.875rem' }}>No suggestions available.</Typography>
+            <Typography sx={{ color: '#64748b', fontSize: '0.875rem' }}>
+              No suggestions available.
+            </Typography>
           ) : (
             <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
               {expertSuggestions.map((p, i) => (
-                <li key={i} style={{ marginBottom: '0.75rem', paddingBottom: '0.75rem', borderBottom: i < expertSuggestions.length - 1 ? '1px solid #99f6e4' : 'none' }}>
-                  <Typography sx={{ margin: '0 0 0.25rem', fontWeight: 500, fontSize: '0.875rem' }}>{p.title}</Typography>
-                  <Typography sx={{ margin: '0 0 0.125rem', color: '#64748b', fontSize: '0.8125rem' }}>
-                    {p.authors.join(', ')} {p.year ? `(${p.year})` : ''} {p.venue ? `— ${p.venue}` : ''}
+                <li
+                  key={i}
+                  style={{
+                    marginBottom: '0.75rem',
+                    paddingBottom: '0.75rem',
+                    borderBottom: i < expertSuggestions.length - 1 ? '1px solid #99f6e4' : 'none',
+                  }}
+                >
+                  <Typography sx={{ margin: '0 0 0.25rem', fontWeight: 500, fontSize: '0.875rem' }}>
+                    {p.title}
                   </Typography>
-                  <Typography sx={{ margin: '0 0 0.25rem', color: '#4b5563', fontSize: '0.8125rem', fontStyle: 'italic' }}>{p.rationale}</Typography>
+                  <Typography
+                    sx={{ margin: '0 0 0.125rem', color: '#64748b', fontSize: '0.8125rem' }}
+                  >
+                    {p.authors.join(', ')} {p.year ? `(${p.year})` : ''}{' '}
+                    {p.venue ? `— ${p.venue}` : ''}
+                  </Typography>
+                  <Typography
+                    sx={{
+                      margin: '0 0 0.25rem',
+                      color: '#4b5563',
+                      fontSize: '0.8125rem',
+                      fontStyle: 'italic',
+                    }}
+                  >
+                    {p.rationale}
+                  </Typography>
                   <Button
                     size="small"
                     variant="contained"
-                    onClick={() => addMutation.mutate(p.doi ? { doi: p.doi } : { title: p.title, authors: p.authors, year: p.year, venue: p.venue })}
-                    sx={{ background: '#0f766e', '&:hover': { background: '#0d6561' }, fontSize: '0.75rem' }}
+                    onClick={() =>
+                      addMutation.mutate(
+                        p.doi
+                          ? { doi: p.doi }
+                          : { title: p.title, authors: p.authors, year: p.year, venue: p.venue },
+                      )
+                    }
+                    sx={{
+                      background: '#0f766e',
+                      '&:hover': { background: '#0d6561' },
+                      fontSize: '0.75rem',
+                    }}
                   >
                     + Add as Seed
                   </Button>
@@ -279,7 +369,9 @@ export default function SeedPapers({ studyId }: Props) {
       )}
 
       {/* Current seeds list */}
-      <Typography variant="subtitle2" sx={{ margin: '0 0 0.75rem' }}>Added Seeds ({seeds?.length ?? 0})</Typography>
+      <Typography variant="subtitle2" sx={{ margin: '0 0 0.75rem' }}>
+        Added Seeds ({seeds?.length ?? 0})
+      </Typography>
       {isLoading ? (
         <Typography>Loading…</Typography>
       ) : !seeds || seeds.length === 0 ? (
@@ -298,14 +390,25 @@ export default function SeedPapers({ studyId }: Props) {
               }}
             >
               <Box>
-                <Typography sx={{ margin: '0 0 0.125rem', fontWeight: 500, fontSize: '0.875rem' }}>{s.paper.title}</Typography>
+                <Typography sx={{ margin: '0 0 0.125rem', fontWeight: 500, fontSize: '0.875rem' }}>
+                  {s.paper.title}
+                </Typography>
                 <Typography sx={{ margin: 0, color: '#64748b', fontSize: '0.8125rem' }}>
                   {s.paper.doi ?? 'No DOI'} · Added by {s.added_by}
                 </Typography>
               </Box>
               <Button
                 onClick={() => deleteMutation.mutate(s.id)}
-                sx={{ background: 'none', border: 'none', color: '#dc2626', cursor: 'pointer', flexShrink: 0, marginLeft: '0.5rem', minWidth: 'auto', padding: 0 }}
+                sx={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#dc2626',
+                  cursor: 'pointer',
+                  flexShrink: 0,
+                  marginLeft: '0.5rem',
+                  minWidth: 'auto',
+                  padding: 0,
+                }}
               >
                 ✕
               </Button>

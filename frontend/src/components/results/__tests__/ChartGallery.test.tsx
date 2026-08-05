@@ -23,12 +23,14 @@ import ChartGallery from '../ChartGallery';
 
 const STUDY_ID = 42;
 
-function makeChart(overrides: Partial<{
-  id: number;
-  chart_type: string;
-  version: number;
-  svg_content: string | null;
-}> = {}) {
+function makeChart(
+  overrides: Partial<{
+    id: number;
+    chart_type: string;
+    version: number;
+    svg_content: string | null;
+  }> = {},
+) {
   return {
     id: overrides.id ?? 1,
     chart_type: overrides.chart_type ?? 'venue',
@@ -66,9 +68,7 @@ describe('ChartGallery', () => {
       const charts = [makeChart({ id: 7, chart_type: 'research_type', svg_content: '<svg/>' })];
       const { container } = render(<ChartGallery studyId={STUDY_ID} charts={charts} />);
       const img = container.querySelector('img') as HTMLImageElement;
-      expect(img.getAttribute('src')).toBe(
-        `/api/v1/studies/${STUDY_ID}/results/charts/7/svg`
-      );
+      expect(img.getAttribute('src')).toBe(`/api/v1/studies/${STUDY_ID}/results/charts/7/svg`);
     });
 
     it('shows chart type label for each chart', () => {
@@ -161,8 +161,19 @@ describe('ChartGallery', () => {
 
   describe('multiple chart types', () => {
     it('renders all 8 known chart types if provided', () => {
-      const types = ['venue', 'author', 'locale', 'institution', 'year', 'subtopic', 'research_type', 'research_method'];
-      const charts = types.map((t, i) => makeChart({ id: i + 1, chart_type: t, svg_content: '<svg/>' }));
+      const types = [
+        'venue',
+        'author',
+        'locale',
+        'institution',
+        'year',
+        'subtopic',
+        'research_type',
+        'research_method',
+      ];
+      const charts = types.map((t, i) =>
+        makeChart({ id: i + 1, chart_type: t, svg_content: '<svg/>' }),
+      );
       const { container } = render(<ChartGallery studyId={STUDY_ID} charts={charts} />);
       expect(container.querySelectorAll('img').length).toBe(8);
     });

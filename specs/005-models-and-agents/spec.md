@@ -5,7 +5,7 @@
 **Status**: Draft
 **Input**: User description: "number 5 models-and-agents @docs/features/008-models-and-agents.md"
 
-## User Scenarios & Testing *(mandatory)*
+## User Scenarios & Testing _(mandatory)_
 
 ### User Story 1 - Configure an LLM Provider (Priority: P1)
 
@@ -101,7 +101,7 @@ A researcher wants to reuse the same agent definition for different research dom
 - What happens when the Agent Generator agent is invoked to generate a system message but no Agent Generator agent is configured yet? The system shows a clear message explaining the dependency and links to agent creation.
 - What happens when a system message template variable references an undefined variable name? Validation at save time flags the unknown variable rather than silently ignoring it.
 
-## Requirements *(mandatory)*
+## Requirements _(mandatory)_
 
 ### Functional Requirements
 
@@ -148,7 +148,7 @@ A researcher wants to reuse the same agent definition for different research dom
 - **Agent**: A configured AI participant in the research workflow. Stores a unique identifier, role name and description, persona name and description, persona SVG image, system message template, and references to its assigned provider and model.
 - **Reviewer** (existing, extended): The study-level participant entity that now references an Agent by identifier instead of a hardcoded name string. May carry per-study model and threshold overrides.
 
-## Success Criteria *(mandatory)*
+## Success Criteria _(mandatory)_
 
 ### Measurable Outcomes
 

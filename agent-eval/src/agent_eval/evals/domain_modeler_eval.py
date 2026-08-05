@@ -36,11 +36,31 @@ DOMAIN_MODELER_TEST_INPUTS: list[dict[str, Any]] = [
             "What are the reported benefits and drawbacks of TDD?",
         ],
         "open_codings": [
-            {"code": "Test-First", "definition": "Writing tests before production code", "evidence_quote": "tests were written before any production code"},
-            {"code": "Refactoring", "definition": "Improving code structure without changing behaviour", "evidence_quote": "code was continuously refactored"},
-            {"code": "Defect Reduction", "definition": "Lower defect density in TDD projects", "evidence_quote": "30% fewer defects were reported"},
-            {"code": "Developer Productivity", "definition": "Impact on coding speed", "evidence_quote": "initial overhead with long-term gains"},
-            {"code": "Code Coverage", "definition": "Percentage of code exercised by tests", "evidence_quote": "test coverage exceeded 90%"},
+            {
+                "code": "Test-First",
+                "definition": "Writing tests before production code",
+                "evidence_quote": "tests were written before any production code",
+            },
+            {
+                "code": "Refactoring",
+                "definition": "Improving code structure without changing behaviour",
+                "evidence_quote": "code was continuously refactored",
+            },
+            {
+                "code": "Defect Reduction",
+                "definition": "Lower defect density in TDD projects",
+                "evidence_quote": "30% fewer defects were reported",
+            },
+            {
+                "code": "Developer Productivity",
+                "definition": "Impact on coding speed",
+                "evidence_quote": "initial overhead with long-term gains",
+            },
+            {
+                "code": "Code Coverage",
+                "definition": "Percentage of code exercised by tests",
+                "evidence_quote": "test coverage exceeded 90%",
+            },
         ],
         "keywords": ["TDD", "unit testing", "agile", "refactoring", "code quality", "defects"],
         "summaries": [
@@ -56,12 +76,35 @@ DOMAIN_MODELER_TEST_INPUTS: list[dict[str, Any]] = [
             "What mitigation strategies exist for reducing bias?",
         ],
         "open_codings": [
-            {"code": "Algorithmic Bias", "definition": "Systematic unfairness in ML predictions", "evidence_quote": "protected attributes leaked through proxies"},
-            {"code": "Fairness Metrics", "definition": "Quantitative measures of fairness", "evidence_quote": "equalised odds and demographic parity were compared"},
-            {"code": "Bias Mitigation", "definition": "Techniques to reduce unfair outcomes", "evidence_quote": "reweighting the training set reduced disparity"},
-            {"code": "Explainability", "definition": "Making model decisions interpretable", "evidence_quote": "SHAP values highlighted biased features"},
+            {
+                "code": "Algorithmic Bias",
+                "definition": "Systematic unfairness in ML predictions",
+                "evidence_quote": "protected attributes leaked through proxies",
+            },
+            {
+                "code": "Fairness Metrics",
+                "definition": "Quantitative measures of fairness",
+                "evidence_quote": "equalised odds and demographic parity were compared",
+            },
+            {
+                "code": "Bias Mitigation",
+                "definition": "Techniques to reduce unfair outcomes",
+                "evidence_quote": "reweighting the training set reduced disparity",
+            },
+            {
+                "code": "Explainability",
+                "definition": "Making model decisions interpretable",
+                "evidence_quote": "SHAP values highlighted biased features",
+            },
         ],
-        "keywords": ["fairness", "bias", "hiring", "machine learning", "discrimination", "explainability"],
+        "keywords": [
+            "fairness",
+            "bias",
+            "hiring",
+            "machine learning",
+            "discrimination",
+            "explainability",
+        ],
         "summaries": [
             "A survey of 15 hiring AI tools found that most lacked transparency about fairness criteria.",
             "A technical study proposed a post-processing step that equalised false positive rates across demographic groups.",
@@ -75,13 +118,40 @@ DOMAIN_MODELER_TEST_INPUTS: list[dict[str, Any]] = [
             "How does CI/CD adoption affect deployment frequency and failure rate?",
         ],
         "open_codings": [
-            {"code": "CI/CD Pipelines", "definition": "Automated build, test, and deploy workflows", "evidence_quote": "all changes triggered a full pipeline run"},
-            {"code": "Infrastructure-as-Code", "definition": "Managing infrastructure through version-controlled scripts", "evidence_quote": "Terraform configs were stored in the same repo"},
-            {"code": "Monitoring", "definition": "Real-time observability of production systems", "evidence_quote": "dashboards tracked error rates and latency"},
-            {"code": "Deployment Frequency", "definition": "How often code is deployed to production", "evidence_quote": "teams deployed multiple times per day"},
-            {"code": "Mean Time to Recovery", "definition": "Average time to restore after a failure", "evidence_quote": "MTTR dropped from hours to minutes after DevOps adoption"},
+            {
+                "code": "CI/CD Pipelines",
+                "definition": "Automated build, test, and deploy workflows",
+                "evidence_quote": "all changes triggered a full pipeline run",
+            },
+            {
+                "code": "Infrastructure-as-Code",
+                "definition": "Managing infrastructure through version-controlled scripts",
+                "evidence_quote": "Terraform configs were stored in the same repo",
+            },
+            {
+                "code": "Monitoring",
+                "definition": "Real-time observability of production systems",
+                "evidence_quote": "dashboards tracked error rates and latency",
+            },
+            {
+                "code": "Deployment Frequency",
+                "definition": "How often code is deployed to production",
+                "evidence_quote": "teams deployed multiple times per day",
+            },
+            {
+                "code": "Mean Time to Recovery",
+                "definition": "Average time to restore after a failure",
+                "evidence_quote": "MTTR dropped from hours to minutes after DevOps adoption",
+            },
         ],
-        "keywords": ["DevOps", "CI/CD", "continuous delivery", "deployment", "monitoring", "infrastructure"],
+        "keywords": [
+            "DevOps",
+            "CI/CD",
+            "continuous delivery",
+            "deployment",
+            "monitoring",
+            "infrastructure",
+        ],
         "summaries": [
             "An industry survey reported that teams using CI/CD deploy 30× more frequently than those without.",
             "A case study at a large enterprise showed DevOps reduced MTTR by 70%.",
@@ -143,9 +213,7 @@ def _assert_no_duplicate_concept_names(output: str) -> None:
     names = [c.get("name", "").lower() for c in data.get("concepts", [])]
     seen: set[str] = set()
     for name in names:
-        assert name not in seen, (
-            f"Duplicate concept name '{name}' detected in domain model output."
-        )
+        assert name not in seen, f"Duplicate concept name '{name}' detected in domain model output."
         seen.add(name)
 
 
@@ -199,35 +267,39 @@ def build_test_cases(run_agent: bool = False) -> list[LLMTestCase]:
             actual_output = asyncio.run(_invoke_domain_modeler(inp))
         else:
             # Structurally valid stub — skips LLM call
-            actual_output = json.dumps({
-                "concepts": [
-                    {
-                        "name": "Stub Concept A",
-                        "definition": "A stub concept for " + inp["topic"],
-                        "attributes": ["attribute-1"],
-                    },
-                    {
-                        "name": "Stub Concept B",
-                        "definition": "A second stub concept.",
-                        "attributes": [],
-                    },
-                ],
-                "relationships": [
-                    {
-                        "from": "Stub Concept A",
-                        "to": "Stub Concept B",
-                        "label": "supports",
-                        "type": "supports",
-                    }
-                ],
-            })
+            actual_output = json.dumps(
+                {
+                    "concepts": [
+                        {
+                            "name": "Stub Concept A",
+                            "definition": "A stub concept for " + inp["topic"],
+                            "attributes": ["attribute-1"],
+                        },
+                        {
+                            "name": "Stub Concept B",
+                            "definition": "A second stub concept.",
+                            "attributes": [],
+                        },
+                    ],
+                    "relationships": [
+                        {
+                            "from": "Stub Concept A",
+                            "to": "Stub Concept B",
+                            "label": "supports",
+                            "type": "supports",
+                        }
+                    ],
+                }
+            )
 
-        input_text = json.dumps({
-            "topic": inp["topic"],
-            "research_questions": inp["research_questions"],
-            "open_codings_count": len(inp["open_codings"]),
-            "keywords": inp["keywords"],
-        })
+        input_text = json.dumps(
+            {
+                "topic": inp["topic"],
+                "research_questions": inp["research_questions"],
+                "open_codings_count": len(inp["open_codings"]),
+                "keywords": inp["keywords"],
+            }
+        )
 
         cases.append(
             LLMTestCase(
@@ -266,13 +338,15 @@ async def _invoke_domain_modeler(inp: dict[str, Any]) -> str:
         keywords=inp.get("keywords", []),
         summaries=inp.get("summaries", []),
     )
-    return json.dumps({
-        "concepts": [c.model_dump() for c in result.concepts],
-        "relationships": [
-            {"from": r.from_, "to": r.to, "label": r.label, "type": r.type}
-            for r in result.relationships
-        ],
-    })
+    return json.dumps(
+        {
+            "concepts": [c.model_dump() for c in result.concepts],
+            "relationships": [
+                {"from": r.from_, "to": r.to, "label": r.label, "type": r.type}
+                for r in result.relationships
+            ],
+        }
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -280,7 +354,9 @@ async def _invoke_domain_modeler(inp: dict[str, Any]) -> str:
 # ---------------------------------------------------------------------------
 
 
-def run_domain_modeler_eval(run_agent: bool = False, threshold: float = PASS_THRESHOLD) -> dict[str, Any]:
+def run_domain_modeler_eval(
+    run_agent: bool = False, threshold: float = PASS_THRESHOLD
+) -> dict[str, Any]:
     """Execute the DomainModelAgent deepeval pipeline.
 
     Validates per-test-case:

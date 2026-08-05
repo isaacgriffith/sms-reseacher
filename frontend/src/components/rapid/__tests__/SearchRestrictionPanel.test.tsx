@@ -64,14 +64,22 @@ describe('SearchRestrictionPanel', () => {
 
   it('calls mutate when Save is clicked', () => {
     const mutate = vi.fn();
-    vi.mocked(useUpdateSearchConfig).mockReturnValue({ mutate, isPending: false, isError: false } as ReturnType<typeof useUpdateSearchConfig>);
+    vi.mocked(useUpdateSearchConfig).mockReturnValue({
+      mutate,
+      isPending: false,
+      isError: false,
+    } as ReturnType<typeof useUpdateSearchConfig>);
     renderWithQuery(<SearchRestrictionPanel studyId={42} />);
     fireEvent.click(screen.getByRole('button', { name: /save restrictions/i }));
     expect(mutate).toHaveBeenCalled();
   });
 
   it('shows error alert when mutation fails', () => {
-    vi.mocked(useUpdateSearchConfig).mockReturnValue({ mutate: vi.fn(), isPending: false, isError: true } as ReturnType<typeof useUpdateSearchConfig>);
+    vi.mocked(useUpdateSearchConfig).mockReturnValue({
+      mutate: vi.fn(),
+      isPending: false,
+      isError: true,
+    } as ReturnType<typeof useUpdateSearchConfig>);
     renderWithQuery(<SearchRestrictionPanel studyId={42} />);
     expect(screen.getByText(/failed to save/i)).toBeTruthy();
   });

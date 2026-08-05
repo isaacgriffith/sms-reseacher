@@ -67,7 +67,7 @@ function renderWithQuery(studyId: number = 1) {
   return render(
     <QueryClientProvider client={qc}>
       <DatabaseSelectionPanel studyId={studyId} />
-    </QueryClientProvider>
+    </QueryClientProvider>,
   );
 }
 
@@ -85,7 +85,9 @@ describe('DatabaseSelectionPanel', () => {
       });
       renderWithQuery();
       expect(
-        screen.getByText(/loading/i) || screen.getByRole('progressbar') || document.querySelector('[aria-label*="loading"]')
+        screen.getByText(/loading/i) ||
+          screen.getByRole('progressbar') ||
+          document.querySelector('[aria-label*="loading"]'),
       ).toBeTruthy();
     });
   });
@@ -112,7 +114,9 @@ describe('DatabaseSelectionPanel', () => {
     it('shows a warning indicator for indices with missing credentials', () => {
       renderWithQuery();
       // IEEE Xplore requires credential but is not configured — should show warning
-      const warnings = document.querySelectorAll('[aria-label*="credential"], [title*="credential"], [title*="API key"]');
+      const warnings = document.querySelectorAll(
+        '[aria-label*="credential"], [title*="credential"], [title*="API key"]',
+      );
       // At least one warning should be present for ieee_xplore and scopus
       expect(warnings.length).toBeGreaterThan(0);
     });

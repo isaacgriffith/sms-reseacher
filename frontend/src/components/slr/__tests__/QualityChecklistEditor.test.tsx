@@ -96,9 +96,7 @@ describe('QualityChecklistEditor', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: /save checklist/i }));
     await waitFor(() => {
-      expect(mockMutate).toHaveBeenCalledWith(
-        expect.objectContaining({ name: 'My Checklist' }),
-      );
+      expect(mockMutate).toHaveBeenCalledWith(expect.objectContaining({ name: 'My Checklist' }));
     });
   });
 });

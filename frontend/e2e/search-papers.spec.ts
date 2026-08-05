@@ -44,16 +44,12 @@ test.describe('Search papers (Phase 2)', () => {
   });
 
   test('search string editor is rendered in the Search tab', async ({ page }) => {
-    const editorSection = page
-      .getByText(/search string|query/i)
-      .first();
+    const editorSection = page.getByText(/search string|query/i).first();
     await expect(editorSection).toBeVisible({ timeout: 8_000 });
   });
 
   test('test/retest panel is rendered in the Search tab', async ({ page }) => {
-    const testRetestSection = page
-      .getByText(/test.*retest|retest|run test/i)
-      .first();
+    const testRetestSection = page.getByText(/test.*retest|retest|run test/i).first();
     await expect(testRetestSection).toBeVisible({ timeout: 8_000 });
   });
 
@@ -62,9 +58,9 @@ test.describe('Search papers (Phase 2)', () => {
     if (await runBtn.isVisible()) {
       await runBtn.click();
       // Either a spinner/progress indicator or "running" label should appear
-      await expect(
-        page.getByText(/running|queued|progress|job/i).first()
-      ).toBeVisible({ timeout: 10_000 });
+      await expect(page.getByText(/running|queued|progress|job/i).first()).toBeVisible({
+        timeout: 10_000,
+      });
     } else {
       test.skip();
     }

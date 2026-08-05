@@ -77,10 +77,7 @@ export async function addGreyLiteratureSource(
   studyId: number,
   body: CreateGreyLiteratureBody,
 ): Promise<GreyLiteratureSource> {
-  const raw = await api.post<unknown>(
-    `/api/v1/slr/studies/${studyId}/grey-literature`,
-    body,
-  );
+  const raw = await api.post<unknown>(`/api/v1/slr/studies/${studyId}/grey-literature`, body);
   return GreyLiteratureSourceSchema.parse(raw);
 }
 
@@ -90,9 +87,6 @@ export async function addGreyLiteratureSource(
  * @param studyId - The integer study ID.
  * @param sourceId - The integer source ID to delete.
  */
-export async function deleteGreyLiteratureSource(
-  studyId: number,
-  sourceId: number,
-): Promise<void> {
+export async function deleteGreyLiteratureSource(studyId: number, sourceId: number): Promise<void> {
   await api.delete(`/api/v1/slr/studies/${studyId}/grey-literature/${sourceId}`);
 }

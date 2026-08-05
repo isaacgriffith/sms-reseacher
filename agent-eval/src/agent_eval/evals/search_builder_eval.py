@@ -109,9 +109,7 @@ def _assert_valid_boolean_syntax(output: str) -> None:
     data: dict[str, Any] = json.loads(output)
     search_string: str = data.get("search_string", "")
     upper = search_string.upper()
-    has_boolean = any(
-        bool(re.search(rf"\b{op}\b", upper)) for op in ("AND", "OR", "NOT")
-    )
+    has_boolean = any(bool(re.search(rf"\b{op}\b", upper)) for op in ("AND", "OR", "NOT"))
     assert has_boolean, (
         f"search_string contains no Boolean operators (AND/OR/NOT): {search_string!r}"
     )
@@ -179,24 +177,26 @@ def build_test_cases(run_agent: bool = False) -> list[LLMTestCase]:
             actual_output = asyncio.run(_invoke_search_builder(inp))
         else:
             # Stub output: structurally valid, skips LLM call
-            actual_output = json.dumps({
-                "search_string": (
-                    f'("{inp["intervention"]}" OR "{inp["seed_keywords"][0]}") '
-                    f'AND ("{inp["outcome"]}")'
-                    if inp.get("intervention") and inp.get("seed_keywords")
-                    else f'("{inp["topic"]}") AND (quality OR effectiveness)'
-                ),
-                "terms_used": [
-                    {
-                        "component": "intervention",
-                        "terms": inp.get("seed_keywords", ["stub-term"]),
-                    }
-                ],
-                "expansion_notes": (
-                    f"Stub expansion for {inp['topic']}. "
-                    "Synonyms sourced from IEEE Thesaurus and MeSH."
-                ),
-            })
+            actual_output = json.dumps(
+                {
+                    "search_string": (
+                        f'("{inp["intervention"]}" OR "{inp["seed_keywords"][0]}") '
+                        f'AND ("{inp["outcome"]}")'
+                        if inp.get("intervention") and inp.get("seed_keywords")
+                        else f'("{inp["topic"]}") AND (quality OR effectiveness)'
+                    ),
+                    "terms_used": [
+                        {
+                            "component": "intervention",
+                            "terms": inp.get("seed_keywords", ["stub-term"]),
+                        }
+                    ],
+                    "expansion_notes": (
+                        f"Stub expansion for {inp['topic']}. "
+                        "Synonyms sourced from IEEE Thesaurus and MeSH."
+                    ),
+                }
+            )
 
         input_text = json.dumps({k: v for k, v in inp.items() if k != "case_id"})
 
@@ -244,11 +244,13 @@ async def _invoke_search_builder(inp: dict[str, Any]) -> str:
         inclusion_criteria=inp.get("inclusion_criteria", []),
         exclusion_criteria=inp.get("exclusion_criteria", []),
     )
-    return json.dumps({
-        "search_string": result.search_string,
-        "terms_used": [tg.model_dump() for tg in result.terms_used],
-        "expansion_notes": result.expansion_notes,
-    })
+    return json.dumps(
+        {
+            "search_string": result.search_string,
+            "terms_used": [tg.model_dump() for tg in result.terms_used],
+            "expansion_notes": result.expansion_notes,
+        }
+    )
 
 
 # ---------------------------------------------------------------------------

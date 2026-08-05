@@ -73,7 +73,10 @@ function ServiceCard({ service }: ServiceCardProps) {
       }}
     >
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography component="span" sx={{ fontWeight: 600, fontSize: '0.9375rem', color: '#111827' }}>
+        <Typography
+          component="span"
+          sx={{ fontWeight: 600, fontSize: '0.9375rem', color: '#111827' }}
+        >
           {service.name}
         </Typography>
         <StatusBadge status={service.status} />
@@ -112,17 +115,29 @@ export default function ServiceHealthPanel() {
     );
   }
 
-  const lastChecked = dataUpdatedAt
-    ? new Date(dataUpdatedAt).toLocaleTimeString()
-    : '—';
+  const lastChecked = dataUpdatedAt ? new Date(dataUpdatedAt).toLocaleTimeString() : '—';
 
   return (
     <Box component="section">
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '0.75rem' }}>
-        <Typography variant="subtitle1" sx={{ margin: 0, fontSize: '1.0625rem' }}>Service Health</Typography>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'baseline',
+          marginBottom: '0.75rem',
+        }}
+      >
+        <Typography variant="subtitle1" sx={{ margin: 0, fontSize: '1.0625rem' }}>
+          Service Health
+        </Typography>
         <Typography component="span" sx={{ fontSize: '0.8125rem', color: '#64748b' }}>
           Last checked: {lastChecked}
-          {data && <> · Overall: <StatusBadge status={data.status} /></>}
+          {data && (
+            <>
+              {' '}
+              · Overall: <StatusBadge status={data.status} />
+            </>
+          )}
         </Typography>
       </Box>
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>

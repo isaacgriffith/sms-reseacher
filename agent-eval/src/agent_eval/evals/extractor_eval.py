@@ -88,9 +88,7 @@ def _assert_no_none_values_for_required_fields(output: str, required_fields: lis
     """
     data: dict[str, Any] = json.loads(output)
     for field in required_fields:
-        assert data.get(field) is not None, (
-            f"Field '{field}' must not be null. Output: {output}"
-        )
+        assert data.get(field) is not None, f"Field '{field}' must not be null. Output: {output}"
 
 
 # ---------------------------------------------------------------------------
@@ -113,18 +111,23 @@ def build_test_cases(run_agent: bool = False) -> list[LLMTestCase]:
     for inp in EXTRACTOR_TEST_INPUTS:
         if run_agent:
             import asyncio
+
             actual_output = asyncio.run(_invoke_extractor(inp))
         else:
-            actual_output = json.dumps({
-                field: f"Stub value for {field} in {inp['case_id']}"
-                for field in inp["extraction_fields"]
-            })
+            actual_output = json.dumps(
+                {
+                    field: f"Stub value for {field} in {inp['case_id']}"
+                    for field in inp["extraction_fields"]
+                }
+            )
 
-        input_text = json.dumps({
-            "title": inp["title"],
-            "abstract": inp["abstract"],
-            "extraction_fields": inp["extraction_fields"],
-        })
+        input_text = json.dumps(
+            {
+                "title": inp["title"],
+                "abstract": inp["abstract"],
+                "extraction_fields": inp["extraction_fields"],
+            }
+        )
 
         cases.append(
             LLMTestCase(

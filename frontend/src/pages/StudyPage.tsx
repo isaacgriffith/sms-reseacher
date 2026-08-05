@@ -38,7 +38,11 @@ import RREvidenceBriefingPage from './rapid/EvidenceBriefingPage';
 import ProtocolGraph from '../components/protocols/ProtocolGraph';
 import ProtocolNodePanel from '../components/protocols/ProtocolNodePanel';
 import ExecutionStateView from '../components/protocols/ExecutionStateView';
-import { useProtocolAssignment, useProtocolDetail, useResetProtocol } from '../hooks/protocols/useProtocol';
+import {
+  useProtocolAssignment,
+  useProtocolDetail,
+  useResetProtocol,
+} from '../hooks/protocols/useProtocol';
 import type { ProtocolNode } from '../services/protocols/protocolsApi';
 
 // ---------------------------------------------------------------------------
@@ -226,8 +230,8 @@ export default function StudyPage() {
         <DialogTitle>Reset Protocol to Default?</DialogTitle>
         <DialogContent>
           <Typography>
-            This will replace the current protocol with the default template for this study type
-            and clear all execution state. This cannot be undone while the study is executing.
+            This will replace the current protocol with the default template for this study type and
+            clear all execution state. This cannot be undone while the study is executing.
           </Typography>
         </DialogContent>
         <DialogActions>
@@ -251,7 +255,15 @@ export default function StudyPage() {
       {/* Phase content */}
       {activePhase === 0 && study.id && (
         <Box>
-          <Box sx={{ display: 'flex', gap: 1, mb: 2, justifyContent: 'space-between', alignItems: 'center' }}>
+          <Box
+            sx={{
+              display: 'flex',
+              gap: 1,
+              mb: 2,
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
             <Box sx={{ display: 'flex', gap: 1 }}>
               <Button
                 size="small"
@@ -294,9 +306,7 @@ export default function StudyPage() {
               )}
             </>
           )}
-          {protocolTab === 'execution' && (
-            <ExecutionStateView studyId={study.id} isAdmin={false} />
-          )}
+          {protocolTab === 'execution' && <ExecutionStateView studyId={study.id} isAdmin={false} />}
         </Box>
       )}
 

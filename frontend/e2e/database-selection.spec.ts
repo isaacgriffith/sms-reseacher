@@ -58,27 +58,19 @@ test.describe('Database Selection Panel (Phase 2)', () => {
   // -------------------------------------------------------------------------
 
   test('Database Search Configuration heading is visible on Phase 2', async ({ page }) => {
-    await expect(
-      page.getByText(/database search configuration/i)
-    ).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText(/database search configuration/i)).toBeVisible({ timeout: 10_000 });
   });
 
   test('Primary database group heading is visible', async ({ page }) => {
-    await expect(
-      page.getByText('Primary')
-    ).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText('Primary')).toBeVisible({ timeout: 10_000 });
   });
 
   test('General database group heading is visible', async ({ page }) => {
-    await expect(
-      page.getByText('General')
-    ).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText('General')).toBeVisible({ timeout: 10_000 });
   });
 
   test('Supplementary database group heading is visible', async ({ page }) => {
-    await expect(
-      page.getByText('Supplementary')
-    ).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText('Supplementary')).toBeVisible({ timeout: 10_000 });
   });
 
   test('at least one database index toggle switch is visible', async ({ page }) => {
@@ -92,9 +84,7 @@ test.describe('Database Selection Panel (Phase 2)', () => {
   // -------------------------------------------------------------------------
 
   test('Save button is present in database selection panel', async ({ page }) => {
-    await expect(
-      page.getByRole('button', { name: /^save$/i })
-    ).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole('button', { name: /^save$/i })).toBeVisible({ timeout: 10_000 });
   });
 
   // -------------------------------------------------------------------------
@@ -120,9 +110,7 @@ test.describe('Database Selection Panel (Phase 2)', () => {
 
   test('SciHub section or toggle is present', async ({ page }) => {
     // SciHub toggle may be a labeled switch or text
-    const scihubElement = page
-      .getByText(/scihub|sci-hub/i)
-      .first();
+    const scihubElement = page.getByText(/scihub|sci-hub/i).first();
 
     // It may not be present if the backend has SCIHUB_ENABLED=false (feature off by default)
     // Use a soft check — if the element is not visible, skip gracefully
@@ -153,9 +141,7 @@ test.describe('Database Selection Panel (Phase 2)', () => {
   });
 
   test('cancelling SciHub dialog dismisses it without enabling', async ({ page }) => {
-    const scihubToggle = page
-      .getByLabel(/enable scihub|scihub/i)
-      .first();
+    const scihubToggle = page.getByLabel(/enable scihub|scihub/i).first();
 
     const isVisible = await scihubToggle.isVisible().catch(() => false);
     if (!isVisible) {
@@ -171,9 +157,7 @@ test.describe('Database Selection Panel (Phase 2)', () => {
   });
 
   test('acknowledging SciHub dialog closes it', async ({ page }) => {
-    const scihubToggle = page
-      .getByLabel(/enable scihub|scihub/i)
-      .first();
+    const scihubToggle = page.getByLabel(/enable scihub|scihub/i).first();
 
     const isVisible = await scihubToggle.isVisible().catch(() => false);
     if (!isVisible) {

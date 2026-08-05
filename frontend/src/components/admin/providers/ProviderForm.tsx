@@ -54,7 +54,13 @@ export default function ProviderForm({ provider, onSuccess, onCancel }: Provider
   const isPending = createMutation.isPending || updateMutation.isPending;
   const mutationError = createMutation.error ?? updateMutation.error;
 
-  const { register, handleSubmit, control, reset, formState: { errors } } = useForm<FormValues>({
+  const {
+    register,
+    handleSubmit,
+    control,
+    reset,
+    formState: { errors },
+  } = useForm<FormValues>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
       provider_type: provider?.provider_type ?? 'anthropic',
@@ -168,7 +174,9 @@ export default function ProviderForm({ provider, onSuccess, onCancel }: Provider
         )}
 
         <Stack direction="row" spacing={1} justifyContent="flex-end">
-          <Button onClick={onCancel} disabled={isPending}>Cancel</Button>
+          <Button onClick={onCancel} disabled={isPending}>
+            Cancel
+          </Button>
           <Button type="submit" variant="contained" disabled={isPending}>
             {isEdit ? 'Save Changes' : 'Add Provider'}
           </Button>

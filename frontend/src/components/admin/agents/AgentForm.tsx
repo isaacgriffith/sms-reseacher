@@ -22,7 +22,11 @@ import Switch from '@mui/material/Switch';
 import TextField from '@mui/material/TextField';
 import SystemMessageEditor from './SystemMessageEditor';
 import type { SystemMessageEditorHandle } from './SystemMessageEditor';
-import { useUpdateAgent, useGenerateSystemMessage, useUndoSystemMessage } from '../../../services/agentsApi';
+import {
+  useUpdateAgent,
+  useGenerateSystemMessage,
+  useUndoSystemMessage,
+} from '../../../services/agentsApi';
 import { useProviderModels } from '../../../services/providersApi';
 import type { Agent } from '../../../types/agent';
 import type { AgentSummary } from '../../../types/agent';
@@ -158,8 +162,15 @@ export default function AgentForm({ agent, onSuccess, onCancel }: AgentFormProps
   };
 
   const TASK_TYPES = [
-    'screener', 'extractor', 'librarian', 'expert', 'quality_judge',
-    'agent_generator', 'domain_modeler', 'synthesiser', 'validity_assessor',
+    'screener',
+    'extractor',
+    'librarian',
+    'expert',
+    'quality_judge',
+    'agent_generator',
+    'domain_modeler',
+    'synthesiser',
+    'validity_assessor',
   ];
 
   return (
@@ -168,7 +179,8 @@ export default function AgentForm({ agent, onSuccess, onCancel }: AgentFormProps
         {(updateMutation.isError || generateMutation.isError || undoMutation.isError) && (
           <Alert severity="error">
             {String(
-              (updateMutation.error ?? generateMutation.error ?? undoMutation.error) || 'An error occurred',
+              (updateMutation.error ?? generateMutation.error ?? undoMutation.error) ||
+                'An error occurred',
             )}
           </Alert>
         )}
@@ -184,7 +196,9 @@ export default function AgentForm({ agent, onSuccess, onCancel }: AgentFormProps
           fullWidth
         >
           {TASK_TYPES.map((t) => (
-            <MenuItem key={t} value={t}>{t}</MenuItem>
+            <MenuItem key={t} value={t}>
+              {t}
+            </MenuItem>
           ))}
         </TextField>
 
@@ -261,9 +275,7 @@ export default function AgentForm({ agent, onSuccess, onCancel }: AgentFormProps
         </Button>
 
         <FormControlLabel
-          control={
-            <Switch defaultChecked={agent.is_active} {...register('is_active')} />
-          }
+          control={<Switch defaultChecked={agent.is_active} {...register('is_active')} />}
           label="Active"
         />
 

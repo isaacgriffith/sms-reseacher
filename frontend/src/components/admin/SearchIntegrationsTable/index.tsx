@@ -94,7 +94,9 @@ export interface SearchIntegrationsTableProps {
  *
  * @param props - {@link SearchIntegrationsTableProps}
  */
-export default function SearchIntegrationsTable({ title = 'Search Integrations' }: SearchIntegrationsTableProps) {
+export default function SearchIntegrationsTable({
+  title = 'Search Integrations',
+}: SearchIntegrationsTableProps) {
   const { data: integrations = [], isLoading } = useSearchIntegrations();
   const upsertMutation = useUpsertCredential();
   const testMutation = useTestIntegration();
@@ -113,7 +115,7 @@ export default function SearchIntegrationsTable({ title = 'Search Integrations' 
           version_id: editingRecord?.version_id ?? null,
         },
       },
-      { onSuccess: () => dispatch({ type: 'CLOSE_EDIT' }) }
+      { onSuccess: () => dispatch({ type: 'CLOSE_EDIT' }) },
     );
   }
 
@@ -127,7 +129,9 @@ export default function SearchIntegrationsTable({ title = 'Search Integrations' 
 
   return (
     <Box>
-      <Typography variant="h6" sx={{ mb: 2 }}>{title}</Typography>
+      <Typography variant="h6" sx={{ mb: 2 }}>
+        {title}
+      </Typography>
 
       <Table size="small">
         <TableHead>
@@ -173,7 +177,9 @@ export default function SearchIntegrationsTable({ title = 'Search Integrations' 
                 </Button>
                 <Button
                   size="small"
-                  onClick={() => dispatch({ type: 'OPEN_EDIT', integrationType: row.integration_type })}
+                  onClick={() =>
+                    dispatch({ type: 'OPEN_EDIT', integrationType: row.integration_type })
+                  }
                 >
                   Edit
                 </Button>

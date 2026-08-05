@@ -176,6 +176,7 @@ Phase 1 (T001–T004)
 ```
 
 **Parallel opportunities per phase**:
+
 - Phase 2: T006, T007 parallel; T010, T011 parallel; T015, T016, T017 parallel
 - Phase 3: T024, T027 parallel with T023; T027, T029 parallel after T023
 - Phase 4: T035, T036, T039–T049 all parallel after T032; MUI component migrations fully parallel with each other

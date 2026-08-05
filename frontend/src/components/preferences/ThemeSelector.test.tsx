@@ -27,7 +27,10 @@ describe('ThemeSelector', () => {
   it('highlights the active preference via aria-pressed', () => {
     render(<ThemeSelector value="dark" onChange={vi.fn()} />);
     expect(screen.getByRole('button', { name: /^Dark$/i })).toHaveAttribute('aria-pressed', 'true');
-    expect(screen.getByRole('button', { name: /^Light$/i })).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getByRole('button', { name: /^Light$/i })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    );
   });
 
   it('calls onChange with "dark" when Dark is clicked', async () => {

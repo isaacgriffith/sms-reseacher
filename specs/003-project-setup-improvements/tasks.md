@@ -101,8 +101,8 @@ are fully configured.
 > Playwright spec is required; this exclusion satisfies the FR-019 edge-case clause ("What if
 > a service has no frontend-visible primary journey?").
 
-- [X] T031 [US3] Run `uv run cosmic-ray run <pkg>/cosmic-ray.toml` for each of the 5 packages (sequentially — compute-intensive); review kill rate via `uv run cosmic-ray results`; add tests to kill surviving mutants; for any mutant representing genuinely equivalent code (same observable behaviour), document it in `<pkg>/cosmic-ray-survivors.md` with the mutant ID, affected line, and justification — this file is committed alongside the package and referenced in the PR description per constitution VI; continue until kill rate ≥ 85% or all survivors are individually justified (depends on T020–T024, T014–T018)
-- [X] T032 [US3] Run `cd frontend && npx stryker run`; review Stryker HTML report; add tests or document justified survivors until kill rate ≥ 85% (depends on T019)
+- [x] T031 [US3] Run `uv run cosmic-ray run <pkg>/cosmic-ray.toml` for each of the 5 packages (sequentially — compute-intensive); review kill rate via `uv run cosmic-ray results`; add tests to kill surviving mutants; for any mutant representing genuinely equivalent code (same observable behaviour), document it in `<pkg>/cosmic-ray-survivors.md` with the mutant ID, affected line, and justification — this file is committed alongside the package and referenced in the PR description per constitution VI; continue until kill rate ≥ 85% or all survivors are individually justified (depends on T020–T024, T014–T018)
+- [x] T032 [US3] Run `cd frontend && npx stryker run`; review Stryker HTML report; add tests or document justified survivors until kill rate ≥ 85% (depends on T019)
 
 **Checkpoint**: All cosmic-ray configs functional; full Playwright e2e suite passing; mutation kill rates ≥ 85% for all 6 subprojects
 
@@ -142,7 +142,7 @@ are fully configured.
 
 ---
 
-## Phase 7: Feature Completion Documentation *(mandatory — Constitution Principle X)*
+## Phase 7: Feature Completion Documentation _(mandatory — Constitution Principle X)_
 
 **Purpose**: Update all required documentation before the feature branch is merged.
 

@@ -32,10 +32,7 @@ vi.mock('../../../hooks/slr/useGreyLiterature', () => ({
   })),
 }));
 
-import {
-  useGreyLiterature,
-  useDeleteSource,
-} from '../../../hooks/slr/useGreyLiterature';
+import { useGreyLiterature, useDeleteSource } from '../../../hooks/slr/useGreyLiterature';
 
 // ---------------------------------------------------------------------------
 // Helpers

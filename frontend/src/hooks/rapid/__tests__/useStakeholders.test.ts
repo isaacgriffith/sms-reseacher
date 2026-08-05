@@ -19,8 +19,22 @@ import {
 
 vi.mock('../../../services/rapid/stakeholdersApi', () => ({
   listStakeholders: vi.fn().mockRejectedValue(new Error('network')),
-  createStakeholder: vi.fn().mockResolvedValue({ id: 1, study_id: 42, name: 'Alice', role: 'Reviewer', email: null, created_at: '2026-01-01T00:00:00Z' }),
-  updateStakeholder: vi.fn().mockResolvedValue({ id: 1, study_id: 42, name: 'Alice Updated', role: 'Reviewer', email: null, created_at: '2026-01-01T00:00:00Z' }),
+  createStakeholder: vi.fn().mockResolvedValue({
+    id: 1,
+    study_id: 42,
+    name: 'Alice',
+    role: 'Reviewer',
+    email: null,
+    created_at: '2026-01-01T00:00:00Z',
+  }),
+  updateStakeholder: vi.fn().mockResolvedValue({
+    id: 1,
+    study_id: 42,
+    name: 'Alice Updated',
+    role: 'Reviewer',
+    email: null,
+    created_at: '2026-01-01T00:00:00Z',
+  }),
   deleteStakeholder: vi.fn().mockResolvedValue(undefined),
 }));
 
@@ -65,7 +79,11 @@ describe('useCreateStakeholder', () => {
     const { result } = renderHook(() => useCreateStakeholder(42), { wrapper: makeWrapper() });
     result.current.mutate({ name: 'Alice', role: 'Reviewer', email: null });
     await waitFor(() => result.current.isSuccess);
-    expect(stakeholdersApiModule.createStakeholder).toHaveBeenCalledWith(42, { name: 'Alice', role: 'Reviewer', email: null });
+    expect(stakeholdersApiModule.createStakeholder).toHaveBeenCalledWith(42, {
+      name: 'Alice',
+      role: 'Reviewer',
+      email: null,
+    });
   });
 });
 
@@ -79,7 +97,9 @@ describe('useUpdateStakeholder', () => {
     const { result } = renderHook(() => useUpdateStakeholder(42), { wrapper: makeWrapper() });
     result.current.mutate({ id: 1, data: { name: 'Alice Updated' } });
     await waitFor(() => result.current.isSuccess);
-    expect(stakeholdersApiModule.updateStakeholder).toHaveBeenCalledWith(42, 1, { name: 'Alice Updated' });
+    expect(stakeholdersApiModule.updateStakeholder).toHaveBeenCalledWith(42, 1, {
+      name: 'Alice Updated',
+    });
   });
 });
 

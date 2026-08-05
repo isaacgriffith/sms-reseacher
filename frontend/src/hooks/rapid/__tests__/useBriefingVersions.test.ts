@@ -21,9 +21,18 @@ import {
 // Mock the API service layer so no real HTTP calls are made
 vi.mock('../../../services/rapid/briefingApi', () => ({
   listBriefings: vi.fn().mockRejectedValue(new Error('network')),
-  generateBriefing: vi.fn().mockResolvedValue({ job_id: 'j1', status: 'queued', estimated_version_number: 1 }),
+  generateBriefing: vi
+    .fn()
+    .mockResolvedValue({ job_id: 'j1', status: 'queued', estimated_version_number: 1 }),
   publishBriefing: vi.fn().mockResolvedValue({ id: 1, status: 'published' }),
-  createShareToken: vi.fn().mockResolvedValue({ token: 'tok', share_url: 'https://example.com/tok', briefing_id: 1, created_at: '2026-01-01T00:00:00Z', revoked_at: null, expires_at: null }),
+  createShareToken: vi.fn().mockResolvedValue({
+    token: 'tok',
+    share_url: 'https://example.com/tok',
+    briefing_id: 1,
+    created_at: '2026-01-01T00:00:00Z',
+    revoked_at: null,
+    expires_at: null,
+  }),
   revokeShareToken: vi.fn().mockResolvedValue(undefined),
 }));
 
@@ -64,22 +73,44 @@ describe('useBriefings', () => {
 
   it('polls when any briefing has no pdf_available', async () => {
     vi.mocked(briefingApiModule.listBriefings).mockResolvedValue([
-      { id: 1, study_id: 42, version_number: 1, status: 'draft', title: 'B', generated_at: null, pdf_available: false, html_available: false },
+      {
+        id: 1,
+        study_id: 42,
+        version_number: 1,
+        status: 'draft',
+        title: 'B',
+        generated_at: null,
+        pdf_available: false,
+        html_available: false,
+      },
     ]);
 
     const { result } = renderHook(() => useBriefings(42), { wrapper: makeWrapper() });
-    await waitFor(() => { if (!result.current.isSuccess) throw new Error('not ready'); });
+    await waitFor(() => {
+      if (!result.current.isSuccess) throw new Error('not ready');
+    });
     // refetchInterval is a function — verify data loaded with generating briefing
     expect(result.current.data?.[0].pdf_available).toBe(false);
   });
 
   it('does not poll when all briefings have pdf_available', async () => {
     vi.mocked(briefingApiModule.listBriefings).mockResolvedValue([
-      { id: 1, study_id: 42, version_number: 1, status: 'draft', title: 'B', generated_at: '2026-01-01T00:00:00Z', pdf_available: true, html_available: true },
+      {
+        id: 1,
+        study_id: 42,
+        version_number: 1,
+        status: 'draft',
+        title: 'B',
+        generated_at: '2026-01-01T00:00:00Z',
+        pdf_available: true,
+        html_available: true,
+      },
     ]);
 
     const { result } = renderHook(() => useBriefings(42), { wrapper: makeWrapper() });
-    await waitFor(() => { if (!result.current.isSuccess) throw new Error('not ready'); });
+    await waitFor(() => {
+      if (!result.current.isSuccess) throw new Error('not ready');
+    });
     expect(result.current.data?.[0].pdf_available).toBe(true);
   });
 });

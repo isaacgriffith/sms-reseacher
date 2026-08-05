@@ -56,9 +56,7 @@ test.describe('Admin — Search Integrations', () => {
   // -------------------------------------------------------------------------
 
   test('Search Integrations heading is visible', async ({ page }) => {
-    await expect(
-      page.getByText(/search integrations/i).first()
-    ).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText(/search integrations/i).first()).toBeVisible({ timeout: 10_000 });
   });
 
   test('table header row shows "Database" column', async ({ page }) => {
@@ -104,7 +102,10 @@ test.describe('Admin — Search Integrations', () => {
 
   test('clicking Edit opens a dialog with an API Key field', async ({ page }) => {
     await page.waitForSelector('tbody tr', { timeout: 10_000 });
-    await page.getByRole('button', { name: /^edit$/i }).first().click();
+    await page
+      .getByRole('button', { name: /^edit$/i })
+      .first()
+      .click();
 
     await expect(page.getByRole('dialog')).toBeVisible({ timeout: 5_000 });
     await expect(page.getByLabel(/api key/i)).toBeVisible();
@@ -112,7 +113,10 @@ test.describe('Admin — Search Integrations', () => {
 
   test('edit dialog has a Cancel button that dismisses it', async ({ page }) => {
     await page.waitForSelector('tbody tr', { timeout: 10_000 });
-    await page.getByRole('button', { name: /^edit$/i }).first().click();
+    await page
+      .getByRole('button', { name: /^edit$/i })
+      .first()
+      .click();
 
     await expect(page.getByRole('dialog')).toBeVisible({ timeout: 5_000 });
     await page.getByRole('button', { name: /cancel/i }).click();
@@ -121,7 +125,10 @@ test.describe('Admin — Search Integrations', () => {
 
   test('edit dialog has a Save button', async ({ page }) => {
     await page.waitForSelector('tbody tr', { timeout: 10_000 });
-    await page.getByRole('button', { name: /^edit$/i }).first().click();
+    await page
+      .getByRole('button', { name: /^edit$/i })
+      .first()
+      .click();
 
     await expect(page.getByRole('dialog')).toBeVisible({ timeout: 5_000 });
     await expect(page.getByRole('button', { name: /^save$/i })).toBeVisible();
@@ -129,7 +136,10 @@ test.describe('Admin — Search Integrations', () => {
 
   test('edit dialog title contains the integration name', async ({ page }) => {
     await page.waitForSelector('tbody tr', { timeout: 10_000 });
-    await page.getByRole('button', { name: /^edit$/i }).first().click();
+    await page
+      .getByRole('button', { name: /^edit$/i })
+      .first()
+      .click();
 
     await expect(page.getByRole('dialog')).toBeVisible({ timeout: 5_000 });
     // Dialog title should contain "Edit Credential —" followed by the integration name
@@ -138,7 +148,10 @@ test.describe('Admin — Search Integrations', () => {
 
   test('API Key field accepts text input', async ({ page }) => {
     await page.waitForSelector('tbody tr', { timeout: 10_000 });
-    await page.getByRole('button', { name: /^edit$/i }).first().click();
+    await page
+      .getByRole('button', { name: /^edit$/i })
+      .first()
+      .click();
 
     await expect(page.getByRole('dialog')).toBeVisible({ timeout: 5_000 });
 
@@ -164,8 +177,12 @@ test.describe('Admin — Search Integrations', () => {
     // last-tested timestamp/status appears. We check for any state change.
     // The button is disabled when testMutation.isPending === true.
     const isDisabled = await testNowBtn.isDisabled().catch(() => false);
-    const hasSpinner = await page.locator('[role="progressbar"]').isVisible().catch(() => false);
-    const hasResult = await page.getByText(/success|error|failed|ok|pending|testing/i)
+    const hasSpinner = await page
+      .locator('[role="progressbar"]')
+      .isVisible()
+      .catch(() => false);
+    const hasResult = await page
+      .getByText(/success|error|failed|ok|pending|testing/i)
       .first()
       .isVisible()
       .catch(() => false);

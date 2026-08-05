@@ -11,14 +11,14 @@
 
 Persists which database indices a study has enabled for its search strategy.
 
-| Column | Type | Constraints | Notes |
-|--------|------|-------------|-------|
-| `id` | UUID | PK, default uuid4 | |
-| `study_id` | UUID | FK → `study.id` ON DELETE CASCADE, not null | |
-| `database_index` | Enum(`DatabaseIndex`) | not null | See enum below |
-| `is_enabled` | Boolean | not null, default `True` | |
-| `created_at` | DateTime(tz=True) | server_default=now() | Audit field |
-| `updated_at` | DateTime(tz=True) | server_default=now(), onupdate=now() | Audit field |
+| Column           | Type                  | Constraints                                 | Notes          |
+| ---------------- | --------------------- | ------------------------------------------- | -------------- |
+| `id`             | UUID                  | PK, default uuid4                           |                |
+| `study_id`       | UUID                  | FK → `study.id` ON DELETE CASCADE, not null |                |
+| `database_index` | Enum(`DatabaseIndex`) | not null                                    | See enum below |
+| `is_enabled`     | Boolean               | not null, default `True`                    |                |
+| `created_at`     | DateTime(tz=True)     | server_default=now()                        | Audit field    |
+| `updated_at`     | DateTime(tz=True)     | server_default=now(), onupdate=now()        | Audit field    |
 
 **Unique constraint**: `(study_id, database_index)`
 
@@ -30,18 +30,18 @@ Persists which database indices a study has enabled for its search strategy.
 
 Encrypted credential storage for subscription-gated database integrations. One row per integration type.
 
-| Column | Type | Constraints | Notes |
-|--------|------|-------------|-------|
-| `id` | UUID | PK, default uuid4 | |
-| `integration_type` | Enum(`IntegrationType`) | unique, not null | See enum below |
-| `api_key_encrypted` | LargeBinary | nullable | Fernet-encrypted; never returned in API responses |
-| `auxiliary_token_encrypted` | LargeBinary | nullable | Second credential where required (e.g., Elsevier institutional token) |
-| `config_json_encrypted` | LargeBinary | nullable | Additional JSON config (e.g., proxy URL); Fernet-encrypted |
-| `last_tested_at` | DateTime(tz=True) | nullable | Timestamp of last successful connectivity test |
-| `last_test_status` | Enum(`TestStatus`) | nullable | `success \| rate_limited \| auth_failed \| unreachable \| untested` |
-| `version_id` | Integer | not null, default 1 | Optimistic locking |
-| `created_at` | DateTime(tz=True) | server_default=now() | |
-| `updated_at` | DateTime(tz=True) | server_default=now(), onupdate=now() | |
+| Column                      | Type                    | Constraints                          | Notes                                                                 |
+| --------------------------- | ----------------------- | ------------------------------------ | --------------------------------------------------------------------- |
+| `id`                        | UUID                    | PK, default uuid4                    |                                                                       |
+| `integration_type`          | Enum(`IntegrationType`) | unique, not null                     | See enum below                                                        |
+| `api_key_encrypted`         | LargeBinary             | nullable                             | Fernet-encrypted; never returned in API responses                     |
+| `auxiliary_token_encrypted` | LargeBinary             | nullable                             | Second credential where required (e.g., Elsevier institutional token) |
+| `config_json_encrypted`     | LargeBinary             | nullable                             | Additional JSON config (e.g., proxy URL); Fernet-encrypted            |
+| `last_tested_at`            | DateTime(tz=True)       | nullable                             | Timestamp of last successful connectivity test                        |
+| `last_test_status`          | Enum(`TestStatus`)      | nullable                             | `success \| rate_limited \| auth_failed \| unreachable \| untested`   |
+| `version_id`                | Integer                 | not null, default 1                  | Optimistic locking                                                    |
+| `created_at`                | DateTime(tz=True)       | server_default=now()                 |                                                                       |
+| `updated_at`                | DateTime(tz=True)       | server_default=now(), onupdate=now() |                                                                       |
 
 **Mapper args**: `version_id_col = version_id`
 
@@ -51,11 +51,11 @@ Encrypted credential storage for subscription-gated database integrations. One r
 
 Three new nullable columns added to the existing `Paper` table:
 
-| Column | Type | Constraints | Notes |
-|--------|------|-------------|-------|
-| `full_text_markdown` | Text | nullable | MarkItDown-converted content |
-| `full_text_source` | Enum(`FullTextSource`) | nullable | See enum below |
-| `full_text_converted_at` | DateTime(tz=True) | nullable | Timestamp of last successful conversion |
+| Column                   | Type                   | Constraints | Notes                                   |
+| ------------------------ | ---------------------- | ----------- | --------------------------------------- |
+| `full_text_markdown`     | Text                   | nullable    | MarkItDown-converted content            |
+| `full_text_source`       | Enum(`FullTextSource`) | nullable    | See enum below                          |
+| `full_text_converted_at` | DateTime(tz=True)      | nullable    | Timestamp of last successful conversion |
 
 ---
 
@@ -115,13 +115,13 @@ class FullTextSource(str, enum.Enum):
 
 ## Existing Models — No Structural Changes
 
-| Model | Change |
-|-------|--------|
-| `Study` | No structural change; linked to `StudyDatabaseSelection` via relationship |
-| `StudyPaper` | No change; full-text content belongs to `Paper`, not the association |
-| `Provider` | No change |
-| `AvailableModel` | No change |
-| `Agent` | No change |
+| Model            | Change                                                                    |
+| ---------------- | ------------------------------------------------------------------------- |
+| `Study`          | No structural change; linked to `StudyDatabaseSelection` via relationship |
+| `StudyPaper`     | No change; full-text content belongs to `Paper`, not the association      |
+| `Provider`       | No change                                                                 |
+| `AvailableModel` | No change                                                                 |
+| `Agent`          | No change                                                                 |
 
 ---
 
@@ -130,6 +130,7 @@ class FullTextSource(str, enum.Enum):
 **File**: `db/alembic/versions/0013_database_search_and_retrieval.py`
 
 Operations:
+
 1. Create `DatabaseIndex`, `IntegrationType`, `TestStatus`, `FullTextSource` PostgreSQL enum types.
 2. Create `study_database_selection` table.
 3. Create `search_integration_credential` table.

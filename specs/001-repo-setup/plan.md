@@ -15,6 +15,7 @@ Scaffold a six-sub-project UV workspace mono-repo for SMS Researcher: `frontend`
 
 **Language/Version**: Python 3.14 (backend, agents, db, agent-eval, researcher-mcp); TypeScript 5.4 / Node 20 LTS (frontend)  
 **Primary Dependencies**:
+
 - Backend: `fastapi>=0.111`, `uvicorn[standard]`, `pydantic>=2`, `structlog`, `sqlalchemy[asyncio]>=2`, `alembic`, `python-jose[cryptography]`, `litellm`
 - Agents: `litellm`, `jinja2`, `mcp` (MCP client SDK), `httpx`
 - DB: `sqlalchemy[asyncio]>=2`, `alembic`, `aiosqlite`, `asyncpg`
@@ -33,17 +34,17 @@ Scaffold a six-sub-project UV workspace mono-repo for SMS Researcher: `frontend`
 
 ## Constitution Check
 
-*No project-specific constitution has been ratified. The following principles from FR-011 govern:*
+_No project-specific constitution has been ratified. The following principles from FR-011 govern:_
 
-| Principle | Status | Notes |
-|-----------|--------|-------|
-| DRY | ✓ Pass | Shared UV lockfile; shared `db` package; single `.pre-commit-config.yaml` at root |
-| SOLID | ✓ Pass | Each sub-project has single responsibility; agents imported as library not HTTP service |
-| GRASP | ✓ Pass | `researcher-mcp` owns paper-search concerns; `agent-eval` owns evaluation concerns |
-| Test-first (≥85% coverage + mutation) | ✓ Pass | FR-014, FR-015 enforce CI gates |
-| Simplicity / YAGNI | ✓ Pass | Auth wired up in later feature; SciHub opt-in; Ollama behind Compose profile |
+| Principle                             | Status | Notes                                                                                   |
+| ------------------------------------- | ------ | --------------------------------------------------------------------------------------- |
+| DRY                                   | ✓ Pass | Shared UV lockfile; shared `db` package; single `.pre-commit-config.yaml` at root       |
+| SOLID                                 | ✓ Pass | Each sub-project has single responsibility; agents imported as library not HTTP service |
+| GRASP                                 | ✓ Pass | `researcher-mcp` owns paper-search concerns; `agent-eval` owns evaluation concerns      |
+| Test-first (≥85% coverage + mutation) | ✓ Pass | FR-014, FR-015 enforce CI gates                                                         |
+| Simplicity / YAGNI                    | ✓ Pass | Auth wired up in later feature; SciHub opt-in; Ollama behind Compose profile            |
 
-*No gate violations. Complexity tracking not required.*
+_No gate violations. Complexity tracking not required._
 
 ---
 
@@ -224,16 +225,16 @@ sms-reseacher/                          # Repo root — UV workspace root
 
 ## Complexity Tracking
 
-*No constitution violations. Six sub-projects are mandated by FR-001 and each has a distinct, non-overlapping responsibility.*
+_No constitution violations. Six sub-projects are mandated by FR-001 and each has a distinct, non-overlapping responsibility._
 
-| Sub-project | Responsibility | Simpler alternative rejected because |
-|-------------|---------------|-------------------------------------|
-| `backend` | API gateway; orchestrates agents | Cannot merge with `agents`; agents must be importable standalone (FR-008) |
-| `agents` | LLM agent logic + prompts | Separate package enables `agent-eval` to import without pulling in HTTP server |
-| `db` | Schema definitions + migrations | Separate package enables `backend` + tests to share models without circular deps |
-| `agent-eval` | CLI evaluation tooling | Separate package avoids polluting production `agents` with evaluation/judge deps |
+| Sub-project      | Responsibility                        | Simpler alternative rejected because                                                 |
+| ---------------- | ------------------------------------- | ------------------------------------------------------------------------------------ |
+| `backend`        | API gateway; orchestrates agents      | Cannot merge with `agents`; agents must be importable standalone (FR-008)            |
+| `agents`         | LLM agent logic + prompts             | Separate package enables `agent-eval` to import without pulling in HTTP server       |
+| `db`             | Schema definitions + migrations       | Separate package enables `backend` + tests to share models without circular deps     |
+| `agent-eval`     | CLI evaluation tooling                | Separate package avoids polluting production `agents` with evaluation/judge deps     |
 | `researcher-mcp` | Paper search + PDF fetch (MCP server) | Separate service enables independent scaling; MCP protocol requires a running server |
-| `frontend` | Researcher-facing SPA | TypeScript/React cannot be a UV workspace member |
+| `frontend`       | Researcher-facing SPA                 | TypeScript/React cannot be a UV workspace member                                     |
 
 ---
 
@@ -276,14 +277,14 @@ Key decisions (summary):
 
 All Phase 1 artifacts are complete:
 
-| Artifact | Status | Notes |
-|----------|--------|-------|
-| [`data-model.md`](data-model.md) | Complete | 6 sub-projects; Study/Paper/StudyPaper schema; Docker Compose registry |
-| [`quickstart.md`](quickstart.md) | Complete | All sub-projects including researcher-mcp; env vars table |
-| [`contracts/backend-api.md`](contracts/backend-api.md) | Complete | FastAPI REST skeleton |
-| [`contracts/agents-api.md`](contracts/agents-api.md) | Complete | Python agent library |
-| [`contracts/agent-eval-cli.md`](contracts/agent-eval-cli.md) | Complete | Typer CLI (evaluate/report/compare/improve) |
-| [`contracts/researcher-mcp-tools.md`](contracts/researcher-mcp-tools.md) | Complete | FastMCP 5-tool contract |
+| Artifact                                                                 | Status   | Notes                                                                  |
+| ------------------------------------------------------------------------ | -------- | ---------------------------------------------------------------------- |
+| [`data-model.md`](data-model.md)                                         | Complete | 6 sub-projects; Study/Paper/StudyPaper schema; Docker Compose registry |
+| [`quickstart.md`](quickstart.md)                                         | Complete | All sub-projects including researcher-mcp; env vars table              |
+| [`contracts/backend-api.md`](contracts/backend-api.md)                   | Complete | FastAPI REST skeleton                                                  |
+| [`contracts/agents-api.md`](contracts/agents-api.md)                     | Complete | Python agent library                                                   |
+| [`contracts/agent-eval-cli.md`](contracts/agent-eval-cli.md)             | Complete | Typer CLI (evaluate/report/compare/improve)                            |
+| [`contracts/researcher-mcp-tools.md`](contracts/researcher-mcp-tools.md) | Complete | FastMCP 5-tool contract                                                |
 
 ---
 

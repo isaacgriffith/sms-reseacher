@@ -120,6 +120,7 @@ Use when you do not have enough knowledge to conduct a manual search
   3. Search execution
 
 Note that there is always a tradeoff between:
+
 - finding all relevant primary studies
 - being overwhelmed with false positives to be removed manually
 
@@ -188,6 +189,7 @@ AND (accuracy OR mean magnitutde relative error)
   - Duplicate studies
 
 **When to Stop Searching**
+
 - Search is a time-consuming process, and we will never be able to find all of the papers
 - To save time, adopt a search stoppage criteria (and don't forget to note them in the report)
   - If using database and another complementary search (manual or snowball sampling)
@@ -351,6 +353,7 @@ Independent of approach used, a sensitivity analysis should take place
 The results of your research should be published where your intended audience can review it
 
 **Practitioner Oriented**
+
 1. Practitioner Journals and Magazines
 2. Press Releases to popular or specialist press
 3. Short summary leaflets
@@ -359,8 +362,10 @@ The results of your research should be published where your intended audience ca
 6. Direct communication
 
 **Academia**
+
 1. Academic Journals
 2. Academic Conferences
+
 - If publication constraints prevent providing necessary detail for replication, write an accompanying Tech Report which can be posted online
 
 ## References

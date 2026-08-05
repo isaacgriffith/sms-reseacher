@@ -40,11 +40,16 @@ describe('computeKappa', () => {
 
   it('calls POST and returns a parsed record', async () => {
     mockApi.post.mockResolvedValue(RECORD);
-    const result = await computeKappa(42, { reviewer_a_id: 3, reviewer_b_id: 4, round_type: 'title_abstract' });
-    expect(mockApi.post).toHaveBeenCalledWith(
-      '/api/v1/slr/studies/42/inter-rater/compute',
-      { reviewer_a_id: 3, reviewer_b_id: 4, round_type: 'title_abstract' },
-    );
+    const result = await computeKappa(42, {
+      reviewer_a_id: 3,
+      reviewer_b_id: 4,
+      round_type: 'title_abstract',
+    });
+    expect(mockApi.post).toHaveBeenCalledWith('/api/v1/slr/studies/42/inter-rater/compute', {
+      reviewer_a_id: 3,
+      reviewer_b_id: 4,
+      round_type: 'title_abstract',
+    });
     expect(result.kappa_value).toBe(0.75);
   });
 });
@@ -54,7 +59,11 @@ describe('recordPostDiscussionKappa', () => {
 
   it('calls POST to post-discussion endpoint', async () => {
     mockApi.post.mockResolvedValue({ ...RECORD, phase: 'post_discussion' });
-    const result = await recordPostDiscussionKappa(42, { reviewer_a_id: 3, reviewer_b_id: 4, round_type: 'title_abstract' });
+    const result = await recordPostDiscussionKappa(42, {
+      reviewer_a_id: 3,
+      reviewer_b_id: 4,
+      round_type: 'title_abstract',
+    });
     expect(mockApi.post).toHaveBeenCalledWith(
       '/api/v1/slr/studies/42/inter-rater/post-discussion',
       expect.any(Object),

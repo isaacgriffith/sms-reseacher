@@ -22,9 +22,15 @@ vi.mock('../../../hooks/rapid/useRRProtocol', () => ({
 }));
 
 vi.mock('../../../components/rapid/ProtocolForm', () => ({
-  default: ({ protocol }: { protocol: { id: number }; studyId: number; readOnly: boolean; onSubmit: (d: unknown) => void; isSaving: boolean }) => (
-    <div data-testid="protocol-form">Protocol Form (id={protocol.id})</div>
-  ),
+  default: ({
+    protocol,
+  }: {
+    protocol: { id: number };
+    studyId: number;
+    readOnly: boolean;
+    onSubmit: (d: unknown) => void;
+    isSaving: boolean;
+  }) => <div data-testid="protocol-form">Protocol Form (id={protocol.id})</div>,
 }));
 
 import {
@@ -66,14 +72,23 @@ const BASE_PROTOCOL = {
 };
 
 function setupDefaultMocks() {
-  vi.mocked(useRRProtocol).mockReturnValue({ data: BASE_PROTOCOL, isLoading: false, error: null } as ReturnType<typeof useRRProtocol>);
+  vi.mocked(useRRProtocol).mockReturnValue({
+    data: BASE_PROTOCOL,
+    isLoading: false,
+    error: null,
+  } as ReturnType<typeof useRRProtocol>);
   vi.mocked(useUpdateRRProtocol).mockReturnValue({
     mutation: { mutate: vi.fn(), isPending: false, isError: false, error: null },
     invalidationPending: null,
     confirmInvalidation: vi.fn(),
     cancelInvalidation: vi.fn(),
   } as ReturnType<typeof useUpdateRRProtocol>);
-  vi.mocked(useValidateRRProtocol).mockReturnValue({ mutate: vi.fn(), isPending: false, isError: false, error: null } as ReturnType<typeof useValidateRRProtocol>);
+  vi.mocked(useValidateRRProtocol).mockReturnValue({
+    mutate: vi.fn(),
+    isPending: false,
+    isError: false,
+    error: null,
+  } as ReturnType<typeof useValidateRRProtocol>);
 }
 
 // ---------------------------------------------------------------------------
@@ -88,7 +103,11 @@ describe('ProtocolEditorPage', () => {
 
   describe('loading state', () => {
     it('shows loading indicator when protocol is loading', () => {
-      vi.mocked(useRRProtocol).mockReturnValue({ data: undefined, isLoading: true, error: null } as ReturnType<typeof useRRProtocol>);
+      vi.mocked(useRRProtocol).mockReturnValue({
+        data: undefined,
+        isLoading: true,
+        error: null,
+      } as ReturnType<typeof useRRProtocol>);
       renderWithQuery(<ProtocolEditorPage studyId={42} />);
       expect(screen.getByText(/loading protocol/i)).toBeTruthy();
     });
@@ -96,13 +115,21 @@ describe('ProtocolEditorPage', () => {
 
   describe('error state', () => {
     it('shows error alert when protocol load fails', () => {
-      vi.mocked(useRRProtocol).mockReturnValue({ data: undefined, isLoading: false, error: new Error('fail') } as ReturnType<typeof useRRProtocol>);
+      vi.mocked(useRRProtocol).mockReturnValue({
+        data: undefined,
+        isLoading: false,
+        error: new Error('fail'),
+      } as ReturnType<typeof useRRProtocol>);
       renderWithQuery(<ProtocolEditorPage studyId={42} />);
       expect(screen.getByText(/failed to load the protocol/i)).toBeTruthy();
     });
 
     it('shows error alert when protocol is undefined after load', () => {
-      vi.mocked(useRRProtocol).mockReturnValue({ data: undefined, isLoading: false, error: null } as ReturnType<typeof useRRProtocol>);
+      vi.mocked(useRRProtocol).mockReturnValue({
+        data: undefined,
+        isLoading: false,
+        error: null,
+      } as ReturnType<typeof useRRProtocol>);
       renderWithQuery(<ProtocolEditorPage studyId={42} />);
       expect(screen.getByText(/failed to load the protocol/i)).toBeTruthy();
     });
@@ -128,13 +155,21 @@ describe('ProtocolEditorPage', () => {
 
   describe('validated protocol', () => {
     it('shows validated banner when protocol status is validated', () => {
-      vi.mocked(useRRProtocol).mockReturnValue({ data: { ...BASE_PROTOCOL, status: 'validated' }, isLoading: false, error: null } as ReturnType<typeof useRRProtocol>);
+      vi.mocked(useRRProtocol).mockReturnValue({
+        data: { ...BASE_PROTOCOL, status: 'validated' },
+        isLoading: false,
+        error: null,
+      } as ReturnType<typeof useRRProtocol>);
       renderWithQuery(<ProtocolEditorPage studyId={42} />);
       expect(screen.getByText(/protocol is validated/i)).toBeTruthy();
     });
 
     it('does not render Validate Protocol button when protocol is validated', () => {
-      vi.mocked(useRRProtocol).mockReturnValue({ data: { ...BASE_PROTOCOL, status: 'validated' }, isLoading: false, error: null } as ReturnType<typeof useRRProtocol>);
+      vi.mocked(useRRProtocol).mockReturnValue({
+        data: { ...BASE_PROTOCOL, status: 'validated' },
+        isLoading: false,
+        error: null,
+      } as ReturnType<typeof useRRProtocol>);
       renderWithQuery(<ProtocolEditorPage studyId={42} />);
       expect(screen.queryByRole('button', { name: /validate protocol/i })).toBeNull();
     });
@@ -143,7 +178,12 @@ describe('ProtocolEditorPage', () => {
   describe('mutation error states', () => {
     it('shows update error alert when updateMutation.isError is true', () => {
       vi.mocked(useUpdateRRProtocol).mockReturnValue({
-        mutation: { mutate: vi.fn(), isPending: false, isError: true, error: new Error('Save failed') },
+        mutation: {
+          mutate: vi.fn(),
+          isPending: false,
+          isError: true,
+          error: new Error('Save failed'),
+        },
         invalidationPending: null,
         confirmInvalidation: vi.fn(),
         cancelInvalidation: vi.fn(),
@@ -153,7 +193,12 @@ describe('ProtocolEditorPage', () => {
     });
 
     it('shows validate error alert when validateMutation.isError is true', () => {
-      vi.mocked(useValidateRRProtocol).mockReturnValue({ mutate: vi.fn(), isPending: false, isError: true, error: new Error('Validation failed') } as ReturnType<typeof useValidateRRProtocol>);
+      vi.mocked(useValidateRRProtocol).mockReturnValue({
+        mutate: vi.fn(),
+        isPending: false,
+        isError: true,
+        error: new Error('Validation failed'),
+      } as ReturnType<typeof useValidateRRProtocol>);
       renderWithQuery(<ProtocolEditorPage studyId={42} />);
       expect(screen.getByText(/validation failed/i)).toBeTruthy();
     });
