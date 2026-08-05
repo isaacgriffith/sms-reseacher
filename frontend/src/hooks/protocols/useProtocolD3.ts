@@ -99,6 +99,7 @@ export function useProtocolD3(onPositionChange?: (taskId: string, x: number, y: 
         .selectAll<SVGGElement, D3SimNode>('g')
         .data(simNodes)
         .join('g')
+        .attr('data-testid', 'protocol-node')
         .attr('cursor', onNodeClick ? 'pointer' : 'default')
         .on('click', (_ev, d) => onNodeClick?.(d.data));
 
@@ -157,6 +158,13 @@ export function useProtocolD3(onPositionChange?: (taskId: string, x: number, y: 
         .force('center', d3.forceCenter(width / 2, height / 2))
         .force('collision', d3.forceCollide(80))
         .on('tick', () => {
+          // The charge and collision forces routinely push nodes past the SVG
+          // viewport, where they are clipped out of sight and unclickable.
+          // Clamping every tick keeps the whole graph reachable.
+          for (const n of simNodes) {
+            n.x = Math.max(0, Math.min(width - NODE_W, n.x ?? 0));
+            n.y = Math.max(0, Math.min(height - NODE_H, n.y ?? 0));
+          }
           linkSel
             .attr('x1', (d) => ((d.source as D3SimNode).x ?? 0) + NODE_W / 2)
             .attr('y1', (d) => ((d.source as D3SimNode).y ?? 0) + NODE_H / 2)

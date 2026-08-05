@@ -16,6 +16,7 @@ from backend.core.config import get_logger
 from backend.core.database import get_db
 from backend.services import audit as audit_svc
 from backend.services.phase_gate import compute_staleness_flags, get_unlocked_phases
+from backend.services.protocol_executor import assign_default_protocol
 from backend.services.rr_phase_gate import get_rr_unlocked_phases
 from backend.services.slr_phase_gate import get_slr_unlocked_phases
 from backend.services.tertiary_phase_gate import get_tertiary_unlocked_phases
@@ -292,6 +293,11 @@ async def create_study(
                 ),
             )
         )
+
+    # Give the study its type's default protocol up front so the Protocol tab
+    # has a graph to show from the moment the study exists. Users can swap or
+    # reset it later via /studies/{id}/protocol-assignment.
+    await assign_default_protocol(study.id, study_type.value, current_user.user_id, db)
 
     await db.commit()
     logger.info("study_created", study_id=study.id, group_id=group_id)

@@ -131,6 +131,16 @@ async def _add_node_and_assign(
         return node.id, state.id
 
 
+async def _set_task_status(db_engine, state_id: int, new_status: TaskNodeStatus) -> None:
+    """Force the TaskExecutionState *state_id* to *new_status*."""
+    maker = async_sessionmaker(db_engine, expire_on_commit=False)
+    async with maker() as session:
+        state = await session.get(TaskExecutionState, state_id)
+        assert state is not None
+        state.status = new_status
+        await session.commit()
+
+
 class TestAssignProtocol:
     """PUT /studies/{study_id}/protocol-assignment endpoint tests."""
 
@@ -205,6 +215,51 @@ class TestAssignProtocol:
         )
 
         assert resp.status_code == 400, resp.text
+
+    @pytest.mark.asyncio
+    async def test_assign_after_task_completed_returns_409(
+        self, client, db_engine, alice
+    ) -> None:
+        """PUT returns 409 once a task has been COMPLETEd.
+
+        Re-assigning discards every execution-state row, and unlike reset there
+        is no confirmation flag, so progress must not be silently destroyed.
+        """
+        alice_user, _ = alice
+        study_id, protocol_id = await _setup_study_and_protocol(client, db_engine, alice_user)
+        _, state_id = await _add_node_and_assign(
+            db_engine, study_id, protocol_id, task_id="done_before_assign"
+        )
+        await _set_task_status(db_engine, state_id, TaskNodeStatus.COMPLETE)
+
+        resp = await client.put(
+            f"/api/v1/studies/{study_id}/protocol-assignment",
+            json={"protocol_id": protocol_id},
+            headers=_bearer(alice_user.id),
+        )
+
+        assert resp.status_code == 409, resp.text
+
+    @pytest.mark.asyncio
+    async def test_assign_with_only_active_tasks_succeeds(
+        self, client, db_engine, alice
+    ) -> None:
+        """PUT succeeds when tasks are merely ACTIVE — no work has been done.
+
+        Studies are auto-assigned their type's default protocol at creation,
+        which activates the start tasks, so ACTIVE alone must not block a swap.
+        """
+        alice_user, _ = alice
+        study_id, protocol_id = await _setup_study_and_protocol(client, db_engine, alice_user)
+        await _add_node_and_assign(db_engine, study_id, protocol_id, task_id="active_before_assign")
+
+        resp = await client.put(
+            f"/api/v1/studies/{study_id}/protocol-assignment",
+            json={"protocol_id": protocol_id},
+            headers=_bearer(alice_user.id),
+        )
+
+        assert resp.status_code == 200, resp.text
 
 
 class TestGetExecutionState:
@@ -580,10 +635,14 @@ class TestResetProtocolAssignment:
         assert resp.status_code == 403, resp.text
 
     @pytest.mark.asyncio
-    async def test_reset_while_active_task_returns_409(
+    async def test_reset_with_only_active_tasks_succeeds(
         self, client, db_engine, alice
     ) -> None:
-        """DELETE returns 409 when any task is currently ACTIVE."""
+        """DELETE succeeds when tasks are merely ACTIVE — no work has been done.
+
+        Every study is auto-assigned its type's default protocol at creation,
+        which activates the start tasks, so ACTIVE alone must not block a reset.
+        """
         alice_user, _ = alice
         study_id, protocol_id = await _setup_study_and_protocol(client, db_engine, alice_user)
         # _add_node_and_assign creates a node in ACTIVE status
@@ -594,7 +653,8 @@ class TestResetProtocolAssignment:
             headers=_bearer(alice_user.id),
         )
 
-        assert resp.status_code == 409, resp.text
+        assert resp.status_code == 200, resp.text
+
 
     @pytest.mark.asyncio
     async def test_reset_clears_old_execution_states(

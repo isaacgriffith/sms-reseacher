@@ -325,6 +325,116 @@ async def _load_all_task_items(study_id: int, db: AsyncSession) -> list[dict]:
     ]
 
 
+#: Statuses that mean the study has done real work under its current protocol.
+#: A merely ACTIVE task is one the protocol has *offered* — since every study is
+#: given its type's default protocol at creation, and assignment activates the
+#: start tasks, treating ACTIVE as "executing" would permanently block both
+#: re-assignment and reset-to-default on every study.
+_PROGRESSED_STATUSES = (
+    TaskNodeStatus.COMPLETE,
+    TaskNodeStatus.GATE_FAILED,
+    TaskNodeStatus.SKIPPED,
+)
+
+
+async def _assert_no_progress(study_id: int, db: AsyncSession, detail: str) -> None:
+    """Raise 409 if any task of *study_id* has progressed past PENDING/ACTIVE.
+
+    Swapping the protocol discards every ``TaskExecutionState`` row, so this
+    guards against destroying a record of work already done.
+
+    Args:
+        study_id: ID of the study to check.
+        db: Active async database session.
+        detail: ``detail`` string for the raised 409.
+
+    Raises:
+        :class:`fastapi.HTTPException`: 409 if any task has progressed.
+
+    """
+    result = await db.execute(
+        select(TaskExecutionState).where(
+            TaskExecutionState.study_id == study_id,
+            TaskExecutionState.status.in_(_PROGRESSED_STATUSES),
+        )
+    )
+    if result.scalars().first() is not None:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=detail)
+
+
+async def _apply_assignment(
+    study_id: int,
+    protocol_id: int,
+    user_id: int,
+    db: AsyncSession,
+) -> StudyProtocolAssignment:
+    """Point *study_id* at *protocol_id* and reseed its execution state.
+
+    Upserts the :class:`StudyProtocolAssignment`, discards any previous
+    :class:`TaskExecutionState` rows, seeds one PENDING row per protocol
+    node, and activates the tasks that have no incomplete predecessors.
+
+    Performs no authorisation or precondition checks and does not commit —
+    callers own both. Shared by :meth:`assign_protocol`,
+    :meth:`reset_to_default`, and :func:`assign_default_protocol`.
+
+    Args:
+        study_id: ID of the study to assign to.
+        protocol_id: ID of the protocol to assign.
+        user_id: ID of the user recorded as the assigner.
+        db: Active async database session.
+
+    Returns:
+        The persisted assignment with ``protocol`` selectinloaded.
+
+    """
+    nodes_result = await db.execute(
+        select(ProtocolNode).where(ProtocolNode.protocol_id == protocol_id)
+    )
+    nodes = nodes_result.scalars().all()
+
+    existing_result = await db.execute(
+        select(StudyProtocolAssignment).where(StudyProtocolAssignment.study_id == study_id)
+    )
+    assignment = existing_result.scalar_one_or_none()
+    if assignment is None:
+        assignment = StudyProtocolAssignment(
+            study_id=study_id,
+            protocol_id=protocol_id,
+            assigned_at=datetime.now(UTC),
+            assigned_by_user_id=user_id,
+        )
+        db.add(assignment)
+    else:
+        assignment.protocol_id = protocol_id
+        assignment.assigned_at = datetime.now(UTC)
+        assignment.assigned_by_user_id = user_id
+
+    await db.execute(delete(TaskExecutionState).where(TaskExecutionState.study_id == study_id))
+
+    for node in nodes:
+        db.add(
+            TaskExecutionState(
+                study_id=study_id,
+                node_id=node.id,
+                status=TaskNodeStatus.PENDING,
+            )
+        )
+
+    await db.flush()
+
+    executor = ProtocolExecutorService()
+    await executor.activate_eligible_tasks(study_id, db)
+
+    stmt = (
+        select(StudyProtocolAssignment)
+        .where(StudyProtocolAssignment.study_id == study_id)
+        .options(selectinload(StudyProtocolAssignment.protocol))
+    )
+    result = await db.execute(stmt)
+    return result.scalar_one()
+
+
 class ProtocolAssignmentService:
     """Service for assigning a research protocol to a study (T058)."""
 
@@ -352,7 +462,8 @@ class ProtocolAssignmentService:
                 - 400 if protocol study_type does not match study study_type.
                 - 403 if user is not LEAD or protocol is owned by another user.
                 - 404 if study or protocol is not found.
-                - 409 if there are active TaskExecutionState rows for the study.
+                - 409 if any task has progressed past PENDING/ACTIVE, since
+                  re-assigning discards the record of that work.
 
         """
         log = logger.bind(study_id=study_id, protocol_id=protocol_id, user_id=user_id)
@@ -378,60 +489,9 @@ class ProtocolAssignmentService:
                 detail="Protocol study_type does not match study study_type.",
             )
 
-        active_result = await db.execute(
-            select(TaskExecutionState).where(
-                TaskExecutionState.study_id == study_id,
-                TaskExecutionState.status == TaskNodeStatus.ACTIVE,
-            )
-        )
-        if active_result.scalar_one_or_none() is not None:
-            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="study_executing")
+        await _assert_no_progress(study_id, db, "study_executing")
 
-        nodes_result = await db.execute(
-            select(ProtocolNode).where(ProtocolNode.protocol_id == protocol_id)
-        )
-        nodes = nodes_result.scalars().all()
-
-        existing_result = await db.execute(
-            select(StudyProtocolAssignment).where(StudyProtocolAssignment.study_id == study_id)
-        )
-        assignment = existing_result.scalar_one_or_none()
-        if assignment is None:
-            assignment = StudyProtocolAssignment(
-                study_id=study_id,
-                protocol_id=protocol_id,
-                assigned_at=datetime.now(UTC),
-                assigned_by_user_id=user_id,
-            )
-            db.add(assignment)
-        else:
-            assignment.protocol_id = protocol_id
-            assignment.assigned_at = datetime.now(UTC)
-            assignment.assigned_by_user_id = user_id
-
-        await db.execute(delete(TaskExecutionState).where(TaskExecutionState.study_id == study_id))
-
-        for node in nodes:
-            db.add(
-                TaskExecutionState(
-                    study_id=study_id,
-                    node_id=node.id,
-                    status=TaskNodeStatus.PENDING,
-                )
-            )
-
-        await db.flush()
-
-        executor = ProtocolExecutorService()
-        await executor.activate_eligible_tasks(study_id, db)
-
-        stmt = (
-            select(StudyProtocolAssignment)
-            .where(StudyProtocolAssignment.study_id == study_id)
-            .options(selectinload(StudyProtocolAssignment.protocol))
-        )
-        result = await db.execute(stmt)
-        refreshed = result.scalar_one()
+        refreshed = await _apply_assignment(study_id, protocol_id, user_id, db)
 
         await db.commit()
         log.info("assign_protocol.ok")
@@ -445,10 +505,12 @@ class ProtocolAssignmentService:
     ) -> StudyProtocolAssignment:
         """Reset a study's protocol to the default template for its study type.
 
-        Verifies the requester is LEAD, blocks if any task is ACTIVE, then
-        finds the default template for the study's study_type, updates the
-        assignment, deletes old execution states, and seeds new PENDING states
-        with start nodes activated.
+        Verifies the requester is LEAD, then finds the default template for
+        the study's study_type, updates the assignment, deletes old execution
+        states, and seeds new PENDING states with start nodes activated.
+
+        Discards any existing progress unconditionally — the caller's
+        ``confirm_reset`` flag is the user's acknowledgement of that.
 
         Args:
             study_id: ID of the study to reset.
@@ -463,24 +525,12 @@ class ProtocolAssignmentService:
             :class:`fastapi.HTTPException`:
                 - 403 if user is not LEAD.
                 - 404 if study not found or no default template exists.
-                - 409 if any TaskExecutionState has status ACTIVE.
 
         """
         log = logger.bind(study_id=study_id, user_id=user_id)
 
         study = await _load_study_and_check_admin(study_id, user_id, db)
 
-        active_result = await db.execute(
-            select(TaskExecutionState).where(
-                TaskExecutionState.study_id == study_id,
-                TaskExecutionState.status == TaskNodeStatus.ACTIVE,
-            )
-        )
-        if active_result.scalar_one_or_none() is not None:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="Cannot reset while study is executing.",
-            )
 
         default_result = await db.execute(
             select(ResearchProtocol).where(
@@ -495,55 +545,58 @@ class ProtocolAssignmentService:
                 detail="No default template found for this study type.",
             )
 
-        nodes_result = await db.execute(
-            select(ProtocolNode).where(ProtocolNode.protocol_id == default_protocol.id)
-        )
-        nodes = nodes_result.scalars().all()
-
-        existing_result = await db.execute(
-            select(StudyProtocolAssignment).where(StudyProtocolAssignment.study_id == study_id)
-        )
-        assignment = existing_result.scalar_one_or_none()
-        if assignment is None:
-            assignment = StudyProtocolAssignment(
-                study_id=study_id,
-                protocol_id=default_protocol.id,
-                assigned_at=datetime.now(UTC),
-                assigned_by_user_id=user_id,
-            )
-            db.add(assignment)
-        else:
-            assignment.protocol_id = default_protocol.id
-            assignment.assigned_at = datetime.now(UTC)
-            assignment.assigned_by_user_id = user_id
-
-        await db.execute(delete(TaskExecutionState).where(TaskExecutionState.study_id == study_id))
-
-        for node in nodes:
-            db.add(
-                TaskExecutionState(
-                    study_id=study_id,
-                    node_id=node.id,
-                    status=TaskNodeStatus.PENDING,
-                )
-            )
-
-        await db.flush()
-
-        executor = ProtocolExecutorService()
-        await executor.activate_eligible_tasks(study_id, db)
-
-        stmt = (
-            select(StudyProtocolAssignment)
-            .where(StudyProtocolAssignment.study_id == study_id)
-            .options(selectinload(StudyProtocolAssignment.protocol))
-        )
-        result = await db.execute(stmt)
-        refreshed = result.scalar_one()
+        refreshed = await _apply_assignment(study_id, default_protocol.id, user_id, db)
 
         await db.commit()
         log.info("reset_to_default.ok", default_protocol_id=default_protocol.id)
         return refreshed
+
+
+async def assign_default_protocol(
+    study_id: int,
+    study_type: str,
+    user_id: int,
+    db: AsyncSession,
+) -> StudyProtocolAssignment | None:
+    """Assign the default template for *study_type* to a newly created study.
+
+    Called from the study-creation path so a study is never protocol-less: the
+    Protocol tab renders its type's default graph immediately instead of an
+    empty state that the user has to resolve by hand.
+
+    Unlike :meth:`ProtocolAssignmentService.reset_to_default` this skips the
+    LEAD check (the caller has just created the study and is its lead) and does
+    not commit, so the assignment lands in the same transaction as the study.
+    A missing default template is not an error — study creation must succeed on
+    a database whose templates have not been seeded.
+
+    Args:
+        study_id: ID of the study just created.
+        study_type: The study's ``study_type`` value, e.g. ``"SMS"``.
+        user_id: ID of the creating user, recorded as the assigner.
+        db: Active async database session.
+
+    Returns:
+        The new assignment, or ``None`` if no default template exists for
+        *study_type*.
+
+    """
+    log = logger.bind(study_id=study_id, study_type=study_type)
+
+    default_result = await db.execute(
+        select(ResearchProtocol).where(
+            ResearchProtocol.is_default_template.is_(True),
+            ResearchProtocol.study_type == study_type,
+        )
+    )
+    default_protocol = default_result.scalars().first()
+    if default_protocol is None:
+        log.warning("assign_default_protocol.no_template")
+        return None
+
+    assignment = await _apply_assignment(study_id, default_protocol.id, user_id, db)
+    log.info("assign_default_protocol.ok", protocol_id=default_protocol.id)
+    return assignment
 
 
 class ProtocolExecutorService:

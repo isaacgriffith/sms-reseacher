@@ -12,6 +12,7 @@
  * your test environment, or use the defaults below.
  */
 
+import fs from 'fs';
 import path from 'path';
 import { test, expect } from '@playwright/test';
 
@@ -94,12 +95,14 @@ test.describe('Research Protocol Definition (feature 010)', () => {
     // Protocol graph should be visible (SVG rendered by D3)
     await expect(page.locator('svg')).toBeVisible({ timeout: 10_000 });
 
-    // At least one node rect should be present
-    const nodeRects = page.locator('svg rect');
-    await expect(nodeRects.first()).toBeVisible({ timeout: 10_000 });
+    // At least one node should be present. Target the node group rather than
+    // its <rect>: the label <text> is painted over the rect and would take the
+    // hit, even though the click handler lives on the group either way.
+    const nodes = page.getByTestId('protocol-node');
+    await expect(nodes.first()).toBeVisible({ timeout: 10_000 });
 
     // Click the first node to open the detail panel
-    await nodeRects.first().click();
+    await nodes.first().click();
 
     // ProtocolNodePanel should show node detail
     await expect(
@@ -183,8 +186,9 @@ test.describe('Research Protocol Definition (feature 010)', () => {
     // Click save (no-op saves the unchanged protocol back)
     await saveBtn.click();
 
-    // Should navigate back to read-only view (no edit in path or save button gone)
-    await expect(page.getByRole('button', { name: /^save$/i })).not.toBeVisible({ timeout: 5_000 });
+    // The editor stays put — /protocols/:id is both the view and the edit
+    // route — so success shows as a confirmation, not a navigation.
+    await expect(page.getByText(/protocol saved/i)).toBeVisible({ timeout: 5_000 });
   });
 
   test('assign custom protocol to study and view execution state', async ({ page }) => {
@@ -193,11 +197,14 @@ test.describe('Research Protocol Definition (feature 010)', () => {
     // Create a study to work with
     const { url } = await createSMSStudy(page);
 
-    // Copy default to create a custom protocol
+    // Copy the SMS default specifically — a protocol may only be assigned to a
+    // study of a matching study_type, and the list is sorted by name, so the
+    // first row is the Rapid Review template.
     await page.goto('/protocols');
     await expect(page.getByRole('listitem').first()).toBeVisible({ timeout: 10_000 });
 
-    const copyBtn = page.getByRole('button', { name: /copy/i }).first();
+    const smsRow = page.getByRole('listitem').filter({ hasText: 'Default SMS Protocol' }).first();
+    const copyBtn = smsRow.getByRole('button', { name: 'Copy', exact: true });
     await copyBtn.click();
 
     const nameField = page.getByLabel(/name/i);
@@ -216,9 +223,10 @@ test.describe('Research Protocol Definition (feature 010)', () => {
 
     // Click Assign on our custom protocol row
     const customRow = page.getByRole('listitem').filter({ hasText: copyName });
-    // The row exposes more than one control matching /assign/i, so scope to
-    // the first for Playwright strict mode.
-    const assignBtn = customRow.getByRole('button', { name: /assign/i }).first();
+    // Must be an exact match: the row itself is a button whose accessible name
+    // is the protocol name, which contains "Assign" — matching /assign/i would
+    // open the editor instead of the assign dialog.
+    const assignBtn = customRow.getByRole('button', { name: 'Assign', exact: true });
     await assignBtn.click();
 
     // Fill in study ID in the assign dialog
@@ -277,20 +285,28 @@ test.describe('Research Protocol Definition (feature 010)', () => {
     const exportedPath = path.join(process.env.TMPDIR ?? '/tmp', download.suggestedFilename());
     await download.saveAs(exportedPath);
 
-    // Import the downloaded YAML file back
-    await page.getByRole('button', { name: /import/i }).click();
-    const fileChooserPromise = page.waitForEvent('filechooser');
-    // Trigger file input (hidden input opened by the Import button handler)
-    const fileChooser = await fileChooserPromise;
-    await fileChooser.setFiles(exportedPath);
+    // Protocol names are unique per owner, so re-importing the export verbatim
+    // fails on the second run against the same database. Rename the copy so the
+    // round-trip is repeatable.
+    const importName = `E2E Import ${Date.now()}`;
+    const importPath = path.join(process.env.TMPDIR ?? '/tmp', `${importName}.yaml`);
+    fs.writeFileSync(
+      importPath,
+      fs.readFileSync(exportedPath, 'utf8').replace(/^name:.*$/m, `name: ${importName}`),
+    );
 
-    // A new protocol should appear in the list
-    await expect(page.getByText(/import|imported/i).first())
-      .not.toBeVisible({ timeout: 5_000 })
-      .catch(() => {
-        // If no error message, import succeeded silently
-      });
-    // The list should have refreshed with a new entry
-    await expect(page.getByRole('listitem').nth(1)).toBeVisible({ timeout: 10_000 });
+    // Import the downloaded YAML file back. The Import button clicks the hidden
+    // file input synchronously, so the listener must be registered first —
+    // waiting for the event after the click always misses it.
+    const fileChooserPromise = page.waitForEvent('filechooser');
+    // Exact name: rows for previously-imported protocols are buttons whose
+    // names also contain "Import".
+    await page.getByRole('button', { name: 'Import YAML', exact: true }).click();
+    const fileChooser = await fileChooserPromise;
+    await fileChooser.setFiles(importPath);
+
+    // A successful import opens the editor for the newly created protocol.
+    await page.waitForURL(/\/protocols\/\d+\/edit/, { timeout: 10_000 });
+    await expect(page.getByTestId('protocol-node').first()).toBeVisible({ timeout: 10_000 });
   });
 });

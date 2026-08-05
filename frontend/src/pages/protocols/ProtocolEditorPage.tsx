@@ -82,7 +82,9 @@ function EditorContent({
         edges: graph.edges,
       },
       {
-        onSuccess: () => navigate(`/protocols/${protocol.id}`),
+        // No navigation on success: this page is already at /protocols/:id, so
+        // the only thing to do is confirm the save in place (see the success
+        // Alert below).
         onError: (err: unknown) => {
           const detail = (err as { detail?: { current_version_id?: number } })?.detail;
           if (detail?.current_version_id) {
@@ -117,6 +119,12 @@ function EditorContent({
       {updateMutation.isError && !conflictVersion && (
         <Alert severity="error" sx={{ mx: 2, mt: 1 }}>
           Save failed. Check validation errors.
+        </Alert>
+      )}
+
+      {updateMutation.isSuccess && (
+        <Alert severity="success" sx={{ mx: 2, mt: 1 }}>
+          Protocol saved.
         </Alert>
       )}
 

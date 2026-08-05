@@ -130,8 +130,9 @@ async def reset_study_protocol_assignment(
 ) -> ProtocolAssignmentResponse:
     """Reset a study's protocol to the default template for its study type.
 
-    Requires ``{"confirm_reset": true}`` in the request body. Blocked while
-    any task is ACTIVE. Only study LEAD may call this.
+    Requires ``{"confirm_reset": true}`` in the request body — that flag is
+    the user's acknowledgement that any existing progress is discarded. Only
+    study LEAD may call this.
 
     Args:
         study_id: ID of the study.
@@ -147,7 +148,6 @@ async def reset_study_protocol_assignment(
         HTTP 400: If ``confirm_reset`` is not ``True``.
         HTTP 403: If the requester is not the study LEAD.
         HTTP 404: If the study is not found or no default template exists.
-        HTTP 409: If any task is currently ACTIVE.
 
     """
     if not body.confirm_reset:
