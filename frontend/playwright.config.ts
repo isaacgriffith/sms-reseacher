@@ -33,13 +33,18 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
   ],
-  /* Start the Vite dev server before tests when not in CI (CI uses a pre-built preview) */
-  webServer: process.env.CI
+  /*
+   * Start the Vite dev server before tests, in CI as well as locally.
+   * The dev server is what proxies /api to the backend (see vite.config.ts),
+   * so `npm run preview` is not a substitute. When PLAYWRIGHT_BASE_URL points
+   * at an already-running stack (e.g. Docker Compose), skip starting one.
+   */
+  webServer: process.env.PLAYWRIGHT_BASE_URL
     ? undefined
     : {
         command: 'npm run dev',
         url: 'http://localhost:5173',
         reuseExistingServer: !process.env.CI,
-        timeout: 30_000,
+        timeout: 120_000,
       },
 });
