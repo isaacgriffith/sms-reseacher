@@ -136,8 +136,14 @@ export default function StudyPage() {
   const { data: slrPhases } = usePhases(isSLR && study?.id ? study.id : 0);
 
   // Protocol tab data (always available)
-  const { data: assignment } = useProtocolAssignment(study?.id ?? 0);
-  const { data: protocol } = useProtocolDetail(assignment?.protocol_id ?? 0);
+  const { data: assignment, isPending: assignmentPending } = useProtocolAssignment(study?.id ?? 0);
+  const { data: protocol, isPending: protocolPending } = useProtocolDetail(
+    assignment?.protocol_id ?? 0,
+  );
+  // The assignment endpoint 404s when a study has no protocol assigned. Without
+  // this distinction the graph pane showed "Loading…" forever instead of
+  // saying nothing is assigned.
+  const protocolLoading = assignmentPending || (assignment != null && protocolPending);
 
   if (isLoading) return <Typography>Loading study…</Typography>;
   if (error || !study) return <Typography sx={{ color: 'red' }}>Failed to load study.</Typography>;
@@ -305,8 +311,12 @@ export default function StudyPage() {
                   />
                   <ProtocolNodePanel node={selectedNode} onClose={() => setSelectedNode(null)} />
                 </>
-              ) : (
+              ) : protocolLoading ? (
                 <Typography sx={{ color: 'text.secondary' }}>Loading protocol graph…</Typography>
+              ) : (
+                <Typography sx={{ color: 'text.secondary' }}>
+                  No protocol is assigned to this study. Choose one from the Protocol Library.
+                </Typography>
               )}
             </>
           )}

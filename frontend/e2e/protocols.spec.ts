@@ -117,7 +117,13 @@ test.describe('Research Protocol Definition (feature 010)', () => {
     await page.goto('/protocols');
 
     // At least one protocol should be listed (default templates are seeded)
-    await expect(page.getByRole('list')).toBeVisible({ timeout: 10_000 });
+    // The sidebar nav is also a list, so scope to the one holding protocols.
+    await expect(
+      page
+        .getByRole('list')
+        .filter({ hasText: /protocol/i })
+        .first(),
+    ).toBeVisible({ timeout: 10_000 });
     const listItems = page.getByRole('listitem');
     await expect(listItems.first()).toBeVisible({ timeout: 10_000 });
 
@@ -210,7 +216,9 @@ test.describe('Research Protocol Definition (feature 010)', () => {
 
     // Click Assign on our custom protocol row
     const customRow = page.getByRole('listitem').filter({ hasText: copyName });
-    const assignBtn = customRow.getByRole('button', { name: /assign/i });
+    // The row exposes more than one control matching /assign/i, so scope to
+    // the first for Playwright strict mode.
+    const assignBtn = customRow.getByRole('button', { name: /assign/i }).first();
     await assignBtn.click();
 
     // Fill in study ID in the assign dialog
