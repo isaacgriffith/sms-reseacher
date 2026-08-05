@@ -41,7 +41,7 @@ test.describe('Create study', () => {
     await page.getByRole('button', { name: /new study/i }).click();
     // The wizard should be visible — look for its first step heading or form field
     await expect(
-      page.getByRole('dialog').or(page.locator('[data-testid="new-study-wizard"]')),
+      page.getByRole('dialog').or(page.locator('[data-testid="new-study-wizard"]')).first(),
     ).toBeVisible();
   });
 

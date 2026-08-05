@@ -51,7 +51,8 @@ async function navigateToAdminAgents(page: Page): Promise<void> {
   const agentsTab = page
     .getByRole('tab', { name: /agents/i })
     .or(page.getByRole('button', { name: /agents/i }))
-    .or(page.getByText('Agents').first());
+    .or(page.getByText('Agents').first())
+    .first();
   await agentsTab.click();
   await expect(page.getByText(/agents/i).first()).toBeVisible();
 }
@@ -72,7 +73,10 @@ test.describe('Admin — Agent Wizard', () => {
   test('agents tab is visible in the admin panel', async ({ page }) => {
     await page.goto('/admin');
     await expect(
-      page.getByRole('tab', { name: /agents/i }).or(page.getByText(/agents/i).first()),
+      page
+        .getByRole('tab', { name: /agents/i })
+        .or(page.getByText(/agents/i).first())
+        .first(),
     ).toBeVisible({ timeout: 10_000 });
   });
 
@@ -84,7 +88,7 @@ test.describe('Admin — Agent Wizard', () => {
     await navigateToAdminAgents(page);
 
     await page
-      .getByRole('button', { name: /add agent|new agent|add/i })
+      .getByRole('button', { name: /create agent|add agent|new agent/i })
       .first()
       .click();
 
@@ -93,7 +97,8 @@ test.describe('Admin — Agent Wizard', () => {
       page
         .getByRole('dialog')
         .or(page.getByText(/add agent|create agent/i).first())
-        .or(page.getByLabel(/role name/i)),
+        .or(page.getByLabel(/role name/i))
+        .first(),
     ).toBeVisible({ timeout: 5_000 });
   });
 
@@ -104,7 +109,7 @@ test.describe('Admin — Agent Wizard', () => {
 
     // Open the add agent dialog
     await page
-      .getByRole('button', { name: /add agent|new agent|add/i })
+      .getByRole('button', { name: /create agent|add agent|new agent/i })
       .first()
       .click();
 
@@ -134,7 +139,8 @@ test.describe('Admin — Agent Wizard', () => {
     // Fill system message template
     const templateField = dialog
       .getByLabel(/system message template|template/i)
-      .or(dialog.locator('textarea').first());
+      .or(dialog.locator('textarea').first())
+      .first();
     if (await templateField.isVisible()) {
       await templateField.fill(VALID_TEMPLATE);
     }
@@ -142,7 +148,8 @@ test.describe('Admin — Agent Wizard', () => {
     // Select task type (screener)
     const taskTypeSelect = dialog
       .getByLabel(/task type/i)
-      .or(dialog.getByRole('combobox', { name: /task type/i }));
+      .or(dialog.getByRole('combobox', { name: /task type/i }))
+      .first();
     if (await taskTypeSelect.isVisible()) {
       await taskTypeSelect.selectOption({ label: /screener/i });
     }
@@ -162,7 +169,7 @@ test.describe('Admin — Agent Wizard', () => {
     await navigateToAdminAgents(page);
 
     await page
-      .getByRole('button', { name: /add agent|new agent|add/i })
+      .getByRole('button', { name: /create agent|add agent|new agent/i })
       .first()
       .click();
 
@@ -171,7 +178,8 @@ test.describe('Admin — Agent Wizard', () => {
     // Fill the template with an invalid variable
     const templateField = dialog
       .getByLabel(/system message template|template/i)
-      .or(dialog.locator('textarea').first());
+      .or(dialog.locator('textarea').first())
+      .first();
     if (await templateField.isVisible()) {
       await templateField.fill(INVALID_TEMPLATE);
     }
@@ -185,7 +193,8 @@ test.describe('Admin — Agent Wizard', () => {
       page
         .getByText(/unknown variable|invalid template|unknown_variable|422/i)
         .first()
-        .or(dialog.getByText(/error/i).first()),
+        .or(dialog.getByText(/error/i).first())
+        .first(),
     ).toBeVisible({ timeout: 8_000 });
   });
 
@@ -197,7 +206,7 @@ test.describe('Admin — Agent Wizard', () => {
     await navigateToAdminAgents(page);
 
     await page
-      .getByRole('button', { name: /add agent|new agent|add/i })
+      .getByRole('button', { name: /create agent|add agent|new agent/i })
       .first()
       .click();
 
@@ -207,7 +216,8 @@ test.describe('Admin — Agent Wizard', () => {
     const generateButton = dialog
       .getByRole('button', { name: /generate/i })
       .first()
-      .or(dialog.getByTitle(/generate/i).first());
+      .or(dialog.getByTitle(/generate/i).first())
+      .first();
 
     if (await generateButton.isVisible({ timeout: 3_000 })) {
       await expect(generateButton).toBeVisible();
@@ -228,7 +238,8 @@ test.describe('Admin — Agent Wizard', () => {
     const editButton = page
       .getByRole('button', { name: /edit/i })
       .first()
-      .or(page.locator('[aria-label*="edit" i]').first());
+      .or(page.locator('[aria-label*="edit" i]').first())
+      .first();
 
     if (await editButton.isVisible({ timeout: 3_000 })) {
       await editButton.click();
@@ -237,7 +248,8 @@ test.describe('Admin — Agent Wizard', () => {
       const undoButton = dialog
         .getByRole('button', { name: /undo/i })
         .first()
-        .or(dialog.getByTitle(/undo/i).first());
+        .or(dialog.getByTitle(/undo/i).first())
+        .first();
 
       // Undo may be disabled if no buffer — just check it exists
       if (await undoButton.isVisible({ timeout: 3_000 })) {
@@ -262,7 +274,8 @@ test.describe('Admin — Agent Wizard', () => {
     const filterControl = page
       .getByLabel(/filter by task type|task type/i)
       .or(page.getByRole('combobox', { name: /task type/i }))
-      .or(page.locator('select[name*="taskType"], select[name*="task_type"]'));
+      .or(page.locator('select[name*="taskType"], select[name*="task_type"]'))
+      .first();
 
     if (await filterControl.isVisible({ timeout: 3_000 })) {
       await expect(filterControl).toBeVisible();
@@ -285,7 +298,8 @@ test.describe('Admin — Agent Wizard', () => {
         .getByText(/no agents/i)
         .or(page.getByRole('table'))
         .or(page.getByRole('list'))
-        .or(page.getByText(/agent/i).first()),
+        .or(page.getByText(/agent/i).first())
+        .first(),
     ).toBeVisible({ timeout: 10_000 });
   });
 });

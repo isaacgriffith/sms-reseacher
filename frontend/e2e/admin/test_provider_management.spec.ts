@@ -38,7 +38,8 @@ async function navigateToAdminProviders(page: Page): Promise<void> {
   const providersTab = page
     .getByRole('tab', { name: /providers/i })
     .or(page.getByRole('button', { name: /providers/i }))
-    .or(page.getByText('Providers').first());
+    .or(page.getByText('Providers').first())
+    .first();
   await providersTab.click();
   await expect(page.getByText(/providers/i).first()).toBeVisible();
 }
@@ -65,14 +66,18 @@ test.describe('Admin — Provider Management', () => {
       page
         .getByRole('heading', { name: /admin/i })
         .or(page.getByText(/admin panel/i).first())
-        .or(page.getByText(/providers/i).first()),
+        .or(page.getByText(/providers/i).first())
+        .first(),
     ).toBeVisible({ timeout: 10_000 });
   });
 
   test('providers tab or section is visible in admin panel', async ({ page }) => {
     await page.goto('/admin');
     await expect(
-      page.getByRole('tab', { name: /providers/i }).or(page.getByText(/providers/i).first()),
+      page
+        .getByRole('tab', { name: /providers/i })
+        .or(page.getByText(/providers/i).first())
+        .first(),
     ).toBeVisible({ timeout: 10_000 });
   });
 
@@ -88,7 +93,8 @@ test.describe('Admin — Provider Management', () => {
         .getByText(/no providers/i)
         .or(page.getByRole('table'))
         .or(page.getByRole('list'))
-        .or(page.getByText(/provider/i).first()),
+        .or(page.getByText(/provider/i).first())
+        .first(),
     ).toBeVisible({ timeout: 10_000 });
   });
 
@@ -110,7 +116,8 @@ test.describe('Admin — Provider Management', () => {
       page
         .getByRole('dialog')
         .or(page.getByText(/add provider/i).first())
-        .or(page.getByLabel(/display name/i)),
+        .or(page.getByLabel(/display name/i))
+        .first(),
     ).toBeVisible({ timeout: 5_000 });
   });
 
@@ -131,9 +138,13 @@ test.describe('Admin — Provider Management', () => {
     // Select provider type (Ollama)
     const typeSelect = dialog
       .getByLabel(/provider type|type/i)
-      .or(dialog.getByRole('combobox', { name: /type/i }));
+      .or(dialog.getByRole('combobox', { name: /type/i }))
+      .first();
     if (await typeSelect.isVisible()) {
-      await typeSelect.selectOption({ label: /ollama/i });
+      // MUI <TextField select> renders a listbox in a portal, not a native
+      // <select>, so selectOption() does not apply — open it and pick the item.
+      await typeSelect.click();
+      await page.getByRole('option', { name: /ollama/i }).click();
     }
 
     // Fill display name
@@ -167,11 +178,17 @@ test.describe('Admin — Provider Management', () => {
       .getByRole('button', { name: /edit/i })
       .first()
       .or(page.getByTitle(/edit/i).first())
-      .or(page.locator('[aria-label*="edit" i]').first());
+      .or(page.locator('[aria-label*="edit" i]').first())
+      .first();
 
     if (await editButton.isVisible({ timeout: 3_000 })) {
       await editButton.click();
-      await expect(page.getByRole('dialog').or(page.getByLabel(/display name/i))).toBeVisible({
+      await expect(
+        page
+          .getByRole('dialog')
+          .or(page.getByLabel(/display name/i))
+          .first(),
+      ).toBeVisible({
         timeout: 5_000,
       });
     } else {
@@ -190,7 +207,8 @@ test.describe('Admin — Provider Management', () => {
     const refreshButton = page
       .getByRole('button', { name: /refresh models|refresh/i })
       .first()
-      .or(page.getByTitle(/refresh/i).first());
+      .or(page.getByTitle(/refresh/i).first())
+      .first();
 
     // Only assert if there are providers in the list
     if (await refreshButton.isVisible({ timeout: 3_000 })) {

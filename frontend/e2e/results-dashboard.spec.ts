@@ -37,7 +37,8 @@ test.describe('Results dashboard', () => {
       page
         .getByRole('heading')
         .first()
-        .or(page.getByText(/results|charts|export/i).first()),
+        .or(page.getByText(/results|charts|export/i).first())
+        .first(),
     ).toBeVisible({ timeout: 10_000 });
   });
 
@@ -65,7 +66,8 @@ test.describe('Results dashboard', () => {
         page
           .locator('svg, canvas')
           .first()
-          .or(page.getByText(/chart|figure|publication year/i).first()),
+          .or(page.getByText(/chart|figure|publication year/i).first())
+          .first(),
       ).toBeVisible({ timeout: 8_000 });
     } else {
       test.skip();
@@ -80,7 +82,8 @@ test.describe('Results dashboard', () => {
         page
           .locator('svg')
           .first()
-          .or(page.getByText(/not available|no domain model/i).first()),
+          .or(page.getByText(/not available|no domain model/i).first())
+          .first(),
       ).toBeVisible({ timeout: 8_000 });
     } else {
       test.skip();

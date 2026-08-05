@@ -126,7 +126,8 @@ test.describe('Database Selection Panel (Phase 2)', () => {
     const scihubToggle = page
       .getByLabel(/enable scihub|scihub/i)
       .first()
-      .or(page.locator('input[type="checkbox"]').filter({ has: page.getByText(/scihub/i) }));
+      .or(page.locator('input[type="checkbox"]').filter({ has: page.getByText(/scihub/i) }))
+      .first();
 
     const isVisible = await scihubToggle.isVisible().catch(() => false);
     if (!isVisible) {
