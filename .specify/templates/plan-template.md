@@ -68,6 +68,10 @@ in the Complexity Tracking table below with justification.
 | Code clarity — all functions/methods/classes have doc comments (Google-style / JSDoc); CLI handlers: brief description only, no Args/Returns                            |        |       |
 | Pre-existing issues — all pre-existing test failures, linting errors, and type errors in touched files are resolved before feature completion                           |        |       |
 | Feature completion docs — CLAUDE.md, root README.md, affected subproject README.md(s), root CHANGELOG.md, affected subproject CHANGELOG.md(s) update tasks in task list |        |       |
+| Reachability (X) — every new component is routed or dispatched to; audit_unreachable_frontend.py exits clean                                                            |        |       |
+| Reachability (X) — every new APIRouter is registered; response schemas expose the fields the UI gates on                                                                |        |       |
+| Reachability (X) — every user-facing feature has an e2e test driving it through the UI against a live backend                                                           |        |       |
+| Test signalling (VI) — no state-conditional assertions or isVisible() guards; unbuilt features use test.fixme + gap citation                                            |        |       |
 
 ## Project Structure
 

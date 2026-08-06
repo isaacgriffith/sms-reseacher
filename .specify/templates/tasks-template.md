@@ -291,9 +291,9 @@ With multiple developers:
 - Commit after each task or logical group
 - Stop at any checkpoint to validate story independently
 - Avoid: vague tasks, same file conflicts, cross-story dependencies that break independence
-- Constitution compliance: each task MUST respect Principles I–X (SOLID, DRY, YAGNI,
-  Code Clarity, Refactoring, GRASP/Patterns, Testing, Toolchain, Observability, Language,
-  Feature Completion Documentation)
+- Constitution compliance: each task MUST respect Principles I–X (SOLID, Structural
+  Quality, Code Clarity, Refactoring, GRASP/Patterns, Testing, Toolchain, Observability,
+  Language-Specific, Reachability & Delivery Verification)
 - Refactoring tasks MUST precede dependent feature tasks and MUST have tests written first
 - No long methods (>20 lines), switch/if-chain smells, or common code smells in new code
 - Apply GRASP responsibility patterns and recognized design patterns where they naturally fit
@@ -301,6 +301,14 @@ With multiple developers:
 - New configuration MUST use Pydantic BaseSettings + lru_cache get_settings() (Principle VIII)
 - New agent services MUST route LLM calls through LLMClient; prompts in prompts/ (Principle VII)
 - New Docker services MUST include healthcheck blocks (Principle VIII)
+- Every new component MUST be routed or dispatched to; `scripts/audit_unreachable_frontend.py`
+  MUST exit clean before the feature is marked complete (Principle X)
+- Every new `APIRouter` MUST be registered; response schemas MUST expose the fields the UI
+  gates on — a feature MUST NOT depend on data the API does not return (Principle X)
+- Every user-facing feature MUST have an e2e test driving it through the UI against a live
+  backend; mock-only unit tests do not satisfy the definition of done (Principle X)
+- Tests MUST NOT branch on application state to decide whether to assert; `isVisible()` MUST
+  NOT be used as a guard; unbuilt features use `test.fixme` + a gap citation (Principle VI)
 - React components MUST be functional, have a named props interface, and be ≤100 JSX lines (IX)
 - React hooks MUST follow Rules of Hooks (top-level only); dependency arrays MUST be complete
   with no inline object/function references; resource-acquiring effects MUST return cleanup (IX)

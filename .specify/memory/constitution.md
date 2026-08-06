@@ -1,6 +1,58 @@
 <!--
 SYNC IMPACT REPORT
 ==================
+Version change: 1.7.0 → 1.8.0
+Bump rationale: MINOR — one new principle added plus materially expanded guidance in three
+  existing ones. Derived from defects found while building out the e2e suite on 2026-08-06,
+  where a reachability sweep found 23 frontend modules that no user could reach despite being
+  complete, unit-tested, and backed by live endpoints (docs/feature-gaps.md, G16–G21).
+
+Added sections:
+  - X. Reachability & Delivery Verification — new principle. Code that exists but cannot be
+    reached is not delivered. Requires: every user-facing module reachable from the app entry
+    point (verified by scripts/audit_unreachable_frontend.py, which MUST run in CI); every
+    APIRouter registered; APIs MUST return the data their UI needs to gate a feature; a
+    feature is complete only when an e2e test drives it through the UI.
+  - VI. Testing Discipline — new "Honest Test Signalling" subsection: e2e tests MUST NOT
+    branch on application state to decide whether to assert; `isVisible()` MUST NOT be used
+    as a guard (it takes no timeout); unbuilt features use `test.fixme` with a gap citation.
+  - Code Quality Standards table: 6 new rows (Frontend reachability, Router registration,
+    Test signalling, SQLAlchemy enum columns, Sibling element identity, Query key
+    namespacing).
+  - Development Workflow step 6: reachability audit added to the checkpoint gate.
+
+Modified sections:
+  - VIII. Observability — Database Model Standards, Enum columns: `values_callable` now
+    required, not just an explicit `name`. Without it SQLAlchemy persists member *names*
+    rather than values; 44 columns were affected before this was corrected.
+  - IX. Language-Specific — React: new bullets for sibling element identity (distinct `key`
+    when two variants occupy one position) and TanStack Query key namespacing (`undefined`
+    and `null` hash to the same key).
+  - Development Workflow step 1 and Governance: renumbered "nine Core Principles" / "I–IX"
+    to "ten" / "I–X".
+
+Templates updated:
+  ✅ .specify/templates/plan-template.md — Constitution Check: 3 new gate rows (X).
+  ✅ .specify/templates/tasks-template.md — Notes footer: reachability + test signalling
+     rules added. Also corrects a pre-existing error: the footer already claimed Principles
+     I–X and named "Feature Completion Documentation" as the tenth, which was never a
+     principle (it is Development Workflow step 9). X is now genuinely defined.
+  ⚠ .specify/templates/spec-template.md — no changes required (generic enough).
+
+Known outstanding violations (recorded, not silently accepted):
+  - frontend/e2e/results-dashboard.spec.ts contains 5 conditional `test.skip()` calls that
+    Principle VI now forbids. These are the residue of the 8 still-skipped e2e tests and
+    require remediation to `test.fixme` + gap citation, or a real assertion.
+  - scripts/audit_unreachable_frontend.py is not yet wired into CI; Principle X requires it.
+    It currently reports 23 unreachable modules, tracked as G18–G21 and designed for in
+    docs/features/012-wire-up-unreachable-workflows.md.
+
+Deferred TODOs: none
+-->
+
+<!--
+SYNC IMPACT REPORT
+==================
 Version change: 1.6.1 → 1.7.0
 Bump rationale: MINOR — three new mandatory requirements added:
   (1) All source files MUST have a module-level doc comment (Python module docstring /
@@ -290,6 +342,29 @@ task list.
 - E2e tests (`npx playwright test`) MUST be run in CI on every PR targeting `main`, with
   all required services provisioned via GitHub Actions `services:` containers.
 
+#### Honest Test Signalling
+
+A test MUST report the truth about the system. A test that quietly declines to assert is
+worse than no test, because it occupies the place where coverage would otherwise be missed.
+
+- **No state-conditional assertions**: A test MUST NOT branch on application state to decide
+  whether to assert. `if (await control.isEnabled()) { assert } else { test.skip() }` is
+  forbidden: when the feature is missing the test reports a pass-shaped skip, which is
+  indistinguishable from success on a dashboard.
+- **`isVisible()` MUST NOT be used as a guard**: Playwright's `isVisible()` takes no timeout
+  and samples the DOM instantaneously, so it returns `false` for anything not yet rendered.
+  Use `expect(locator).toBeVisible({ timeout })`, or `locator.waitFor()`, which retry.
+- **Unbuilt features use `test.fixme`**: When a test cannot pass because the feature does not
+  exist or is unreachable, it MUST be marked `test.fixme` with a comment naming the gap
+  (e.g. a `docs/feature-gaps.md` entry). `test.fixme` states "this should work and does not";
+  a conditional skip states nothing at all.
+- **Skips MUST carry a reason**: Every `@pytest.mark.skip` / `@pytest.mark.xfail` MUST have a
+  non-empty `reason=`. This is enforced at session level by the root `conftest.py`, which
+  fails the run otherwise. Playwright skips MUST carry an equivalent inline justification.
+- **Assertions MUST NOT be satisfiable by a placeholder**: A test that passes against
+  "content will be available in a future sprint" is asserting the wrong thing. Assert on
+  something only the working feature can produce.
+
 #### Mutation Testing
 
 - All test suites MUST be validated for quality using mutation testing. The minimum acceptable
@@ -462,8 +537,13 @@ behaviour across development, staging, and production environments.
   users MUST include a `version_id` column and configure SQLAlchemy's optimistic locking
   via `__mapper_args__ = {"version_id_col": version_id}`.
 - **Enum columns**: Domain-constrained string columns MUST use Python `enum.Enum` subclasses
-  mapped through SQLAlchemy's `Enum` column type with an explicit `name` parameter to ensure
-  stable PostgreSQL enum type naming across migrations.
+  mapped through SQLAlchemy's `Enum` column type with **both** an explicit `name` parameter
+  (for stable PostgreSQL enum type naming across migrations) and an explicit
+  `values_callable` (e.g. `Enum(MyEnum, values_callable=enum_values, name="my_enum")`).
+  Omitting `values_callable` is a blocking violation: SQLAlchemy defaults to persisting enum
+  member **names**, not their values, so `Status.IN_PROGRESS` is stored as `"IN_PROGRESS"`
+  while every API contract, migration, and client expects `"in_progress"`. The mismatch is
+  invisible until a query filters on the value and silently matches nothing.
 - **Model exports**: All models MUST be exported from `db/src/db/models/__init__.py` so
   consumers can import from a single stable path.
 
@@ -509,9 +589,22 @@ avoided:
 - **Unstable list keys**: The `key` prop in list renders MUST be a stable, unique identifier
   from the data (e.g., record ID). Array indices MUST NOT be used as keys for lists that can
   reorder, insert, or delete items.
+- **Sibling element identity**: When two different elements can occupy the same position in
+  a render tree — a Next button that becomes a Submit button, an Edit control that becomes
+  Save — each variant MUST carry a distinct, stable `key`. Without one, React reconciles them
+  into a **single** DOM node and only patches the changed attributes, so a `type="button"`
+  that becomes `type="submit"` mid-interaction fires the browser's default action on the
+  click that is already in flight. This is not a styling detail: it silently submitted a
+  multi-step form one step early and discarded the final step's input.
 - **State mutation**: React state MUST be treated as immutable. Direct mutation of state
   objects or arrays (e.g., `arr.push()` before `setState`) is forbidden — always derive new
   values and pass them to the setter.
+- **TanStack Query key collisions**: Query keys are identified by a structural **hash**, not
+  by reference. `['agents', undefined]` and `['agents', null]` serialise identically, so an
+  unparameterised list query and a disabled detail query silently share one cache entry —
+  and `enabled: false` only stops that observer, never the shared query's `queryFn`. Keys
+  MUST therefore be namespaced by role rather than distinguished by an argument's absence:
+  `['agents', 'list', params]` and `['agents', 'detail', id]`, never `['agents', maybeId]`.
 - **Circular imports**: Vite HMR and bundler tree-shaking break silently on circular
   imports. Module dependency graphs MUST remain acyclic. Use dependency injection or
   event-based patterns to break cycles.
@@ -700,6 +793,46 @@ production bugs and developer confusion. Encoding them here as non-negotiable ru
 than leaving them to tribal knowledge—ensures consistent quality across AI-assisted and human
 contributions.
 
+### X. Reachability & Delivery Verification
+
+Code that exists but cannot be reached has not been delivered. A module that compiles, passes
+its unit tests, and calls a working endpoint says **nothing** about whether a user can get to
+it. Every requirement below is mechanically checkable, because judgement has repeatedly failed
+here: a reachability sweep on 2026-08-06 found 23 frontend modules — including an entire
+completed study workflow — that no user could reach.
+
+- **Frontend reachability**: Every module under `frontend/src` MUST be reachable from the
+  application entry point (`main.tsx`) through the static import graph. This is verified by
+  `python3 scripts/audit_unreachable_frontend.py`, which walks that graph and exits non-zero
+  on any unreachable module. The audit MUST run in CI on every PR targeting `main`, and MUST
+  pass. Modules that are entry points in their own right MUST be declared in the script's
+  `ENTRY_POINTS` / `ALLOWED_ORPHANS` lists — never left to be silently tolerated.
+- **Route and dispatch registration**: A new page component MUST be registered on a route, or
+  dispatched to by a component that is. Where a parent dispatches on a discriminator (study
+  type, role, phase), adding a new variant MUST include adding its branch — a fall-through
+  that renders another variant's UI over the new variant's data is a blocking defect, not a
+  cosmetic one.
+- **Backend router registration**: Every `APIRouter` MUST be included in the application
+  router tree. An endpoint module that nothing registers is dead code and MUST be removed or
+  registered before merge.
+- **APIs MUST return what their UI needs**: A frontend feature MUST NOT be gated on data the
+  API does not return. When a control's visibility, permission, or data source depends on a
+  field, that field MUST be added to the relevant response schema in the same change. Shipping
+  a component whose required prop has no source — or hardcoding that prop to a constant —
+  renders the feature for nobody.
+- **Placeholders MUST NOT outlive their implementation**: Text of the form "available in a
+  future sprint" MUST NOT remain in a code path whose implementing components exist. If the
+  components are written and their endpoints answer, the placeholder is a defect.
+- **Definition of done**: A user-facing feature is complete when an automated test drives it
+  **through the UI**, end to end, against a live backend. Unit tests against mocks do not
+  satisfy this clause — mock-only green is precisely the signal that concealed every defect
+  this principle exists to prevent.
+
+_Rationale_: The costliest defects found in this project to date were not incorrect code;
+they were correct code nobody could run. Unit tests, type checking, and coverage all pass
+cleanly on an unreachable module, so no existing gate detects this class. Reachability must
+therefore be asserted explicitly and mechanically.
+
 ## Code Quality Standards
 
 The following gates apply at specification, planning, and implementation time:
@@ -745,6 +878,12 @@ The following gates apply at specification, planning, and implementation time:
 | TypeScript any              | MUST NOT appear; use unknown + narrowing at all external boundaries                                                                                                                                                                                                    |
 | TypeScript enum             | MUST NOT be used; use string literal unions or as const object maps                                                                                                                                                                                                    |
 | TypeScript non-null (!)     | MUST NOT be used without inline justification comment                                                                                                                                                                                                                  |
+| Frontend reachability       | `scripts/audit_unreachable_frontend.py` MUST report zero unreachable modules; MUST run in CI                                                                                                                                                                           |
+| Router registration         | Every `APIRouter` MUST be included in the app router tree; every page MUST be routed or dispatched to                                                                                                                                                                  |
+| Test signalling             | No state-conditional assertions; no `isVisible()` guards; unbuilt features use `test.fixme` + gap citation                                                                                                                                                             |
+| SQLAlchemy enum columns     | MUST pass both `name=` and `values_callable=`; omitting the latter persists member names, not values                                                                                                                                                                   |
+| Sibling element identity    | Two element variants in one render position MUST carry distinct stable `key`s                                                                                                                                                                                          |
+| Query key namespacing       | TanStack Query keys MUST be namespaced by role (`['x','list',p]` / `['x','detail',id]`), never by argument absence                                                                                                                                                     |
 
 These standards apply to Python (backend, agents, db, researcher-mcp) and TypeScript
 (frontend) code equally. Language-idiomatic implementations are preferred (e.g., Python
@@ -756,11 +895,11 @@ hierarchies where pure data is involved).
 The following workflow MUST be followed for every task in the implementation plan:
 
 1. **Spec → Plan → Tasks**: Specification, planning, and task generation MUST check all
-   nine Core Principles. Any violation found at planning time MUST surface as an explicit
+   ten Core Principles. Any violation found at planning time MUST surface as an explicit
    task (refactor or redesign) — not deferred to "Polish".
 
 2. **Pre-implementation code review**: Before starting a task, examine the target file(s)
-   and their callers. Document any Principle I–III and Principle IX violations in the task
+   and their callers. Document any Principle I–III, IX, and X violations in the task
    description.
 
 3. **Refactoring-before-feature**: If refactoring is required to implement a feature cleanly,
@@ -784,6 +923,10 @@ The following workflow MUST be followed for every task in the implementation pla
    - Full test suite MUST pass with coverage ≥ 85%. All tests — including pre-existing tests
      for unchanged code — MUST pass. A failing pre-existing test is a blocking defect that
      MUST be fixed before the feature is marked complete, not deferred.
+   - `python3 scripts/audit_unreachable_frontend.py` MUST exit clean (Principle X). Any
+     component added by the feature MUST be reachable from `main.tsx`, and an e2e test MUST
+     drive the feature through the UI against a live backend. A feature whose components are
+     written but unreachable MUST NOT be marked complete.
    - Before the feature is marked complete, mutation testing MUST be run against every
      modified subproject (cosmic-ray for Python subprojects, stryker for the frontend). A
      subproject is modified if any file under its `src/` directory was added, changed, or
@@ -799,7 +942,7 @@ The following workflow MUST be followed for every task in the implementation pla
      These tasks MUST be completed before the agent task is marked done.
 
 8. **New dependencies**: Any addition of a new Python or TypeScript dependency MUST be
-   reviewed against Principles VII, VIII, and IX. If the dependency introduces a tool that
+   reviewed against Principles VII, VIII, IX, and X. If the dependency introduces a tool that
    duplicates an already-approved tool (e.g., a second HTTP client, a second form library),
    the new dependency MUST NOT be merged without a constitution amendment approving the
    substitution or co-existence.
@@ -844,7 +987,7 @@ and AI coding agents operating within this repository.
 
 **Compliance review**:
 
-- All PRs MUST verify compliance with Principles I–IX before merging.
+- All PRs MUST verify compliance with Principles I–X before merging.
 - AI agents MUST apply the Constitution Check gate in plan.md before generating code.
 - Complexity Tracking in plan.md MUST record any justified violations with rationale.
 - Testing Discipline gates (Principle VI) MUST be verified in CI before merge approval.
@@ -854,5 +997,8 @@ and AI coding agents operating within this repository.
   configuration module.
 - Language-specific gates (Principle IX) MUST be checked during code review for all React,
   Python, and TypeScript code changes.
+- Reachability gates (Principle X) MUST be verified in CI before merge approval: the frontend
+  audit MUST exit clean, and every user-facing feature MUST have an e2e test that drives it
+  through the UI.
 
-**Version**: 1.7.0 | **Ratified**: 2026-03-11 | **Last Amended**: 2026-03-21
+**Version**: 1.8.0 | **Ratified**: 2026-03-11 | **Last Amended**: 2026-08-06
