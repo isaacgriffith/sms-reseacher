@@ -46,8 +46,28 @@ had been invisible because tests skipped themselves rather than failing.
   `# type: ignore`); those suppressions are removed. One unit test had been
   written against a mutant and now asserts the correct value.
 
+### Removed
+
+- **Two shadowed Python modules deleted** — `backend/src/backend/api/v1/admin.py`
+  and `db/src/db/models.py`. Each sat beside a same-named package, so `import`
+  resolved to the package and neither file ever executed; `admin.py` declared an
+  `APIRouter` nothing could reach. `admin.py` was left behind when feature 005
+  converted the module into a package; `db/models.py` was created in the same
+  commit as the package that shadows it and was never imported once. Verified
+  safe before removal: identical top-level symbol sets, the live packages a
+  strict superset on columns, and no config referencing either by path.
+
 ### Added
 
+- **`scripts/check_shadowed_modules.py`** — the Python counterpart to
+  `scripts/audit_unreachable_frontend.py`. A shadowed module lints, type-checks
+  and can be unit-tested by file path while contributing nothing to the running
+  system, so no existing tool objected. Runs in pre-commit and CI, with 9 tests
+  in `scripts/tests/`. Scans the whole tree rather than staged files, because
+  the defect is a relationship between two paths — staging one still creates it.
+- **`scripts/` added to `ruff` and `mypy` coverage** in both pre-commit and CI.
+  It had never been linted, which is how two new scripts entered the tree with
+  formatting and `ISC004` violations; both are fixed.
 - **Mutation-testing containment** — three independent guards, added after the
   repair above:
   - `scripts/mutation-test-command.sh`: every cosmic-ray test run refuses

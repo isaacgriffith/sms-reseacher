@@ -34,23 +34,28 @@ jobs:
       - name: Mutation artifact scan
         run: python3 scripts/check_mutation_artifacts.py
 
+      # The Python counterpart to scripts/audit_unreachable_frontend.py: a
+      # module shadowed by a same-named package is dead however well it lints.
+      - name: Shadowed module scan
+        run: python3 scripts/check_shadowed_modules.py
+
       - name: Scanner self-test
         run: uv run pytest scripts/tests -q
 
       - name: Ruff check
         run: |
           uv run ruff check \
-            backend/src agents/src db/src agent-eval/src researcher-mcp/src
+            backend/src agents/src db/src agent-eval/src researcher-mcp/src scripts
 
       - name: Ruff format check
         run: |
           uv run ruff format --check \
-            backend/src agents/src db/src agent-eval/src researcher-mcp/src
+            backend/src agents/src db/src agent-eval/src researcher-mcp/src scripts
 
       - name: MyPy type check
         run: |
           uv run mypy \
-            backend/src agents/src db/src agent-eval/src researcher-mcp/src
+            backend/src agents/src db/src agent-eval/src researcher-mcp/src scripts
 
   # ── Python: Tests (matrix) ───────────────────────────────────────────────────
   python-test:

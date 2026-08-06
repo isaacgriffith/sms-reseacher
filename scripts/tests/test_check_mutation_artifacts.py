@@ -113,7 +113,9 @@ def test_ignores_prose_in_docstrings(tmp_path: Path) -> None:
 def test_ignores_signatures_inside_string_literals(tmp_path: Path) -> None:
     """A signature quoted in a string is data, not code."""
     # Arrange
-    target = _write(tmp_path, 'MESSAGE = "raises CosmicRayTestingException on failure"\n')
+    target = _write(
+        tmp_path, 'MESSAGE = "raises CosmicRayTestingException on failure"\n'
+    )
 
     # Act
     findings = cma.scan_file(target)
@@ -172,7 +174,9 @@ def test_equality_comparisons_are_never_flagged(tmp_path: Path) -> None:
 def test_unparseable_source_does_not_crash(tmp_path: Path) -> None:
     """A syntactically invalid file degrades to raw-line scanning."""
     # Arrange
-    target = _write(tmp_path, "def broken(:\n    q = select(Paper).where(Paper.doi > doi)\n")
+    target = _write(
+        tmp_path, "def broken(:\n    q = select(Paper).where(Paper.doi > doi)\n"
+    )
 
     # Act
     findings = cma.scan_file(target)

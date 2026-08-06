@@ -56,26 +56,36 @@ SIGNATURES: tuple[tuple[str, re.Pattern[str], str], ...] = (
     (
         "cosmic-ray exception class",
         re.compile(r"\bCosmicRayTestingException\b"),
-        "cosmic-ray's internal exception type; the name is undefined at runtime, "
-        "so the handler raises NameError and masks the real error",
+        (
+            "cosmic-ray's internal exception type; the name is undefined at "
+            "runtime, so the handler raises NameError and masks the real error"
+        ),
     ),
     (
         "double negation",
         re.compile(r"\bnot\s+not\b"),
-        "cosmic-ray negates a condition by prefixing 'not'; two of them mean a "
-        "mutant landed on an already-negated expression",
+        (
+            "cosmic-ray negates a condition by prefixing 'not'; two of them mean "
+            "a mutant landed on an already-negated expression"
+        ),
     ),
     (
         "loop over an empty literal",
         re.compile(r"\bfor\s+\w+\s+in\s+\[\]\s*:"),
-        "the loop body is unreachable — cosmic-ray blanks an iterable to prove "
-        "the loop is untested",
+        (
+            "the loop body is unreachable — cosmic-ray blanks an iterable to "
+            "prove the loop is untested"
+        ),
     ),
     (
         "identity comparison against a value",
-        re.compile(r"\b[A-Z]\w*\.\w+\s+is(?:\s+not)?\s+(?!None\b|True\b|False\b)[a-z_]\w*"),
-        "'is' compares object identity; on a SQLAlchemy column it yields a plain "
-        "bool instead of a SQL clause, silently matching every row or none",
+        re.compile(
+            r"\b[A-Z]\w*\.\w+\s+is(?:\s+not)?\s+(?!None\b|True\b|False\b)[a-z_]\w*"
+        ),
+        (
+            "'is' compares object identity; on a SQLAlchemy column it yields a "
+            "plain bool instead of a SQL clause, matching every row or none"
+        ),
     ),
     (
         "ordering comparison on an identity column",
@@ -83,8 +93,11 @@ SIGNATURES: tuple[tuple[str, re.Pattern[str], str], ...] = (
             r"\b[A-Z]\w*\.(?:id|\w+_id|doi|uuid|token|role|email|username)\s*"
             r"(?:>=|<=|(?<![<>=!])>(?!=)|(?<![<>=!])<(?!=))\s"
         ),
-        "identity columns are matched with '==', never ordered; an inequality "
-        "here selects the wrong rows and can raise MultipleResultsFound",
+        (
+            "identity columns are matched with '==', never ordered; an "
+            "inequality here selects the wrong rows and can raise "
+            "MultipleResultsFound"
+        ),
     ),
 )
 
@@ -163,7 +176,11 @@ def scan_file(path: Path) -> list[tuple[int, str, str, str]]:
 def _candidate_files(argv: list[str]) -> list[Path]:
     """Resolve the files to scan from CLI arguments, or from the default roots."""
     if argv:
-        return [Path(a) for a in argv if Path(a).suffix in SOURCE_SUFFIXES and Path(a).is_file()]
+        return [
+            Path(a)
+            for a in argv
+            if Path(a).suffix in SOURCE_SUFFIXES and Path(a).is_file()
+        ]
     files: list[Path] = []
     for root in DEFAULT_ROOTS:
         base = REPO_ROOT / root

@@ -552,13 +552,25 @@ A module `X.py` sitting beside a package `X/` in the same directory is dead: Pyt
 | `backend/src/backend/api/v1/admin.py` | 14.5 K | `api/v1/admin/__init__.py` | `backend.api.v1.admin.__file__` resolves to the package |
 | `db/src/db/models.py`                 |  5.4 K | `db/models/__init__.py`    | `db.models.__file__` resolves to the package            |
 
-Both are genuine forks rather than leftovers of a half-finished move: `admin.py` declares its own `APIRouter(prefix="/admin")` carrying the same three routes as the live package, and `models.py` redefines `StudyType`, `StudyStatus`, `InclusionStatus`, `Study`, `Paper` and `StudyPaper` — every one of which also exists in the package. Editing either file has no effect on the running system, which is the trap: they look exactly like the code you are changing.
+`admin.py` declares its own `APIRouter(prefix="/admin")` carrying the same three routes as the live package, and `models.py` redefines `StudyType`, `StudyStatus`, `InclusionStatus`, `Study`, `Paper` and `StudyPaper` — every one of which also exists in the package. Editing either file has no effect on the running system, which is the trap: they look exactly like the code you are changing.
 
 `admin.py` is also where a copy-pasted `GroupMembership.role <= GroupRole.ADMIN` mutant was found (see [Committed mutation artifacts](#committed-mutation-artifacts-resolved-2026-08-06)). It was repaired in `e47abd9` alongside the live copies rather than left to mislead the next reader.
 
-**Remediation.** Mount `QualityScoreForm` in `QualityAssessmentPage` beneath the checklist; surface `EdgeConditionBuilder` from the protocol editor when an edge is selected. Delete both shadowed files after diffing each against its package to confirm no unique behaviour was ever added. Then extend `scripts/audit_unreachable_frontend.py`, or add a sibling check, so a package-shadowed module fails CI the way an unreachable component does — this class is invisible to the current audit, which walks only the frontend import graph.
+**Origin — corrected 2026-08-06.** This section first called both files "genuine forks rather than leftovers of a half-finished move". The git history says the opposite, and each arrived a different way:
 
-**Cost.** Low. The deletions are mechanical; the shadowing check is a dozen lines.
+- `admin.py` was created at `f812348` (2026-03-08) as an ordinary module. Feature 005 (`a05d09b`, 2026-03-17) converted it into a package and **left the original in place** — a half-finished move, precisely what the earlier wording denied.
+- `db/models.py` was created at `f812348` in the **same commit** as the package that shadows it. It was never imported, not once, in its entire existence.
+
+The distinction matters for the fix: neither file holds newer work, so both are safe to delete outright rather than merge.
+
+**Remediation — ✅ done 2026-08-06.**
+
+- Both files deleted. Verified safe first: identical top-level symbol sets, and the live package a strict superset on columns (`Study` 18 vs 13, `Paper` 16 vs 13, `StudyPaper` 7 vs 7, nothing unique to the dead copies). No `pyproject.toml`, coverage, mypy or cosmic-ray config referenced either by path. After deletion `backend.api.v1.admin` and `db.models` still resolve, the app serves its routes, and 1253 backend + db tests pass.
+- `scripts/check_shadowed_modules.py` added — the Python counterpart to `audit_unreachable_frontend.py`, run in pre-commit and CI, with 9 tests in `scripts/tests/`. It scans the whole tree rather than staged files, because the defect is a _relationship between two paths_: staging only one of them still creates it.
+
+Frontend items remain open: mount `QualityScoreForm` in `QualityAssessmentPage` beneath the checklist, and surface `EdgeConditionBuilder` from the protocol editor when an edge is selected.
+
+**Cost.** Low. The backend half is complete; the two frontend mounts remain.
 
 ---
 
@@ -582,7 +594,14 @@ python3 scripts/audit_unreachable_frontend.py
 | Screening decisions               |       2 | G18 |
 | Orphaned controls                 |       2 | G21 |
 
-**Correction — 2026-08-06.** This section previously read "The backend has no equivalent problem: all **56** `APIRouter` modules are registered." Every registered router does resolve, but the statement was drawn from the registration list rather than from the import graph, and it misses the opposite failure: a module that is never loaded at all. `backend/src/backend/api/v1/admin.py` declares an `APIRouter` that nothing can reach, because the `admin/` package beside it shadows the name — as does `db/src/db/models.py`. Both are recorded under G21. The backend has the same disease in a different organ; what it lacks is an audit that would find it, since `scripts/audit_unreachable_frontend.py` walks only `frontend/src`.
+**Correction — 2026-08-06.** This section previously read "The backend has no equivalent problem: all **56** `APIRouter` modules are registered." Every registered router does resolve, but the statement was drawn from the registration list rather than from the import graph, and it misses the opposite failure: a module that is never loaded at all. `backend/src/backend/api/v1/admin.py` declared an `APIRouter` that nothing could reach, because the `admin/` package beside it shadows the name — as did `db/src/db/models.py`. Both are recorded under G21, and both were deleted the same day.
+
+The backend had the same disease in a different organ, and what it lacked was an audit that would find it. It now has one: `scripts/check_shadowed_modules.py` runs in pre-commit and CI beside the mutation scanner. Two oracles now guard reachability, one per language:
+
+| Oracle                                  | Language   | Failure it detects                                         |
+| --------------------------------------- | ---------- | ---------------------------------------------------------- |
+| `scripts/audit_unreachable_frontend.py` | TypeScript | Module not reachable from `main.tsx` in the import graph   |
+| `scripts/check_shadowed_modules.py`     | Python     | Module shadowed by a same-named package, so never imported |
 
 **Already fixed, same pattern.** Recorded because they show the failure mode is not confined to whole components:
 

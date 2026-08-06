@@ -257,6 +257,18 @@ python3 scripts/audit_unreachable_frontend.py
 It currently reports 23 unreachable modules, tracked as G18–G21 in `docs/feature-gaps.md`
 and designed for in `docs/features/012-wire-up-unreachable-workflows.md`.
 
+The Python side has its own oracle, because the failure mode differs. A module `X.py` beside a
+package `X/` is dead — `import X` resolves to the package every time — yet it lints,
+type-checks, and can even be unit-tested by file path. Two such files existed and were deleted
+on 2026-08-06 (`api/v1/admin.py`, `db/models.py`).
+
+```bash
+python3 scripts/check_shadowed_modules.py
+```
+
+Both oracles run in pre-commit and CI. `scripts/` is covered by `ruff` and `mypy` alongside the
+five `*/src` roots — it was not, which is how two unlinted scripts reached the tree.
+
 ### Mutation Testing
 
 Mutation testing is slow and NOT run on every PR. Use `workflow_dispatch` in GitHub Actions
@@ -276,9 +288,9 @@ Three independent guards now stand in the way:
 
 | Guard                                 | Where it fires            | What it does                                                                       |
 | ------------------------------------- | ------------------------- | ---------------------------------------------------------------------------------- |
-| `scripts/mutation-test-command.sh`    | every cosmic-ray test run | Refuses (exit 99) unless `git rev-parse` proves it is inside a **linked worktree**  |
-| `scripts/run-mutation-safe.sh`        | before and after each run | Fingerprints the tracked tree and fails if the run changed a single byte of it      |
-| `scripts/check_mutation_artifacts.py` | pre-commit and CI         | Blocks commits carrying cosmic-ray signatures; self-tested by `scripts/tests/`      |
+| `scripts/mutation-test-command.sh`    | every cosmic-ray test run | Refuses (exit 99) unless `git rev-parse` proves it is inside a **linked worktree** |
+| `scripts/run-mutation-safe.sh`        | before and after each run | Fingerprints the tracked tree and fails if the run changed a single byte of it     |
+| `scripts/check_mutation_artifacts.py` | pre-commit and CI         | Blocks commits carrying cosmic-ray signatures; self-tested by `scripts/tests/`     |
 
 The first guard is structural: an environment variable can be exported by mistake, whereas
 `--git-dir` differing from `--git-common-dir` is true only inside a throwaway checkout. The

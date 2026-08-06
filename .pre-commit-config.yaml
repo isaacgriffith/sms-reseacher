@@ -10,6 +10,16 @@ repos:
         pass_filenames: true
         types: [python]
 
+      # A module beside a same-named package never executes. Scans the whole
+      # tree rather than staged files, because the defect is a relationship
+      # between two paths — staging only one of them still creates it.
+      - id: shadowed-modules
+        name: shadowed modules (dead Python files)
+        language: system
+        entry: python3 scripts/check_shadowed_modules.py
+        pass_filenames: false
+        types: [python]
+
       - id: ruff-check
         name: ruff check (Python lint)
         language: system
@@ -21,6 +31,7 @@ repos:
             "db/src",
             "agent-eval/src",
             "researcher-mcp/src",
+            "scripts",
           ]
         pass_filenames: false
         types: [python]
@@ -36,6 +47,7 @@ repos:
             "db/src",
             "agent-eval/src",
             "researcher-mcp/src",
+            "scripts",
           ]
         pass_filenames: false
         types: [python]
@@ -51,6 +63,7 @@ repos:
             "db/src",
             "agent-eval/src",
             "researcher-mcp/src",
+            "scripts",
           ]
         pass_filenames: false
         types: [python]
