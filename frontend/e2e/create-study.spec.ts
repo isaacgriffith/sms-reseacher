@@ -26,6 +26,40 @@ async function loginAndNavigate(page: import('@playwright/test').Page) {
   await page.waitForURL('**/groups**');
 }
 
+/**
+ * Fill step 1 of NewStudyWizard and click through to the end.
+ *
+ * The wizard always has five steps: step 1 requires name + topic (its Next
+ * button calls trigger() on both), steps 2–4 are optional, and step 5 submits.
+ * That is fixed, so the walk is unconditional — the previous version probed
+ * each control with isVisible(), which has no timeout and silently skipped
+ * fields whenever it lost the race with the render.
+ */
+async function fillWizard(
+  page: import('@playwright/test').Page,
+  studyName: string,
+  opts: { topic: string; studyType?: string },
+) {
+  await page.getByLabel(/study name/i).fill(studyName);
+  await page.getByLabel(/topic/i).fill(opts.topic);
+  if (opts.studyType) {
+    await page.getByLabel(/study type/i).selectOption(opts.studyType);
+  }
+
+  // Drive off the wizard's own "Step N of 5" indicator so each click waits for
+  // the step it belongs to, rather than firing a fixed number of times and
+  // racing the re-render.
+  for (let step = 1; step < 5; step++) {
+    await expect(page.getByText(`Step ${step} of 5`)).toBeVisible({ timeout: 10_000 });
+    // Anchored + case-insensitive: MUI uppercases button labels via CSS, and
+    // Chromium computes the accessible name from the rendered text, so
+    // { name: 'Next', exact: true } is case-sensitive against "NEXT".
+    await page.getByRole('button', { name: /^next$/i }).click();
+  }
+  await expect(page.getByText('Step 5 of 5')).toBeVisible({ timeout: 10_000 });
+  await page.getByRole('button', { name: /^create study$/i }).click();
+}
+
 test.describe('Create study', () => {
   test.beforeEach(async ({ page }) => {
     await loginAndNavigate(page);
@@ -63,32 +97,7 @@ test.describe('Create study', () => {
     await page.goto(`/groups/${TEST_GROUP_ID}/studies`);
     await page.getByRole('button', { name: /new study/i }).click();
 
-    // Fill in study name
-    await page.getByLabel(/study name|name/i).fill(studyName);
-
-    // Fill in topic if present
-    const topicField = page.getByLabel(/topic/i);
-    if (await topicField.isVisible()) {
-      await topicField.fill('Automated testing in agile projects');
-    }
-
-    // Submit the wizard (may be multi-step — keep clicking Next until done)
-    for (let step = 0; step < 5; step++) {
-      const nextBtn = page.getByRole('button', { name: /next|create study|finish/i });
-      if (await nextBtn.isVisible()) {
-        await nextBtn.click();
-        // If we've reached the list (wizard closed), stop
-        if (
-          await page
-            .getByText(studyName)
-            .isVisible()
-            .catch(() => false)
-        )
-          break;
-      } else {
-        break;
-      }
-    }
+    await fillWizard(page, studyName, { topic: 'Automated testing in agile projects' });
 
     // The new study should appear in the list
     await expect(page.getByText(studyName)).toBeVisible({ timeout: 10_000 });

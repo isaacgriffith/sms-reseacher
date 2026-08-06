@@ -135,26 +135,17 @@ test.describe('Admin — Provider Management', () => {
     // Fill in the form
     const dialog = page.getByRole('dialog');
 
-    // Select provider type (Ollama)
-    const typeSelect = dialog
-      .getByLabel(/provider type|type/i)
-      .or(dialog.getByRole('combobox', { name: /type/i }))
-      .first();
-    if (await typeSelect.isVisible()) {
-      // MUI <TextField select> renders a listbox in a portal, not a native
-      // <select>, so selectOption() does not apply — open it and pick the item.
-      await typeSelect.click();
-      await page.getByRole('option', { name: /ollama/i }).click();
-    }
+    // Provider Type is always present. MUI <TextField select> renders a listbox
+    // in a portal, not a native <select>, so selectOption() does not apply —
+    // open it and pick the item.
+    await dialog.getByLabel(/provider type/i).click();
+    await page.getByRole('option', { name: /ollama/i }).click();
 
-    // Fill display name
     await dialog.getByLabel(/display name/i).fill(providerName);
 
-    // Fill base URL (required for Ollama)
-    const baseUrlField = dialog.getByLabel(/base url|url/i);
-    if (await baseUrlField.isVisible()) {
-      await baseUrlField.fill('http://localhost:11434');
-    }
+    // Base URL renders only for the ollama provider type, which was just
+    // selected — so it is unconditional here.
+    await dialog.getByLabel(/base url/i).fill('http://localhost:11434');
 
     // Submit the form
     await dialog.getByRole('button', { name: /save|create|add|submit/i }).click();

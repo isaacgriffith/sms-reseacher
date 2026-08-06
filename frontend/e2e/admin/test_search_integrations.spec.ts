@@ -173,20 +173,15 @@ test.describe('Admin — Search Integrations', () => {
     const testNowBtn = page.getByRole('button', { name: /test now/i }).first();
     await testNowBtn.click();
 
-    // After clicking, either the button becomes disabled/pending or a
-    // last-tested timestamp/status appears. We check for any state change.
-    // The button is disabled when testMutation.isPending === true.
-    const isDisabled = await testNowBtn.isDisabled().catch(() => false);
-    const hasSpinner = await page
-      .locator('[role="progressbar"]')
-      .isVisible()
-      .catch(() => false);
-    const hasResult = await page
-      .getByText(/success|error|failed|ok|pending|testing/i)
-      .first()
-      .isVisible()
-      .catch(() => false);
-
-    expect(isDisabled || hasSpinner || hasResult).toBeTruthy();
+    // Wait for the outcome rather than sampling the DOM the instant after the
+    // click: the in-flight spinner may not have rendered yet, and by the time
+    // it has, the request may already have resolved. Either a progress
+    // indicator or a result status counts as feedback.
+    await expect(
+      page
+        .locator('[role="progressbar"]')
+        .first()
+        .or(page.getByText(/success|error|failed|ok|pending|testing/i).first()),
+    ).toBeVisible({ timeout: 15_000 });
   });
 });

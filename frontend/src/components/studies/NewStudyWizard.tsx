@@ -300,6 +300,7 @@ export default function NewStudyWizard({ groupId, onClose, onCreated }: Props) {
               </Box>
               <Box sx={{ marginBottom: '1rem' }}>
                 <label
+                  htmlFor="wizard-study-type"
                   style={{
                     display: 'block',
                     marginBottom: '0.25rem',
@@ -309,7 +310,7 @@ export default function NewStudyWizard({ groupId, onClose, onCreated }: Props) {
                 >
                   Study type *
                 </label>
-                <select style={inputStyle} {...register('study_type')}>
+                <select id="wizard-study-type" style={inputStyle} {...register('study_type')}>
                   {STUDY_TYPES.map((t) => (
                     <option key={t} value={t}>
                       {t}
@@ -336,6 +337,7 @@ export default function NewStudyWizard({ groupId, onClose, onCreated }: Props) {
               </Box>
               <Box sx={{ marginBottom: '1rem' }}>
                 <label
+                  htmlFor="wizard-snowball-threshold"
                   style={{
                     display: 'block',
                     marginBottom: '0.25rem',
@@ -346,6 +348,7 @@ export default function NewStudyWizard({ groupId, onClose, onCreated }: Props) {
                   Snowball threshold
                 </label>
                 <input
+                  id="wizard-snowball-threshold"
                   type="number"
                   min={1}
                   max={50}
@@ -434,6 +437,7 @@ export default function NewStudyWizard({ groupId, onClose, onCreated }: Props) {
               </Typography>
               <Box sx={{ marginBottom: '1rem' }}>
                 <label
+                  htmlFor="wizard-motivation"
                   style={{
                     display: 'block',
                     marginBottom: '0.25rem',
@@ -444,6 +448,7 @@ export default function NewStudyWizard({ groupId, onClose, onCreated }: Props) {
                   Motivation
                 </label>
                 <textarea
+                  id="wizard-motivation"
                   rows={3}
                   style={{ ...inputStyle, resize: 'vertical' }}
                   placeholder="Why is this study needed?"
@@ -452,6 +457,7 @@ export default function NewStudyWizard({ groupId, onClose, onCreated }: Props) {
               </Box>
               <Box sx={{ marginBottom: '1rem' }}>
                 <label
+                  htmlFor="wizard-research-objectives"
                   style={{
                     display: 'block',
                     marginBottom: '0.25rem',
@@ -462,6 +468,7 @@ export default function NewStudyWizard({ groupId, onClose, onCreated }: Props) {
                   Research objectives (one per line)
                 </label>
                 <textarea
+                  id="wizard-research-objectives"
                   rows={4}
                   style={{ ...inputStyle, resize: 'vertical' }}
                   placeholder="RO1: Identify…&#10;RO2: Characterise…"
@@ -470,6 +477,7 @@ export default function NewStudyWizard({ groupId, onClose, onCreated }: Props) {
               </Box>
               <Box sx={{ marginBottom: '1rem' }}>
                 <label
+                  htmlFor="wizard-research-questions"
                   style={{
                     display: 'block',
                     marginBottom: '0.25rem',
@@ -480,6 +488,7 @@ export default function NewStudyWizard({ groupId, onClose, onCreated }: Props) {
                   Research questions (one per line)
                 </label>
                 <textarea
+                  id="wizard-research-questions"
                   rows={4}
                   style={{ ...inputStyle, resize: 'vertical' }}
                   placeholder="RQ1: What…&#10;RQ2: How…"
@@ -546,6 +555,12 @@ export default function NewStudyWizard({ groupId, onClose, onCreated }: Props) {
             </Button>
             {step < TOTAL_STEPS ? (
               <Button
+                // Distinct keys keep React from reusing one DOM node across the
+                // Next/Create swap. Reusing it flips the live button's `type`
+                // to "submit" while the click is still being handled, so the
+                // browser's default action submits the form — creating the
+                // study from step 4 and discarding step 5's input entirely.
+                key="wizard-next"
                 type="button"
                 variant="contained"
                 onClick={async () => {
@@ -561,6 +576,7 @@ export default function NewStudyWizard({ groupId, onClose, onCreated }: Props) {
               </Button>
             ) : (
               <Button
+                key="wizard-submit"
                 type="submit"
                 variant="contained"
                 disabled={isSubmitting}

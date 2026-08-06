@@ -39,33 +39,20 @@ async function createSMSStudy(
   await page.goto(`/groups/${TEST_GROUP_ID}/studies`);
   await page.getByRole('button', { name: /new study/i }).click();
 
-  await page.getByLabel(/study name|name/i).fill(studyName);
+  await page.getByLabel(/study name/i).fill(studyName);
+  await page.getByLabel(/topic/i).fill('Protocol definition e2e test');
+  await page.getByLabel(/study type/i).selectOption('SMS');
 
-  const topicField = page.getByLabel(/topic/i);
-  if (await topicField.isVisible()) {
-    await topicField.fill('Protocol definition e2e test');
+  // The wizard always has five steps. Wait for each step's own indicator before
+  // clicking, and use anchored case-insensitive names: MUI uppercases button
+  // labels via CSS and Chromium derives the accessible name from the rendered
+  // text, so { name: 'Next', exact: true } matches nothing.
+  for (let step = 1; step < 5; step++) {
+    await expect(page.getByText(`Step ${step} of 5`)).toBeVisible({ timeout: 10_000 });
+    await page.getByRole('button', { name: /^next$/i }).click();
   }
-
-  // Select SMS study type if wizard exposes type selector
-  const smsOption = page.getByRole('radio', { name: /sms|systematic mapping/i });
-  if (await smsOption.isVisible()) {
-    await smsOption.click();
-  }
-
-  // Step through wizard
-  for (let step = 0; step < 6; step++) {
-    const nextBtn = page.getByRole('button', { name: /next|create study|finish/i });
-    if (await nextBtn.isVisible()) {
-      await nextBtn.click();
-      const visible = await page
-        .getByText(studyName)
-        .isVisible()
-        .catch(() => false);
-      if (visible) break;
-    } else {
-      break;
-    }
-  }
+  await expect(page.getByText('Step 5 of 5')).toBeVisible({ timeout: 10_000 });
+  await page.getByRole('button', { name: /^create study$/i }).click();
 
   await expect(page.getByText(studyName)).toBeVisible({ timeout: 10_000 });
 
