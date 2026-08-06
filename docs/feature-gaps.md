@@ -1,7 +1,7 @@
 # Feature Gap Analysis
 
 **Assessed**: 2026-08-05
-**Last updated**: 2026-08-06 — G16–G21 added. A systematic reachability sweep found **23 frontend modules unreachable from `main.tsx`**, including the entire Tertiary Studies frontend. See [Built-but-never-wired audit](#built-but-never-wired-audit). G18, G19, and G20 were then designed together as [feature 012](./features/012-wire-up-unreachable-workflows.md); that pass **corrected several claims in G18 and G19** — see the `Correction — 2026-08-06` notes in each.
+**Last updated**: 2026-08-06 — G16–G21 added. A systematic reachability sweep found **23 frontend modules unreachable from `main.tsx`**, including the entire Tertiary Studies frontend. See [Built-but-never-wired audit](#built-but-never-wired-audit). G18, G19, and G20 were then designed together as [feature 012](./features/012-wire-up-unreachable-workflows.md); that pass **corrected several claims in G18 and G19** — see the `Correction — 2026-08-06` notes in each. Later the same day, starting work on 012 uncovered **60+ committed mutation-testing artifacts** in `backend/src`, invisible to a fully green suite — see [Committed mutation artifacts](#committed-mutation-artifacts-resolved-2026-08-06), now resolved. G21 was broadened to cover **two package-shadowed backend modules**, and this document's claim that the backend had no reachability problem was withdrawn.
 **Baseline**: `docs/base-features.md` (27 features, F1-SF01 – F3-SF04)
 **Evidence**: working tree of branch `011-improve-testing-and-fix-ci` (301 modified files uncommitted; base commit `32aeffb`)
 **Method**: traced each feature to implementing code — ORM models, API routes, services, agents, source adapters, and UI components — not to `specs/` intent
@@ -30,7 +30,7 @@
 | F2-SF02 | Protocol validation  | ◐      | AI review is SLR-only                                                       |
 | F2-SF03 | Automated searches   | ◐      | G1, G2, G3, G13 — the largest cluster                                       |
 | F2-SF04 | Study selection      | ◐      | G4, G5; G18 — no UI to record a screening decision at all                   |
-| F2-SF05 | Quality assessment   | ◐      | G6 — no Study entity distinct from Paper; G21 — QualityScoreForm orphaned   |
+| F2-SF05 | Quality assessment   | ◐      | G6 — no Study entity distinct from Paper; G21 — orphaned + shadowed modules |
 | F2-SF06 | Data extraction      | ◐      | G20 — extraction UI exists but phase 4 shows a placeholder                  |
 | F2-SF07 | Automated analysis   | ●      | —                                                                           |
 | F2-SF08 | Text analysis        | ●      | —                                                                           |
@@ -502,16 +502,31 @@ Net effect: the work is **smaller than described in every respect but one**. The
 
 ---
 
-### G21 — Two orphaned controls in otherwise-wired features (F2-SF05) — **low**
+### G21 — Orphaned controls and shadowed modules (F2-SF05) — **low**
 
-**Claim.** Two components are complete and unused inside features that are themselves reachable.
+**Claim.** Four modules are complete and unreachable inside features that are themselves reachable. Two are frontend controls nothing imports; two are Python files the interpreter never loads.
+
+_Frontend — imported by nothing:_
 
 - `components/slr/QualityScoreForm.tsx` — per-reviewer scoring with a live aggregate. `QualityAssessmentPage` imports `QualityChecklistEditor` but not this, so a reviewer can define a checklist and never score against it.
 - `components/protocols/EdgeConditionBuilder.tsx` — builds the conditional triple on a protocol edge. Nothing imports it, so conditional edges cannot be authored in the visual editor (the YAML pane remains the only route).
 
-**Remediation.** Mount `QualityScoreForm` in `QualityAssessmentPage` beneath the checklist; surface `EdgeConditionBuilder` from the protocol editor when an edge is selected.
+_Backend — shadowed by a same-named package_ (added 2026-08-06):
 
-**Cost.** Low.
+A module `X.py` sitting beside a package `X/` in the same directory is dead: Python resolves `import X` to the package every time. Two exist, both stale duplicates of the package that displaced them.
+
+| Dead file                             |   Size | Shadowed by                | Verified                                                |
+| ------------------------------------- | -----: | -------------------------- | ------------------------------------------------------- |
+| `backend/src/backend/api/v1/admin.py` | 14.5 K | `api/v1/admin/__init__.py` | `backend.api.v1.admin.__file__` resolves to the package |
+| `db/src/db/models.py`                 |  5.4 K | `db/models/__init__.py`    | `db.models.__file__` resolves to the package            |
+
+Both are genuine forks rather than leftovers of a half-finished move: `admin.py` declares its own `APIRouter(prefix="/admin")` carrying the same three routes as the live package, and `models.py` redefines `StudyType`, `StudyStatus`, `InclusionStatus`, `Study`, `Paper` and `StudyPaper` — every one of which also exists in the package. Editing either file has no effect on the running system, which is the trap: they look exactly like the code you are changing.
+
+`admin.py` is also where a copy-pasted `GroupMembership.role <= GroupRole.ADMIN` mutant was found (see [Committed mutation artifacts](#committed-mutation-artifacts-resolved-2026-08-06)). It was repaired in `e47abd9` alongside the live copies rather than left to mislead the next reader.
+
+**Remediation.** Mount `QualityScoreForm` in `QualityAssessmentPage` beneath the checklist; surface `EdgeConditionBuilder` from the protocol editor when an edge is selected. Delete both shadowed files after diffing each against its package to confirm no unique behaviour was ever added. Then extend `scripts/audit_unreachable_frontend.py`, or add a sibling check, so a package-shadowed module fails CI the way an unreachable component does — this class is invisible to the current audit, which walks only the frontend import graph.
+
+**Cost.** Low. The deletions are mechanical; the shadowing check is a dozen lines.
 
 ---
 
@@ -535,7 +550,7 @@ python3 scripts/audit_unreachable_frontend.py
 | Screening decisions               |       2 | G18 |
 | Orphaned controls                 |       2 | G21 |
 
-The backend has no equivalent problem: all **56** `APIRouter` modules are registered.
+**Correction — 2026-08-06.** This section previously read "The backend has no equivalent problem: all **56** `APIRouter` modules are registered." Every registered router does resolve, but the statement was drawn from the registration list rather than from the import graph, and it misses the opposite failure: a module that is never loaded at all. `backend/src/backend/api/v1/admin.py` declares an `APIRouter` that nothing can reach, because the `admin/` package beside it shadows the name — as does `db/src/db/models.py`. Both are recorded under G21. The backend has the same disease in a different organ; what it lacks is an audit that would find it, since `scripts/audit_unreachable_frontend.py` walks only `frontend/src`.
 
 **Already fixed, same pattern.** Recorded because they show the failure mode is not confined to whole components:
 
@@ -545,6 +560,42 @@ The backend has no equivalent problem: all **56** `APIRouter` modules are regist
 | `NewStudyWizard` reused one DOM node across the Next/Create swap, so clicking Next on step 4 submitted the form and **discarded step 5's input**                               | `513d973` — distinct React keys                                  |
 
 **Why it stayed hidden.** In every case the e2e tests that should have caught it were guarding on `isVisible()` — which takes no timeout — and silently skipping, or asserting against a placeholder. The lesson is recorded under [Observed pattern](#observed-pattern): a component compiling, passing unit tests, and having a working endpoint says nothing about whether a user can reach it.
+
+---
+
+## Committed mutation artifacts (resolved 2026-08-06)
+
+Not a feature gap: a correctness incident in code the catalogue above assumes is sound. Recorded here because several gaps were assessed against source that turned out to be wrong, and because the detection method generalises.
+
+**What happened.** Commit `ecc32de` — "feat: complete 003-project-setup-improvements", the commit that _introduced_ cosmic-ray — ran mutation testing against the real working tree and committed the mutants it left behind. `scripts/run-mutation-safe.sh`, which isolates runs in a git worktree, was not written until `64c99c0` two weeks later; the wrapper was added, but the damage already committed was never reverted. **60+ artifacts survived five feature releases**, and the corruption spread: features 005 and 006 copy-pasted a mutated admin guard into five further files.
+
+**Why nothing caught it.** This is the part worth internalising. A _surviving_ mutant is by definition one the test suite cannot detect — that is what "survived" means. Committing survivors therefore yields a codebase that is green and broken simultaneously. Throughout, **1104 backend tests passed**, coverage held above its gate, and CI was green. Two artifacts were even reported by the linters and then _suppressed_ rather than recognised: `# noqa: F821` silenced "undefined name" on `except CosmicRayTestingException`, and `# type: ignore` silenced the empty-iterable warning on `for chart_type in []`. Neither test results nor static analysis can find this class; only reading the source diff can.
+
+**Representative defects** (full list in the root `CHANGELOG.md`):
+
+| Defect                                                                     | Effect                                                               |
+| -------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| `GroupMembership.group_id >= group_id`, `StudyMember.user_id >= …`         | Membership in any higher-id group passed the gate — cross-group leak |
+| `if decision != "accepted"`                                                | Accepted and rejected counters swapped on **every** search           |
+| `InclusionCriterion.study_id != study_id`, `Reviewer.study_id != study_id` | Screening and validity loaded every **other** study's rows           |
+| `for chart_type in []`                                                     | Results charts never generated                                       |
+| `except CosmicRayTestingException` ×3                                      | Undefined name — handler raised `NameError`, masking the real error  |
+| `_process_single_candidate` returning `(None, False)`                      | `None` candidate entered the screening pass                          |
+
+**Interaction with an existing gap.** The last row compounded a separate defect. A `None` candidate reaching `_run_screening_pass` raises `AttributeError`, which that function's bare `except Exception` swallowed and returned as `("rejected", [])` — so an already-seen paper was silently _rejected_ on a crash. The mutation and the silent-failure defect concealed each other. That bare `except` is tracked as **C3** in [feature 012's plan](./features/012-wire-up-unreachable-workflows.md) and is fixed by tasks TREF5–TREF6.
+
+**Detection method**, re-runnable and now enforced in pre-commit and CI:
+
+```bash
+# cosmic-ray signatures in tracked source
+python3 scripts/check_mutation_artifacts.py
+```
+
+It tokenizes each file and matches executable code only — docstring prose such as "`WorkerSettings.functions` is a non-empty list" reads exactly like an identity comparison, and flagging it produced four false positives on a clean tree. A commit gate that cries wolf gets disabled, so precision is treated as load-bearing; 16 tests in `scripts/tests/` cover both directions. Deliberate exceptions are justified inline with `# cosmic-ray-ok: <reason>`.
+
+**Resolution.** `e47abd9` reverted 63 sites across 17 files and corrected one unit test that had been written against a mutant two days after the corruption landed. `0303a3c` added three independent guards: a structural refusal that stops any cosmic-ray test run outside a linked worktree (`git rev-parse` can prove that; an environment variable cannot), a before/after fingerprint of the tracked tree in the wrapper, and the commit-time scanner above. The five `cosmic-ray-survivors.md` reports are annotated — their "100% killed" scores came from the unsafe session and should not be cited until re-run.
+
+**Consequence for this document.** Gaps assessed before 2026-08-06 were read against corrupted source. None of the catalogued gaps is known to be invalidated, but any conclusion that rested on the behaviour of `search_job.py`, `quality_job.py`, `results_job.py`, `validity_job.py`, `extraction_job.py`, or the group/study listing endpoints is worth re-checking against the repaired tree.
 
 ---
 
