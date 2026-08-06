@@ -14,6 +14,9 @@ This directory contains high-level feature documents (PRDs) for all planned work
 | [008](./008-models-and-agents.md)             | Models & Agents Management                    | ✅ Implemented | 001, 002      |
 | [009](./009-research-protocol-definition.md)  | Research Protocol Definition                  | Planned        | 002, 003, 004 |
 | [010](./010-database-search-and-retrieval.md) | Database Search, Retrieval & Paper Processing | ✅ Implemented | 001, 002, 008 |
+| [012](./012-wire-up-unreachable-workflows.md) | Wire Up Unreachable Workflows                 | Planned        | 002, 005      |
+
+> **Numbering.** IDs `003`–`010` are this directory's own sequence and have drifted from `specs/`. From `012` onward, feature documents follow the `specs/` branch sequence so that a document and its spec branch share an ID. There is no `011` here — `011-improve-testing-and-fix-ci` had no PRD.
 
 ## Recommended Implementation Order
 
