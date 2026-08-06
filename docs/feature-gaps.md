@@ -1,7 +1,7 @@
 # Feature Gap Analysis
 
 **Assessed**: 2026-08-05
-**Last updated**: 2026-08-06 — G16, G17, G18 added: three UI surfaces that are built or partly built but never wired up, surfaced by e2e tests that were silently skipping rather than failing
+**Last updated**: 2026-08-06 — G16–G21 added. A systematic reachability sweep found **23 frontend modules unreachable from `main.tsx`**, including the entire Tertiary Studies frontend. See [Built-but-never-wired audit](#built-but-never-wired-audit).
 **Baseline**: `docs/base-features.md` (27 features, F1-SF01 – F3-SF04)
 **Evidence**: working tree of branch `011-improve-testing-and-fix-ci` (301 modified files uncommitted; base commit `32aeffb`)
 **Method**: traced each feature to implementing code — ORM models, API routes, services, agents, source adapters, and UI components — not to `specs/` intent
@@ -31,7 +31,7 @@
 | F2-SF03  | Automated searches       | ◐      | G1, G2, G3, G13 — the largest cluster                      |
 | F2-SF04  | Study selection          | ◐      | G4, G5; G18 — no UI to record a screening decision at all  |
 | F2-SF05  | Quality assessment       | ◐      | G6 — no Study entity distinct from Paper                   |
-| F2-SF06  | Data extraction          | ●      | —                                                          |
+| F2-SF06  | Data extraction          | ◐      | G20 — extraction UI exists but phase 4 shows a placeholder |
 | F2-SF07  | Automated analysis       | ●      | —                                                          |
 | F2-SF08  | Text analysis            | ●      | —                                                          |
 | F2-SF09  | Meta-analysis            | ◐      | G8 — no metasummary; thematic synthesis is not Cruzes/Dybå |
@@ -40,7 +40,7 @@
 | F3-SF01  | Multiple users           | ◐      | G11 — role model mismatch, no user CRUD                    |
 | F3-SF02  | Document management      | ◐      | G12 — no manual fallback/store/viewer; G16 — SciHub toggle unreachable |
 | F3-SF03  | Security                 | ●      | Capability matrix is coarse (see G11)                      |
-| F3-SF04  | Multiple projects        | ●      | —                                                          |
+| F3-SF04  | Multiple projects        | ◐      | G19 — the entire Tertiary Studies frontend is unreachable   |
 
 ---
 
@@ -425,6 +425,108 @@ The backend is complete: `backend/src/backend/api/v1/papers.py:157` onward imple
 
 ---
 
+### G19 — The Tertiary Studies frontend is unreachable (F3-SF04) — **high**
+
+**Claim.** Feature 009 is complete on both sides and connected on neither. Thirteen frontend modules — the entire Tertiary Studies UI — cannot be reached from the application entry point.
+
+**Evidence.** Unreachable from `main.tsx`:
+
+| Layer | Modules |
+| ----- | ------- |
+| Pages | `TertiaryStudyPage.tsx`, `TertiaryReportPage.tsx` |
+| Components | `TertiaryProtocolForm`, `SeedImportPanel`, `TertiaryExtractionForm`, `TertiaryQAGuidancePanel`, `LandscapeSummarySection` |
+| Hooks | `hooks/tertiary/useProtocol.ts`, `useSeedImports.ts`, `useExtractions.ts` |
+| Services | `services/tertiary/protocolApi.ts`, `seedImportApi.ts`, `extractionApi.ts` |
+
+Two independent causes:
+
+1. `App.tsx` registers no route for `TertiaryStudyPage` — the router knows nothing about it.
+2. `StudyPage` branches on `isSLR` and `isRapid` only. There is no `isTertiary`, so a study whose `study_type` is `Tertiary` falls through to the SMS path and renders SMS phase panels.
+
+The backend is live: all **7** `/api/v1/tertiary/*` routes are registered and answer, migration `0017` is applied, and `TertiaryReportService` / `TertiaryExtractionService` are implemented and tested.
+
+**Remediation.**
+
+| # | Step |
+| - | ---- |
+| 1 | Add `const isTertiary = study?.study_type === 'Tertiary'` to `StudyPage` and dispatch its five phases to the tertiary panels, matching the `isSLR` / `isRapid` pattern already there. |
+| 2 | Decide whether `TertiaryStudyPage` is the host (add a route) or whether its panels fold into `StudyPage` as the SLR and Rapid pages do. The latter is more consistent with what exists. |
+| 3 | Wire `TertiaryReportPage` to the phase-5 slot. |
+| 4 | Add an e2e spec — the workflow currently has no end-to-end coverage, because there is no way to reach it. |
+
+**Cost.** Medium — no new components, no API work, no migration. This is dispatch wiring over finished parts.
+
+**Interaction.** Until this lands, feature 009 delivers nothing to a user, and its 13 modules cannot be exercised by any test that drives the UI.
+
+---
+
+### G20 — Phases 4 and 5 show a placeholder over finished components (F2-SF06, F2-SF10) — **medium**
+
+**Claim.** For SMS and Tertiary studies, `StudyPage` renders *"Phase 4 content will be available in a future sprint."* and the same for phase 5, while the components those phases need are written and their endpoints answer.
+
+**Evidence.** `StudyPage.tsx` phase 4 and 5 fall through to placeholder text for `!isSLR && !isRapid`. Unreachable but complete:
+
+| Module | Purpose | Backend |
+| ------ | ------- | ------- |
+| `pages/ExtractionPage.tsx` | Lists accepted papers, hosts `ExtractionView`, opens `DiffViewer` on a 409 | `GET /studies/{id}/extractions` → **200** |
+| `components/phase3/ExtractionView.tsx` | Per-paper extraction form | as above |
+| `components/shared/DiffViewer.tsx` | Conflict resolution on concurrent edits | PATCH 409 path |
+| `components/phase4/ValidityForm.tsx` | Six validity dimensions, autosave, "Generate with AI" ARQ job | `GET/PUT /studies/{id}/validity` |
+| `components/phase5/QualityReport.tsx` | Rubric score cards and prioritised recommendations | `GET /studies/{id}/quality-reports` |
+| `components/phase2/MetricsDashboard.tsx` | identified → accepted → rejected → duplicates funnel | `GET /studies/{id}/metrics` → **200** |
+
+**Remediation.** Mount `ExtractionPage` at phase 4 and `QualityReport` at phase 5 for the non-SLR/non-Rapid branch; add `ValidityForm` to the phase-4 view; place `MetricsDashboard` in the phase-2 view. Replace the placeholders.
+
+**Cost.** Medium — wiring plus deciding the phase-4 layout (paper list beside extraction form).
+
+---
+
+### G21 — Two orphaned controls in otherwise-wired features (F2-SF05) — **low**
+
+**Claim.** Two components are complete and unused inside features that are themselves reachable.
+
+- `components/slr/QualityScoreForm.tsx` — per-reviewer scoring with a live aggregate. `QualityAssessmentPage` imports `QualityChecklistEditor` but not this, so a reviewer can define a checklist and never score against it.
+- `components/protocols/EdgeConditionBuilder.tsx` — builds the conditional triple on a protocol edge. Nothing imports it, so conditional edges cannot be authored in the visual editor (the YAML pane remains the only route).
+
+**Remediation.** Mount `QualityScoreForm` in `QualityAssessmentPage` beneath the checklist; surface `EdgeConditionBuilder` from the protocol editor when an edge is selected.
+
+**Cost.** Low.
+
+---
+
+## Built-but-never-wired audit
+
+Five defects of the same shape were found on 2026-08-06, so the codebase was swept systematically rather than incident by incident.
+
+**Method.** Build the import graph of `frontend/src` and compute what is reachable from `main.tsx`. Anything else is dead, however complete it is. Re-runnable:
+
+```bash
+# modules unreachable from the entry point
+python3 scripts/audit_unreachable_frontend.py
+```
+
+**Result.** 142 modules scanned, **23 unreachable** (excluding `test-setup.ts`, a Vitest entry point):
+
+| Cluster | Modules | Gap |
+| ------- | ------: | --- |
+| Tertiary Studies frontend | 13 | G19 |
+| Extraction / phases 4–5 / metrics | 6 | G20 |
+| Screening decisions | 2 | G18 |
+| Orphaned controls | 2 | G21 |
+
+The backend has no equivalent problem: all **56** `APIRouter` modules are registered.
+
+**Already fixed, same pattern.** Recorded because they show the failure mode is not confined to whole components:
+
+| Defect | Fix |
+| ------ | --- |
+| `StudyPage` passed `isAdmin={false}` as a literal, so protocol task **Mark Complete** and **Approve** were rendered for nobody, though both endpoints exist and are LEAD-gated | `342fc4b` — added `viewer_role` to `StudyDetail` and gated on it |
+| `NewStudyWizard` reused one DOM node across the Next/Create swap, so clicking Next on step 4 submitted the form and **discarded step 5's input** | `513d973` — distinct React keys |
+
+**Why it stayed hidden.** In every case the e2e tests that should have caught it were guarding on `isVisible()` — which takes no timeout — and silently skipping, or asserting against a placeholder. The lesson is recorded under [Observed pattern](#observed-pattern): a component compiling, passing unit tests, and having a working endpoint says nothing about whether a user can reach it.
+
+---
+
 ## Recommended sequence
 
 | Order | Item                                   | Rationale                                                                                     |
@@ -442,7 +544,9 @@ The backend is complete: `backend/src/backend/api/v1/papers.py:157` onward imple
 | 9     | **G7**, **G9**, **G12**, F1 docs       | Additive, low coupling                                                                         |
 | —     | **G15** vLLM + LM Studio providers     | Unordered — cheapest item on the list and independent of everything else; land whenever local inference is wanted |
 | 1b    | **G18** wire up screening decisions    | Promote near the top: the components and API already exist, and until it lands F2-SF04 has no exercisable path |
-| —     | **G16**, **G17** unreachable UI controls | Unordered — each is a single control over machinery that is already written |
+| 1c    | **G19** wire up Tertiary Studies       | Highest ratio of delivered value to work on the list — 13 finished modules and 7 live routes, needing only dispatch |
+| 1d    | **G20** phases 4–5 over finished parts | Same shape as G18/G19; removes two "future sprint" placeholders |
+| —     | **G16**, **G17**, **G21** unreachable UI controls | Unordered — each is a single control over machinery that is already written |
 
 ---
 
