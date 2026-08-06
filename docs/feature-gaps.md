@@ -1,7 +1,7 @@
 # Feature Gap Analysis
 
 **Assessed**: 2026-08-05
-**Last updated**: 2026-08-06 — G16–G21 added. A systematic reachability sweep found **23 frontend modules unreachable from `main.tsx`**, including the entire Tertiary Studies frontend. See [Built-but-never-wired audit](#built-but-never-wired-audit).
+**Last updated**: 2026-08-06 — G16–G21 added. A systematic reachability sweep found **23 frontend modules unreachable from `main.tsx`**, including the entire Tertiary Studies frontend. See [Built-but-never-wired audit](#built-but-never-wired-audit). G18, G19, and G20 were then designed together as [feature 012](./features/012-wire-up-unreachable-workflows.md); that pass **corrected several claims in G18 and G19** — see the `Correction — 2026-08-06` notes in each.
 **Baseline**: `docs/base-features.md` (27 features, F1-SF01 – F3-SF04)
 **Evidence**: working tree of branch `011-improve-testing-and-fix-ci` (301 modified files uncommitted; base commit `32aeffb`)
 **Method**: traced each feature to implementing code — ORM models, API routes, services, agents, source adapters, and UI components — not to `specs/` intent
@@ -409,21 +409,30 @@ The backend half is complete: `backend/src/backend/api/v1/studies/database_selec
 - `frontend/src/components/phase2/ReviewerPanel.tsx` renders accepted/rejected/duplicate buttons and POSTs to `/api/v1/studies/{id}/papers/{candidate}/decisions` (`:58`).
 - `frontend/src/components/shared/PaperCard.tsx` queries a paper's decisions and offers conflict resolution.
 
-What Phase 3 actually renders is `frontend/src/components/phase2/PaperQueue.tsx`, a **read-only** listing: its only controls are Refresh, Run Full Search, and pagination. There is likewise no control anywhere that starts a screening run, so the job-progress panel can never appear.
+What Phase 3 actually renders is `frontend/src/components/phase2/PaperQueue.tsx`, a **read-only** listing: its only controls are Refresh, a filter reset, and pagination.
 
 The backend is complete: `backend/src/backend/api/v1/papers.py:157` onward implements the decisions endpoints, including conflict detection (`_detect_conflict`, `:223`), and is covered by `backend/tests/integration/test_papers_decisions.py`.
 
+**Correction — 2026-08-06.** This entry originally claimed that "there is no control anywhere that starts a screening run, so the job-progress panel can never appear", and attributed a **Run Full Search** control to `PaperQueue`. Both were wrong, and the design pass for [feature 012](./features/012-wire-up-unreachable-workflows.md) found it by reading the code rather than the entry:
+
+- **Run Full Search** exists, but lives in `StudyPage.tsx:436`, not in `PaperQueue`. It POSTs to `/studies/{id}/searches` and feeds the returned `job_id` to `JobProgressPanel`.
+- `backend/src/backend/jobs/search_job.py` runs `ScreenerAgent` over every candidate as part of that job. **AI screening is therefore both reachable and observable today.**
+
+What genuinely does not exist is a way to **re-screen an existing candidate set** against revised criteria without re-running the database search — no endpoint, no ARQ job. That is worth having on its own merits (criteria change after a search; re-running the full fan-out is expensive and pollutes provenance), so step 4 below is restated in those terms.
+
+The e2e test named `job progress panel is visible during a screening run` fails only because it looks for a button matching `/run screening/i`; the machinery it is testing is present.
+
 **Remediation.**
 
-| #   | Step                                                                                                          |
-| --- | ------------------------------------------------------------------------------------------------------------- |
-| 1   | Mount `ReviewerPanel` in the Phase 3 view, wired to the selected candidate paper.                             |
-| 2   | Make `PaperQueue` rows selectable so a paper can be sent to the panel.                                        |
-| 3   | Mount `PaperCard` (or fold its decision history into the panel) so prior decisions and conflicts are visible. |
-| 4   | Add a control that enqueues a screening job, so the existing progress panel has a trigger.                    |
-| 5   | Un-`fixme` the three tests in `frontend/e2e/screen-paper.spec.ts`.                                            |
+| #   | Step                                                                                                                                                                                             |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1   | Mount `ReviewerPanel` in the Phase 3 view, wired to the selected candidate paper.                                                                                                                |
+| 2   | Make `PaperQueue` rows selectable so a paper can be sent to the panel.                                                                                                                           |
+| 3   | Mount `PaperCard` (or fold its decision history into the panel) so prior decisions and conflicts are visible.                                                                                    |
+| 4   | Add `POST /studies/{id}/screening-runs` + an ARQ job to re-screen existing candidates against current criteria, recording a **new** `Reviewer` round rather than overwriting prior AI decisions. |
+| 5   | Un-`fixme` the three tests in `frontend/e2e/screen-paper.spec.ts`.                                                                                                                               |
 
-**Cost.** Medium — the components and API exist, so this is wiring plus selection state, not new feature work. Step 4 is the only part that may need new backend surface.
+**Cost.** Medium — steps 1–3 are wiring plus selection state over components and endpoints that already exist. Step 4 is the only genuinely new work, and is smaller than first described: the trigger, the progress panel, and the screening agent all exist; what is new is invoking the agent over a candidate set that is already in the database.
 
 **Interaction.** Blocks meaningful end-to-end coverage of **F2-SF04**, and by extension the inter-rater reliability work in **G4/G5** — κ cannot be exercised through the UI if decisions cannot be recorded through it.
 
@@ -442,23 +451,29 @@ The backend is complete: `backend/src/backend/api/v1/papers.py:157` onward imple
 | Hooks      | `hooks/tertiary/useProtocol.ts`, `useSeedImports.ts`, `useExtractions.ts`                                                 |
 | Services   | `services/tertiary/protocolApi.ts`, `seedImportApi.ts`, `extractionApi.ts`                                                |
 
-Two independent causes:
-
-1. `App.tsx` registers no route for `TertiaryStudyPage` — the router knows nothing about it.
-2. `StudyPage` branches on `isSLR` and `isRapid` only. There is no `isTertiary`, so a study whose `study_type` is `Tertiary` falls through to the SMS path and renders SMS phase panels.
+The cause: `StudyPage` branches on `isSLR` and `isRapid` only. There is no `isTertiary`, so a study whose `study_type` is `Tertiary` falls through to the SMS path and renders SMS phase panels. (`App.tsx` also registers no route for `TertiaryStudyPage`, but per the correction below, a route is not the right fix.)
 
 The backend is live: all **7** `/api/v1/tertiary/*` routes are registered and answer, migration `0017` is applied, and `TertiaryReportService` / `TertiaryExtractionService` are implemented and tested.
 
+**Correction — 2026-08-06.** The design pass for [feature 012](./features/012-wire-up-unreachable-workflows.md) found that two of the four remediation steps below were already done inside the unreachable subtree, that the recommendation in step 2 was backwards, and that the cost line was wrong:
+
+- **Step 3 is already done.** `TertiaryReportPage` is mounted by `Phase5Panel` (`TertiaryStudyPage.tsx:428`), gated on synthesis completion. It is unreachable only because everything above it is.
+- **The phase gate already dispatches on study type.** `_PHASE_GATE_DISPATCH[StudyType.TERTIARY] = get_tertiary_unlocked_phases` (`backend/src/backend/api/v1/studies/__init__.py:118`), so `study.unlocked_phases` is already correct for a Tertiary study — no SLR-style extra `usePhases` query is needed.
+- **Step 2's recommendation is backwards.** Folding the panels into `StudyPage` is _not_ more consistent with what exists: `TertiaryStudyPage` owns its own `PhaseTabs` and its `Phase1Panel`…`Phase5Panel` are module-private. Folding them in means exporting five internals and rendering two tab bars. The page was written as a host; `StudyPage` should hand off to it wholesale.
+- **"No API work" is wrong.** `TertiaryStudyPage` requires a `groupId` prop, which it passes to `SeedImportPanel` → `useGroupStudies` → `GET /api/v1/groups/{groupId}/studies`. **`StudyDetail` does not return `research_group_id`**, and the route is `/studies/:studyId`, so there is no group in the URL to fall back on. Seed import is the substance of Tertiary Phase 2, so this gap cannot be closed by frontend wiring alone.
+
+Net effect: the work is **smaller than described in every respect but one**. There is exactly one missing edge, and adding it makes all thirteen modules reachable at once — but it must be accompanied by a backend field, in the same shape as the `viewer_role` addition in `342fc4b`.
+
 **Remediation.**
 
-| #   | Step                                                                                                                                                                                    |
-| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | Add `const isTertiary = study?.study_type === 'Tertiary'` to `StudyPage` and dispatch its five phases to the tertiary panels, matching the `isSLR` / `isRapid` pattern already there.   |
-| 2   | Decide whether `TertiaryStudyPage` is the host (add a route) or whether its panels fold into `StudyPage` as the SLR and Rapid pages do. The latter is more consistent with what exists. |
-| 3   | Wire `TertiaryReportPage` to the phase-5 slot.                                                                                                                                          |
-| 4   | Add an e2e spec — the workflow currently has no end-to-end coverage, because there is no way to reach it.                                                                               |
+| #   | Step                                                                                                                                                                                                                             |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Add `const isTertiary = study?.study_type === 'Tertiary'` to `StudyPage`, render the study header, then hand off wholesale to `<TertiaryStudyPage>` — skipping `StudyPage`'s own tab bar, since the tertiary page owns its tabs. |
+| 2   | Add `research_group_id: int` to `StudyDetail` and pass it through as `groupId`, without which seed import cannot function.                                                                                                       |
+| 3   | ~~Wire `TertiaryReportPage` to the phase-5 slot.~~ Already done — `Phase5Panel` mounts it.                                                                                                                                       |
+| 4   | Add an e2e spec — the workflow currently has no end-to-end coverage, because there is no way to reach it.                                                                                                                        |
 
-**Cost.** Medium — no new components, no API work, no migration. This is dispatch wiring over finished parts.
+**Cost.** Medium — no new components and no migration, but **one backend field is required** (see the correction above). Otherwise this is dispatch wiring over finished parts.
 
 **Interaction.** Until this lands, feature 009 delivers nothing to a user, and its 13 modules cannot be exercised by any test that drives the UI.
 
@@ -480,6 +495,8 @@ The backend is live: all **7** `/api/v1/tertiary/*` routes are registered and an
 | `components/phase2/MetricsDashboard.tsx` | identified → accepted → rejected → duplicates funnel                       | `GET /studies/{id}/metrics` → **200**     |
 
 **Remediation.** Mount `ExtractionPage` at phase 4 and `QualityReport` at phase 5 for the non-SLR/non-Rapid branch; add `ValidityForm` to the phase-4 view; place `MetricsDashboard` in the phase-2 view. Replace the placeholders.
+
+**Note — 2026-08-06.** `ExtractionPage` takes no props; it reads `useParams<{ studyId: string }>()`. The `StudyPage` route is `studies/:studyId`, so mounting it as a child happens to work — by coincidence of a matching param name, not by design. Give it an optional `studyId` prop that takes precedence over the route param, as `TertiaryReportPage` and the SLR pages already do. Found during the [feature 012](./features/012-wire-up-unreachable-workflows.md) design pass.
 
 **Cost.** Medium — wiring plus deciding the phase-4 layout (paper list beside extraction form).
 
@@ -533,24 +550,22 @@ The backend has no equivalent problem: all **56** `APIRouter` modules are regist
 
 ## Recommended sequence
 
-| Order | Item                                                     | Rationale                                                                                                           |
-| ----- | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| ~~0~~ | ~~**G13d** two defects in `_fetch_test_search_results`~~ | ✅ **Done 2026-08-05** — was writing fabricated pilot data on service failure                                       |
-| 1     | **G10** report validation                                | Greenfield, no schema change, operates on an existing structured object                                             |
-| 2     | **G1** + **G14** steps 1–2 provenance                    | Design together — the PRISMA "other methods" arm and the snowball DAG need the same discriminator                   |
-| 2b    | **G14** steps 3–6 flow diagram                           | Follows the provenance work; reuses `visualization.py`'s existing SVG pattern                                       |
-| 3     | **G6** Study/Paper split                                 | Every downstream count and pooled estimate depends on the unit of analysis being right                              |
-| 4     | **G11** roles + user CRUD                                | The system currently cannot onboard a user through its own API                                                      |
-| 5     | **G4**, **G5** reliability + rules                       | Both reuse the existing κ and decision machinery                                                                    |
-| 6     | **G2** + **G13** search fidelity + piloting              | Land together — a per-database breakdown is misleading until query translation exists                               |
-| 7     | **G3** remaining search modalities                       | EI Compendex adapter and manual search; independent of the above                                                    |
-| 8     | **G8** qualitative synthesis                             | Large, but unblocked once G6 lands                                                                                  |
-| 9     | **G7**, **G9**, **G12**, F1 docs                         | Additive, low coupling                                                                                              |
-| —     | **G15** vLLM + LM Studio providers                       | Unordered — cheapest item on the list and independent of everything else; land whenever local inference is wanted   |
-| 1b    | **G18** wire up screening decisions                      | Promote near the top: the components and API already exist, and until it lands F2-SF04 has no exercisable path      |
-| 1c    | **G19** wire up Tertiary Studies                         | Highest ratio of delivered value to work on the list — 13 finished modules and 7 live routes, needing only dispatch |
-| 1d    | **G20** phases 4–5 over finished parts                   | Same shape as G18/G19; removes two "future sprint" placeholders                                                     |
-| —     | **G16**, **G17**, **G21** unreachable UI controls        | Unordered — each is a single control over machinery that is already written                                         |
+| Order | Item                                                                                           | Rationale                                                                                                                                                                                                                         |
+| ----- | ---------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ~~0~~ | ~~**G13d** two defects in `_fetch_test_search_results`~~                                       | ✅ **Done 2026-08-05** — was writing fabricated pilot data on service failure                                                                                                                                                     |
+| 1     | **G10** report validation                                                                      | Greenfield, no schema change, operates on an existing structured object                                                                                                                                                           |
+| 2     | **G1** + **G14** steps 1–2 provenance                                                          | Design together — the PRISMA "other methods" arm and the snowball DAG need the same discriminator                                                                                                                                 |
+| 2b    | **G14** steps 3–6 flow diagram                                                                 | Follows the provenance work; reuses `visualization.py`'s existing SVG pattern                                                                                                                                                     |
+| 3     | **G6** Study/Paper split                                                                       | Every downstream count and pooled estimate depends on the unit of analysis being right                                                                                                                                            |
+| 4     | **G11** roles + user CRUD                                                                      | The system currently cannot onboard a user through its own API                                                                                                                                                                    |
+| 5     | **G4**, **G5** reliability + rules                                                             | Both reuse the existing κ and decision machinery                                                                                                                                                                                  |
+| 6     | **G2** + **G13** search fidelity + piloting                                                    | Land together — a per-database breakdown is misleading until query translation exists                                                                                                                                             |
+| 7     | **G3** remaining search modalities                                                             | EI Compendex adapter and manual search; independent of the above                                                                                                                                                                  |
+| 8     | **G8** qualitative synthesis                                                                   | Large, but unblocked once G6 lands                                                                                                                                                                                                |
+| 9     | **G7**, **G9**, **G12**, F1 docs                                                               | Additive, low coupling                                                                                                                                                                                                            |
+| —     | **G15** vLLM + LM Studio providers                                                             | Unordered — cheapest item on the list and independent of everything else; land whenever local inference is wanted                                                                                                                 |
+| 1b    | **G18**, **G19**, **G20** — see [feature 012](./features/012-wire-up-unreachable-workflows.md) | Designed together, since they are one defect shape and all three land in `StudyPage`. Promote near the top: G19 has the highest ratio of delivered value to work on the list, and until G18 lands F2-SF04 has no exercisable path |
+| —     | **G16**, **G17**, **G21** unreachable UI controls                                              | Unordered — each is a single control over machinery that is already written                                                                                                                                                       |
 
 ---
 

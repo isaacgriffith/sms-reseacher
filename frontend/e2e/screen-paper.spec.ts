@@ -61,8 +61,11 @@ test.describe('Screen paper (Phase 3)', () => {
     await expect(page.getByRole('button', { name: /reject/i }).first()).toBeEnabled();
   });
 
-  // GAP: there is no control anywhere that starts a screening run, so the job
-  // progress panel has no way to appear. See docs/feature-gaps.md (G18).
+  // GAP: AI screening *is* reachable — "Run Full Search" (StudyPage.tsx) starts
+  // a job whose search_job.py pipeline screens every candidate, and its progress
+  // does render. What is missing is a way to re-screen an existing candidate set
+  // against revised criteria, which is what this test's /run screening/ button
+  // would trigger. See docs/feature-gaps.md (G18, "Correction — 2026-08-06").
   test.fixme('job progress panel is visible during a screening run', async ({ page }) => {
     await page.getByRole('button', { name: /run screening/i }).click();
     await expect(page.getByText(/running|queued|progress/i).first()).toBeVisible({
