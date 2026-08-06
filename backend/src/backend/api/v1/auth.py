@@ -50,6 +50,9 @@ class LoginResponse(BaseModel):
     token_type: str = "bearer"
     user_id: int
     display_name: str
+    #: Included so the client can apply the stored theme immediately, without
+    #: a follow-up /auth/me round-trip.
+    theme_preference: str
 
 
 class LoginTotpRequiredResponse(BaseModel):
@@ -138,6 +141,7 @@ async def login(body: LoginRequest, db: AsyncSession = Depends(get_db)):
         access_token=token,
         user_id=user.id,
         display_name=user.display_name,
+        theme_preference=user.theme_preference.value,
     )
 
 
@@ -215,6 +219,7 @@ async def login_totp(body: TotpLoginRequest, db: AsyncSession = Depends(get_db))
         access_token=token,
         user_id=user.id,
         display_name=user.display_name,
+        theme_preference=user.theme_preference.value,
     )
 
 

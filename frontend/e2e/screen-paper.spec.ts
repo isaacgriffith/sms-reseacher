@@ -54,9 +54,11 @@ test.describe('Screen paper (Phase 3)', () => {
     if (await acceptBtn.isEnabled({ timeout: 5_000 }).catch(() => false)) {
       await expect(acceptBtn).toBeEnabled();
     } else {
-      // No papers in queue — verify empty state message
+      // No papers in queue — verify empty state message. The panel renders
+      // "No candidate papers found. Run a full search to populate the paper
+      // queue."
       await expect(
-        page.getByText(/no papers|queue is empty|nothing to screen/i).first(),
+        page.getByText(/no candidate papers|no papers|queue is empty|nothing to screen/i).first(),
       ).toBeVisible({ timeout: 8_000 });
     }
   });

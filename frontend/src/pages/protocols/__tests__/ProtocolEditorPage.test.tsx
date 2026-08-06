@@ -197,6 +197,22 @@ describe('ProtocolEditorPage', () => {
     expect(mockMutate).toHaveBeenCalled();
   });
 
+  it('confirms the save in place instead of navigating away', () => {
+    vi.mocked(useUpdateProtocol).mockReturnValue({
+      mutate: (...args: unknown[]) => mockMutate(...args),
+      isPending: false,
+      isError: false,
+      isSuccess: true,
+    } as ReturnType<typeof useUpdateProtocol>);
+
+    renderPage();
+
+    // /protocols/:id is both the view and the edit route, so a successful save
+    // shows a confirmation rather than a navigation.
+    expect(screen.getByText(/protocol saved/i)).toBeInTheDocument();
+    expect(mockNavigate).not.toHaveBeenCalled();
+  });
+
   it('navigates back on Discard click', () => {
     renderPage();
     fireEvent.click(screen.getByText('Discard'));

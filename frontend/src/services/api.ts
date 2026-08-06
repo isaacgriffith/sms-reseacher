@@ -16,6 +16,9 @@ export const LoginSuccessSchema = z.object({
   token_type: z.string(),
   user_id: z.number(),
   display_name: z.string(),
+  // Optional so an older backend that omits it still parses; the client falls
+  // back to the default preference in that case.
+  theme_preference: z.enum(['light', 'dark', 'system']).optional(),
 });
 export type LoginSuccess = z.infer<typeof LoginSuccessSchema>;
 

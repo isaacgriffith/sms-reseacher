@@ -4,7 +4,10 @@ import { defineConfig } from 'vite';
 export default defineConfig({
   server: {
     proxy: {
-      '/api': {
+      // Trailing slash matters: Vite matches proxy keys as prefixes, so a bare
+      // '/api' also swallows the client-side '/api-docs' route and answers it
+      // with the backend's JSON 404. Every backend path is under '/api/v1/'.
+      '/api/': {
         target: process.env.VITE_API_URL ?? 'http://localhost:8000',
         changeOrigin: true,
       },

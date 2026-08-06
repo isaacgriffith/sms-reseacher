@@ -49,6 +49,7 @@ export default function LoginPage() {
         id: result.user_id,
         email: data.email,
         displayName: result.display_name,
+        themePreference: result.theme_preference,
       });
       navigate('/groups', { replace: true });
     } catch (err) {
@@ -81,11 +82,13 @@ export default function LoginPage() {
         access_token: string;
         user_id: number;
         display_name: string;
+        theme_preference?: 'light' | 'dark' | 'system';
       };
       setSession(data.access_token, {
         id: data.user_id,
         email: getValues('email'),
         displayName: data.display_name,
+        themePreference: data.theme_preference,
       });
       navigate('/groups', { replace: true });
     } catch {

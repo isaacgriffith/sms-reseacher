@@ -29,6 +29,32 @@ class TestLogin:
         assert body["display_name"] == "Alice"
 
     @pytest.mark.asyncio
+    async def test_success_returns_theme_preference(self, client, alice, db_engine):
+        """Login returns the stored theme_preference.
+
+        The client applies it immediately, so a preference set in an earlier
+        session survives logging back in without a /auth/me round-trip.
+        """
+        from sqlalchemy.ext.asyncio import async_sessionmaker
+
+        from db.models.users import ThemePreference, User
+
+        user, plain = alice
+        maker = async_sessionmaker(db_engine, expire_on_commit=False)
+        async with maker() as session:
+            stored = await session.get(User, user.id)
+            assert stored is not None
+            stored.theme_preference = ThemePreference.DARK
+            await session.commit()
+
+        resp = await client.post(
+            f"{BASE}/login", json={"email": user.email, "password": plain}
+        )
+
+        assert resp.status_code == 200
+        assert resp.json()["theme_preference"] == "dark"
+
+    @pytest.mark.asyncio
     async def test_wrong_password_returns_401(self, client, alice):
         """Correct email but wrong password → 401 Unauthorized."""
         user, _ = alice

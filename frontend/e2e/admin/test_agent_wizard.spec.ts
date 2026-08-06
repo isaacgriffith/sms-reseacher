@@ -20,7 +20,7 @@
  *   E2E_ADMIN_PASSWORD — admin user password (default: adminpassword)
  */
 
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type Locator, type Page } from '@playwright/test';
 
 const ADMIN_EMAIL = process.env.E2E_ADMIN_EMAIL ?? 'admin@example.com';
 const ADMIN_PASSWORD = process.env.E2E_ADMIN_PASSWORD ?? 'adminpassword';
@@ -55,6 +55,54 @@ async function navigateToAdminAgents(page: Page): Promise<void> {
     .first();
   await agentsTab.click();
   await expect(page.getByText(/agents/i).first()).toBeVisible();
+}
+
+/** Pick an option from a MUI `<TextField select>`, which is not a native select. */
+async function chooseOption(page: Page, dialog: Locator, label: RegExp, option: RegExp) {
+  await dialog.getByLabel(label).click();
+  await page.getByRole('option', { name: option }).first().click();
+}
+
+/**
+ * Walk the AgentWizard from step 0 to the final System Message step.
+ *
+ * The wizard has five steps (Task Type → Model Selection → Role & Persona →
+ * Persona SVG → System Message); "Next" is disabled until each step's required
+ * field is set, so every step must be filled in order.
+ *
+ * @returns The wizard dialog locator, sitting on the final step.
+ */
+async function walkToSystemMessageStep(page: Page, roleName: string): Promise<Locator> {
+  await page
+    .getByRole('button', { name: /create agent|add agent|new agent/i })
+    .first()
+    .click();
+
+  const dialog = page.getByRole('dialog');
+  await expect(dialog.getByText('Task Type').first()).toBeVisible({ timeout: 5_000 });
+
+  // Step 0 — Task Type
+  await chooseOption(page, dialog, /task type/i, /screener/i);
+  await dialog.getByRole('button', { name: /^next$/i }).click();
+
+  // Step 1 — Provider and Model. The Anthropic default provider and its one
+  // enabled model are seeded by migration 0012.
+  await chooseOption(page, dialog, /provider/i, /anthropic/i);
+  await dialog.getByLabel(/model/i).click();
+  await page.getByRole('option').first().click();
+  await dialog.getByRole('button', { name: /^next$/i }).click();
+
+  // Step 2 — Role and Persona
+  await dialog.getByLabel(/role name/i).fill(roleName);
+  await dialog.getByLabel(/role description/i).fill('Evaluates abstracts against criteria.');
+  await dialog.getByLabel(/persona name/i).fill('Dr. E2E');
+  await dialog.getByLabel(/persona description/i).fill('A meticulous e2e reviewer.');
+  await dialog.getByRole('button', { name: /^next$/i }).click();
+
+  // Step 3 — Persona SVG is optional
+  await dialog.getByRole('button', { name: /^next$/i }).click();
+
+  return dialog;
 }
 
 // ---------------------------------------------------------------------------
@@ -106,57 +154,11 @@ test.describe('Admin — Agent Wizard', () => {
     await navigateToAdminAgents(page);
 
     const roleName = `E2E Screener ${Date.now()}`;
+    const dialog = await walkToSystemMessageStep(page, roleName);
 
-    // Open the add agent dialog
-    await page
-      .getByRole('button', { name: /create agent|add agent|new agent/i })
-      .first()
-      .click();
-
-    const dialog = page.getByRole('dialog');
-
-    // Fill required fields — the form fields may vary by implementation
-    const roleNameField = dialog.getByLabel(/role name/i);
-    if (await roleNameField.isVisible()) {
-      await roleNameField.fill(roleName);
-    }
-
-    const roleDescField = dialog.getByLabel(/role description/i);
-    if (await roleDescField.isVisible()) {
-      await roleDescField.fill('Evaluates abstracts against inclusion criteria.');
-    }
-
-    const personaNameField = dialog.getByLabel(/persona name/i);
-    if (await personaNameField.isVisible()) {
-      await personaNameField.fill('Dr. E2E');
-    }
-
-    const personaDescField = dialog.getByLabel(/persona description/i);
-    if (await personaDescField.isVisible()) {
-      await personaDescField.fill('A meticulous reviewer created during e2e testing.');
-    }
-
-    // Fill system message template
-    const templateField = dialog
-      .getByLabel(/system message template|template/i)
-      .or(dialog.locator('textarea').first())
-      .first();
-    if (await templateField.isVisible()) {
-      await templateField.fill(VALID_TEMPLATE);
-    }
-
-    // Select task type (screener)
-    const taskTypeSelect = dialog
-      .getByLabel(/task type/i)
-      .or(dialog.getByRole('combobox', { name: /task type/i }))
-      .first();
-    if (await taskTypeSelect.isVisible()) {
-      await taskTypeSelect.selectOption({ label: /screener/i });
-    }
-
-    // Submit the form (may be a multi-step wizard — click through steps)
-    const submitButton = dialog.getByRole('button', { name: /save|create|finish|submit/i });
-    await submitButton.click();
+    // Step 4 — System Message
+    await dialog.locator('textarea').first().fill(VALID_TEMPLATE);
+    await dialog.getByRole('button', { name: /^save$/i }).click();
 
     // Dialog should close after successful submission
     await expect(page.getByRole('dialog')).not.toBeVisible({ timeout: 10_000 });
@@ -168,34 +170,17 @@ test.describe('Admin — Agent Wizard', () => {
   test('shows validation error for template with unknown variable', async ({ page }) => {
     await navigateToAdminAgents(page);
 
-    await page
-      .getByRole('button', { name: /create agent|add agent|new agent/i })
-      .first()
-      .click();
+    const dialog = await walkToSystemMessageStep(page, `E2E Invalid ${Date.now()}`);
 
-    const dialog = page.getByRole('dialog');
+    await dialog.locator('textarea').first().fill(INVALID_TEMPLATE);
+    await dialog.getByRole('button', { name: /^save$/i }).click();
 
-    // Fill the template with an invalid variable
-    const templateField = dialog
-      .getByLabel(/system message template|template/i)
-      .or(dialog.locator('textarea').first())
-      .first();
-    if (await templateField.isVisible()) {
-      await templateField.fill(INVALID_TEMPLATE);
-    }
-
-    // Attempt to submit
-    const submitButton = dialog.getByRole('button', { name: /save|create|finish|submit/i });
-    await submitButton.click();
-
-    // Should show an error about the unknown variable — either inline or a toast
+    // The backend rejects the unknown variable with 422; the wizard surfaces
+    // the error and stays open rather than closing on a failed save.
     await expect(
-      page
-        .getByText(/unknown variable|invalid template|unknown_variable|422/i)
-        .first()
-        .or(dialog.getByText(/error/i).first())
-        .first(),
+      dialog.getByText(/unknown variable|unknown_variable|invalid template|error|422/i).first(),
     ).toBeVisible({ timeout: 8_000 });
+    await expect(page.getByRole('dialog')).toBeVisible();
   });
 
   // -------------------------------------------------------------------------

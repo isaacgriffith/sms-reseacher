@@ -36,7 +36,12 @@ export function useAgents(params?: { task_type?: string; is_active?: boolean }) 
   if (params?.is_active !== undefined) qs.set('is_active', String(params.is_active));
   const queryString = qs.toString();
   return useQuery({
-    queryKey: ['agents', params],
+    // 'list' / 'detail' namespaces keep this key distinct from useAgent's.
+    // Without them ['agents', undefined] and ['agents', null] hash alike, so
+    // the two hooks share one cache entry and the detail fetcher hijacks the
+    // list's refetch — it requests /agents/null and 422s, leaving the list
+    // permanently stale after any mutation.
+    queryKey: ['agents', 'list', params],
     queryFn: async () => {
       const url = `${BASE}/agents${queryString ? `?${queryString}` : ''}`;
       const raw = await api.get<unknown[]>(url);
@@ -53,7 +58,7 @@ export function useAgents(params?: { task_type?: string; is_active?: boolean }) 
  */
 export function useAgent(id: string | null) {
   return useQuery({
-    queryKey: ['agents', id],
+    queryKey: ['agents', 'detail', id],
     enabled: !!id,
     queryFn: async () => {
       const raw = await api.get<unknown>(`${BASE}/agents/${id}`);
@@ -111,7 +116,7 @@ export function useGenerateSystemMessage() {
       return SystemMessageGenerateResultSchema.parse(raw);
     },
     onSuccess: (_data, agentId) => {
-      qc.invalidateQueries({ queryKey: ['agents', agentId] });
+      qc.invalidateQueries({ queryKey: ['agents', 'detail', agentId] });
     },
   });
 }
@@ -133,7 +138,7 @@ export function useUpdateAgent() {
     },
     onSuccess: (_, { id }) => {
       qc.invalidateQueries({ queryKey: ['agents'] });
-      qc.invalidateQueries({ queryKey: ['agents', id] });
+      qc.invalidateQueries({ queryKey: ['agents', 'detail', id] });
     },
   });
 }
@@ -171,7 +176,7 @@ export function useUndoSystemMessage() {
     },
     onSuccess: (_, agentId) => {
       qc.invalidateQueries({ queryKey: ['agents'] });
-      qc.invalidateQueries({ queryKey: ['agents', agentId] });
+      qc.invalidateQueries({ queryKey: ['agents', 'detail', agentId] });
     },
   });
 }

@@ -531,7 +531,6 @@ class ProtocolAssignmentService:
 
         study = await _load_study_and_check_admin(study_id, user_id, db)
 
-
         default_result = await db.execute(
             select(ResearchProtocol).where(
                 ResearchProtocol.is_default_template.is_(True),

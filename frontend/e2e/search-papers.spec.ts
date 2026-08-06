@@ -27,12 +27,14 @@ test.describe('Search papers (Phase 2)', () => {
   test.beforeEach(async ({ page }) => {
     await loginAndNavigate(page);
     await page.goto(`/studies/${TEST_STUDY_ID}`);
-    // Navigate to the Search tab
-    await page.getByRole('button', { name: /search/i }).click();
+    // Navigate to the Search tab. Match the phase tab specifically — once the
+    // tab is open its panel also renders a "Run Test Search" button, so a bare
+    // /search/i is ambiguous under Playwright strict mode.
+    await page.getByRole('button', { name: /phase 2: search/i }).click();
   });
 
   test('Search tab is visible on the study page', async ({ page }) => {
-    await expect(page.getByRole('button', { name: /search/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /phase 2: search/i })).toBeVisible();
   });
 
   test('criteria form is rendered in the Search tab', async ({ page }) => {
