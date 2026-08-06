@@ -67,6 +67,28 @@ class TestCreateStudy:
         assert "unlocked_phases" in body
         assert "stale_phases" in body
         assert isinstance(body["stale_phases"], dict)
+        # The creator is the study lead; clients gate LEAD-only controls on this.
+        assert body["viewer_role"] == "lead"
+
+    @pytest.mark.asyncio
+    async def test_viewer_role_reflects_membership(self, client, alice, bob, db_engine):
+        """A non-lead member sees viewer_role == "member" on GET."""
+        user, _ = alice
+        other, _ = bob
+        group_id = await _create_group(db_engine, user.id)
+        resp = await client.post(
+            f"/api/v1/groups/{group_id}/studies",
+            json={**_WIZARD_PAYLOAD, "member_ids": [other.id]},
+            headers=_bearer(user.id),
+        )
+        assert resp.status_code == 201, resp.text
+        study_id = resp.json()["id"]
+
+        as_lead = await client.get(f"/api/v1/studies/{study_id}", headers=_bearer(user.id))
+        as_member = await client.get(f"/api/v1/studies/{study_id}", headers=_bearer(other.id))
+
+        assert as_lead.json()["viewer_role"] == "lead"
+        assert as_member.json()["viewer_role"] == "member"
 
     @pytest.mark.asyncio
     async def test_invalid_study_type_returns_422(self, client, alice, db_engine):

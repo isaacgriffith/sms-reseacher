@@ -96,6 +96,8 @@ interface StudyDetail {
   research_questions: string[];
   snowball_threshold: number;
   unlocked_phases: number[];
+  /** The current user's role on this study — "lead" or "member". */
+  viewer_role: string;
   created_at: string;
   updated_at: string;
 }
@@ -320,7 +322,12 @@ export default function StudyPage() {
               )}
             </>
           )}
-          {protocolTab === 'execution' && <ExecutionStateView studyId={study.id} isAdmin={false} />}
+          {protocolTab === 'execution' && (
+            // Mark Complete / Approve are LEAD-only server-side, so gate them on
+            // the caller's actual role. This was hardcoded to false, which made
+            // both actions unreachable for every user.
+            <ExecutionStateView studyId={study.id} isAdmin={study.viewer_role === 'lead'} />
+          )}
         </Box>
       )}
 

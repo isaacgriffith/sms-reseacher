@@ -260,15 +260,21 @@ test.describe('Research Protocol Definition (feature 010)', () => {
       timeout: 10_000,
     });
 
-    // Mark the first available task complete
-    const markCompleteBtn = page.getByRole('button', { name: /mark complete|complete/i }).first();
-    if (await markCompleteBtn.isVisible()) {
-      await markCompleteBtn.click();
-      // After completion, the UI should update to show the next task state
-      await expect(page.getByText(/completed|active|pending/i).first()).toBeVisible({
-        timeout: 5_000,
-      });
-    }
+    // Studies are auto-assigned their default protocol, which activates the
+    // start tasks, so an ACTIVE task with a Mark Complete button always exists.
+    // The old isVisible() guard had no timeout, so a slow render silently
+    // skipped the click *and* the assertion, leaving the test proving nothing.
+    const markCompleteBtn = page.getByRole('button', { name: /mark complete/i }).first();
+    await expect(markCompleteBtn).toBeEnabled({ timeout: 10_000 });
+
+    await markCompleteBtn.click();
+
+    // The status chip flips active → complete. The SMS template's start task
+    // (define_pico) carries only a completion_check gate, which always passes,
+    // so this outcome is deterministic.
+    await expect(page.getByText('complete', { exact: true }).first()).toBeVisible({
+      timeout: 10_000,
+    });
   });
 
   test('export YAML and re-import as new protocol', async ({ page }) => {

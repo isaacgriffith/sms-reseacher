@@ -91,6 +91,10 @@ class StudyDetail(BaseModel):
     snowball_threshold: int
     unlocked_phases: list[int]
     stale_phases: dict[str, bool]
+    #: The requesting user's StudyMember role ("lead" or "member"). Clients gate
+    #: LEAD-only controls on this — without it the UI cannot tell whether to
+    #: offer actions the API restricts to the study lead.
+    viewer_role: str
     created_at: str
     updated_at: str
 
@@ -147,6 +151,30 @@ async def _require_study_access(
     if study is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Study not found")
     return study
+
+
+async def _viewer_role(study_id: int, user_id: int, db: AsyncSession) -> str:
+    """Return *user_id*'s StudyMember role for *study_id*.
+
+    Args:
+        study_id: ID of the study.
+        user_id: ID of the requesting user.
+        db: Active async database session.
+
+    Returns:
+        The role value, e.g. ``"lead"``. Falls back to ``"member"`` when no
+        membership row exists, which callers past ``_require_study_access``
+        cannot hit.
+
+    """
+    result = await db.execute(
+        select(StudyMember.role).where(
+            StudyMember.study_id == study_id,
+            StudyMember.user_id == user_id,
+        )
+    )
+    role = result.scalar_one_or_none()
+    return role.value if role is not None else StudyMemberRole.MEMBER.value
 
 
 # ---------------------------------------------------------------------------
@@ -303,6 +331,8 @@ async def create_study(
     logger.info("study_created", study_id=study.id, group_id=group_id)
 
     meta = _study_metadata(study)
+    # create_study makes the caller the study lead by construction.
+    viewer_role = StudyMemberRole.LEAD.value
     return StudyDetail(
         id=study.id,
         name=study.name,
@@ -316,6 +346,7 @@ async def create_study(
         snowball_threshold=study.snowball_threshold,
         unlocked_phases=[0],
         stale_phases=compute_staleness_flags(study),
+        viewer_role=viewer_role,
         created_at=study.created_at.isoformat(),
         updated_at=study.updated_at.isoformat(),
     )
@@ -345,6 +376,7 @@ async def get_study(
     study = await _require_study_access(study_id, current_user, db)
     unlocked = await _get_unlocked_phases_for_study(study, db)
     meta = _study_metadata(study)
+    viewer_role = await _viewer_role(study_id, current_user.user_id, db)
 
     return StudyDetail(
         id=study.id,
@@ -359,6 +391,7 @@ async def get_study(
         snowball_threshold=study.snowball_threshold,
         unlocked_phases=unlocked,
         stale_phases=compute_staleness_flags(study),
+        viewer_role=viewer_role,
         created_at=study.created_at.isoformat(),
         updated_at=study.updated_at.isoformat(),
     )
@@ -419,6 +452,7 @@ async def patch_study(
     await db.commit()
 
     unlocked = await _get_unlocked_phases_for_study(study, db)
+    viewer_role = await _viewer_role(study_id, current_user.user_id, db)
     return StudyDetail(
         id=study.id,
         name=study.name,
@@ -432,6 +466,7 @@ async def patch_study(
         snowball_threshold=study.snowball_threshold,
         unlocked_phases=unlocked,
         stale_phases=compute_staleness_flags(study),
+        viewer_role=viewer_role,
         created_at=study.created_at.isoformat(),
         updated_at=study.updated_at.isoformat(),
     )

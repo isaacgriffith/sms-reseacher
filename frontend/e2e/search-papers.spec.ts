@@ -55,16 +55,16 @@ test.describe('Search papers (Phase 2)', () => {
     await expect(testRetestSection).toBeVisible({ timeout: 8_000 });
   });
 
-  test('clicking run test shows a job progress indicator', async ({ page }) => {
-    const runBtn = page.getByRole('button', { name: /run|test/i }).first();
-    if (await runBtn.isVisible()) {
-      await runBtn.click();
-      // Either a spinner/progress indicator or "running" label should appear
-      await expect(page.getByText(/running|queued|progress|job/i).first()).toBeVisible({
-        timeout: 10_000,
-      });
-    } else {
-      test.skip();
-    }
+  test('clicking run test queues a test search', async ({ page }) => {
+    // The seed creates an active SearchString, so the button is always enabled.
+    // The previous version guarded on isVisible() with no timeout — an
+    // instantaneous check that raced the render, so this test skipped itself
+    // on roughly half of runs instead of asserting anything.
+    const runBtn = page.getByRole('button', { name: /run test search/i });
+    await expect(runBtn).toBeEnabled({ timeout: 10_000 });
+
+    await runBtn.click();
+
+    await expect(page.getByText(/test search queued/i)).toBeVisible({ timeout: 10_000 });
   });
 });
