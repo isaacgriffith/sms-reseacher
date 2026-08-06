@@ -157,10 +157,24 @@ validate_environment() {
 extract_plan_field() {
     local field_pattern="$1"
     local plan_file="$2"
-    
-    grep "^\*\*${field_pattern}\*\*: " "$plan_file" 2>/dev/null | \
-        head -1 | \
-        sed "s|^\*\*${field_pattern}\*\*: ||" | \
+
+    # Plan fields are prose and are frequently wrapped across several lines, so
+    # reading only the line that carries the label truncates the value mid-
+    # sentence. Join continuation lines until the next label, blank line, or
+    # heading. index() is used rather than a regex because field names contain
+    # "/" and other characters that would need escaping.
+    awk -v pat="$field_pattern" '
+        BEGIN { label = "**" pat "**: "; found = 0; val = "" }
+        !found && index($0, label) == 1 {
+            val = substr($0, length(label) + 1); found = 1; next
+        }
+        found {
+            if ($0 ~ /^\*\*/ || $0 ~ /^[[:space:]]*$/ || $0 ~ /^#/) { exit }
+            sub(/^[ \t]+/, "", $0)
+            val = val " " $0
+        }
+        END { if (found) print val }
+    ' "$plan_file" 2>/dev/null | \
         sed 's/^[ \t]*//;s/[ \t]*$//' | \
         grep -v "NEEDS CLARIFICATION" | \
         grep -v "^N/A$" || echo ""
@@ -388,12 +402,24 @@ update_existing_agent_file() {
     local new_tech_entries=()
     local new_change_entry=""
     
-    # Prepare new technology entries
-    if [[ -n "$tech_stack" ]] && ! grep -q "$tech_stack" "$target_file"; then
+    # Prepare new technology entries.
+    #
+    # Dedup uses -F: these values contain regex metacharacters (+ ( ) . |), so
+    # an unanchored -q treats them as a pattern and matches unpredictably —
+    # which is how duplicate entries got appended on every run.
+    #
+    # The branch guard is the stronger check: re-running the plan for a branch
+    # that already has an entry must be idempotent, whatever the wording.
+    local branch_already_recorded=0
+    if grep -qF "($CURRENT_BRANCH)" "$target_file" 2>/dev/null; then
+        branch_already_recorded=1
+    fi
+
+    if [[ -n "$tech_stack" ]] && [[ $branch_already_recorded -eq 0 ]] && ! grep -qF "$tech_stack" "$target_file"; then
         new_tech_entries+=("- $tech_stack ($CURRENT_BRANCH)")
     fi
-    
-    if [[ -n "$NEW_DB" ]] && [[ "$NEW_DB" != "N/A" ]] && [[ "$NEW_DB" != "NEEDS CLARIFICATION" ]] && ! grep -q "$NEW_DB" "$target_file"; then
+
+    if [[ -n "$NEW_DB" ]] && [[ "$NEW_DB" != "N/A" ]] && [[ "$NEW_DB" != "NEEDS CLARIFICATION" ]] && [[ $branch_already_recorded -eq 0 ]] && ! grep -qF "$NEW_DB" "$target_file"; then
         new_tech_entries+=("- $NEW_DB ($CURRENT_BRANCH)")
     fi
     
