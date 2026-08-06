@@ -173,28 +173,12 @@ test.describe('Admin — Provider Management', () => {
   test('can open edit dialog for an existing provider', async ({ page }) => {
     await navigateToAdminProviders(page);
 
-    // Look for any edit action (pencil icon, "Edit" button, or kebab menu)
-    const editButton = page
-      .getByRole('button', { name: /edit/i })
-      .first()
-      .or(page.getByTitle(/edit/i).first())
-      .or(page.locator('[aria-label*="edit" i]').first())
-      .first();
+    // Migration 0012 seeds the Anthropic default provider, so a row always
+    // exists — no conditional skip needed.
+    await page.getByRole('button', { name: 'edit provider' }).first().click();
 
-    if (await editButton.isVisible({ timeout: 3_000 })) {
-      await editButton.click();
-      await expect(
-        page
-          .getByRole('dialog')
-          .or(page.getByLabel(/display name/i))
-          .first(),
-      ).toBeVisible({
-        timeout: 5_000,
-      });
-    } else {
-      // If no providers exist, the test is a no-op (handled by prior test)
-      test.skip();
-    }
+    await expect(page.getByRole('dialog')).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByLabel(/display name/i)).toBeVisible();
   });
 
   // -------------------------------------------------------------------------
@@ -204,18 +188,10 @@ test.describe('Admin — Provider Management', () => {
   test('refresh models button is visible for each provider', async ({ page }) => {
     await navigateToAdminProviders(page);
 
-    const refreshButton = page
-      .getByRole('button', { name: /refresh models|refresh/i })
-      .first()
-      .or(page.getByTitle(/refresh/i).first())
-      .first();
-
-    // Only assert if there are providers in the list
-    if (await refreshButton.isVisible({ timeout: 3_000 })) {
-      await expect(refreshButton).toBeEnabled();
-    } else {
-      // Skip if no providers exist — this is a conditional check
-      test.skip();
-    }
+    // Migration 0012 seeds the Anthropic default provider, so a row always
+    // exists — the old conditional skip made this silently vanish whenever the
+    // list happened to be slow or empty.
+    const refreshButton = page.getByRole('button', { name: /refresh models/i }).first();
+    await expect(refreshButton).toBeEnabled({ timeout: 10_000 });
   });
 });

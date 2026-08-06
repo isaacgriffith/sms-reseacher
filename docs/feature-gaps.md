@@ -1,7 +1,7 @@
 # Feature Gap Analysis
 
 **Assessed**: 2026-08-05
-**Last updated**: 2026-08-05 — G13d resolved; G7 SMS-protocol claim corrected; G14 added (MLR modelled as a flag on `Study`); G15 added (vLLM + LM Studio providers)
+**Last updated**: 2026-08-06 — G16, G17, G18 added: three UI surfaces that are built or partly built but never wired up, surfaced by e2e tests that were silently skipping rather than failing
 **Baseline**: `docs/base-features.md` (27 features, F1-SF01 – F3-SF04)
 **Evidence**: working tree of branch `011-improve-testing-and-fix-ci` (301 modified files uncommitted; base commit `32aeffb`)
 **Method**: traced each feature to implementing code — ORM models, API routes, services, agents, source adapters, and UI components — not to `specs/` intent
@@ -29,7 +29,7 @@
 | F2-SF01  | Protocol development     | ●      | Guideline grounding is thin (see G7)                       |
 | F2-SF02  | Protocol validation      | ◐      | AI review is SLR-only                                      |
 | F2-SF03  | Automated searches       | ◐      | G1, G2, G3, G13 — the largest cluster                      |
-| F2-SF04  | Study selection          | ◐      | G4, G5                                                     |
+| F2-SF04  | Study selection          | ◐      | G4, G5; G18 — no UI to record a screening decision at all  |
 | F2-SF05  | Quality assessment       | ◐      | G6 — no Study entity distinct from Paper                   |
 | F2-SF06  | Data extraction          | ●      | —                                                          |
 | F2-SF07  | Automated analysis       | ●      | —                                                          |
@@ -38,7 +38,7 @@
 | F2-SF10  | Report write-up          | ◐      | G9 — no Typst backend; G14 — no PRISMA 2020 flow diagram   |
 | F2-SF11  | Report validation        | ✗      | G10 — no PRISMA/SEGRESS/trAIce checker; G14                |
 | F3-SF01  | Multiple users           | ◐      | G11 — role model mismatch, no user CRUD                    |
-| F3-SF02  | Document management      | ◐      | G12 — no manual fallback, no on-disk store, no viewer      |
+| F3-SF02  | Document management      | ◐      | G12 — no manual fallback/store/viewer; G16 — SciHub toggle unreachable |
 | F3-SF03  | Security                 | ●      | Capability matrix is coarse (see G11)                      |
 | F3-SF04  | Multiple projects        | ●      | —                                                          |
 
@@ -370,6 +370,61 @@ Three places hard-code the three-way enum:
 
 ---
 
+### G16 — SciHub toggle is unreachable (F3-SF02) — **low, mechanical**
+
+**Claim.** The SciHub acknowledgment flow specified in feature 006 cannot be reached from the UI.
+
+**Evidence.** `frontend/src/components/studies/DatabaseSelectionPanel/index.tsx` declares the action (`:90`), handles it in the reducer (`:109`) and renders the full "Enable SciHub Access?" dialog (`:273`) — but `TOGGLE_SCIHUB` is **never dispatched**. There is no toggle control, so the dialog is dead code.
+
+The backend half is complete: `backend/src/backend/api/v1/studies/database_selection.py:165` gates on the server-level `SCIHUB_ENABLED` env var and rejects `scihub_enabled=True` when it is off.
+
+**Remediation.** Render a `Switch` in the panel that dispatches `TOGGLE_SCIHUB`, driven by `state.scihub_enabled`. Un-`fixme` the four tests in `frontend/e2e/database-selection.spec.ts`.
+
+**Cost.** Low — one control; the reducer, dialog, and API are already written.
+
+---
+
+### G17 — Agents list has no task-type filter (F1-SF04) — **low, mechanical**
+
+**Claim.** The admin Agents tab cannot be filtered by task type, though every layer beneath it supports the filter.
+
+**Evidence.** `useAgents()` accepts `{ task_type }` and forwards it as a query param (`frontend/src/services/agentsApi.ts:33`), and the API honours it — but `AdminPage`'s `AgentsTab` calls `useAgents()` with no arguments (`frontend/src/pages/AdminPage.tsx:216`) and renders no filter control.
+
+**Remediation.** Add a task-type `TextField select` to the tab, hold the value in `AdminState`, and pass it to `useAgents`. Un-`fixme` the test in `frontend/e2e/admin/test_agent_wizard.spec.ts`.
+
+**Cost.** Low.
+
+---
+
+### G18 — Phase 3 screening decisions cannot be recorded (F2-SF04) — **medium**
+
+**Claim.** A human reviewer has no way to accept, reject, or mark a paper as a duplicate. This is the most consequential of the three, because manual screening is a core SMS/SLR activity and the backend for it is finished.
+
+**Evidence.** Two complete components are orphaned — **imported by nothing**:
+
+- `frontend/src/components/phase2/ReviewerPanel.tsx` renders accepted/rejected/duplicate buttons and POSTs to `/api/v1/studies/{id}/papers/{candidate}/decisions` (`:58`).
+- `frontend/src/components/shared/PaperCard.tsx` queries a paper's decisions and offers conflict resolution.
+
+What Phase 3 actually renders is `frontend/src/components/phase2/PaperQueue.tsx`, a **read-only** listing: its only controls are Refresh, Run Full Search, and pagination. There is likewise no control anywhere that starts a screening run, so the job-progress panel can never appear.
+
+The backend is complete: `backend/src/backend/api/v1/papers.py:157` onward implements the decisions endpoints, including conflict detection (`_detect_conflict`, `:223`), and is covered by `backend/tests/integration/test_papers_decisions.py`.
+
+**Remediation.**
+
+| # | Step |
+| - | ---- |
+| 1 | Mount `ReviewerPanel` in the Phase 3 view, wired to the selected candidate paper. |
+| 2 | Make `PaperQueue` rows selectable so a paper can be sent to the panel. |
+| 3 | Mount `PaperCard` (or fold its decision history into the panel) so prior decisions and conflicts are visible. |
+| 4 | Add a control that enqueues a screening job, so the existing progress panel has a trigger. |
+| 5 | Un-`fixme` the three tests in `frontend/e2e/screen-paper.spec.ts`. |
+
+**Cost.** Medium — the components and API exist, so this is wiring plus selection state, not new feature work. Step 4 is the only part that may need new backend surface.
+
+**Interaction.** Blocks meaningful end-to-end coverage of **F2-SF04**, and by extension the inter-rater reliability work in **G4/G5** — κ cannot be exercised through the UI if decisions cannot be recorded through it.
+
+---
+
 ## Recommended sequence
 
 | Order | Item                                   | Rationale                                                                                     |
@@ -386,6 +441,8 @@ Three places hard-code the three-way enum:
 | 8     | **G8** qualitative synthesis           | Large, but unblocked once G6 lands                                                             |
 | 9     | **G7**, **G9**, **G12**, F1 docs       | Additive, low coupling                                                                         |
 | —     | **G15** vLLM + LM Studio providers     | Unordered — cheapest item on the list and independent of everything else; land whenever local inference is wanted |
+| 1b    | **G18** wire up screening decisions    | Promote near the top: the components and API already exist, and until it lands F2-SF04 has no exercisable path |
+| —     | **G16**, **G17** unreachable UI controls | Unordered — each is a single control over machinery that is already written |
 
 ---
 

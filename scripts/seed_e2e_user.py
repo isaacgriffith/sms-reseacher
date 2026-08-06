@@ -19,7 +19,9 @@ import os
 import sys
 
 from backend.core.auth import hash_password
-from db.models import Study, StudyType
+from backend.core.encryption import encrypt_secret
+from db.models import Paper, Study, StudyType
+from db.models.candidate import CandidatePaper, CandidatePaperStatus
 from db.models.pico import PICOComponent, PICOVariant
 from db.models.search import SearchString
 from db.models.search_exec import SearchExecution, SearchExecutionStatus
@@ -38,6 +40,26 @@ STUDY_NAME = os.environ.get("E2E_STUDY_NAME", "E2E Seed Study")
 ADMIN_EMAIL = os.environ.get("E2E_ADMIN_EMAIL", "admin@example.com")
 ADMIN_PASSWORD = os.environ.get("E2E_ADMIN_PASSWORD", "adminpassword")
 ADMIN_DISPLAY_NAME = os.environ.get("E2E_ADMIN_DISPLAY_NAME", "Admin User")
+
+# e2e/two-factor-auth.spec.ts logs in as a TOTP-enabled account to exercise the
+# second-step prompt and the five-failure lockout. Neither test needs a *valid*
+# code, so a fixed dummy secret is enough — no authenticator app required.
+TOTP_EMAIL = os.environ.get("E2E_TOTP_EMAIL", "totpuser@example.com")
+TOTP_PASSWORD = os.environ.get("E2E_TOTP_PASSWORD", "testpassword")
+TOTP_DISPLAY_NAME = os.environ.get("E2E_TOTP_DISPLAY_NAME", "TOTP User")
+# The lockout spec deliberately locks its account, and a locked account is
+# refused at the password step too — so it gets its own user rather than
+# poisoning the prompt spec when the two run in either order.
+TOTP_LOCKOUT_EMAIL = os.environ.get("E2E_TOTP_LOCKOUT_EMAIL", "totplockout@example.com")
+#: Base32, valid for pyotp — never used to produce a code in the e2e flow.
+TOTP_SECRET = "JBSWY3DPEHPK3PXP"
+
+#: Papers seeded into the screening queue so the accept/reject controls render.
+SEED_PAPERS = [
+    ("Continuous integration practices in agile teams", "10.1000/e2e-seed-1"),
+    ("A survey of automated regression testing", "10.1000/e2e-seed-2"),
+    ("Mutation testing adoption in industry", "10.1000/e2e-seed-3"),
+]
 
 
 async def seed() -> None:
@@ -75,6 +97,21 @@ async def seed() -> None:
         admin = await upsert_user(
             session, ADMIN_EMAIL, ADMIN_PASSWORD, ADMIN_DISPLAY_NAME
         )
+
+        # A third account with 2FA switched on. Kept separate from the main test
+        # user so every other spec can still log in with a password alone.
+        for totp_email in (TOTP_EMAIL, TOTP_LOCKOUT_EMAIL):
+            totp_user = await upsert_user(
+                session, totp_email, TOTP_PASSWORD, TOTP_DISPLAY_NAME
+            )
+            if not totp_user.totp_enabled:
+                totp_user.totp_enabled = True
+                totp_user.totp_secret_encrypted = encrypt_secret(TOTP_SECRET)
+                print(f"enabled 2FA for {totp_email}")
+            # Always clear the counters: the lockout spec deliberately fails
+            # five times, so a re-run would otherwise start already locked out.
+            totp_user.totp_failed_attempts = 0
+            totp_user.totp_locked_until = None
 
         group = (
             await session.execute(
@@ -189,16 +226,54 @@ async def seed() -> None:
             )
         ).scalar_one_or_none()
         if execution is None:
-            session.add(
-                SearchExecution(
-                    study_id=study.id,
-                    search_string_id=search_string.id,
-                    status=SearchExecutionStatus.COMPLETED,
-                    phase_tag="initial-search",
-                    databases_queried=["acm", "ieee"],
-                )
+            execution = SearchExecution(
+                study_id=study.id,
+                search_string_id=search_string.id,
+                status=SearchExecutionStatus.COMPLETED,
+                phase_tag="initial-search",
+                databases_queried=["acm", "ieee"],
             )
+            session.add(execution)
+            await session.flush()
             print("created completed search execution (unlocks phase 3)")
+
+        # Screening (phase 3) renders accept/reject controls only when the queue
+        # has PENDING papers; without these the screen-paper specs skip instead
+        # of asserting anything.
+        for title, doi in SEED_PAPERS:
+            paper = (
+                await session.execute(select(Paper).where(Paper.doi == doi))
+            ).scalar_one_or_none()
+            if paper is None:
+                paper = Paper(
+                    title=title,
+                    doi=doi,
+                    abstract=f"Seed abstract for {title}.",
+                    year=2024,
+                    venue="E2E Proceedings",
+                )
+                session.add(paper)
+                await session.flush()
+
+            candidate = (
+                await session.execute(
+                    select(CandidatePaper).where(
+                        CandidatePaper.study_id == study.id,
+                        CandidatePaper.paper_id == paper.id,
+                    )
+                )
+            ).scalar_one_or_none()
+            if candidate is None:
+                session.add(
+                    CandidatePaper(
+                        study_id=study.id,
+                        paper_id=paper.id,
+                        search_execution_id=execution.id,
+                        phase_tag="initial-search",
+                        current_status=CandidatePaperStatus.PENDING,
+                    )
+                )
+                print(f"created candidate paper {doi}")
 
         await session.commit()
 

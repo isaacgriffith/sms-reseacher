@@ -108,69 +108,32 @@ test.describe('Database Selection Panel (Phase 2)', () => {
   // SciHub acknowledgment flow
   // -------------------------------------------------------------------------
 
-  test('SciHub section or toggle is present', async ({ page }) => {
-    // SciHub toggle may be a labeled switch or text
-    const scihubElement = page.getByText(/scihub|sci-hub/i).first();
-
-    // It may not be present if the backend has SCIHUB_ENABLED=false (feature off by default)
-    // Use a soft check — if the element is not visible, skip gracefully
-    const isVisible = await scihubElement.isVisible().catch(() => false);
-    if (!isVisible) {
-      test.skip();
-      return;
-    }
-    await expect(scihubElement).toBeVisible();
+  // GAP: DatabaseSelectionPanel declares a TOGGLE_SCIHUB action, handles it in
+  // its reducer and renders an "Enable SciHub Access?" acknowledgment dialog,
+  // but nothing dispatches the action — there is no toggle control, so the
+  // dialog is unreachable. The backend half (SCIHUB_ENABLED gating) is done.
+  // See docs/feature-gaps.md (G16).
+  test.fixme('SciHub section or toggle is present', async ({ page }) => {
+    await expect(page.getByLabel(/enable scihub/i)).toBeVisible();
   });
 
-  test('SciHub acknowledgment dialog appears when SciHub is toggled on', async ({ page }) => {
-    const scihubToggle = page
-      .getByLabel(/enable scihub|scihub/i)
-      .first()
-      .or(page.locator('input[type="checkbox"]').filter({ has: page.getByText(/scihub/i) }))
-      .first();
-
-    const isVisible = await scihubToggle.isVisible().catch(() => false);
-    if (!isVisible) {
-      test.skip();
-      return;
-    }
-
-    await scihubToggle.click();
-
+  test.fixme('SciHub acknowledgment dialog appears when SciHub is toggled on', async ({ page }) => {
+    await page.getByLabel(/enable scihub/i).click();
     await expect(page.getByRole('dialog')).toBeVisible({ timeout: 5_000 });
     await expect(page.getByText(/enable scihub/i).first()).toBeVisible();
   });
 
-  test('cancelling SciHub dialog dismisses it without enabling', async ({ page }) => {
-    const scihubToggle = page.getByLabel(/enable scihub|scihub/i).first();
-
-    const isVisible = await scihubToggle.isVisible().catch(() => false);
-    if (!isVisible) {
-      test.skip();
-      return;
-    }
-
-    await scihubToggle.click();
+  test.fixme('cancelling SciHub dialog dismisses it without enabling', async ({ page }) => {
+    await page.getByLabel(/enable scihub/i).click();
     await expect(page.getByRole('dialog')).toBeVisible({ timeout: 5_000 });
-
     await page.getByRole('button', { name: /cancel/i }).click();
     await expect(page.getByRole('dialog')).not.toBeVisible({ timeout: 3_000 });
   });
 
-  test('acknowledging SciHub dialog closes it', async ({ page }) => {
-    const scihubToggle = page.getByLabel(/enable scihub|scihub/i).first();
-
-    const isVisible = await scihubToggle.isVisible().catch(() => false);
-    if (!isVisible) {
-      test.skip();
-      return;
-    }
-
-    await scihubToggle.click();
+  test.fixme('acknowledging SciHub dialog closes it', async ({ page }) => {
+    await page.getByLabel(/enable scihub/i).click();
     await expect(page.getByRole('dialog')).toBeVisible({ timeout: 5_000 });
-
-    const acknowledgeBtn = page.getByRole('button', { name: /acknowledge|enable scihub/i });
-    await acknowledgeBtn.click();
+    await page.getByRole('button', { name: /i understand|acknowledge|enable/i }).click();
     await expect(page.getByRole('dialog')).not.toBeVisible({ timeout: 3_000 });
   });
 });

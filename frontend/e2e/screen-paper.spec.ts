@@ -48,47 +48,25 @@ test.describe('Screen paper (Phase 3)', () => {
     await expect(queue).toBeVisible({ timeout: 8_000 });
   });
 
-  test('accept button is present when papers are queued', async ({ page }) => {
-    // If there are papers, accept/reject buttons should be present
-    const acceptBtn = page.getByRole('button', { name: /accept/i }).first();
-    if (await acceptBtn.isEnabled({ timeout: 5_000 }).catch(() => false)) {
-      await expect(acceptBtn).toBeEnabled();
-    } else {
-      // No papers in queue — verify empty state message. The panel renders
-      // "No candidate papers found. Run a full search to populate the paper
-      // queue."
-      await expect(
-        page.getByText(/no candidate papers|no papers|queue is empty|nothing to screen/i).first(),
-      ).toBeVisible({ timeout: 8_000 });
-    }
+  // GAP: ReviewerPanel — a complete accept/reject/duplicate UI that POSTs to
+  // /studies/{id}/papers/{candidate}/decisions — and PaperCard are both fully
+  // built but imported by nothing, so Phase 3 renders a read-only PaperQueue
+  // and a human cannot record a screening decision at all.
+  // See docs/feature-gaps.md (G18).
+  test.fixme('accept button is present when papers are queued', async ({ page }) => {
+    await expect(page.getByRole('button', { name: /accept/i }).first()).toBeEnabled();
   });
 
-  test('reject button is present when papers are queued', async ({ page }) => {
-    const rejectBtn = page.getByRole('button', { name: /reject/i }).first();
-    if (await rejectBtn.isEnabled({ timeout: 5_000 }).catch(() => false)) {
-      await expect(rejectBtn).toBeEnabled();
-    } else {
-      // Acceptable — no papers to reject
-      test.skip();
-    }
+  test.fixme('reject button is present when papers are queued', async ({ page }) => {
+    await expect(page.getByRole('button', { name: /reject/i }).first()).toBeEnabled();
   });
 
-  test('job progress panel is visible during a screening run', async ({ page }) => {
-    // Trigger a screening job if a "Run" button is available
-    const runBtn = page.getByRole('button', { name: /run screening|start screen/i }).first();
-    if (await runBtn.isEnabled({ timeout: 3_000 }).catch(() => false)) {
-      await runBtn.click();
-      await expect(page.getByText(/running|queued|progress/i).first()).toBeVisible({
-        timeout: 10_000,
-      });
-    } else {
-      // The job progress panel may already be showing
-      const progressPanel = page.getByText(/progress|running/i).first();
-      if (await progressPanel.isEnabled({ timeout: 3_000 }).catch(() => false)) {
-        await expect(progressPanel).toBeVisible();
-      } else {
-        test.skip();
-      }
-    }
+  // GAP: there is no control anywhere that starts a screening run, so the job
+  // progress panel has no way to appear. See docs/feature-gaps.md (G18).
+  test.fixme('job progress panel is visible during a screening run', async ({ page }) => {
+    await page.getByRole('button', { name: /run screening/i }).click();
+    await expect(page.getByText(/running|queued|progress/i).first()).toBeVisible({
+      timeout: 10_000,
+    });
   });
 });

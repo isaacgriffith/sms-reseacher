@@ -190,26 +190,11 @@ test.describe('Admin — Agent Wizard', () => {
   test('generate button is present in the agent template form', async ({ page }) => {
     await navigateToAdminAgents(page);
 
-    await page
-      .getByRole('button', { name: /create agent|add agent|new agent/i })
-      .first()
-      .click();
+    // "Generate System Message" lives on the wizard's final step, not step 0 —
+    // looking for it on the opening screen is why this used to skip.
+    const dialog = await walkToSystemMessageStep(page, `E2E Generate ${Date.now()}`);
 
-    const dialog = page.getByRole('dialog');
-
-    // Look for a "Generate" button near the template field
-    const generateButton = dialog
-      .getByRole('button', { name: /generate/i })
-      .first()
-      .or(dialog.getByTitle(/generate/i).first())
-      .first();
-
-    if (await generateButton.isVisible({ timeout: 3_000 })) {
-      await expect(generateButton).toBeVisible();
-    } else {
-      // Generate button may only appear after filling in role/persona fields
-      test.skip();
-    }
+    await expect(dialog.getByRole('button', { name: /generate system message/i })).toBeVisible();
   });
 
   // -------------------------------------------------------------------------
@@ -219,55 +204,29 @@ test.describe('Admin — Agent Wizard', () => {
   test('undo button is visible in the agent form', async ({ page }) => {
     await navigateToAdminAgents(page);
 
-    // Navigate into an existing agent's detail/edit view if any exists
-    const editButton = page
-      .getByRole('button', { name: /edit/i })
-      .first()
-      .or(page.locator('[aria-label*="edit" i]').first())
-      .first();
+    // The seeded agents guarantee at least one row, so this is unconditional.
+    await page.getByRole('button', { name: 'Edit agent' }).first().click();
 
-    if (await editButton.isVisible({ timeout: 3_000 })) {
-      await editButton.click();
+    const dialog = page.getByRole('dialog');
+    await expect(dialog.getByRole('heading', { name: /edit agent/i })).toBeVisible({
+      timeout: 10_000,
+    });
 
-      const dialog = page.getByRole('dialog');
-      const undoButton = dialog
-        .getByRole('button', { name: /undo/i })
-        .first()
-        .or(dialog.getByTitle(/undo/i).first())
-        .first();
-
-      // Undo may be disabled if no buffer — just check it exists
-      if (await undoButton.isVisible({ timeout: 3_000 })) {
-        await expect(undoButton).toBeVisible();
-      } else {
-        test.skip();
-      }
-    } else {
-      // No agents exist yet — skip undo test
-      test.skip();
-    }
+    // Undo renders always and is disabled until an undo buffer exists.
+    await expect(dialog.getByRole('button', { name: /undo/i })).toBeVisible({ timeout: 5_000 });
   });
 
   // -------------------------------------------------------------------------
   // Filter by task type
   // -------------------------------------------------------------------------
 
-  test('task type filter is available in the agents list', async ({ page }) => {
+  // GAP: AdminPage's AgentsTab calls useAgents() with no arguments and renders
+  // no filter control, even though the hook accepts a task_type param and the
+  // API supports it. See docs/feature-gaps.md (G17).
+  test.fixme('task type filter is available in the agents list', async ({ page }) => {
     await navigateToAdminAgents(page);
 
-    // Look for a filter/select dropdown for task type
-    const filterControl = page
-      .getByLabel(/filter by task type|task type/i)
-      .or(page.getByRole('combobox', { name: /task type/i }))
-      .or(page.locator('select[name*="taskType"], select[name*="task_type"]'))
-      .first();
-
-    if (await filterControl.isVisible({ timeout: 3_000 })) {
-      await expect(filterControl).toBeVisible();
-    } else {
-      // Filter may not be present if there are no agents or feature is behind a flag
-      test.skip();
-    }
+    await expect(page.getByLabel(/filter by task type|task type/i)).toBeVisible();
   });
 
   // -------------------------------------------------------------------------
