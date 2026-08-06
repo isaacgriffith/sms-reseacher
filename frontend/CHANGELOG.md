@@ -4,6 +4,49 @@ All notable changes to this subproject are documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Fixed
+
+- **`/api-docs` was unreachable in development.** Vite matches proxy keys by
+  prefix, so a bare `/api` also swallowed the client route and answered it with
+  the backend's JSON 404
+- **Theme preference did not survive logging out.** The column, endpoint and
+  `/auth/me` field all existed, but nothing ever read the value back, so it
+  lived only in local state
+- **The admin agent list never refreshed after a mutation.** `useAgents()` keyed
+  on `['agents', undefined]` and `useAgent(null)` on `['agents', null]`, which
+  hash identically — so both hooks shared one cache entry and every refetch
+  requested `/agents/null` and 422'd. Keys are namespaced `list` / `detail`
+- **Protocol task actions rendered for nobody.** `StudyPage` passed
+  `isAdmin={false}` as a literal, so Mark Complete and Approve were unreachable
+  even for the study lead; now gated on `viewer_role`
+- **The study wizard submitted a step early.** React reused one DOM node across
+  the Next / Create Study swap, flipping the live button's `type` to `submit`
+  mid-click, so clicking Next on step 4 created the study and discarded step
+  5's input. Distinct keys force separate nodes
+- **Protocol graph nodes drifted off-canvas**, where they were clipped and
+  unclickable; positions are clamped to the viewport each tick
+- **Saving a protocol produced no visible feedback** — `onSuccess` navigated to
+  the route the editor already occupied. It now confirms in place
+- Locked phase tabs were styled as unavailable but remained focusable and
+  announced nothing to assistive technology; they are now `disabled`
+- The study Protocol tab showed a permanent "Loading protocol graph…" when no
+  protocol was assigned; it now shows an empty state
+- Five `NewStudyWizard` controls had labels that neither wrapped nor referenced
+  them (study type, snowball threshold, three textareas), leaving them unnamed
+  for screen readers and unaddressable by `getByLabel`
+
+### Changed
+
+- **e2e suite**: from 0 to 82 passing. All 13 conditional `test.skip()`
+  branches removed — five became real coverage, eight are `test.fixme` with a
+  reason and a gap reference. Every zero-timeout `isVisible()` guard is gone: it
+  samples the DOM instantly and silently took the wrong branch whenever it lost
+  the race with a render
+- Protocol graph nodes carry `data-testid="protocol-node"`, so the node rather
+  than its label is the addressable unit
+
 ## [0.10.0] — 2026-03-31 — feature/010-research-protocol-definition
 
 ### Added

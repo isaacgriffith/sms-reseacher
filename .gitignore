@@ -67,5 +67,9 @@ frontend/reports/
 frontend/test-results/
 frontend/coverage/
 frontend/playwright-report/
+# Playwright writes these to the repo root when invoked from there rather than
+# from frontend/, which the paths above do not cover.
+test-results/
+playwright-report/
 # Vitest coverage temp output
 frontend/coverage-temp/

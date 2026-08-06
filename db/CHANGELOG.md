@@ -4,6 +4,31 @@ All notable changes to this subproject are documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Added
+
+- `enum_values()` in `db.base` — a `values_callable` helper for `sa.Enum`
+
+### Fixed
+
+- **44 enum columns persisted member names rather than values.** SQLAlchemy's
+  `Enum(PyEnumClass)` stores names by default, and SQLite builds its CHECK
+  constraint from the same names it sends — so the mismatch was self-consistent
+  under test and only surfaced against PostgreSQL, where 40 of 44 columns
+  disagreed with the schema the migrations create. Every class-backed enum
+  column across 17 model files now passes `values_callable=enum_values`
+- `Reviewer.agent_name` removed from the ORM; migration 0013 had dropped it
+- Migration `2f51665cbb6d`: `theme_preference_enum` was never created
+  (`op.add_column` does not emit `CREATE TYPE`), and `security_event_type_enum`
+  used names rather than values; `downgrade()` now drops both
+- Migration `0012`: `sa.Enum(..., create_type=True)` silently ignored the kwarg
+  and re-created existing types; now uses `postgresql.ENUM(create_type=False)`
+- Migration `0006`: five `op.drop_constraint(None, ..., type_="enum")` calls
+  were invalid; replaced with `sa.Enum(name=...).drop(checkfirst=True)`. Adds
+  five missing `background_job_type_enum` labels
+- Migration `0010`: `downgrade()` left `audit_action_enum` orphaned
+
 ## [0.10.0] — 2026-03-31 — feature/010-research-protocol-definition
 
 ### Added

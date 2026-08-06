@@ -4,6 +4,37 @@ All notable changes to this subproject are documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Added
+
+- `viewer_role` on `StudyDetail` — the requesting user's `StudyMember` role, so
+  clients can gate LEAD-only controls the way the API already does
+- `theme_preference` on both login responses, so a stored preference is applied
+  at sign-in without a follow-up `/auth/me` call
+- `assign_default_protocol()` — study creation assigns its study type's default
+  protocol template in the same transaction. A missing template is logged, not
+  raised, so a database without seeded templates can still create studies
+
+### Fixed
+
+- `GET /api/v1/health` no longer requires authentication. It answered 401, so
+  the Docker health check could never pass and the container stayed unhealthy
+- Study creation no longer raises on `Reviewer.agent_name`, a column dropped by
+  migration 0013 but still declared on the ORM. A caller-supplied name is
+  preserved in `agent_config` instead
+
+### Changed
+
+- `PUT /studies/{id}/protocol-assignment` blocks only when a task has actually
+  progressed (COMPLETE / GATE_FAILED / SKIPPED). Every study now starts with
+  ACTIVE tasks, so the previous ACTIVE-based guard would have blocked
+  re-assignment permanently
+- `DELETE /studies/{id}/protocol-assignment` drops its status guard entirely —
+  `confirm_reset` is already the user's acknowledgement that progress is lost
+- `assign_protocol` and `reset_to_default` share a commit-free
+  `_apply_assignment`, so callers own the transaction
+
 ## [0.10.0] — 2026-03-31 — feature/010-research-protocol-definition
 
 ### Added

@@ -4,6 +4,85 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+Repairs to CI, the ORM/migration boundary, and the end-to-end suite. The e2e
+suite went from 0 to 82 passing; making it run exposed a series of defects that
+had been invisible because tests skipped themselves rather than failing.
+
+### Added
+
+- **Auto-assigned protocols**: creating a study now assigns its study type's
+  default protocol template in the same transaction, so the Protocol tab shows a
+  graph immediately instead of an empty state the user has to resolve by hand.
+  A database with no seeded templates still creates studies — a missing default
+  is logged, not raised
+- **`viewer_role` on `StudyDetail`**: the requesting user's `StudyMember` role,
+  so clients can gate LEAD-only controls the way the API does
+- **`theme_preference` in the login response**: the stored preference is applied
+  on sign-in without a follow-up `/auth/me` round-trip
+- **`scripts/audit_unreachable_frontend.py`**: walks the frontend import graph
+  and reports modules unreachable from `main.tsx`. Exits non-zero, so it can
+  gate CI. Its first run found 23 (see `docs/feature-gaps.md`, G18–G21)
+- **e2e fixtures** (`scripts/seed_e2e_user.py`): research group, study, study
+  memberships, PICO, search string and completed execution, candidate papers,
+  and two TOTP-enabled accounts
+
+### Fixed
+
+- **44 enum columns persisted member names, not values**: SQLAlchemy's
+  `Enum(PyEnumClass)` stores names by default. SQLite rendered its CHECK
+  constraint from the same names it sent, so the mismatch was self-consistent
+  in tests and only broke against PostgreSQL, where 40 of 44 columns disagreed
+  with the schema the migrations create. All now pass `values_callable`
+- **Four migration defects**: a missing `CREATE TYPE` on `op.add_column`, a
+  duplicate `CREATE TYPE`, five invalid `op.drop_constraint(type_="enum")`
+  calls, and enum types orphaned by `downgrade()`
+- **`Reviewer.agent_name`**: the ORM still declared a column migration 0013 had
+  dropped, so study creation raised
+- **`/api/v1/health` required authentication**, so the Docker health check could
+  never pass and the container was permanently unhealthy
+- **Vite proxied `/api-docs` to the backend**: proxy keys match by prefix, so a
+  bare `/api` swallowed the client route and answered it with the backend's JSON 404. `/api-docs` had never worked under `npm run dev`
+- **Theme preference did not survive logout**: the column, the endpoint and the
+  `/auth/me` field all existed, but nothing read the value back, so it lived
+  only in local state
+- **Admin agent list never refreshed after a mutation**: `useAgents()` keyed on
+  `['agents', undefined]` and `useAgent(null)` on `['agents', null]`, which hash
+  identically — one shared cache entry, whose refetch requested `/agents/null`
+  and 422'd. Keys are now namespaced
+- **Protocol task actions were unreachable**: `StudyPage` passed
+  `isAdmin={false}` as a literal, so Mark Complete and Approve rendered for
+  nobody though both endpoints exist and are LEAD-gated
+- **The study wizard submitted a step early**: React reused one DOM node across
+  the Next/Create-Study swap, flipping the live button's `type` to `submit`
+  mid-click, so clicking Next on step 4 created the study and discarded step 5's
+  input
+- **Protocol graph nodes drifted off-canvas**: charge and collision forces pushed
+  them past the SVG viewport, where they were clipped and unclickable
+- **Saving a protocol gave no feedback**: `onSuccess` navigated to the route the
+  editor already occupied
+- **Locked phase tabs were styled as unavailable but stayed focusable**, and
+  announced nothing to assistive technology; they are now `disabled`
+- **Five wizard controls had unassociated labels** (study type, snowball
+  threshold, three textareas), leaving them unnamed for screen readers
+
+### Changed
+
+- **Protocol re-assignment guard**: `PUT /studies/{id}/protocol-assignment` now
+  blocks only when a task has progressed (COMPLETE / GATE_FAILED / SKIPPED).
+  Since every study starts with ACTIVE tasks, the previous ACTIVE-based guard
+  would have blocked re-assignment permanently. `DELETE` (reset) drops the
+  status guard entirely — `confirm_reset` is already the user's acknowledgement
+- **CI**: e2e job now stands up PostgreSQL, Redis, migrations, fixtures, and a
+  backend with a liveness probe; `python-test` runs the `db` package against
+  PostgreSQL so the 16 migration tests execute instead of skipping; Trivy uses
+  `trivyignores:` rather than the ignored `trivy-config:`
+- **e2e suite**: all 13 conditional `test.skip()` branches removed. Five became
+  real coverage; eight are now `test.fixme` with a reason and a gap reference.
+  Every zero-timeout `isVisible()` guard is gone — it samples the DOM instantly
+  and silently took the wrong branch whenever it lost the race with a render
+
 ## [0.10.0] — 2026-03-31 — feature/010-research-protocol-definition
 
 ### Added
