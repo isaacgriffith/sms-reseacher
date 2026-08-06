@@ -1,6 +1,23 @@
-# sms-agents
+# agents
 
-LLM-powered research agents for SMS Researcher. Provides `ScreenerAgent`, `ExtractorAgent`, and `SynthesiserAgent` as an importable Python library.
+LLM-powered research agents for SMS Researcher, exposed as an importable Python library.
+Every call routes through the shared `LLMClient` (LiteLLM); prompts are Jinja2 templates
+under `src/agents/prompts/<agent>/`, never inline strings.
+
+| Agent                       | Role                                                          |
+| --------------------------- | ------------------------------------------------------------- |
+| `ScreenerAgent`             | Include/exclude a candidate paper against study criteria      |
+| `ExtractorAgent`            | Pull structured data from an accepted paper                   |
+| `SynthesiserAgent`          | Synthesise findings across extracted papers                   |
+| `NarrativeSynthesiserAgent` | Draft per-research-question narrative sections (Rapid Review) |
+| `SearchStringBuilderAgent`  | Build and refine Boolean search strings                       |
+| `LibrarianAgent`            | Locate and resolve bibliographic records                      |
+| `DomainModelAgent`          | Derive a domain model from the corpus                         |
+| `ExpertAgent`               | Answer domain questions in study context                      |
+| `ProtocolReviewerAgent`     | Structured review of a study protocol                         |
+| `QualityJudgeAgent`         | Score study quality against a rubric                          |
+| `ValidityAgent`             | Draft threats-to-validity assessments                         |
+| `AgentGeneratorAgent`       | Generate new agent definitions from a task description        |
 
 ## Setup
 
@@ -9,10 +26,10 @@ LLM-powered research agents for SMS Researcher. Provides `ScreenerAgent`, `Extra
 uv sync
 
 # Run tests
-uv run --package sms-agents pytest agents/tests/
+uv run --package agents pytest agents/tests/
 
 # Run tests with coverage (minimum 85% line coverage required)
-uv run --package sms-agents pytest agents/tests/ --cov=agents --cov-report=term-missing
+uv run --package agents pytest agents/tests/ --cov=agents --cov-report=term-missing
 
 # Mutation testing (run via GitHub Actions workflow_dispatch, or locally)
 uv run cosmic-ray run agents/cosmic-ray.toml

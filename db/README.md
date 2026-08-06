@@ -1,4 +1,4 @@
-# sms-db
+# db
 
 SQLAlchemy 2.x async models and Alembic migrations for SMS Researcher.
 
@@ -194,7 +194,7 @@ Defined in `db/src/db/models/slr.py`:
 uv sync
 
 # Run tests with coverage (minimum 85% line coverage required)
-uv run --package sms-db pytest db/tests/ --cov=db --cov-report=term-missing
+uv run --package db pytest db/tests/ --cov=db --cov-report=term-missing
 
 # Mutation testing (run via GitHub Actions workflow_dispatch, or locally)
 uv run cosmic-ray run db/cosmic-ray.toml
