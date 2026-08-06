@@ -4,23 +4,26 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-This is a research project by Isaac Griffith, PhD, licensed under the MIT License. A six-subproject UV workspace mono-repo for systematic mapping study (SMS) research automation.
+This is a research project by Isaac Griffith, PhD, licensed under the MIT License. A
+six-subproject `uv` workspace mono-repo that automates secondary and tertiary research
+studies: Systematic Mapping Studies (SMS), Systematic Literature Reviews (SLR), Rapid
+Reviews, and Tertiary Studies.
+
+### Start here
+
+| Document                                              | Answers                                              |
+| ----------------------------------------------------- | ---------------------------------------------------- |
+| **[CONTEXT.md](./CONTEXT.md)**                        | Where am I? Architecture, repo map, request flow     |
+| **[MEMORY.md](./MEMORY.md)**                          | What will bite me? Non-obvious gotchas, with reasons |
+| **[constitution](./.specify/memory/constitution.md)** | What rules are binding? Principles I–X               |
+| **[docs/feature-gaps.md](./docs/feature-gaps.md)**    | What is actually built vs. only specified?           |
+| **This file**                                         | What commands do I run?                              |
 
 ## Active Technologies
 
-- Python 3.14 (backend, db); TypeScript 5.4 / Node 20 LTS (frontend) + FastAPI + Pydantic v2, SQLAlchemy 2.0+ async, Alembic, React 18, MUI v5, react-hook-form + Zod, TanStack Query v5, pyotp, qrcode[pil], cryptography (Fernet), swagger-ui-react (004-frontend-improvements)
-- PostgreSQL 16 (production/Docker Compose); SQLite + aiosqlite (unit/integration tests) (004-frontend-improvements)
-- Python 3.14 (backend, agents, db); TypeScript 5.4 / Node 20 LTS (frontend) + FastAPI + Pydantic v2, SQLAlchemy 2.0+ async, Alembic, LiteLLM, Jinja2, cryptography (Fernet), React 18, MUI v5, TanStack Query v5, react-hook-form + Zod (005-models-and-agents)
-- PostgreSQL 16 (production); SQLite + aiosqlite (tests) (005-models-and-agents)
-- Python 3.14 (researcher-mcp, backend, db); TypeScript 5.4 / Node 20 LTS (frontend); pybliometrics, semanticscholar, scholarly, unpywall, springernature-api-client, markitdown[all], scidownl, httpx (006-database-search-and-retrieval)
-- Python 3.14 (backend, agents, db); TypeScript 5.4 / Node 20 LTS (frontend) + FastAPI, SQLAlchemy 2.0+ async, ARQ, LiteLLM, React 18, MUI v5, TanStack Query v5, react-hook-form + Zod; new: `scipy>=1.13`, `scikit-learn>=1.5`, `numpy>=1.26` (007-slr-workflow)
-- PostgreSQL 16 (production); SQLite + aiosqlite (tests); Alembic migration `0015_slr_workflow` (007-slr-workflow)
-- Python 3.14 (backend, db, agents); TypeScript 5.4 / Node 20 LTS (frontend) + FastAPI + Pydantic v2, SQLAlchemy 2.0+ async, Alembic, ARQ, LiteLLM, weasyprint, Jinja2 (008-rapid-review-workflow)
-- PostgreSQL 16 (production); SQLite + aiosqlite (tests); Alembic migration `0016_rapid_review_workflow` (008-rapid-review-workflow)
-- Python 3.14 (backend, db, agents); TypeScript 5.4 / Node 20 LTS (frontend) + FastAPI, Pydantic v2, SQLAlchemy 2.0+ async, Alembic, ARQ, LiteLLM, React 18, MUI v5, TanStack Query v5, react-hook-form + Zod (009-tertiary-studies-workflow)
-- PostgreSQL 16 (production); SQLite + aiosqlite (tests); Alembic migration `0017_tertiary_studies_workflow` (009-tertiary-studies-workflow)
-- Python 3.14 (backend, db); TypeScript 5.4 / Node 20 LTS (frontend) + FastAPI + Pydantic v2, SQLAlchemy 2.0+ async, Alembic, D3.js (already approved), ARQ, React 18, MUI v5, TanStack Query v5, react-hook-form + Zod. No new dependencies required. (010-research-protocol-definition)
-- PostgreSQL 16 (production); SQLite + aiosqlite (tests); Alembic migration `0018_research_protocol_definition` (010-research-protocol-definition)
+The canonical stack is listed below. Per-feature additions are recorded under
+**Recent Changes**, and the authoritative dependency list is each subproject's
+`pyproject.toml` / `frontend/package.json`.
 
 ### Runtime & Language
 
@@ -143,6 +146,8 @@ This is a research project by Isaac Griffith, PhD, licensed under the MIT Licens
 - 007-slr-workflow: SLR protocol editor with AI review, SLR phase gate, quality assessment checklists, inter-rater reliability (Cohen's κ), meta-analysis/descriptive/qualitative synthesis, Forest/Funnel plots, grey literature tracking, structured SLR report export; new libs: scipy, scikit-learn, numpy
 - 008-rapid-review-workflow: Rapid Review protocol, phase gate, practitioner stakeholders, search config, QA appraisal config, threats to validity, narrative synthesis with AI draft (NarrativeSynthesiserAgent), Evidence Briefing (versioned, PDF via WeasyPrint, share tokens for unauthenticated practitioner access); migration 0016
 - 009-tertiary-studies-workflow: Tertiary Study type (meta-reviews of secondary literature), 5-phase gate, protocol editor, seed import from platform studies, secondary-study data extraction with AI-assist, landscape-of-secondary-studies report section (timeline, RQ evolution, synthesis method shifts), narrative/thematic synthesis; migration 0017
+- 011-improve-testing-and-fix-ci: e2e suite brought from 0 to 82 passing, which exposed 44 enum columns persisting member names rather than values, four migration defects, a Vite proxy that swallowed `/api-docs`, a theme preference written but never read back, colliding TanStack Query keys, a hardcoded `isAdmin={false}`, and a wizard that submitted a step early; adds `scripts/audit_unreachable_frontend.py` and `scripts/seed_e2e_user.py`
+- 012-wire-up-unreachable-workflows (**planned**): closes G18/G19/G20 — screening decisions, the Tertiary Studies frontend, and phases 4–5, all of which are finished code that no user can reach. See `docs/features/012-wire-up-unreachable-workflows.md`
 - 010-research-protocol-definition: reusable research protocol graph model (23 task types, quality gates, assignees, typed I/O slots, directed conditional edges); dual visual+YAML editor; protocol executor service (gate evaluation, task activation); 4 default templates seeded for SMS/SLR/Rapid/Tertiary; YAML export/import; reset-to-default; real-time execution state polling (5 s); Protocol Library page + `/protocols` routes; migration 0018
 
 ---
@@ -178,8 +183,8 @@ uv run pytest backend/tests/ agents/tests/ db/tests/ agent-eval/tests/ researche
 
 # Single package
 uv run --package sms-backend pytest backend/tests/
-uv run --package sms-agents pytest agents/tests/
-uv run --package sms-db pytest db/tests/
+uv run --package agents pytest agents/tests/
+uv run --package db pytest db/tests/
 uv run --package sms-agent-eval pytest agent-eval/tests/
 uv run --package sms-researcher-mcp pytest researcher-mcp/tests/
 
@@ -194,10 +199,10 @@ cd frontend && npm run test:watch   # watch mode
 uv run --package sms-backend pytest backend/tests/ \
   --cov=src/backend --cov-report=term-missing --cov-report=xml:backend/coverage.xml
 
-uv run --package sms-agents pytest agents/tests/ \
+uv run --package agents pytest agents/tests/ \
   --cov=src/agents --cov-report=term-missing --cov-report=xml:agents/coverage.xml
 
-uv run --package sms-db pytest db/tests/ \
+uv run --package db pytest db/tests/ \
   --cov=src/db --cov-report=term-missing --cov-report=xml:db/coverage.xml
 
 uv run --package sms-agent-eval pytest agent-eval/tests/ \
@@ -236,6 +241,19 @@ cd frontend && npm run format:check
 > - Third-party packages without stubs (plotly, jose, qrcode, springernature, pybliometrics, scholarly) are listed in `[[tool.mypy.overrides]]` in the root `pyproject.toml`.
 > - Per-package `strict = true` lives in each subproject's `pyproject.toml`; run per-package for strict checks.
 
+### Reachability Audit
+
+A component can compile, pass its unit tests, and call a working endpoint while being
+unreachable by any user. This walks the import graph from `main.tsx` and exits non-zero on
+anything nothing can reach — required by Principle X.
+
+```bash
+python3 scripts/audit_unreachable_frontend.py
+```
+
+It currently reports 23 unreachable modules, tracked as G18–G21 in `docs/feature-gaps.md`
+and designed for in `docs/features/012-wire-up-unreachable-workflows.md`.
+
 ### Mutation Testing
 
 Mutation testing is slow and NOT run on every PR. Use `workflow_dispatch` in GitHub Actions
@@ -265,12 +283,18 @@ cd frontend && npx stryker run
 
 ### End-to-End Tests (Playwright)
 
-E2e tests require the backend and a database to be running.
+E2e tests require the backend, a database, and **seeded fixtures** to be running.
+
+> **Run Playwright from `frontend/`.** Invoking it from the repository root picks up a
+> different installation and fails with a confusing `test.describe() called here` error.
 
 ```bash
 # Using Docker Compose (recommended for local e2e)
 cp .env.example .env   # configure DATABASE_URL, SECRET_KEY, ANTHROPIC_API_KEY
 docker compose up -d
+
+# Seed the users, studies, and papers the specs expect (idempotent — re-run freely)
+uv run python scripts/seed_e2e_user.py
 
 cd frontend
 PLAYWRIGHT_BASE_URL=http://localhost:5173 npx playwright test
