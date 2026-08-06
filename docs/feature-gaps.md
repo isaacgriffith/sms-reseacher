@@ -1,10 +1,25 @@
 # Feature Gap Analysis
 
 **Assessed**: 2026-08-05
-**Last updated**: 2026-08-06 — G16–G21 added. A systematic reachability sweep found **23 frontend modules unreachable from `main.tsx`**, including the entire Tertiary Studies frontend. See [Built-but-never-wired audit](#built-but-never-wired-audit). G18, G19, and G20 were then designed together as [feature 012](./features/012-wire-up-unreachable-workflows.md); that pass **corrected several claims in G18 and G19** — see the `Correction — 2026-08-06` notes in each. Later the same day, starting work on 012 uncovered **60+ committed mutation-testing artifacts** in `backend/src`, invisible to a fully green suite — see [Committed mutation artifacts](#committed-mutation-artifacts-resolved-2026-08-06), now resolved. G21 was broadened to cover **two package-shadowed backend modules**, and this document's claim that the backend had no reachability problem was withdrawn.
+**Last updated**: 2026-08-06
 **Baseline**: `docs/base-features.md` (27 features, F1-SF01 – F3-SF04)
-**Evidence**: working tree of branch `011-improve-testing-and-fix-ci` (301 modified files uncommitted; base commit `32aeffb`)
-**Method**: traced each feature to implementing code — ORM models, API routes, services, agents, source adapters, and UI components — not to `specs/` intent
+**Evidence**: branch `012-wire-up-unreachable-workflows` at `fdd5220`, working tree clean
+**Scope**: 21 gaps catalogued (G1–G21); 23 frontend modules still unreachable, pending feature 012
+
+**Method**: each feature traced to implementing code — ORM models, API routes, services, agents, source adapters, UI components — rather than to `specs/` intent.
+
+> **Known limit of that method.** Tracing to code answers _does an implementation exist_, not _does it work_. Two features marked ● survived a trace while being inert: `_generate_all_charts` looped over an empty list, and the group study listing leaked across research groups. Both had a function that existed, was called, and was covered by passing tests. Claims about behaviour now need the feature exercised — which is what [feature 012](./features/012-wire-up-unreachable-workflows.md) makes a standing requirement. See [Re-check of affected gap claims](#re-check-of-affected-gap-claims-2026-08-06).
+
+### Revision history
+
+| Date       | Change                                                                                                                                                                                                                                                |
+| ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-08-05 | Initial assessment, G1–G15. G13d resolved                                                                                                                                                                                                             |
+| 2026-08-06 | **G16–G21 added.** A systematic reachability sweep found 23 frontend modules unreachable from `main.tsx`, including the entire Tertiary Studies frontend — see [Built-but-never-wired audit](#built-but-never-wired-audit)                            |
+| 2026-08-06 | **G18–G20 designed together** as feature 012; that pass corrected several claims in G18 and G19 (see the `Correction` notes in each)                                                                                                                  |
+| 2026-08-06 | **60+ committed mutation artifacts found** in `backend/src`, invisible to a fully green suite. Reverted in `e47abd9`, contained in `0303a3c` — see [Committed mutation artifacts](#committed-mutation-artifacts-resolved-2026-08-06)                  |
+| 2026-08-06 | **Every gap claim resting on repaired source re-checked.** No verdict changed; four claims corrected, including G13d's root cause — see [Re-check of affected gap claims](#re-check-of-affected-gap-claims-2026-08-06)                                |
+| 2026-08-06 | **G21 broadened** to cover two package-shadowed backend modules, both since deleted (`fdd5220`). This document's claim that the backend had no reachability problem was withdrawn, and `scripts/check_shadowed_modules.py` now guards the class in CI |
 
 ---
 
