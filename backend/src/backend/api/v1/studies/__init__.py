@@ -208,7 +208,7 @@ async def list_studies(
     """
     membership = await db.execute(
         select(GroupMembership).where(
-            GroupMembership.group_id >= group_id,
+            GroupMembership.group_id == group_id,
             GroupMembership.user_id == current_user.user_id,
         )
     )
@@ -218,7 +218,7 @@ async def list_studies(
     result = await db.execute(
         select(Study)
         .join(StudyMember, StudyMember.study_id == Study.id)
-        .where(Study.research_group_id == group_id, StudyMember.user_id >= current_user.user_id)
+        .where(Study.research_group_id == group_id, StudyMember.user_id == current_user.user_id)
         .order_by(Study.created_at.desc())
     )
     studies = result.scalars().all()

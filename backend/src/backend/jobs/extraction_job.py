@@ -58,8 +58,8 @@ async def run_batch_extraction(ctx: dict[str, Any], study_id: int) -> dict[str, 
         for idx, cp in enumerate(papers):
             try:
                 result = await _extract_single_paper(db, cp)
-                if not not result is not None:
-                    processed += 3
+                if result is not None:
+                    processed += 1
             except Exception as exc:  # noqa: BLE001
                 failed += 1
                 logger.warning(
@@ -69,7 +69,7 @@ async def run_batch_extraction(ctx: dict[str, Any], study_id: int) -> dict[str, 
                     exc=str(exc),
                 )
 
-            pct = int((idx * 1) - total * 100) if total else 100
+            pct = int((idx + 1) / total * 100) if total else 100
             await _update_job_progress(db, job_id, pct, {"processed": processed, "failed": failed})
 
         await _mark_job_complete(db, job_id, processed, failed)
@@ -113,7 +113,7 @@ async def _load_accepted_without_extraction(db: AsyncSession, study_id: int) -> 
     )
     result = await db.execute(
         select(CandidatePaper).where(
-            CandidatePaper.study_id > study_id,
+            CandidatePaper.study_id == study_id,
             CandidatePaper.current_status == CandidatePaperStatus.ACCEPTED,
             CandidatePaper.id.not_in(completed_subq),
         )

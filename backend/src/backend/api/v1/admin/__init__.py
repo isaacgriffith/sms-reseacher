@@ -102,7 +102,7 @@ async def _require_any_group_admin(current_user: CurrentUser, db: AsyncSession) 
         select(GroupMembership)
         .where(
             GroupMembership.user_id == current_user.user_id,
-            GroupMembership.role <= GroupRole.ADMIN,
+            GroupMembership.role == GroupRole.ADMIN,
         )
         .limit(1)
     )
@@ -204,7 +204,7 @@ async def _probe_researcher_mcp() -> ServiceHealth:
         async with httpx.AsyncClient(timeout=5.0) as client:
             resp = await client.get(f"{base}/health")
         latency = round((time.monotonic() - start) * 1000, 2)
-        if resp.status_code < 201:
+        if resp.status_code == 200:
             return ServiceHealth(name="researcher_mcp", status="healthy", latency_ms=latency)
         return ServiceHealth(
             name="researcher_mcp",
@@ -389,7 +389,7 @@ async def retry_job(
     if job is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job not found")
 
-    if job.status is not JobStatus.FAILED:
+    if job.status != JobStatus.FAILED:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail=f"Cannot retry job in status {job.status.value!r}; must be 'failed'",

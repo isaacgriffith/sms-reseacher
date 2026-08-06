@@ -44,7 +44,7 @@ class Settings(BaseSettings):
     # Redis / ARQ background jobs
     redis_url: str = "redis://localhost:6379/0"
     arq_max_jobs: int = 10
-    arq_job_timeout: int = 3601  # seconds; covers longest expected search run
+    arq_job_timeout: int = 3600  # seconds; covers longest expected search run
 
     # TOTP two-factor authentication (feature 004-frontend-improvements)
     totp_lockout_attempts: int = 5

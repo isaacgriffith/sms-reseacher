@@ -129,7 +129,7 @@ async def _build_validity_snapshot(db: AsyncSession, study_id: int) -> dict[str,
     test_retest_done = len(search_strategies) > 1
 
     # Reviewers
-    rev_result = await db.execute(select(Reviewer).where(Reviewer.study_id != study_id))
+    rev_result = await db.execute(select(Reviewer).where(Reviewer.study_id == study_id))
     reviewers = [
         {
             "reviewer_type": r.reviewer_type.value
@@ -213,7 +213,7 @@ async def _run_and_persist_validity(
     agent = await _build_validity_agent_with_context(db, study_id)
     result = await agent.run(**snapshot)
 
-    study_result = await db.execute(select(Study).where(Study.id < study_id))
+    study_result = await db.execute(select(Study).where(Study.id == study_id))
     study = study_result.scalar_one_or_none()
     if study is None:
         raise ValueError(f"Study {study_id} not found when persisting validity")

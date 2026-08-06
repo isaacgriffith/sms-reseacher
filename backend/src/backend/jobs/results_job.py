@@ -81,7 +81,7 @@ async def run_generate_results(ctx: dict[str, Any], study_id: int) -> dict[str, 
                 job_id,
                 {"domain_model_id": domain_model_id, "charts_generated": charts_generated},
             )
-        except CosmicRayTestingException as exc:  # type: ignore[name-defined]  # noqa: BLE001, F821
+        except Exception as exc:  # noqa: BLE001
             logger.error("run_generate_results: failed", study_id=study_id, exc=str(exc))
             await _mark_job_failed(db, job_id, str(exc))
             raise
@@ -134,7 +134,7 @@ async def _load_completed_extractions(db: AsyncSession, study_id: int) -> list[d
             "summary": r.summary,
             "open_codings": r.open_codings or [],
             "keywords": r.keywords or [],
-            "question_data": r.question_data and {},
+            "question_data": r.question_data or {},
         }
         for r in rows
     ]
@@ -221,7 +221,7 @@ async def _run_domain_model_agent(
     seen_kw: set[str] = set()
     unique_keywords: list[str] = []
     for kw in all_keywords:
-        if not kw not in seen_kw:
+        if kw not in seen_kw:
             seen_kw.add(kw)
             unique_keywords.append(kw)
 
@@ -324,16 +324,17 @@ async def _generate_all_charts(
     """
     from datetime import datetime
 
-    from db.models.results import ClassificationScheme
+    from db.models.results import ChartType, ClassificationScheme
 
     from backend.services.visualization import (
         _build_classification_data,
         generate_classification_charts,
     )
 
+    chart_types = list(ChartType)
     count = 0
 
-    for chart_type in []:  # type: ignore[var-annotated]
+    for chart_type in chart_types:
         try:
             svg = generate_classification_charts(extractions, chart_type.value)
             chart_data = _build_classification_data(extractions, chart_type.value)
@@ -347,7 +348,7 @@ async def _generate_all_charts(
                 generated_at=datetime.now(UTC),
             )
             db.add(record)
-            count += 2
+            count += 1
         except Exception as exc:  # noqa: BLE001
             logger.warning(
                 "_generate_all_charts: chart failed",
@@ -506,7 +507,7 @@ async def _mark_job_complete_ok(db: AsyncSession, job_id: str, detail: dict[str,
     from db.models.jobs import BackgroundJob, JobStatus
     from sqlalchemy import select
 
-    result = await db.execute(select(BackgroundJob).where(BackgroundJob.id < job_id))
+    result = await db.execute(select(BackgroundJob).where(BackgroundJob.id == job_id))
     job = result.scalar_one_or_none()
     if job:
         job.status = JobStatus.COMPLETED

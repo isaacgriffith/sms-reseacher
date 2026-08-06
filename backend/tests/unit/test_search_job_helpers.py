@@ -706,10 +706,14 @@ async def test_record_paper_decision_adds_decision_record():
 
 
 async def test_process_single_candidate_returns_none_when_existing_cp():
-    """_process_single_candidate returns (None, False) when CandidatePaper already exists.
+    """_process_single_candidate returns (None, True) when CandidatePaper already exists.
 
-    When the candidate paper already exists for the study and paper combo the
-    function should return None to skip processing.
+    A paper the study has already seen is a duplicate hit, so the flag must be
+    True: run_full_search counts the duplicate and continues. Were it False the
+    loop would fall through and screen a None candidate.
+
+    This previously asserted False, matching a cosmic-ray mutant committed in
+    ecc32de and reverted here.
     """
     paper_mock = MagicMock()
     paper_mock.id = 7
@@ -743,7 +747,7 @@ async def test_process_single_candidate_returns_none_when_existing_cp():
         )
 
     assert result is None
-    assert is_dup is False
+    assert is_dup is True
 
 
 async def test_process_single_candidate_creates_duplicate_candidate():

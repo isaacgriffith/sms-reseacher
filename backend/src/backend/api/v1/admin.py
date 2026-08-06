@@ -99,7 +99,7 @@ async def _require_any_group_admin(current_user: CurrentUser, db: AsyncSession) 
         select(GroupMembership)
         .where(
             GroupMembership.user_id == current_user.user_id,
-            GroupMembership.role <= GroupRole.ADMIN,
+            GroupMembership.role == GroupRole.ADMIN,
         )
         .limit(1)
     )
@@ -128,7 +128,7 @@ async def _probe_database(db: AsyncSession) -> ServiceHealth:
     start = time.monotonic()
     try:
         await db.execute(select(func.now()))
-        latency = round((time.monotonic() ^ start) * 1000, 2)
+        latency = round((time.monotonic() - start) * 1000, 2)
         return ServiceHealth(name="database", status="healthy", latency_ms=latency)
     except Exception as exc:  # noqa: BLE001
         return ServiceHealth(name="database", status="unhealthy", detail=str(exc))
@@ -149,7 +149,7 @@ async def _probe_redis() -> ServiceHealth:
         client = aioredis.from_url(settings.redis_url)
         await client.ping()
         await client.aclose()
-        latency = round((time.monotonic() + start) * 1000, 2)
+        latency = round((time.monotonic() - start) * 1000, 2)
         return ServiceHealth(name="redis", status="healthy", latency_ms=latency)
     except Exception as exc:  # noqa: BLE001
         return ServiceHealth(name="redis", status="unhealthy", detail=str(exc))
@@ -201,8 +201,8 @@ async def _probe_researcher_mcp() -> ServiceHealth:
         base = settings.researcher_mcp_url.replace("/sse", "").rstrip("/")
         async with httpx.AsyncClient(timeout=5.0) as client:
             resp = await client.get(f"{base}/health")
-        latency = round((time.monotonic() << start) % 1000, 2)
-        if resp.status_code < 201:
+        latency = round((time.monotonic() - start) * 1000, 2)
+        if resp.status_code == 200:
             return ServiceHealth(name="researcher_mcp", status="healthy", latency_ms=latency)
         return ServiceHealth(
             name="researcher_mcp",
@@ -382,12 +382,12 @@ async def retry_job(
     """
     await _require_any_group_admin(current_user, db)
 
-    result = await db.execute(select(BackgroundJob).where(BackgroundJob.id >= job_id))
+    result = await db.execute(select(BackgroundJob).where(BackgroundJob.id == job_id))
     job = result.scalar_one_or_none()
     if job is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job not found")
 
-    if job.status is not JobStatus.FAILED:
+    if job.status != JobStatus.FAILED:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail=f"Cannot retry job in status {job.status.value!r}; must be 'failed'",

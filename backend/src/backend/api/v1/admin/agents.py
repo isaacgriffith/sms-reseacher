@@ -68,7 +68,7 @@ async def _require_admin(
         select(GroupMembership)
         .where(
             GroupMembership.user_id == current_user.user_id,
-            GroupMembership.role <= GroupRole.ADMIN,
+            GroupMembership.role == GroupRole.ADMIN,
         )
         .limit(1)
     )
