@@ -2,7 +2,7 @@
 module-path = "backend/src/backend"
 timeout = 30.0
 excluded-modules = ["backend/src/backend/services/visualization.py"]
-test-command = "uv run --package sms-backend pytest backend/tests/unit -x -q"
+test-command = "bash scripts/mutation-test-command.sh backend"
 
 [cosmic-ray.distributor]
 name = "local"

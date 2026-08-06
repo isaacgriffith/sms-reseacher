@@ -10,8 +10,58 @@ Repairs to CI, the ORM/migration boundary, and the end-to-end suite. The e2e
 suite went from 0 to 82 passing; making it run exposed a series of defects that
 had been invisible because tests skipped themselves rather than failing.
 
+### Fixed
+
+- **60+ committed mutation-testing artifacts removed from `backend/src`**.
+  Commit `ecc32de`, which introduced cosmic-ray before the isolation wrapper
+  existed, ran it against the working tree and committed the mutants. They
+  survived five feature releases because a _surviving_ mutant is by definition
+  one the test suite cannot detect — 1104 tests passed throughout. Reverted, in
+  order of severity:
+  - `GroupMembership.group_id >= group_id` and
+    `StudyMember.user_id >= current_user.user_id` in the group study listing —
+    membership in any higher-id group passed the access gate, leaking studies
+    across research groups
+  - `if decision != "accepted"` in `run_full_search` — accepted and rejected
+    counters were swapped on every search
+  - `InclusionCriterion.study_id != study_id` and `Reviewer.study_id != study_id`
+    — screening and validity loaded _every other study's_ rows
+  - `for chart_type in []` — results charts were never generated. The mutation
+    orphaned `chart_types = list(ChartType)`, which a later unused-variable
+    cleanup then deleted along with its import
+  - three `except CosmicRayTestingException` clauses naming a class that does
+    not exist, so the handler raised `NameError` and masked the real error
+  - `_process_single_candidate` returning `(None, False)` for an already-seen
+    paper, sending a `None` candidate into the screening pass — where the bare
+    `except Exception` recorded the resulting `AttributeError` as a legitimate
+    rejection
+  - identity lookups on `Study.id`, `Paper.doi`, `BackgroundJob.id`,
+    `SearchString.id` and others using `<`/`>`/`<=`/`>=` instead of `==`
+  - constants and arithmetic: `progress_pct = 101`, `added = -1`, `count += 2`,
+    `processed += 3`, `arq_job_timeout = 3601`,
+    `round((time.monotonic() ^ start) * 1000, 2)`
+  - `audit.py` keyword-only marker `*,` changed to positional-only `/,`
+
+  Two artifacts had been lint-suppressed rather than recognised (`# noqa: F821`,
+  `# type: ignore`); those suppressions are removed. One unit test had been
+  written against a mutant and now asserts the correct value.
+
 ### Added
 
+- **Mutation-testing containment** — three independent guards, added after the
+  repair above:
+  - `scripts/mutation-test-command.sh`: every cosmic-ray test run refuses
+    (exit 99) unless `git rev-parse` proves it is inside a linked worktree.
+    Structural rather than an environment flag, because a variable can be
+    exported by mistake and `--git-dir` differing from `--git-common-dir`
+    cannot. Wired into the `test-command` key of all five `cosmic-ray.toml`
+  - `scripts/run-mutation-safe.sh`: fingerprints the tracked tree before the run
+    and fails if a single byte changed, then scans for artifacts
+  - `scripts/check_mutation_artifacts.py`: blocks commits containing cosmic-ray
+    signatures, in pre-commit and CI. Scans code only — string literals and
+    comments are tokenized away, so docstring prose such as
+    "`WorkerSettings.functions` is a non-empty list" is not flagged. Covered by
+    16 tests in `scripts/tests/`
 - **Auto-assigned protocols**: creating a study now assigns its study type's
   default protocol template in the same transaction, so the Protocol tab shows a
   graph immediately instead of an empty state the user has to resolve by hand.

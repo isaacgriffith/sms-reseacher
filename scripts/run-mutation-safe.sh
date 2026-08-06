@@ -27,6 +27,41 @@ WORKTREE_DIR=$(mktemp -d "/tmp/cosmic-ray-${PACKAGE}-XXXXXX")
 
 results_saved=false
 
+# Fingerprint of the real checkout, taken before the run and re-checked on exit.
+# Isolation is the mechanism; this is the proof. A fingerprint is used rather
+# than refusing on a dirty tree so ordinary work-in-progress does not block a
+# run — what matters is that this run changed nothing, not that the tree
+# started pristine.
+tree_fingerprint() {
+    git -C "$REPO_ROOT" status --porcelain --untracked-files=no \
+        | sort \
+        | sha256sum \
+        | cut -d' ' -f1
+}
+FINGERPRINT_BEFORE="$(tree_fingerprint)"
+
+verify_tree_untouched() {
+    if [[ "$(tree_fingerprint)" != "$FINGERPRINT_BEFORE" ]]; then
+        cat >&2 <<EOF
+
+  ✖ THE REAL WORKING TREE CHANGED DURING THIS RUN.
+
+  Isolation failed — mutated files may be sitting in ${REPO_ROOT}.
+  Do not commit. Review every change before discarding anything:
+
+      git -C "${REPO_ROOT}" status
+      git -C "${REPO_ROOT}" diff
+
+  Then scan for artifacts that survived:
+      python3 scripts/check_mutation_artifacts.py
+
+EOF
+        return 1
+    fi
+    echo "  ✓ Real working tree is byte-identical to before the run"
+    return 0
+}
+
 cleanup() {
     if [[ "$results_saved" == "false" ]]; then
         echo ""
@@ -48,7 +83,11 @@ cleanup() {
     echo ""
     echo "→ Removing worktree ${WORKTREE_DIR}..."
     git -C "$REPO_ROOT" worktree remove "$WORKTREE_DIR" --force 2>/dev/null || true
-    echo "  ✓ Worktree removed — source tree is clean"
+    echo "  ✓ Worktree removed"
+
+    echo ""
+    echo "→ Verifying the real working tree was never touched..."
+    verify_tree_untouched || exit 1
 }
 trap cleanup EXIT
 
@@ -86,5 +125,14 @@ find "$WORKTREE_DIR" -maxdepth 3 -name "*.sqlite" 2>/dev/null \
     done || true
 
 results_saved=true
+
+# Belt and braces: the worktree proves isolation, the fingerprint proves it
+# held, and this proves no artifact reached the tracked source by any other
+# route (a stray editor save, a copied file, a hand-run cosmic-ray).
+echo ""
+echo "→ Scanning the real source tree for mutation artifacts..."
+python3 "$REPO_ROOT/scripts/check_mutation_artifacts.py"
+echo "  ✓ No artifacts present"
+
 echo ""
 echo "✓ Mutation testing complete — source tree was never modified."

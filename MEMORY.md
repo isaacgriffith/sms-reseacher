@@ -182,9 +182,9 @@ but the correct working directory is still `frontend/`.
 
 ---
 
-## Always use the mutation-testing wrapper
+## Always use the mutation-testing wrapper — this already went wrong once
 
-_2026-08-05_
+_2026-08-05, updated 2026-08-06_
 
 `scripts/run-mutation-safe.sh <package>` runs cosmic-ray inside an isolated git worktree.
 
@@ -192,8 +192,30 @@ _2026-08-05_
 interrupted run leaves mutated source in the real working tree, where it is easy to commit
 without noticing.
 
-**How to apply.** Never call `cosmic-ray run` directly. The wrapper copies the session
-database back to the package directory when it finishes.
+That is not hypothetical. Commit `ecc32de` — which introduced cosmic-ray, before the wrapper
+existed — committed **60+ mutants** into `backend/src`. They survived five feature releases.
+Among them: `if decision != "accepted"` (accept/reject counters swapped on every search),
+`GroupMembership.group_id >= group_id` (cross-group study leakage), `for chart_type in []`
+(results charts never generated), and three `except CosmicRayTestingException` clauses naming a
+class that does not exist. Two had been lint-suppressed — `# noqa: F821`, `# type: ignore` —
+rather than recognised.
+
+The reason it hid so long is the sharp edge worth remembering: **a surviving mutant is by
+definition one the test suite cannot detect.** Committing survivors yields a codebase that is
+green and broken simultaneously. 1104 tests passed throughout. Neither coverage nor CI finds this
+class of defect; only reading the source diff does.
+
+Note the date on this entry. It was first written as a precaution on 2026-08-05 — five months
+_after_ the damage was already committed. A warning is not a control.
+
+**How to apply.** Never call `cosmic-ray run` directly; use the wrapper. Three guards now enforce
+it: `mutation-test-command.sh` refuses unless `git rev-parse` proves a linked worktree
+(structural — an env var can be set by mistake, this cannot); `run-mutation-safe.sh` fingerprints
+the tracked tree before and after; `check_mutation_artifacts.py` blocks commits in pre-commit and
+CI. If a flagged line is deliberate, justify it: `# cosmic-ray-ok: <reason>`.
+
+When reviewing any commit that touches mutation tooling, read the source diff — not the test
+result.
 
 ---
 

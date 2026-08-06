@@ -1,6 +1,15 @@
 repos:
   - repo: local
     hooks:
+      # Runs first: a mutated tree makes every check below meaningless, because
+      # a surviving mutant is by definition one the tests cannot detect.
+      - id: mutation-artifacts
+        name: mutation artifacts (cosmic-ray leakage)
+        language: system
+        entry: python3 scripts/check_mutation_artifacts.py
+        pass_filenames: true
+        types: [python]
+
       - id: ruff-check
         name: ruff check (Python lint)
         language: system

@@ -2,7 +2,7 @@
 module-path = "db/src/db"
 timeout = 30.0
 excluded-modules = []
-test-command = "uv run --package db pytest db/tests/unit -x -q"
+test-command = "bash scripts/mutation-test-command.sh db"
 
 [cosmic-ray.distributor]
 name = "local"

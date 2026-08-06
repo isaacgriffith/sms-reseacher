@@ -28,6 +28,15 @@ jobs:
       - name: Install dependencies
         run: uv sync --all-packages
 
+      # Runs before lint and types: a mutated tree makes both meaningless,
+      # because a surviving mutant is by definition invisible to the suite.
+      # Commit ecc32de shipped 60+ of them past a fully green CI.
+      - name: Mutation artifact scan
+        run: python3 scripts/check_mutation_artifacts.py
+
+      - name: Scanner self-test
+        run: uv run pytest scripts/tests -q
+
       - name: Ruff check
         run: |
           uv run ruff check \

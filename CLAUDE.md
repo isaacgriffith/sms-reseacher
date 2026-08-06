@@ -21,8 +21,11 @@ Reviews, and Tertiary Studies.
 
 ## Active Technologies
 
-The canonical stack is listed below. Per-feature additions are recorded under
-**Recent Changes**, and the authoritative dependency list is each subproject's
+- Python 3.14 (backend, db, agents); TypeScript 5.4 / Node 20 LTS (frontend) + FastAPI, Pydantic v2, SQLAlchemy 2.0 async, Alembic, ARQ, LiteLLM; React 18, MUI v5, TanStack Query v5. **No new dependencies.** (012-wire-up-unreachable-workflows)
+- PostgreSQL 16 (production), SQLite + aiosqlite (tests). One Alembic migration — `0019`, adding a `JobType` enum value only. No table or column changes. (012-wire-up-unreachable-workflows)
+
+Entries above are appended per feature branch by `update-agent-context.sh`. The canonical
+stack follows; the authoritative dependency list is always each subproject's
 `pyproject.toml` / `frontend/package.json`.
 
 ### Runtime & Language
@@ -262,6 +265,32 @@ or run locally when needed.
 > **IMPORTANT**: Always use `scripts/run-mutation-safe.sh` rather than calling `cosmic-ray run`
 > directly. The script runs cosmic-ray inside an isolated git worktree so a crash or
 > interruption can never leave a mutated file in the real working tree.
+
+This is enforced, not merely advised, because it already went wrong once — commit `ecc32de`
+introduced cosmic-ray before the wrapper existed and committed 60+ mutants into `backend/src`,
+where they survived five releases with every test passing. A _surviving_ mutant is by definition
+one the suite cannot detect, so leaked mutants produce a codebase that is green and broken at the
+same time.
+
+Three independent guards now stand in the way:
+
+| Guard                                 | Where it fires            | What it does                                                                       |
+| ------------------------------------- | ------------------------- | ---------------------------------------------------------------------------------- |
+| `scripts/mutation-test-command.sh`    | every cosmic-ray test run | Refuses (exit 99) unless `git rev-parse` proves it is inside a **linked worktree**  |
+| `scripts/run-mutation-safe.sh`        | before and after each run | Fingerprints the tracked tree and fails if the run changed a single byte of it      |
+| `scripts/check_mutation_artifacts.py` | pre-commit and CI         | Blocks commits carrying cosmic-ray signatures; self-tested by `scripts/tests/`      |
+
+The first guard is structural: an environment variable can be exported by mistake, whereas
+`--git-dir` differing from `--git-common-dir` is true only inside a throwaway checkout. The
+`test-command` key in every `*/cosmic-ray.toml` routes through it, so a bare `cosmic-ray run`
+against this checkout stops on the first mutant instead of quietly rewriting files.
+
+```bash
+# Scan the tree by hand (also runs in CI and pre-commit)
+python3 scripts/check_mutation_artifacts.py
+```
+
+If a flagged line is deliberate, justify it inline: `# cosmic-ray-ok: <reason>`.
 
 ```bash
 # Python mutation testing — safe wrapper (recommended)

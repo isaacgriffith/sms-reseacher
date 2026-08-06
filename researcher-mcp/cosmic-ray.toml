@@ -2,7 +2,7 @@
 module-path = "researcher-mcp/src/researcher_mcp"
 timeout = 30.0
 excluded-modules = []
-test-command = "uv run --package sms-researcher-mcp pytest researcher-mcp/tests/unit -x -q"
+test-command = "bash scripts/mutation-test-command.sh researcher-mcp"
 
 [cosmic-ray.distributor]
 name = "local"

@@ -2,7 +2,7 @@
 module-path = "agents/src/agents"
 timeout = 30.0
 excluded-modules = []
-test-command = "uv run --package agents pytest agents/tests/unit -x -q"
+test-command = "bash scripts/mutation-test-command.sh agents"
 
 [cosmic-ray.distributor]
 name = "local"
