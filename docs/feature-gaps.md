@@ -32,14 +32,14 @@
 | F2-SF04 | Study selection      | ◐      | G4, G5; G18 — no UI to record a screening decision at all                   |
 | F2-SF05 | Quality assessment   | ◐      | G6 — no Study entity distinct from Paper; G21 — orphaned + shadowed modules |
 | F2-SF06 | Data extraction      | ◐      | G20 — extraction UI exists but phase 4 shows a placeholder                  |
-| F2-SF07 | Automated analysis   | ●      | —                                                                           |
+| F2-SF07 | Automated analysis   | ●      | Re-verified 2026-08-06 — the ● was unearned when written (see below)        |
 | F2-SF08 | Text analysis        | ●      | —                                                                           |
 | F2-SF09 | Meta-analysis        | ◐      | G8 — no metasummary; thematic synthesis is not Cruzes/Dybå                  |
 | F2-SF10 | Report write-up      | ◐      | G9 — no Typst backend; G14 — no PRISMA 2020 flow diagram                    |
 | F2-SF11 | Report validation    | ✗      | G10 — no PRISMA/SEGRESS/trAIce checker; G14                                 |
 | F3-SF01 | Multiple users       | ◐      | G11 — role model mismatch, no user CRUD                                     |
 | F3-SF02 | Document management  | ◐      | G12 — no manual fallback/store/viewer; G16 — SciHub toggle unreachable      |
-| F3-SF03 | Security             | ●      | Capability matrix is coarse (see G11)                                       |
+| F3-SF03 | Security             | ●      | Capability matrix is coarse (G11); a live access-control defect was missed  |
 | F3-SF04 | Multiple projects    | ◐      | G19 — the entire Tertiary Studies frontend is unreachable                   |
 
 ---
@@ -53,6 +53,8 @@
 **Current.** `run_snowball` (`backend/src/backend/jobs/search_job.py:693`) performs iterative bidirectional snowballing with a stopping threshold, dedup, and AI pre-screening against inclusion/exclusion criteria. Discovery works. But `CandidatePaper` (`db/src/db/models/candidate.py:29`) carries only `duplicate_of_id` and `source_seed_import_id` — **there is no edge recording which paper a candidate was discovered from**. `_process_snowball_batch` (`search_job.py:590`) never writes one.
 
 **Consequence.** Retraction cascade is impossible. Excluding an included paper silently orphans its descendants, and there is no way to distinguish a descendant with a second surviving parent from one without.
+
+> **Correction — 2026-08-06.** "Discovery works" was true of the design and false of the code when this was written: `_process_snowball_batch` deduplicated with `Paper.doi > ep.doi` instead of `==`, and its counters ran `added = -1` / `added += 2`. Both were cosmic-ray mutants, repaired in `e47abd9`; the premise now holds. The gap itself is unchanged — the missing discovery edge is structural and has nothing to do with the mutants.
 
 **Remediation sketch.**
 
@@ -207,6 +209,10 @@ Authorization itself is coarse: `require_study_member` (`backend/src/backend/cor
 
 **Note.** The rest of F3-SF03 is solid — JWT with `token_version` invalidation, TOTP 2FA with bcrypt-hashed backup codes, Fernet encryption at rest, and a security audit log.
 
+> **Correction — 2026-08-06.** That note was too confident when written. `GET /groups/{group_id}/studies` was gating on `GroupMembership.group_id >= group_id` and `StudyMember.user_id >= current_user.user_id`, so membership in any higher-id group passed the check and the listing returned other members' studies — broken access control, live, while the feature was marked ●. Both are equality again as of `e47abd9`; the note is accurate now. The mechanisms it praises were never the problem, which is the point: sound primitives do not make a system secure if a predicate is wrong.
+>
+> Separately, the `admin.py` named above is `backend/src/backend/api/v1/admin.py`, which the `admin/` package shadows (G21) — it is never imported. Its three routes match the live package exactly, so the conclusion drawn here is unaffected, but the file to read is `api/v1/admin/__init__.py`.
+
 ---
 
 ### G12 — Document management (F3-SF02) — **medium**
@@ -257,6 +263,32 @@ Secondary: research goal and RQs are read from the untyped `study.metadata_` JSO
 - **`max_results: 100`** truncates the result set, so a seed ranked 101st counts as a miss and recall is silently understated.
 
 #### 13d — Two defects in `_fetch_test_search_results` — ✅ **RESOLVED 2026-08-05**
+
+> **Correction — 2026-08-06 (root cause).** Neither "defect" below was written by hand. Both are
+> cosmic-ray mutants committed by `ecc32de`, confirmed against that commit's diff:
+>
+> ```text
+> -            if resp.status_code == 200:        →  +            if not resp.status_code > 200:
+> -    return set(), 0                            →  +    return set(), 2
+> ```
+>
+> The `2` in `return set(), 2` was never a "magic number" chosen by a developer — it is the
+> `NumberReplacer` mutator incrementing a `0`. The reasoning below about intent is therefore
+> wrong, though every observation about _behaviour_ is right and the fix stands (it improved on
+> the original by adding `TestSearchUnavailableError` and an explicit 2xx range check, which the
+> pre-mutation code lacked).
+>
+> Two consequences worth keeping. First, `test_fetch_test_search_results_returns_empty_on_exception`
+> did not "enshrine a defect" — it was written at `a05d09b` on 2026-03-17, two days _after_ the
+> corruption, against mutated behaviour. That is the same pattern as
+> `test_process_single_candidate_returns_none_when_existing_cp`, corrected in `e47abd9`. When a
+> mutant is committed, tests written afterwards calcify it.
+>
+> Second, and more costly: this was the corruption's **first encounter**, on 2026-08-05. Diagnosed
+> as two ordinary defects in one function, it prompted no search for siblings — so the other 60+
+> mutants survived another day, until an unrelated read of `search_job.py` on 2026-08-06 turned up
+> `Paper.doi > doi` two lines away. See [Committed mutation artifacts](#committed-mutation-artifacts-resolved-2026-08-06).
+> The lesson is to ask where a defect came from, not only what it does.
 
 The original code was:
 
@@ -595,7 +627,24 @@ It tokenizes each file and matches executable code only — docstring prose such
 
 **Resolution.** `e47abd9` reverted 63 sites across 17 files and corrected one unit test that had been written against a mutant two days after the corruption landed. `0303a3c` added three independent guards: a structural refusal that stops any cosmic-ray test run outside a linked worktree (`git rev-parse` can prove that; an environment variable cannot), a before/after fingerprint of the tracked tree in the wrapper, and the commit-time scanner above. The five `cosmic-ray-survivors.md` reports are annotated — their "100% killed" scores came from the unsafe session and should not be cited until re-run.
 
-**Consequence for this document.** Gaps assessed before 2026-08-06 were read against corrupted source. None of the catalogued gaps is known to be invalidated, but any conclusion that rested on the behaviour of `search_job.py`, `quality_job.py`, `results_job.py`, `validity_job.py`, `extraction_job.py`, or the group/study listing endpoints is worth re-checking against the repaired tree.
+### Re-check of affected gap claims (2026-08-06)
+
+Every gap assessed before 2026-08-06 was read against corrupted source, so each claim resting on a repaired file was re-verified against the repaired tree. **No gap's verdict changed** — the structural absences the catalogue records are real and independent of the mutants. Four claims did need correcting, and one of them is the most instructive item in this document.
+
+| Claim                                                    | Verdict                                                                                                                                                                                  |
+| -------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **G13d** — "two defects in `_fetch_test_search_results`" | ⚠ **Root cause wrong.** Both were cosmic-ray mutants, not design defects. Fix stands. See the correction on that gap — this was the corruption's first, misdiagnosed encounter           |
+| **F2-SF07** Automated analysis — marked ●                | ⚠ **Unearned when written.** `_generate_all_charts` looped over `[]`, so zero charts were ever produced. Now genuinely correct — verified below                                          |
+| **F3-SF03** Security — marked ●, "the rest is solid"     | ⚠ **Overstated when written.** A broken-access-control defect was live in `GET /groups/{id}/studies`. Now correct — verified below                                                       |
+| **G1** — "Discovery works"                               | ⚠ **Premise was false, verdict unaffected.** Snowball dedup (`Paper.doi > ep.doi`) and its counters (`added = -1`, `added += 2`) were broken. Repaired; the missing DAG is still missing |
+| **G11** — cites `admin.py` route list                    | ✓ Names the package-shadowed dead file (G21), but its three routes are identical to the live package, so the conclusion holds                                                            |
+| **G4, G15, G18, G19** — reference repaired files         | ✓ Unaffected. Each rests on a structural absence, not on mutated behaviour                                                                                                               |
+
+**F2-SF07 re-verified.** `ChartType` has 8 members; `_generate_all_charts` is called from `run_generate_results` (`results_job.py:77`), persists a `ClassificationScheme` per type, is served by `results.py`, and is rendered by `components/results/ChartGallery.tsx` on `ResultsPage`. The path is complete end to end. It was not before: for five releases the feature marked "fully implemented" generated nothing.
+
+**F3-SF03 re-verified.** Both predicates in the group study listing are equality again, so membership in one group no longer grants visibility of another's studies. The rest of the F3-SF03 note remains accurate — JWT with `token_version` invalidation, TOTP 2FA with bcrypt-hashed backup codes, Fernet at rest, and both audit modules (`services/audit.py` for data changes, imported by six routers; `services/audit_service.py` for security events) are intact and distinct.
+
+**What this says about the assessment method.** The header of this document states the method: "traced each feature to implementing code — not to `specs/` intent". That is the right instinct, and it still failed here, because tracing to code answers _does an implementation exist_ and not _does it work_. Both ● marks above survived a trace: the function existed, was called, was covered by passing tests. What would have caught them is the question feature 012 was written to institutionalise — can a user reach this, and does exercising it produce the claimed effect? An e2e test opening the results page and asserting eight charts would have failed for five releases.
 
 ---
 
