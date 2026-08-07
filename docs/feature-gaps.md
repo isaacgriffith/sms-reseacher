@@ -1068,7 +1068,7 @@ Two findings from executing `todo.md`'s first item and `todo2.md`'s constitution
 
 So the gate is codified, the safety rails are built, and no package has a citable number. Closing this is a matter of running the wrapper five times and recording the results; the guards that make that safe are the part that was hard, and it is finished.
 
-**2 — The documented coverage command reports 0.00% and fails.** CLAUDE.md gives:
+**2 — The documented coverage command reports 0.00% and fails.** ✅ **RESOLVED 2026-08-07.** CLAUDE.md gave:
 
 ```bash
 uv run --package sms-backend pytest backend/tests/ --cov=src/backend …
@@ -1090,7 +1090,15 @@ This bears directly on `todo.md`'s first item — "explain how to correctly run 
 
 **3 — One oracle is not actually enforced.** CLAUDE.md states "Both oracles run in pre-commit and CI." `check_mutation_artifacts.py` and `check_shadowed_modules.py` do (`.pre-commit-config.yaml:9,19`; `ci.yml:35,40`). **`audit_unreachable_frontend.py` appears in neither** — the constitution's own v1.8.0 sync-impact report records this as a known outstanding violation of Principle X, and CLAUDE.md has not caught up.
 
-**Fix.** Make the coverage commands `cd`-prefixed or module-scoped (`--cov=backend`) and verify each from the root before committing the doc; wire `audit_unreachable_frontend.py` into pre-commit and CI — with feature 012 landed it should report zero, making it a genuine gate; run `run-mutation-safe.sh` across all five packages plus Stryker and replace the six disclaimed reports; widen Stryker's scope beyond `src/services`.
+> **⚠ The obvious alternative fix is wrong, and was nearly shipped.** Keeping the command at the
+> root and passing the module name (`--cov=agent_eval`) appears to work — but each package's
+> `branch = true` lives in **its own** `pyproject.toml` and there is no coverage config at the root,
+> so that form **silently disables branch coverage**. It reported 87.05% against the correct 86.34%.
+> The commands are now `cd`-prefixed subshells, which preserve the configured measurement, write
+> `<package>/coverage.xml` to the same path, and leave the caller's working directory unchanged.
+> Verified against agent-eval and db before committing.
+
+**Fix.** ~~Make the coverage commands `cd`-prefixed and verify each before committing the doc~~ ✅ done 2026-08-07; wire `audit_unreachable_frontend.py` into pre-commit and CI — with feature 012 landed it should report zero, making it a genuine gate; run `run-mutation-safe.sh` across all five packages plus Stryker and replace the six disclaimed reports; widen Stryker's scope beyond `src/services`.
 
 **Cost.** Low in effort, mostly machine time. The point is that a documented command that fails and an unenforced oracle both erode the evidence base every other entry in this document rests on.
 

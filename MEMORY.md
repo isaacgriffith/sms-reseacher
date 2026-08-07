@@ -304,9 +304,17 @@ reads as "your tests do not cover the code", which sends you looking for missing
 actual fault is the working directory. The real figures are healthy: backend 86.23%, agents 87.42%,
 db 96.23%, agent-eval 86.34%, researcher-mcp 87.90%, frontend 91.06%.
 
-**How to apply.** `cd` into the package first, or use the module name (`--cov=backend`) rather than
-the path. Tracked as **G34** in `docs/feature-gaps.md`; the commands in `CLAUDE.md` have not been
-corrected yet.
+**There is a second, quieter failure.** Each package sets `branch = true` in **its own**
+`pyproject.toml`, and there is no coverage config at the repository root. So the obvious alternative
+fix — keeping the command at the root and passing the module name (`--cov=agent_eval`) — appears to
+work but **silently disables branch coverage**. It reported 87.05% against the correct 86.34%,
+measuring three columns where the configured run measures five.
+
+**How to apply.** **`cd` into the package** — do not use the module-name form. `CLAUDE.md` was
+corrected on 2026-08-07 and its commands now use subshells (`(cd backend && …)`), which preserve
+branch coverage, write `<package>/coverage.xml` to the same path as before, and leave your shell's
+working directory alone. The general lesson survives the fix: **a tool that reads config relative to
+the working directory will silently measure something different when you move.**
 
 ---
 

@@ -223,26 +223,38 @@ cd frontend && npm run test:watch   # watch mode
 
 ### Coverage Commands (minimum 85% line coverage enforced)
 
+> **Run each from inside its package directory.** Unlike every other command in this file, these
+> do **not** work from the repository root: `--cov=src/<pkg>` matches nothing there, and coverage
+> reports **0.00%**, failing the 85% gate. Worse, each package's `branch = true` lives in its own
+> `pyproject.toml` and there is no coverage config at the root — so running from the root also
+> **silently disables branch coverage**. `cd` first. See `MEMORY.md`.
+
 ```bash
-uv run --package sms-backend pytest backend/tests/ \
-  --cov=src/backend --cov-report=term-missing --cov-report=xml:backend/coverage.xml
+(cd backend        && uv run --package sms-backend        pytest tests/ \
+  --cov=src/backend        --cov-report=term-missing --cov-report=xml:coverage.xml)
 
-uv run --package agents pytest agents/tests/ \
-  --cov=src/agents --cov-report=term-missing --cov-report=xml:agents/coverage.xml
+(cd agents         && uv run --package agents             pytest tests/ \
+  --cov=src/agents         --cov-report=term-missing --cov-report=xml:coverage.xml)
 
-uv run --package db pytest db/tests/ \
-  --cov=src/db --cov-report=term-missing --cov-report=xml:db/coverage.xml
+(cd db             && uv run --package db                 pytest tests/ \
+  --cov=src/db             --cov-report=term-missing --cov-report=xml:coverage.xml)
 
-uv run --package sms-agent-eval pytest agent-eval/tests/ \
-  --cov=src/agent_eval --cov-report=term-missing --cov-report=xml:agent-eval/coverage.xml
+(cd agent-eval     && uv run --package sms-agent-eval     pytest tests/ \
+  --cov=src/agent_eval     --cov-report=term-missing --cov-report=xml:coverage.xml)
 
-uv run --package sms-researcher-mcp pytest researcher-mcp/tests/ \
-  --cov=src/researcher_mcp --cov-report=term-missing \
-  --cov-report=xml:researcher-mcp/coverage.xml
+(cd researcher-mcp && uv run --package sms-researcher-mcp pytest tests/ \
+  --cov=src/researcher_mcp --cov-report=term-missing --cov-report=xml:coverage.xml)
 
 # Frontend (85% threshold enforced via vite.config.ts)
-cd frontend && npm run test:coverage
+(cd frontend && npm run test:coverage)
 ```
+
+Each writes `<package>/coverage.xml` — the same path as before, since the command now runs from
+inside the package. The subshells keep your shell's working directory unchanged, so the block can be
+pasted as a whole.
+
+**Expected**, as of 2026-08-07: backend 86.23% · agents 87.42% · db 96.23% · agent-eval 86.34% ·
+researcher-mcp 87.90% · frontend 91.06% lines.
 
 ### Lint and Type-Check
 
