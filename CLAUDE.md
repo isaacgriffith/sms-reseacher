@@ -17,7 +17,32 @@ Reviews, and Tertiary Studies.
 | **[MEMORY.md](./MEMORY.md)**                          | What will bite me? Non-obvious gotchas, with reasons |
 | **[constitution](./.specify/memory/constitution.md)** | What rules are binding? Principles I–X               |
 | **[docs/feature-gaps.md](./docs/feature-gaps.md)**    | What is actually built vs. only specified?           |
+| **[docs/methodology/](./docs/methodology/)**          | How should a review actually be conducted? The research-backed processes |
 | **This file**                                         | What commands do I run?                              |
+
+### The research basis
+
+`docs/methodology/` holds the process definitions this platform automates, written from the 54-paper
+corpus in `research/`. **Consult it before designing anything that touches how a review is
+conducted** — search, screening, quality assessment, extraction, synthesis, validity, or reporting.
+
+Fastest entry points:
+
+| Need | Read |
+| ---- | ---- |
+| A quick pre-design check | [`11-caveats-register.md`](./docs/methodology/11-caveats-register.md) — ~80 traps indexed by the step each bites |
+| What this means for the codebase | [`12-platform-implications.md`](./docs/methodology/12-platform-implications.md) — mapped to `feature-gaps.md` gap IDs |
+| The process for one study type | `01-slr.md` · `02-sms.md` · `03-rapid-review.md` · `04-tertiary.md` |
+| **Adding new papers to the corpus** | [`PLAYBOOK.md`](./docs/methodology/PLAYBOOK.md) — the pipeline, ready-to-use prompts, and a register of all 54 papers already examined so effort is not duplicated |
+
+Three constraints worth knowing before they surprise you:
+
+- **Kitchenham & Charters 2007 is amended, not current.** Eleven changes are recorded in
+  [`01-slr.md`](./docs/methodology/01-slr.md), including two recommendations its own authors withdrew.
+- **PRISMA 2020 must not be used to score quality** — it measures reporting completeness. SEGRESS is
+  the standard to build against, because it is the only one with per-review-type applicability.
+- **Extraction decoupled from quality appraisal produces results "very quickly [that] will be
+  wrong".** The sharpest methodological warning in the corpus for a platform like this one.
 
 ## Active Technologies
 
@@ -266,8 +291,14 @@ on 2026-08-06 (`api/v1/admin.py`, `db/models.py`).
 python3 scripts/check_shadowed_modules.py
 ```
 
-Both oracles run in pre-commit and CI. `scripts/` is covered by `ruff` and `mypy` alongside the
-five `*/src` roots — it was not, which is how two unlinted scripts reached the tree.
+`check_shadowed_modules.py` and `check_mutation_artifacts.py` run in pre-commit and CI.
+**`audit_unreachable_frontend.py` runs in neither**, despite Principle X requiring it — the
+constitution's own v1.8.0 sync-impact report records this as a known outstanding violation, and it
+is tracked as **G34** in `docs/feature-gaps.md`. Wire it in once feature 012 lands and it reports
+zero, at which point it becomes a genuine gate rather than a permanent 23-module failure.
+
+`scripts/` is covered by `ruff` and `mypy` alongside the five `*/src` roots — it was not, which is
+how two unlinted scripts reached the tree.
 
 ### Mutation Testing
 

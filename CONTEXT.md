@@ -71,7 +71,8 @@ A `uv` workspace of five Python packages plus a Vite/React frontend.
 | `agent-eval/`     | `sms-agent-eval`     | deepeval pipelines scoring agent quality                                   |
 | `frontend/`       | (npm)                | React 18 + MUI v5 SPA, TanStack Query, Playwright e2e                      |
 | `scripts/`        | —                    | Operational tooling (see below)                                            |
-| `docs/`           | —                    | Feature PRDs, gap register, methodology notes                              |
+| `docs/`           | —                    | Feature PRDs, gap register, and `methodology/` — the research-backed review processes |
+| `research/`       | —                    | The 54-paper corpus `docs/methodology/` is built from                      |
 | `specs/`          | —                    | Per-feature speckit specs, plans, and task lists                           |
 
 ### Scripts
@@ -133,7 +134,8 @@ Prefer these over inference when they disagree with code comments or with each o
 | Question                                | Authority                                            |
 | --------------------------------------- | ---------------------------------------------------- |
 | What are the binding engineering rules? | `.specify/memory/constitution.md`                    |
-| What is built vs. merely specified?     | `docs/feature-gaps.md` (21 catalogued gaps)          |
+| What is built vs. merely specified?     | `docs/feature-gaps.md` (43 catalogued gaps, G1–G43)  |
+| **How should a review actually be conducted?** | **`docs/methodology/`** — process definitions for SLR, SMS, Rapid Review and Tertiary, grounded in 54 research papers. **Where the platform and these documents disagree, the documents are the specification and the platform is the defect** |
 | What is planned next?                   | `docs/features/` (PRDs) and `specs/` (specs + tasks) |
 | What is the database schema?            | `db/src/db/models/` + `db/alembic/versions/`         |
 | What commands do I run?                 | `CLAUDE.md`                                          |
