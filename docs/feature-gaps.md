@@ -1,10 +1,10 @@
 # Feature Gap Analysis
 
 **Assessed**: 2026-08-05
-**Last updated**: 2026-08-06
+**Last updated**: 2026-08-07
 **Baseline**: `docs/base-features.md` (27 features, F1-SF01 – F3-SF04)
-**Evidence**: branch `012-wire-up-unreachable-workflows` at `fdd5220`, working tree clean
-**Scope**: 21 gaps catalogued (G1–G21); 23 frontend modules still unreachable, pending feature 012
+**Evidence**: branch `012-wire-up-unreachable-workflows` at `1e01097`, working tree clean
+**Scope**: 23 gaps catalogued (G1–G23); 23 frontend modules still unreachable, pending feature 012
 
 **Method**: each feature traced to implementing code — ORM models, API routes, services, agents, source adapters, UI components — rather than to `specs/` intent.
 
@@ -20,6 +20,7 @@
 | 2026-08-06 | **60+ committed mutation artifacts found** in `backend/src`, invisible to a fully green suite. Reverted in `e47abd9`, contained in `0303a3c` — see [Committed mutation artifacts](#committed-mutation-artifacts-resolved-2026-08-06)                  |
 | 2026-08-06 | **Every gap claim resting on repaired source re-checked.** No verdict changed; four claims corrected, including G13d's root cause — see [Re-check of affected gap claims](#re-check-of-affected-gap-claims-2026-08-06)                                |
 | 2026-08-06 | **G21 broadened** to cover two package-shadowed backend modules, both since deleted (`fdd5220`). This document's claim that the backend had no reachability problem was withdrawn, and `scripts/check_shadowed_modules.py` now guards the class in CI |
+| 2026-08-07 | **G22–G23 added**, both found while fixing the screening pipeline (`d8f6dcf`, `1e01097`). Snowballing is a registered job with no enqueue site, and admin job retry enqueues function names that are not registered, with arguments matching no job's signature — while reporting `200`. Neither is visible to the reachability oracles, which model imports rather than HTTP routes; see [Neither oracle sees a backend route](#neither-oracle-sees-a-backend-route) |
 
 ---
 
@@ -43,7 +44,7 @@
 | F1-SF04 | Self-contained       | ◐      | 8 external API keys + an LLM provider; G15 — only Ollama self-hostable; G17 |
 | F2-SF01 | Protocol development | ●      | Guideline grounding is thin (see G7)                                        |
 | F2-SF02 | Protocol validation  | ◐      | AI review is SLR-only                                                       |
-| F2-SF03 | Automated searches   | ◐      | G1, G2, G3, G13 — the largest cluster                                       |
+| F2-SF03 | Automated searches   | ◐      | G1, G2, G3, G13, G22 — the largest cluster; snowballing cannot be started   |
 | F2-SF04 | Study selection      | ◐      | G4, G5; G18 — no UI to record a screening decision at all                   |
 | F2-SF05 | Quality assessment   | ◐      | G6 — no Study entity distinct from Paper; G21 — orphaned + shadowed modules |
 | F2-SF06 | Data extraction      | ◐      | G20 — extraction UI exists but phase 4 shows a placeholder                  |
@@ -52,7 +53,7 @@
 | F2-SF09 | Meta-analysis        | ◐      | G8 — no metasummary; thematic synthesis is not Cruzes/Dybå                  |
 | F2-SF10 | Report write-up      | ◐      | G9 — no Typst backend; G14 — no PRISMA 2020 flow diagram                    |
 | F2-SF11 | Report validation    | ✗      | G10 — no PRISMA/SEGRESS/trAIce checker; G14                                 |
-| F3-SF01 | Multiple users       | ◐      | G11 — role model mismatch, no user CRUD                                     |
+| F3-SF01 | Multiple users       | ◐      | G11 — role model mismatch, no user CRUD; G23 — job retry silently no-ops   |
 | F3-SF02 | Document management  | ◐      | G12 — no manual fallback/store/viewer; G16 — SciHub toggle unreachable      |
 | F3-SF03 | Security             | ●      | Capability matrix is coarse (G11); a live access-control defect was missed  |
 | F3-SF04 | Multiple projects    | ◐      | G19 — the entire Tertiary Studies frontend is unreachable                   |
@@ -70,6 +71,8 @@
 **Consequence.** Retraction cascade is impossible. Excluding an included paper silently orphans its descendants, and there is no way to distinguish a descendant with a second surviving parent from one without.
 
 > **Correction — 2026-08-06.** "Discovery works" was true of the design and false of the code when this was written: `_process_snowball_batch` deduplicated with `Paper.doi > ep.doi` instead of `==`, and its counters ran `added = -1` / `added += 2`. Both were cosmic-ray mutants, repaired in `e47abd9`; the premise now holds. The gap itself is unchanged — the missing discovery edge is structural and has nothing to do with the mutants.
+
+> **Correction — 2026-08-07.** "Discovery works" was still too generous, twice over, and the paths above are stale. Both functions now live in `backend/src/backend/jobs/snowball_job.py` (`1e01097`). More importantly: **`run_snowball` has no enqueue site**, so none of this code has ever run for a user — see [G22](#g22--snowball-sampling-has-no-enqueue-site-f2-sf03--medium). And until `d8f6dcf` the screening pass inside it rejected every paper by crashing, because it was handed a `CandidatePaper` that could not produce a title. The structural gap this entry describes is unaffected, but it cannot be _observed_ until G22 is closed, and it was never observable before.
 
 **Remediation sketch.**
 
@@ -586,6 +589,75 @@ The distinction matters for the fix: neither file holds newer work, so both are 
 Frontend items remain open: mount `QualityScoreForm` in `QualityAssessmentPage` beneath the checklist, and surface `EdgeConditionBuilder` from the protocol editor when an edge is selected.
 
 **Cost.** Low. The backend half is complete; the two frontend mounts remain.
+
+---
+
+### G22 — Snowball sampling has no enqueue site (F2-SF03) — **medium**
+
+**Claim.** `run_snowball` is a complete, registered ARQ job that nothing can start. It appears in `WorkerSettings.functions` (`backend/src/backend/jobs/worker.py:49`) and nowhere else: no endpoint enqueues it, no service calls it, no frontend control reaches it.
+
+```bash
+grep -rn "run_snowball" --include=*.py backend/src/
+# jobs/worker.py:23  — the import
+# jobs/worker.py:49  — the registration
+```
+
+This is the same defect class as G18–G20 — finished code no user can reach — on the side of the codebase where `scripts/audit_unreachable_frontend.py` cannot see it. That script walks the frontend import graph from `main.tsx`; a backend job is reachable only via an HTTP route, which no import graph models. `scripts/check_shadowed_modules.py` does not catch it either: `snowball_job.py` is imported, just never invoked.
+
+**Why it matters.** Backward and forward snowballing is a named requirement of the search phase, and the implementation is real — iterative citation walking, a stopping threshold, dedup, and AI pre-screening. `Study.snowball_threshold` is a column users can set, so the platform asks for a parameter governing a capability it never runs.
+
+**G1** (no discovery edge recorded per snowballed candidate) was written against this job as though it ran. It does not. G1 remains correct as a structural gap, but its symptom cannot be observed until this one is closed — and its opening line, "Discovery works", is true only of code that is never executed.
+
+**Fix.** A `POST /studies/{id}/snowball` endpoint mirroring `start_full_search`: create the `SearchExecution` and `BackgroundJob`, then enqueue. The job now records `running` → `completed` → `failed` on both rows (`1e01097`), so the existing `JobProgressPanel` can report it with no new frontend work. Gate it on the same in-flight check FR-026 defines, since snowballing screens candidates and would otherwise interleave with a search or re-screen over the same papers.
+
+**Cost.** Low — one endpoint, one control. The job, its failure handling, and its integration tests already exist.
+
+---
+
+### G23 — Admin job retry enqueues jobs that cannot run (F3-SF01) — **medium**
+
+**Claim.** `POST /admin/jobs/{id}/retry` returns `200` with a new job id for jobs that will never execute. `_arq_function_for_type` (`backend/src/backend/api/v1/admin/__init__.py:428`) maps a `JobType` to an ARQ function name, and the endpoint enqueues it as `redis.enqueue_job(arq_function, job.study_id, new_job_id)`. Three things are wrong, independently.
+
+_1. Two names are not registered functions._
+
+| `JobType`         | Mapped name           | Registered in `WorkerSettings.functions` |
+| ----------------- | --------------------- | ---------------------------------------- |
+| `SNOWBALL_SEARCH` | `run_snowball_search` | ✗ — the function is `run_snowball`       |
+| `TEST_SEARCH`     | absent → fallback     | ✗ — the fallback is `run_generic_job`    |
+
+`TEST_SEARCH` is missing from the map entirely, so it takes the `run_generic_job` default, and no such function exists anywhere in the repository.
+
+_2. The argument list matches no job's signature._ Every registered job takes `(ctx, study_id, …)` with a job-specific tail: `run_full_search(ctx, study_id, search_execution_id: int)`, `run_snowball(ctx, study_id, phase_tag, paper_dois, direction, search_execution_id)`. Retry passes `(study_id, new_job_id)` for all of them, so even the six correctly-named entries either receive a UUID string where an integer `search_execution_id` is expected, or too few arguments outright.
+
+_3. The endpoint reports success regardless._ `enqueue_job` accepts an arbitrary function name, so the call returns and the endpoint responds `200 {new_job_id}`. The failure surfaces later in the worker, against a different job row than the one the operator was looking at — or not at all.
+
+**Why it matters.** The user-visible behaviour is worse than a broken button: an administrator retries a failed job, is told it succeeded, and nothing happens. This is a silent failure of the same shape as the screening swallow — an operation reporting a result it did not achieve.
+
+It also means job retry has no test that runs a retried job. The existing tests assert the endpoint's response, which is precisely the part that is right.
+
+**Fix.** Derive the function name from the registration rather than restating it — a `JobType` → callable map keyed on the imported functions, so a rename breaks at import time instead of at retry time, and a missing entry raises `KeyError` rather than yielding a plausible-looking string. Reconstruct each job's real arguments from the original `BackgroundJob` row, which is the only place a retry can learn what the first attempt was called with; `run_snowball` needs four values the row does not currently carry, so retry for that type stays unsupported until they are recorded. Cover it with a test that retries a failed job and asserts the worker dispatches it.
+
+**Cost.** Medium. The dispatch map is small; reconstructing arguments needs the job rows to record what each job was invoked with.
+
+---
+
+### Neither oracle sees a backend route
+
+G22 and G23 are the built-but-never-wired defect on the backend, and both passed every gate in the repository. It is worth being explicit about why, because the two oracles added on 2026-08-06 can read as covering more than they do.
+
+| Oracle                              | What it proves                                   | What it cannot see                                            |
+| ----------------------------------- | ------------------------------------------------ | ------------------------------------------------------------- |
+| `audit_unreachable_frontend.py`     | Every module is reachable from `main.tsx`        | Anything not in `frontend/src` — no backend job or route      |
+| `check_shadowed_modules.py`         | No `X.py` is displaced by a package `X/`         | A module that is imported and never called                    |
+
+Both reason about **imports**. A backend capability is reachable only through an HTTP route and, for a job, an enqueue call — neither of which an import graph models. `snowball_job.py` is imported by `worker.py` and registered with ARQ, so it looks alive to every static check while being unreachable to every user. The `run_snowball_search` string in G23 is worse still: it is not an import at all, so no tool in the repository can tell it apart from a correct name.
+
+**What would catch these.** Two checks, both cheap and neither yet written:
+
+1. Assert that every name `_arq_function_for_type` can return is the `__name__` of a function in `WorkerSettings.functions`. A plain unit test over both collections; it fails today.
+2. Assert that every `JobType` member has a route that enqueues it. This is the backend analogue of the frontend reachability audit and would have caught G22 on the day snowballing was written.
+
+Principle X requires an e2e test driving each user-facing feature through the UI, which subsumes both — but only for features someone remembered to route. A capability nobody exposed has no journey to write a test against, which is precisely how it stays hidden.
 
 ---
 
