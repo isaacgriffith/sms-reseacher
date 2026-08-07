@@ -1,3 +1,11 @@
+> **Superseded 2026-08-07 by [`docs/methodology/01-slr.md`](./methodology/01-slr.md).**
+> That document is written directly from the source papers in `research/` and, critically, presents
+> Kitchenham & Charters 2007 **as amended by Kitchenham et al. 2013** — which withdrew two of the
+> recommendations this file reproduces (structured-question search-string construction, and the
+> extractor/checker split). This file is kept as a record of the earlier understanding.
+
+---
+
 # Systematic Literature Reviews
 
 A systematic literature review (SLR) is a rigorous, transparent, and reproducible research method used to identify, appraise, and synthesize all high-quality evidence relevant to a specific research question. Unlike traditional reviews, it follows a planned, step-by-step protocol to minimize bias and provide comprehensive answers to focused questions.

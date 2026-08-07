@@ -1,3 +1,12 @@
+> **Superseded 2026-08-07 by [`docs/methodology/02-sms.md`](./methodology/02-sms.md).**
+> Most of this file is sound — its five rubrics come from Petersen et al. 2015 and its validity
+> classes from Petersen & Gencel 2013, now attributed. Two corrections in the new document:
+> the **"Evaluation of the search" rubric table below is malformed** (the score-1 row lost its label
+> and its cells shifted), and the 2015 update **replaced contribution type with venue, research type
+> and research method** as the recommended facets. Kept as a record of the earlier understanding.
+
+---
+
 # Systematic Mapping Studies
 
 The purpose of a Systematic Mapping Study is to provide a researcher a broad understanding of the research that has taken place within a specific field or topic of interest. The challenge of this type of study is that it is very time consuming to execute. However, a significant amount of this work can be automated with AI Agents. While the goal of the system as a whole is to provide automation across Systematic Mapping Studies, Systematic Literature Reviews, Rapid Reviews, and Tertiary Studies, we want to begin with the Systematic Mapping Study first.

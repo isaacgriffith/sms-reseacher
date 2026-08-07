@@ -1,3 +1,11 @@
+> **Superseded 2026-08-07 by [`docs/methodology/03-rapid-review.md`](./methodology/03-rapid-review.md).**
+> One correction carried there: a Rapid Review is defined by being **bound to a practitioner's
+> problem and conducted with that practitioner**, not by being "the least rigorous" review type.
+> Cartaxo is explicit that a review without practitioner collaboration and a problem from practice
+> is a *deviation to be avoided*. Kept as a record of the earlier understanding.
+
+---
+
 # Rapid Reviews
 
 Rapid Reviews are secondary studies aiming to provide research evidence to support decision-making in practice. Rapid Reviews must be conducted taking into account the contraints inherent to pracitcal environments, such as time and effort. Rapid Reviews usually deliver evidence in a more timely manner, with lower costs, and reporting results through more appealing mediums.
