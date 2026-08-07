@@ -4,7 +4,7 @@
 **Last updated**: 2026-08-07
 **Baseline**: `docs/base-features.md` (27 features, F1-SF01 – F3-SF04), plus `docs/todo.md` and `docs/todo2.md`
 **Evidence**: branch `012-wire-up-unreachable-workflows` at `dd1fe20`, working tree clean but for `docs/`
-**Scope**: 34 gaps catalogued (G1–G34), 2 resolved; 23 frontend modules still unreachable, pending feature 012
+**Scope**: 43 gaps catalogued (G1–G43), 2 resolved; 23 frontend modules still unreachable, pending feature 012
 
 **Method**: each feature traced to implementing code — ORM models, API routes, services, agents, source adapters, UI components — rather than to `specs/` intent.
 
@@ -25,6 +25,7 @@
 | 2026-08-07 | **G22–G23 added**, both found while fixing the screening pipeline (`d8f6dcf`, `1e01097`). Snowballing is a registered job with no enqueue site, and admin job retry enqueues function names that are not registered, with arguments matching no job's signature — while reporting `200`. Neither is visible to the reachability oracles, which model imports rather than HTTP routes; see [Neither oracle sees a backend route](#neither-oracle-sees-a-backend-route) |
 | 2026-08-07 | **G22 resolved.** `POST /studies/{id}/snowball` plus a `SnowballControls` mount, with seeds defaulting to the study's accepted papers, a `409` naming any in-flight pass (FR-026), and a `422` rather than an empty run. 16 integration tests, 10 component tests. G23 remains open |
 | 2026-08-07 | **In-flight guard made bidirectional**, and **G24 added**: snowballing is DOI-keyed, so grey literature, reports, theses and older proceedings — the papers most likely to lack a DOI — are silently excluded from the walk. Both directions are recoverable, backward from stored full text and forward by resolving to a non-DOI identifier, but which citation index to prefer needs a research spike |
+| 2026-08-07 | **G35–G43 added from the methodology corpus.** Requirements the 54-paper research pass established that were not in this catalogue: protocol-as-preregistration with a validation snapshot; stopping rules and the *assessed vs never-assessed* distinction; escalatable reading depth and per-classification rationale; the quality-instrument shape (purpose flag, ordinal scales, separated scores); threat derivation from protocol configuration; GQM goal→question→field traceability; review-update as a workflow; terminology-variant search; and replication-package export with archival and licence discipline. Seven further requirements were folded into existing gaps rather than given IDs — see the table at the end of that section |
 | 2026-08-07 | **G10 amended** after the research pass behind [`docs/methodology/`](./methodology/). PRISMA 2020 states it "should not be used to assess the conduct or methodological quality of systematic reviews", so the planned checker measures **reporting completeness**, not rigour. SEGRESS replaces PRISMA as the primary standard, being the only one that marks each item required/optional/not-required **per review type**; quality scoring moves to DARE and the Petersen 2015 rubrics. The gap becomes two features rather than one |
 | 2026-08-07 | **`docs/todo.md` and `docs/todo2.md` folded in — G25–G34 added.** Every line of both was executed against the tree rather than read. Nine of 26 assessable items were already delivered and seven partial; the rest became gaps. The largest is **G25**: the backend addresses researcher-mcp over a REST API that server does not serve — `mcp.http_app()` exposes exactly one route, `/mcp`, so all five `POST /tools/…` and `GET /health` call sites fail, four of them silently. Every database search, PDF fetch and snowball walk in the platform runs through those calls. See [Unified intake](#unified-intake-from-todomd-and-todo2md) |
 
@@ -48,17 +49,17 @@
 | F1-SF02 | Installation guide   | ◐      | README Quick Start only; no standalone guide                                |
 | F1-SF03 | Tutorial             | ✗      | None                                                                        |
 | F1-SF04 | Self-contained       | ◐      | 8 external API keys + an LLM provider; G15 — only Ollama self-hostable; G17 |
-| F2-SF01 | Protocol development | ●      | Guideline grounding is thin (see G7)                                        |
+| F2-SF01 | Protocol development | ◐      | G7 — thin guideline grounding; G35 — the protocol is a preregistration but is not committed as one; G40 — no goal→question→field traceability |
 | F2-SF02 | Protocol validation  | ◐      | AI review is SLR-only                                                       |
-| F2-SF03 | Automated searches   | ✗      | **G25 — the MCP call surface does not exist, so no search returns papers.** Then G1, G2, G3, G13, G24, G26, G28 — largest cluster. G22 resolved: snowballing is startable |
+| F2-SF03 | Automated searches   | ✗      | **G25 — the MCP call surface does not exist, so no search returns papers.** Then G1, G2, G3, G13, G24, G26, G28, G36, G41, G42 — largest cluster by far. G22 resolved: snowballing is startable |
 | F2-SF04 | Study selection      | ◐      | G4, G5; G18 — no UI to record a screening decision at all                   |
-| F2-SF05 | Quality assessment   | ◐      | G6 — no Study entity distinct from Paper; G21 — orphaned + shadowed modules |
-| F2-SF06 | Data extraction      | ◐      | G20 — extraction UI exists but phase 4 shows a placeholder; G25 — full text never retrieved, so extraction runs on abstracts |
+| F2-SF05 | Quality assessment   | ◐      | G6 — no Study entity distinct from Paper; G21 — orphaned + shadowed modules; G38 — instrument model is the wrong shape |
+| F2-SF06 | Data extraction      | ◐      | G20 — extraction UI exists but phase 4 shows a placeholder; G25 — full text never retrieved, so extraction runs on abstracts; G37 — no reading depth or rationale capture |
 | F2-SF07 | Automated analysis   | ●      | Re-verified 2026-08-06 — the ● was unearned when written (see below)        |
 | F2-SF08 | Text analysis        | ●      | —                                                                           |
 | F2-SF09 | Meta-analysis        | ◐      | G8 — no metasummary; thematic synthesis is not Cruzes/Dybå; G27 — SMS has no synthesis at all |
-| F2-SF10 | Report write-up      | ◐      | G9 — no Typst backend; G14 — no PRISMA 2020 flow diagram; G27 — SMS produces a data archive, not a report |
-| F2-SF11 | Report validation    | ✗      | G10 — no checker. **Amended**: SEGRESS is the standard, per review type; PRISMA may not score quality; G14 |
+| F2-SF10 | Report write-up      | ◐      | G9 — no Typst backend; G14 — no PRISMA 2020 flow diagram; G27 — SMS produces a data archive, not a report; G43 — no replication package or archival |
+| F2-SF11 | Report validation    | ✗      | G10 — no checker. **Amended**: SEGRESS is the standard, per review type; PRISMA may not score quality; G14; G35 — no protocol snapshot to detect deviation against; G39 — threats not derived from configuration |
 | F3-SF01 | Multiple users       | ◐      | G11 — role model mismatch, no user CRUD; G23 — job retry silently no-ops; G31 — no user avatar |
 | F3-SF02 | Document management  | ◐      | G12 — no manual fallback/store/viewer; G16 — SciHub toggle unreachable; G28 — grey literature is a register, not a source |
 | F3-SF03 | Security             | ●      | Capability matrix is coarse (G11); a live access-control defect was missed  |
@@ -1095,6 +1096,285 @@ This bears directly on `todo.md`'s first item — "explain how to correctly run 
 
 ---
 
+## G35–G43 — requirements from the methodology corpus
+
+Added 2026-08-07 from [`docs/methodology/`](./methodology/), chapters 12 and 13. These are
+requirements the research establishes that **were not previously in this catalogue**. Requirements
+that merely confirm an existing gap are recorded as notes on that gap instead, and listed at the end
+of this section.
+
+Each cites the chapter carrying the full treatment.
+
+---
+
+### G35 — The protocol is a preregistration, and is not committed as one (F2-SF01, F2-SF11) — **medium**
+
+**Required.** A review protocol specifies the questions, the rationale, and exactly how the questions
+will be answered — which is what preregistration registers. Its value depends on a **commitment
+property**: timestamped, immutable, and fixed *before* the data exist. Preregistration is credited
+with avoiding three named pathologies — publication bias, p-hacking, and HARKing (hypothesising after
+the results are known).
+
+**Current.** `ReviewProtocol`, `RapidReviewProtocol` and `TertiaryStudyProtocol` all carry a status
+lifecycle (`draft` → `validated`) and optimistic locking via `version_id`. What does not exist is a
+**snapshot**: an immutable, citable record of what the protocol said at the moment it was validated,
+against which later divergence can be measured.
+
+**Why it matters.** "Report deviations from the protocol" recurs independently across the corpus —
+Kitchenham & Charters, Cartaxo, and SEGRESS all require it. Without a snapshot, a deviation is
+something a researcher must remember to disclose. With one, it is **detectable**. That is the
+difference between an honour system and a control.
+
+Two ordering constraints follow, and both are enforceable by software in a way a spreadsheet cannot
+be:
+- **The analysis plan is fixed before the data are analysed.** For a secondary study, the synthesis
+  strategy should be committed before extraction completes.
+- **Some methods cannot be selected retrospectively at all.** "Research cannot be reconstructed as
+  [grounded theory] at write-up", because the method dictates the order of collection and analysis. A
+  UI offering synthesis-strategy selection after extraction has finished offers an invalid choice for
+  those methods.
+
+**Remediation sketch.** Persist a protocol snapshot when status moves to `validated`; render
+deviations as a diff against it; optionally export to the Open Science Framework so the snapshot is
+externally verifiable. Gate synthesis-strategy selection on extraction not having completed, for the
+strategies where order is constitutive.
+
+**Cost.** Medium. The protocol model and its versioning exist; the snapshot, the diff, and the gate
+are new. **See [13 — Open science](./methodology/13-open-science.md) and
+[08 Part 4b](./methodology/08-extraction-and-synthesis.md).**
+
+---
+
+### G36 — Stopping rules are not modelled, and unassessed papers are indistinguishable from excluded ones (F2-SF03) — **medium**
+
+**Required.** Exhaustive search is not always the goal — Petersen 2015 reverses the position for
+mapping studies, and grey-literature search cannot be exhaustive in principle. A **stopping rule**
+must therefore be defined in advance, in one of two forms: **marginal yield** (stop when a
+complementary strategy adds fewer than *n* new articles) or **time budget** (fix the effort, include
+what was found, **and list the articles that were not considered**). Grey literature adds a third:
+**theoretical saturation**.
+
+**Current.** `Study.snowball_threshold` is one instance of a marginal-yield rule, hardcoded to that
+one use. There is no general stopping-rule concept, and no way to record papers that were retrieved
+but never assessed.
+
+**Why it matters.** **An unassessed paper is not an excluded paper.** Conflating them corrupts the
+PRISMA flow (G14) and misrepresents the search: a reader cannot tell whether a paper was judged
+irrelevant or simply never reached. FR-024's distinction between *assessed* and *never assessed* — 
+already noted under G24 — is the same requirement arriving from a different direction.
+
+**Remediation sketch.** A protocol-level stopping rule with a type, a threshold, and a
+saturation option; a `not_assessed` terminal state on `CandidatePaper` distinct from `rejected`; and
+both surfaced in the flow diagram and the report.
+
+**Cost.** Small–medium. **See [02](./methodology/02-sms.md), [05](./methodology/05-grey-literature-mlr.md)
+and [06](./methodology/06-search-and-selection.md).**
+
+---
+
+### G37 — Reading depth is global, and classification rationale is not captured (F2-SF04, F2-SF06) — **medium**
+
+**Required.** Two related properties of screening and classification:
+
+1. **Reading depth must escalate per paper.** Petersen 2015 is explicit: do not pre-specify that only
+   certain parts of a paper may be read; allow more detailed study of papers whose classification is
+   unclear. Abstracts are "often misleading and lack important information", so the fallback to
+   introduction and conclusion is part of the method, not a workaround.
+2. **A rationale must be recorded per classification.** Petersen 2008 recorded a short rationale for
+   every category assignment; Kitchenham's consensus-and-minority-report protocol requires a
+   justification for every quality answer.
+
+**Current.** Screening and classification produce a decision; `PaperDecision.reasons` holds a JSON
+list against a *decision*, not against a *classification*, and there is no notion of how much of a
+paper was read.
+
+**Why it matters.** Reading depth is the difference between a mapping study and a review — the two
+"can be considered as different points on a continuum". Recording it makes that position explicit
+rather than implied. And rationale capture is what makes a classification auditable: the corpus
+records **73% of papers designated incorrectly by their own authors**, so a classifier's reasoning is
+the only way a reader can check the call.
+
+**Remediation sketch.** A `reading_depth` enum on the per-paper decision (`abstract` ·
+`intro_conclusion` · `full_text`), set by whoever made the call and escalatable; a required
+`rationale` field on classification records.
+
+**Cost.** Small. **See [02](./methodology/02-sms.md).**
+
+---
+
+### G38 — The quality-instrument model is the wrong shape (F2-SF05) — **medium**
+
+**Required.** Three properties the corpus establishes, none currently modelled:
+
+1. **A purpose flag — selection or analysis.** The distinction is load-bearing and changes the data
+   flow. Quality data used to *select* studies becomes inclusion/exclusion criteria and **must be
+   collected before the main extraction, on separate forms**. Quality data used to *analyse* may be
+   collected alongside extraction on a joint form. Both may coexist in one review.
+2. **Per-item ordinal scales, not booleans.** Every real instrument uses ordinal anchors — DARE is
+   Y=1 / P=0.5 / N=0; Garousi's grey-literature checklist is 1 / 0.5 / 0 with a 10-of-20 threshold.
+   Kitchenham warns that a simple Yes/No "may be misleading".
+3. **Methodological and reporting quality kept as separate scores.** "It is good practice not to
+   include quality of study and quality of reporting scores in a single metric." Kitchenham's own
+   worked example weighted reporting quality *lower* rather than merging it.
+
+**Current.** `QualityChecklist` / `QualityChecklistItem` / `QualityScore` exist and are the right
+overall shape — a template mechanism rather than a fixed list, which is correct, because the 2007
+quality guidance was **explicitly withdrawn** by its own authors with no replacement named. What is
+missing is the purpose flag, the ordinal scales, and the separation.
+
+**Why it matters.** Without the purpose flag, a study missing a quality score is ambiguous — an error,
+or simply not yet assessed. Without ordinal scales the instruments cannot be represented faithfully.
+And a merged score is one the sources say should not exist.
+
+**Cost.** Small. **See [07](./methodology/07-quality-assessment.md).**
+
+---
+
+### G39 — Threats are not derived from the protocol configuration (F2-SF11) — **medium**
+
+**Required.** Ampatzoglou supplies **22 top-level threats expanding to 34**, with **60 mitigation
+actions**, organised by review phase, plus exclusivity rules — e.g. if digital-library selection is
+used, the venue-selection threat does not apply, *except* when a quasi-gold standard from specific
+venues is also used. The author-side procedure requires that **every threat be checked for
+applicability**, and that each applicable one carry either a mitigation or an explicit
+acknowledgement that it is not mitigated.
+
+**Current.** `RRThreatToValidity` auto-creates threats from the Rapid Review QA mode — the right
+pattern, scoped to one study type and one configuration switch.
+
+**Why it matters.** The generalisation is mechanical: threats follow from what the protocol says the
+study will do. A study that searches one database, screens with one reviewer, and skips appraisal has
+a determinable threat set. Presenting a flat 34-item checklist instead would be noise; deriving the
+applicable subset is the feature. Note also the trap the corpus records: **a mitigation for one threat
+can create another** — snowballing and grey literature mitigate publication bias while introducing
+their own risks.
+
+**Remediation sketch.** Generalise `RRThreatToValidity` to all study types; encode the threat
+catalogue with its phase mapping, its exclusivity rules, and the one Rapid Review concession that must
+**not** generate a threat (narrowing criteria to the practitioner's context is good practice, not a
+threat); enforce mitigation-or-acknowledgement as a completion gate.
+
+**Cost.** Medium — the catalogue is large but flat, and the platform already has the pattern. **See
+[09](./methodology/09-threats-to-validity.md) and [03](./methodology/03-rapid-review.md).**
+
+---
+
+### G40 — No traceability from goal to research question to extracted field (F2-SF01, F2-SF06) — **medium**
+
+**Required.** Kitchenham's protocol evaluation asks whether "the data to be extracted will properly
+address the research question(s)". **GQM** is the structure that makes this checkable rather than a
+matter of opinion — goal → question → metric, where the goal has an object, purpose, quality focus,
+viewpoint and environment. Ampatzoglou names GQM as the best practice for mitigating **TV19,
+coverage of research questions**.
+
+**Current.** Research questions and extraction fields both exist, with no link between them.
+
+**Why it matters.** It answers a question the platform otherwise cannot: *which extraction fields
+belong on this form?* Those, and only those, that answer a question derived from the goal. It also
+makes protocol review mechanical — an unlinked question is one nothing will answer; an unlinked field
+is data nobody asked for.
+
+**Cost.** Small — a join table and two validations. **See [09](./methodology/09-threats-to-validity.md).**
+
+---
+
+### G41 — Updating an existing review is not a supported workflow (F2-SF03) — **medium**
+
+**Required.** A "second-generation" study updates a prior review, and it has a **different and much
+cheaper search strategy**: forward-only snowballing, without iteration, from the earlier review and
+its primary studies.
+
+**Evidence.** That strategy found **all 11 papers a database search found, plus 3 more — one of which
+appeared in no standard database** — while screening 1,018 candidates and reading 16 in detail,
+against 1,641 and 100 for the database search. A striking detail: **all 16 candidates came from the
+two versions of the review itself, and none from the 794 citations to its primary studies.**
+
+**Current.** Studies are one-shot. There is no ancestry relation between a study and the study it
+updates.
+
+**Why it matters.** Reviews go out of date — Petersen warns that mapping studies "may quickly become
+out of date" — and updating one is a common, well-defined task with an evidenced cheaper method. The
+platform currently offers no path other than starting again.
+
+**Remediation sketch.** A `supersedes` / `updates` relation on `Study`; a search mode that seeds
+forward snowballing from the prior study's report and included set; a report section stating what
+changed.
+
+**Cost.** Medium. **See [06](./methodology/06-search-and-selection.md).**
+
+---
+
+### G42 — No terminology-variant search (F2-SF03) — **low**
+
+**Required.** Where the target is described inconsistently across the literature, **many simple search
+strings outperform one complex string**. Kitchenham's tertiary study used **15 simple strings** — one
+per terminological variant of "systematic review" — plus a separate pair of complex strings for one
+database, on the stated rationale that "reducing the number of searches reduces the problem of
+integrating search results".
+
+**Current.** One search string per `SearchString` record, with versioning. The model supports several
+strings only as successive *versions*, not as a simultaneous set.
+
+**Why it matters.** This is the defining difficulty of a **tertiary study**, where you are searching
+for a *method* and authors call it "literature survey", "assembly of studies", or just "review". It
+also bears on G2: variant strings and per-engine translation are different problems and should not be
+conflated.
+
+**Cost.** Small. **See [04](./methodology/04-tertiary.md).**
+
+---
+
+### G43 — No replication package, and no archival discipline (F1-SF04, F2-SF10) — **medium**
+
+**Required.** An open-science-conforming study discloses three things: a **preregistered protocol**
+(G35), a **replication package** — all analysed data plus all files, scripts and codebooks needed to
+comprehend the study — and a **preprint**.
+
+**Archival is constrained, not free-form.** Replication packages must go to a repository providing a
+**DOI and permanent archival** — Zenodo or figshare — and **never** to a personal or institutional
+URL. Web pages disappear continuously, empirically demonstrated over a four-year longitudinal study.
+This is the same link-rot problem G28 records for grey-literature *sources*, arriving from the other
+direction: **our own outputs rot too.**
+
+**Current.** `POST /studies/{id}/export` produces `svg_only | json_only | csv_json | full_archive`
+locally. There is no DOI, no external archival, no licence handling, and no anonymisation step.
+
+**Why it matters.** Three concrete consequences:
+- **Licence selection is a real trap.** Never offer `-NC`: the legal meaning of "commercial" is far
+  broader than it looks, and it would bar open infrastructure born from commercial entities —
+  figshare and PeerJ are the named examples — from using the material at all. `-SA` and `-NC` are
+  usually incompatible with traditional publishing. The positive guidance is arXiv's default
+  non-exclusive licence when a traditional publisher is intended, **CC BY** when a gold open access
+  venue is.
+- **Where consent for underlying data is refused** — which the source expects to be common for
+  qualitative data — the fallback is publishing **the protocol, the coding schema and the coding
+  rules**, so the trustworthiness of the analysis can be checked. That is the same persistence change
+  **G8** already proposes on methodological grounds.
+- **Anonymisation** is needed before exporting anything participant-derived — relevant if the platform
+  ever holds interview data from Rapid Review stakeholder work.
+
+**Evidence it is worth building.** Under **voluntary, non-mandatory** open science policies at recent
+SE venues, **more than 50% of authors disclosed their data.**
+
+**Cost.** Medium. Zenodo and figshare both have APIs. **See
+[13 — Open science](./methodology/13-open-science.md).**
+
+---
+
+### Requirements folded into existing gaps rather than given new IDs
+
+| Requirement | Gap it belongs to | Note |
+| ----------- | ----------------- | ---- |
+| **SEGRESS per-study-type applicability** | **G10** | Already added in the G10 amendment above — it is the reason SEGRESS replaces PRISMA as the primary standard |
+| **Three-valued screening vote (include / exclude / uncertain)** | **G5** | A schema prerequisite: a binary decision cannot express the "both uncertain" cell of the decision-rule table, and Petersen 2015's measured trade-offs are stated over that table |
+| **Publishable coding schema and coding rules** | **G8** | Persisting codes as first-class rows serves both the synthesis method and the open-science fallback when data cannot be released — one change, two justifications |
+| **Exclusion after inclusion, with a reason** | **G14** | Papers pass full-text screening and still fail during extraction; the flow diagram must show it, and "excluded with reasons, per reason" is a PRISMA requirement |
+| **Grey-source metadata minimum** — URL, access date stamped at retrieval, author, title, outlet, archived copy | **G28** | The access date is unrecoverable after the fact. 24.8% of grey items in one study had **no URL recorded at all** |
+| **Manual search is not optional** | **G3** | Petersen 2015 says it "may be more effective"; Kitchenham 2013 requires manual search of recent proceedings to cover indexing lag |
+| **Two disjoint seed sets** — one to build the string, one to evaluate it | **G13a** | Using one set for both measures memorisation, not recall |
+
+---
+
 ### Neither oracle sees a backend route
 
 G22 and G23 are the built-but-never-wired defect on the backend, and both passed every gate in the repository. It is worth being explicit about why, because the two oracles added on 2026-08-06 can read as covering more than they do.
@@ -1246,6 +1526,13 @@ Every gap assessed before 2026-08-06 was read against corrupted source, so each 
 | 7b    | **G28** grey literature as a real source                                                       | Follows G3; steps 1 and 6 (arXiv search + a UI grouping) are a day and close the arXiv ask on their own                                                                                                                            |
 | 8b    | **G27** workflow unification                                                                   | Take the bottom-up route unless a fifth study type is planned; feature 012 already pays for two of its ✗ cells. The SMS report and SMS synthesis are the substance                                                                |
 | 9b    | **G29** de-hardcode the agent prompts                                                          | Cheap, and it silently biases every screening and extraction decision until done                                                                                                                                                  |
+| 1c    | **G40** GQM traceability · **G38** quality-instrument shape · **G37** reading depth and rationale | Three small schema changes that turn later gates from advisory into checkable. All are additive columns and join tables                                                                                                            |
+| 2c    | **G35** protocol snapshot and deviation diff                                                    | Turns "report deviations from the protocol" from an honour system into a control, and is a prerequisite for report validation meaning anything. Also fixes the ordering problem: some synthesis methods cannot be chosen after extraction |
+| 5b    | **G36** stopping rules; *assessed* vs *never assessed*                                          | Land with **G14** — the PRISMA flow cannot be correct while an unassessed paper is indistinguishable from an excluded one                                                                                                          |
+| 6c    | **G42** terminology-variant search                                                              | Small, and it is the defining search difficulty for tertiary studies. Keep separate from G2 — variant strings and per-engine translation are different problems                                                                    |
+| 8c    | **G39** threat derivation from protocol configuration                                           | Generalises the pattern `RRThreatToValidity` already implements, to all study types and the full 34-threat catalogue                                                                                                              |
+| 9c    | **G43** replication package, archival and licence discipline                                    | Follows **G8**'s code persistence, which supplies the qualitative fallback artefact                                                                                                                                                |
+| —     | **G41** review-update workflow                                                                  | Unordered — self-contained, and the evidenced cheaper search strategy makes it a good standalone feature                                                                                                                          |
 | —     | **G34** part 1 — run the mutation wrapper and record real scores                                | Unordered but overdue: the gate is codified, the rails are built, and no package has a citable number                                                                                                                              |
 | —     | **G16**, **G17**, **G21**, **G30** unreachable or absent UI controls                           | Unordered — each is a single control over machinery that is already written. G17 and G30 sit in the same admin tab                                                                                                                 |
 | —     | **G31** user avatar, **G33** inline-style residue                                              | Unordered and independent. G33 is a live dark-theme defect, not only a tidiness item                                                                                                                                               |
