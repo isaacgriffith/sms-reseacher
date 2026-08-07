@@ -1,3 +1,12 @@
+> **Superseded 2026-08-07 — do not track work here.**
+> Every item below was checked against the repository and folded into
+> [`docs/feature-gaps.md`](./feature-gaps.md) → _Unified intake from `todo.md` and `todo2.md`_,
+> which records a verdict and supporting evidence for each one and assigns a gap ID to
+> whatever remains. Most of this file is delivered. It is kept unedited as a provenance
+> record of the original asks, and because four `docs/features/` documents cite its sections.
+
+---
+
 ## Project Setup
 
 - [ ] Correct the project setup - Have the AI update both CLAUDE.md and constitution.md to explain how to correctly run all types of tests, linters, and static analysis tools for the project correctly on the first try. - Run all existing tests, any failures should be remedied, add any additional tests needed to reach code coverage percentation of 85% or higher. - Fix mutmut, or if not possible, shift to another python mutation testing approach. Run all tests against mutation, add new tests to ensure that 85% or greater mutants are killed

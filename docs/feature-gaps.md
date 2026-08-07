@@ -2,11 +2,13 @@
 
 **Assessed**: 2026-08-05
 **Last updated**: 2026-08-07
-**Baseline**: `docs/base-features.md` (27 features, F1-SF01 – F3-SF04)
-**Evidence**: branch `012-wire-up-unreachable-workflows` at `a855688`, working tree clean
-**Scope**: 24 gaps catalogued (G1–G24), 1 resolved; 23 frontend modules still unreachable, pending feature 012
+**Baseline**: `docs/base-features.md` (27 features, F1-SF01 – F3-SF04), plus `docs/todo.md` and `docs/todo2.md`
+**Evidence**: branch `012-wire-up-unreachable-workflows` at `dd1fe20`, working tree clean but for `docs/`
+**Scope**: 34 gaps catalogued (G1–G34), 2 resolved; 23 frontend modules still unreachable, pending feature 012
 
 **Method**: each feature traced to implementing code — ORM models, API routes, services, agents, source adapters, UI components — rather than to `specs/` intent.
+
+> **This document is now the single backlog.** `docs/todo.md` and `docs/todo2.md` were separate wish-lists whose items overlapped this catalogue, each other, and work already shipped. Every line of both was checked against the tree on 2026-08-07 and folded in here — see [Unified intake from todo.md and todo2.md](#unified-intake-from-todomd-and-todo2md), which maps each original line to a verdict and a gap. The two source files are left in place unedited as a provenance record; they are no longer the place to look for what is outstanding.
 
 > **Known limit of that method.** Tracing to code answers _does an implementation exist_, not _does it work_. Two features marked ● survived a trace while being inert: `_generate_all_charts` looped over an empty list, and the group study listing leaked across research groups. Both had a function that existed, was called, and was covered by passing tests. Claims about behaviour now need the feature exercised — which is what [feature 012](./features/012-wire-up-unreachable-workflows.md) makes a standing requirement. See [Re-check of affected gap claims](#re-check-of-affected-gap-claims-2026-08-06).
 
@@ -23,6 +25,7 @@
 | 2026-08-07 | **G22–G23 added**, both found while fixing the screening pipeline (`d8f6dcf`, `1e01097`). Snowballing is a registered job with no enqueue site, and admin job retry enqueues function names that are not registered, with arguments matching no job's signature — while reporting `200`. Neither is visible to the reachability oracles, which model imports rather than HTTP routes; see [Neither oracle sees a backend route](#neither-oracle-sees-a-backend-route) |
 | 2026-08-07 | **G22 resolved.** `POST /studies/{id}/snowball` plus a `SnowballControls` mount, with seeds defaulting to the study's accepted papers, a `409` naming any in-flight pass (FR-026), and a `422` rather than an empty run. 16 integration tests, 10 component tests. G23 remains open |
 | 2026-08-07 | **In-flight guard made bidirectional**, and **G24 added**: snowballing is DOI-keyed, so grey literature, reports, theses and older proceedings — the papers most likely to lack a DOI — are silently excluded from the walk. Both directions are recoverable, backward from stored full text and forward by resolving to a non-DOI identifier, but which citation index to prefer needs a research spike |
+| 2026-08-07 | **`docs/todo.md` and `docs/todo2.md` folded in — G25–G34 added.** Every line of both was executed against the tree rather than read. Nine of 26 assessable items were already delivered and seven partial; the rest became gaps. The largest is **G25**: the backend addresses researcher-mcp over a REST API that server does not serve — `mcp.http_app()` exposes exactly one route, `/mcp`, so all five `POST /tools/…` and `GET /health` call sites fail, four of them silently. Every database search, PDF fetch and snowball walk in the platform runs through those calls. See [Unified intake](#unified-intake-from-todomd-and-todo2md) |
 
 ---
 
@@ -40,25 +43,76 @@
 
 | ID      | Feature              | Status | Headline gap                                                                |
 | ------- | -------------------- | ------ | --------------------------------------------------------------------------- |
-| F1-SF01 | Simple install/setup | ◐      | Compose path works; manual path is 5 steps across 2 stacks                  |
+| F1-SF01 | Simple install/setup | ◐      | Compose path works; manual path is 5 steps across 2 stacks; G34 — the documented coverage command fails from the repo root |
 | F1-SF02 | Installation guide   | ◐      | README Quick Start only; no standalone guide                                |
 | F1-SF03 | Tutorial             | ✗      | None                                                                        |
 | F1-SF04 | Self-contained       | ◐      | 8 external API keys + an LLM provider; G15 — only Ollama self-hostable; G17 |
 | F2-SF01 | Protocol development | ●      | Guideline grounding is thin (see G7)                                        |
 | F2-SF02 | Protocol validation  | ◐      | AI review is SLR-only                                                       |
-| F2-SF03 | Automated searches   | ◐      | G1, G2, G3, G13, G24 — largest cluster. G22 resolved: snowballing is startable |
+| F2-SF03 | Automated searches   | ✗      | **G25 — the MCP call surface does not exist, so no search returns papers.** Then G1, G2, G3, G13, G24, G26, G28 — largest cluster. G22 resolved: snowballing is startable |
 | F2-SF04 | Study selection      | ◐      | G4, G5; G18 — no UI to record a screening decision at all                   |
 | F2-SF05 | Quality assessment   | ◐      | G6 — no Study entity distinct from Paper; G21 — orphaned + shadowed modules |
-| F2-SF06 | Data extraction      | ◐      | G20 — extraction UI exists but phase 4 shows a placeholder                  |
+| F2-SF06 | Data extraction      | ◐      | G20 — extraction UI exists but phase 4 shows a placeholder; G25 — full text never retrieved, so extraction runs on abstracts |
 | F2-SF07 | Automated analysis   | ●      | Re-verified 2026-08-06 — the ● was unearned when written (see below)        |
 | F2-SF08 | Text analysis        | ●      | —                                                                           |
-| F2-SF09 | Meta-analysis        | ◐      | G8 — no metasummary; thematic synthesis is not Cruzes/Dybå                  |
-| F2-SF10 | Report write-up      | ◐      | G9 — no Typst backend; G14 — no PRISMA 2020 flow diagram                    |
+| F2-SF09 | Meta-analysis        | ◐      | G8 — no metasummary; thematic synthesis is not Cruzes/Dybå; G27 — SMS has no synthesis at all |
+| F2-SF10 | Report write-up      | ◐      | G9 — no Typst backend; G14 — no PRISMA 2020 flow diagram; G27 — SMS produces a data archive, not a report |
 | F2-SF11 | Report validation    | ✗      | G10 — no PRISMA/SEGRESS/trAIce checker; G14                                 |
-| F3-SF01 | Multiple users       | ◐      | G11 — role model mismatch, no user CRUD; G23 — job retry silently no-ops   |
-| F3-SF02 | Document management  | ◐      | G12 — no manual fallback/store/viewer; G16 — SciHub toggle unreachable      |
+| F3-SF01 | Multiple users       | ◐      | G11 — role model mismatch, no user CRUD; G23 — job retry silently no-ops; G31 — no user avatar |
+| F3-SF02 | Document management  | ◐      | G12 — no manual fallback/store/viewer; G16 — SciHub toggle unreachable; G28 — grey literature is a register, not a source |
 | F3-SF03 | Security             | ●      | Capability matrix is coarse (G11); a live access-control defect was missed  |
-| F3-SF04 | Multiple projects    | ◐      | G19 — the entire Tertiary Studies frontend is unreachable                   |
+| F3-SF04 | Multiple projects    | ◐      | G19 — the entire Tertiary Studies frontend is unreachable; G27 — the four study types are parallel implementations |
+
+---
+
+## Unified intake from `todo.md` and `todo2.md`
+
+The two files hold 27 bullets between them; several bundle two or three separable asks, so they resolve to **26 assessable items**, each executed against the tree on 2026-08-07 rather than read. **Nine are delivered, seven are partial, ten are not started.** Everything in `todo.md` is done or partial — nothing there is untouched — while ten of `todo2.md`'s thirteen have no implementation at all. The verdict column cites the command or file that decides it; anything not marked ● became a gap in the catalogue that follows.
+
+### `docs/todo.md`
+
+| # | Item | Verdict | Evidence | Gap |
+| - | ---- | ------- | -------- | --- |
+| 1a | CLAUDE.md + constitution explain how to run tests, linters, static analysis correctly first time | ◐ | Both document the toolchain in detail, and `ruff` / `ruff format` / `mypy` all pass clean across the five `src` roots plus `scripts`. But the coverage command CLAUDE.md gives reports **0.00%** and fails the 85% gate when run from the repo root, where every other command in that file is run | **G34** |
+| 1b | All tests pass; coverage ≥ 85% | ● | `1946 passed, 16 skipped` across the five Python packages; the 16 skips all carry a `reason=` naming a live PostgreSQL requirement. Frontend `1349 passed` in 126 files. **Every package clears the gate**: backend 86.23%, agents 87.42%, db 96.23%, agent-eval 86.34%, researcher-mcp 87.90%, frontend 91.06% lines / 85.42% branches | — |
+| 1c | Fix mutmut or move to another mutation tool; ≥ 85% mutants killed | ◐ | The **tooling** is done and hardened past what was asked: cosmic-ray replaces mutmut, `scripts/run-mutation-safe.sh` isolates runs in a worktree, and three independent guards prevent a repeat of the committed-mutant incident. The **score** is not established — all five `cosmic-ray-survivors.md` files open by disclaiming themselves | **G34** |
+| 2a | Swagger/OpenAPI documentation endpoint in the frontend | ● | `swagger-ui-react@^5.17.14`; `/api-docs` route in `App.tsx:43`; backend `GET /api/v1/openapi.json` | — |
+| 2b | Frontend uses Material UI | ● | `@mui/material@^5.16.7` + `@emotion`; 92 files use the `sx` prop. Residual inline `style={{…}}` remains, tracked separately | **G33** (residue) |
+| 2c | User preferences: password change, 2FA, display preference | ● | `components/preferences/` — `PasswordChangeForm`, `TwoFactorSettings`, `TwoFactorSetupDialog`, `ThemeSelector`; `/preferences` route; `hooks/useTotp.ts` | — |
+| 3a | Agent prompt templates cover SE **and AI**; make the field a variable | ◐ | The variable mechanism is real and broad: `build_study_context` → `{{ domain }}` / `{{ study_type }}` → `render_system_message` → `system_message_override`, honoured by 9 of 10 agent classes and wired from 5 jobs. But it only fires when an `Agent` **row** is linked, no rows are seeded, and **9 of the 12 shipped `prompts/*/system.md` name software engineering directly**, while exactly one contains `{{ domain }}` — and only as documentation of a variable it writes for others | **G29** |
+| 3b | Templates for any study type, not just SMS _(author-deferred)_ | ◐ | Same mechanism — `_STUDY_TYPE_LABELS` maps the enum to a label for `{{ study_type }}`. Same limitation | **G29** |
+| 3c | Admin panel: providers section + available-models section | ● | Feature 005 — `Provider` / `AvailableModel` tables, Providers and Models tabs, Anthropic / OpenAI / Ollama. (vLLM and LM Studio are a separate ask, already **G15**) | — |
+| 3d | `Agent` abstraction storing nine named fields | ● | `db/src/db/models/agents.py:169` carries all nine: `id`, `role_name`, `role_description`, `persona_name`, `persona_description`, `persona_svg`, `system_message_template`, `model_id`, `provider_id` | — |
+| 3e | Admin agents tab: syntax-highlighted system message, Generate/Update button, guided Create Agent | ◐ | `AgentList` / `AgentForm` / `AgentWizard` / `SystemMessageEditor` all exist and are reachable; `POST /admin/agents/{id}/generate-system-message` is live and the wizard restricts to `AgentTaskType`. **Not syntax-highlighted** — `SystemMessageEditor` is a plain MUI multiline `TextField` and `package.json` carries no highlighting library | **G30** |
+| 4a | Graph-based, editable research protocol definition | ● | Feature 010 — `ResearchProtocol` / `ProtocolNode` (23 task types) / typed I/O / `QualityGate` / `NodeAssignee` / `ProtocolEdge`, migration `0018`, four seeded templates | — |
+| 4b | Protocols editable textually **and** visually | ● | Dual-pane `ProtocolEditorPage`: `ProtocolGraph` (D3, drag-to-reposition) beside `ProtocolTextEditor` (YAML). Caveat: `EdgeConditionBuilder` is unreachable, so conditional edges are YAML-only — already **G21** | — |
+
+### `docs/todo2.md`
+
+| # | Item | Verdict | Evidence | Gap |
+| - | ---- | ------- | -------- | --- |
+| 1 | Constitution: file-level doc comments; mutation gate; all tests/lint/static analysis pass including pre-existing | ● | Constitution v1.7.0 added all three (§ Documentation, § Mutation Testing, Development Workflow step 6) and v1.8.0 layered Principle X on top. Enforced, not merely stated: `ruff --select D100` passes across all five `src` roots and `scripts` | — |
+| 2a | All workflows based on the SLR workflow, aspects relaxed per type | ✗ | Four independent phase gates, four protocol models, and four hand-written phase maps in `studyTypeDispatch.tsx`. Nothing derives from an SLR base | **G27** |
+| 2b | All workflows handle validity / threats to validity | ✗ | Only Rapid has a threats model (`RRThreatToValidity`) and UI. SMS's `ValidityForm.tsx` is unreachable; SLR and Tertiary have neither model nor view | **G27** |
+| 2c | All workflows handle data synthesis | ✗ | SLR ●, Rapid ●, Tertiary ● but unreachable, **SMS renders `futureSprintPlaceholder(5)`** | **G27** |
+| 2d | All workflows produce a report | ✗ | SLR ●, Tertiary ●, Rapid ● (Evidence Briefing). SMS has only `POST /studies/{id}/export` emitting `svg_only \| json_only \| csv_json \| full_archive` — a data archive, not a report | **G27** |
+| 3a | Hunt blog posts via web search; scrape to Markdown with access metadata | ✗ | No web-search capability of any kind in the tree. `scrape_journal` / `scrape_author_page` traverse journal TOCs and author pages, not blogs, and capture no access date or `@online` fields | **G28** |
+| 3b | Search Master's theses and doctoral dissertations; download PDF; convert; capture metadata | ✗ | `GreyLiteratureType.DISSERTATION` is a label on a manually-typed row. No ProQuest / EThOS / DART-Europe / NDLTD adapter, no search path | **G28** |
+| 3c | Extract from arXiv — download, convert, capture metadata | ✗ | `ArxivSource` exists but is referenced **only by its own unit tests**: absent from `SourceRegistry`, from `sources/__init__.py`, and from `fetch_paper_pdf`'s waterfall. There is no arXiv *search* at all, and `DatabaseIndex` has no arXiv member. **This corrects G3, which marked arXiv ●** | **G28** |
+| 3d | UI to select grey literature and its types during search setup | ✗ | `DatabaseSelectionPanel` offers exactly the nine `DatabaseIndex` members and nothing else | **G28** |
+| 4 | User avatar, settable in user settings | ✗ | `User` has no avatar column. `SideNav` renders an MUI `Avatar` showing initials. The only avatar code in the tree generates persona SVGs for *agents* | **G31** |
+| 5 | Automate agent improvement with DSPy alongside DeepEval | ✗ | DeepEval is present (`agent-eval`, `deepeval>=1.0`). "dspy" appears exactly once in the repository — in `todo2.md` itself | **G32** |
+| 6 | Replace inline styles with consolidated per-component styles | ◐ | 80 `style={{` props across 26 files against 92 files using `sx`. Concentrated: `NewStudyWizard` (15), `DiffViewer` (7), `TestRetest` (7) | **G33** |
+| 7 | Extract paper metadata and abstract from the index during search | ◐ | `PaperRecord` carries eleven fields including `abstract`, and `_upsert_paper` persists seven. Three are dropped, `Paper.metadata_` is never written, and `source_url` is read under a key the record does not use — so it is **always** `None`. All of it is moot until G25 | **G26** |
+
+### What the intake changed about existing entries
+
+| Entry | Change |
+| ----- | ------ |
+| **G3** | arXiv row corrected from ● to ✗ — see the entry |
+| **G13c** | Broadened: `StudyDatabaseSelection` is ignored on the **full-search** path too, not only the pilot, and the UI hardcodes index names that do not exist |
+| **G19**, **G20** | Evidence re-anchored. `StudyPage` no longer branches on `isSLR` / `isRapid`; `17aaab1` moved dispatch into `components/studies/studyTypeDispatch.tsx`. Both verdicts stand unchanged |
+| **F2-SF03** | ◐ → ✗. It cannot be partial when no search can return a paper |
 
 ---
 
@@ -106,7 +160,7 @@
 | Requirement       | State | Detail                                                                             |
 | ----------------- | ----- | ---------------------------------------------------------------------------------- |
 | Google Scholar    | ●     | `sources/google_scholar.py`                                                        |
-| arXiv             | ●     | `sources/arxiv.py`                                                                 |
+| **arXiv**         | ✗     | See the correction below — `sources/arxiv.py` is neither a search adapter nor reachable |
 | IEEE Xplore       | ●     | `sources/ieee.py`                                                                  |
 | ACM DL            | ●     | `sources/acm.py`                                                                   |
 | Scopus            | ●     | `sources/scopus.py`                                                                |
@@ -117,7 +171,17 @@
 
 Beyond the required eight, adapters also exist for Inspec, Springer, Semantic Scholar, Crossref, OpenAlex, Unpaywall, and Sci-Hub.
 
-**Remediation.** EI Compendex is a straightforward adapter (Engineering Village API). Manual search is a new subsystem: venue → website resolution, then site-specific listing traversal, feeding the same `CandidatePaper` upsert path.
+> **Correction — 2026-08-07 (arXiv).** The ● above was assigned from the existence of `sources/arxiv.py`, which is exactly the failure mode this document's header warns about. Three checks say otherwise:
+>
+> - **It is not a search adapter.** `ArxivSource` exposes one method, `fetch_pdf(doi, output_path)`. It has no `search()`, so it cannot satisfy the `DatabaseSource` protocol, and its own docstring says "arXiv source for preprint PDF fetching".
+> - **Nothing constructs it.** `grep -rn "ArxivSource" --include=*.py .` returns thirteen hits, **all thirteen in `researcher-mcp/tests/unit/test_sources.py`**. It is absent from `core/registry.py`, from `sources/__init__.py` (which is empty), and from the `fetch_paper_pdf` waterfall, which runs Unpaywall → direct → optional Sci-Hub and never consults it.
+> - **A user could not select it if it worked.** `DatabaseIndex` has nine members and arXiv is not among them, so no `StudyDatabaseSelection` row can name it.
+>
+> This is the same orphan shape as G21, in a third package. The audit that would catch it does not exist: `audit_unreachable_frontend.py` reads only `frontend/src`, and `check_shadowed_modules.py` looks for a different defect. See [Neither oracle sees a backend route](#neither-oracle-sees-a-backend-route) — a class-covered, lint-clean, type-clean module that nothing constructs passes every gate in the repository.
+>
+> arXiv is now tracked under **[G28](#g28--grey-literature-is-a-manual-register-not-a-discovery-capability-f2-sf03-f3-sf02--high)**, where the todo's arXiv, thesis, and blog requirements sit together.
+
+**Remediation.** EI Compendex is a straightforward adapter (Engineering Village API). arXiv needs a real `search()` against `export.arxiv.org/api/query`, a `DatabaseIndex` member, and registry registration — the PDF half is written. Manual search is a new subsystem: venue → website resolution, then site-specific listing traversal, feeding the same `CandidatePaper` upsert path.
 
 ---
 
@@ -281,6 +345,10 @@ Secondary: research goal and RQs are read from the untyped `study.metadata_` JSO
 - **Databases are not persisted on the iteration.** `databases` is a job argument only; `SearchStringIteration` has no column for it, so pilots are neither reproducible nor comparable across runs.
 - **`StudyDatabaseSelection` is ignored** — the default is hardcoded `["acm", "ieee", "scopus"]`, and the UI passes a free-text comma-separated field (`frontend/src/components/phase2/TestRetest.tsx:38`).
 - **`max_results: 100`** truncates the result set, so a seed ranked 101st counts as a miss and recall is silently understated.
+
+> **Broadened — 2026-08-07.** "`StudyDatabaseSelection` is ignored" was scoped to the pilot. It is ignored **everywhere**. `grep -rn "StudyDatabaseSelection" backend/src/` returns hits in exactly two files, `services/database_selection.py` and the router that mounts it — the table is read only by its own CRUD endpoint. The full-search path takes `search_exec.databases_queried or ["acm", "ieee", "scopus"]` (`search_job.py:453`), and that column is filled straight from the request body (`searches.py:84`), whose default is the same three strings (`searches.py:35`), which `FullSearchControl.tsx:22` also hardcodes as `DEFAULT_DATABASES`. **Feature 006's database-selection panel therefore changes nothing about any search the platform runs.**
+>
+> Worse, the three strings are not valid index names. `SourceRegistry` registers `ieee_xplore`, `acm_dl`, `scopus`, `web_of_science`, `inspec`, `science_direct`, `springer_link`, `google_scholar`, `semantic_scholar`; `DatabaseIndex` declares the same nine. Of the hardcoded `acm` / `ieee` / `scopus`, **two match nothing**. So even after G25 restores the transport, two thirds of the default fan-out would address databases that do not exist — and `search_papers` records unknown indices in `sources_failed` rather than raising, so the search would still report success.
 
 #### 13d — Two defects in `_fetch_test_search_results` — ✅ **RESOLVED 2026-08-05**
 
@@ -505,6 +573,8 @@ The e2e test named `job progress panel is visible during a screening run` fails 
 
 The cause: `StudyPage` branches on `isSLR` and `isRapid` only. There is no `isTertiary`, so a study whose `study_type` is `Tertiary` falls through to the SMS path and renders SMS phase panels. (`App.tsx` also registers no route for `TertiaryStudyPage`, but per the correction below, a route is not the right fix.)
 
+> **Evidence re-anchored — 2026-08-07.** The boolean branching described above is gone. `17aaab1` replaced it with a dispatch table in `frontend/src/components/studies/studyTypeDispatch.tsx`: `STUDY_TYPE_PHASES` maps `"SMS"`, `"SLR"` and `"Rapid"` to a `PhaseMap`, and `renderStudyPhase` resolves `STUDY_TYPE_PHASES[studyType] ?? DEFAULT_PHASE_MAP`. **The gap is unchanged, only relocated**: there is still no `"Tertiary"` key, and `DEFAULT_PHASE_MAP` is `MAPPING_STUDY_PHASES`, so a Tertiary study still silently renders the mapping-study workspace. The audit still reports the same 13 modules. What did change is the shape of the fix — step 1 below is now a map entry rather than a boolean, and that file's own header comment already names the omission and points at task T024.
+
 The backend is live: all **7** `/api/v1/tertiary/*` routes are registered and answer, migration `0017` is applied, and `TertiaryReportService` / `TertiaryExtractionService` are implemented and tested.
 
 **Correction — 2026-08-06.** The design pass for [feature 012](./features/012-wire-up-unreachable-workflows.md) found that two of the four remediation steps below were already done inside the unreachable subtree, that the recommendation in step 2 was backwards, and that the cost line was wrong:
@@ -536,6 +606,8 @@ Net effect: the work is **smaller than described in every respect but one**. The
 **Claim.** For SMS and Tertiary studies, `StudyPage` renders _"Phase 4 content will be available in a future sprint."_ and the same for phase 5, while the components those phases need are written and their endpoints answer.
 
 **Evidence.** `StudyPage.tsx` phase 4 and 5 fall through to placeholder text for `!isSLR && !isRapid`. Unreachable but complete:
+
+> **Evidence re-anchored — 2026-08-07.** As with G19, `17aaab1` moved this. The placeholder is now `futureSprintPlaceholder(phase)` in `components/studies/studyTypeDispatch.tsx`, bound at `MAPPING_STUDY_PHASES[4]` and `[5]`. Because Tertiary falls back to that same map, **the placeholder is what a Tertiary study shows at phases 4 and 5 as well**. Verdict and module list unchanged.
 
 | Module                                   | Purpose                                                                    | Backend                                   |
 | ---------------------------------------- | -------------------------------------------------------------------------- | ----------------------------------------- |
@@ -690,6 +762,301 @@ Crossref deserves separating from the rest: recovering a DOI turns the problem b
 
 ---
 
+### G25 — The backend addresses researcher-mcp over an HTTP API that server does not serve (F2-SF03, F2-SF06, F3-SF02) — **critical, blocking**
+
+**Claim.** Every call the backend makes to researcher-mcp targets a URL that returns 404. The search subsystem, full-text retrieval, and both snowball directions all run through those calls. Four of the five call sites swallow the failure and report success.
+
+**Evidence — the server's entire route table is one path.** `researcher-mcp/src/researcher_mcp/server.py:85` runs `uvicorn.run(mcp.http_app(), host="0.0.0.0", port=8002)`. `mcp.http_app()` is FastMCP's MCP transport, not a REST façade. Enumerated rather than assumed:
+
+```text
+$ uv run --package sms-researcher-mcp python -c \
+    "from researcher_mcp.server import mcp; print([r.path for r in mcp.http_app().routes])"
+['/mcp']
+```
+
+FastMCP 3.4.5. There is no `/tools/<name>`, and no `/health`. `grep -rn "custom_route\|FastAPI\|APIRouter" researcher-mcp/src/` returns nothing, so no shim adds them.
+
+**Evidence — what the backend asks for.** Five call sites, all built from `settings.researcher_mcp_url`:
+
+| # | Call site | URL | On failure |
+| - | --------- | --- | ---------- |
+| 1 | `jobs/search_job.py:169` — pilot search | `POST {base}/tools/search_papers` | Raises `TestSearchUnavailableError` → job `FAILED`. **The only loud one**, and it landed by accident: G13d added it to fix a different defect |
+| 2 | `jobs/search_job.py:232` — full search | `POST {base}/tools/search_papers` | `if resp.status_code == 200` is false → `return []`. The sweep completes over zero papers and the run is marked successful |
+| 3 | `jobs/extraction_job.py:154` — full text | `POST {base}/tools/fetch_paper_pdf` | Same guard → falls through to `paper.abstract or paper.title`. Extraction runs on the abstract and `full_text_available` stays `False` |
+| 4 | `jobs/snowball_job.py:48` — citation walk | `POST {base}/tools/{get_references\|get_citations}` | Same guard → `return []`. The walk reports zero new papers for every seed |
+| 5 | `api/v1/admin/__init__.py:205` — health probe | `GET {base}/health` | 404 ≠ 200 → the service is permanently reported `degraded` |
+
+`docker-compose.yml:89` compounds it: `curl -f http://localhost:8002/health` can never pass, so the container never reaches `healthy`. Nothing declares `depends_on: researcher-mcp`, so this mislabels rather than blocks — but it means the one signal an operator would check has been red since the service was written.
+
+**Two further mismatches sit behind the first**, so fixing the transport alone is not sufficient:
+
+- **Wrong parameter name.** All three `search_papers` calls send `{"query", "databases", "max_results"}`. The tool's signature is `search_papers(query, indices, max_results, year_from, year_to)` (`tools/search.py:177`). There is no `databases` parameter.
+- **Wrong index names.** The defaults are `["acm", "ieee", "scopus"]`; the registry keys are `acm_dl`, `ieee_xplore`, `scopus`. Two of three name nothing. See the broadened note on [G13c](#13c--piloting-is-single-aggregate-not-per-database).
+
+**Why nothing caught it.** `grep -rl "tools/search_papers" backend/tests/ researcher-mcp/tests/` returns **no files**. Every backend test that exercises these jobs mocks `httpx` at the client boundary, so the tests assert the shape of a response the server has never produced. The two packages are tested thoroughly and independently, and nothing tests the seam between them — which is exactly where the contract lives. Both sides also pass `ruff` and `mypy` cleanly, because a URL string is opaque to both.
+
+**Consequence.** This subsumes several existing entries. G13's piloting loop cannot be evaluated because pilots cannot run. G22 delivered a snowball trigger that reaches a walk returning nothing. G24's DOI-less exclusion is invisible beneath a walk that excludes everything. And F2-SF03 is not partially met — **no database search in this platform has ever returned a paper through this path.**
+
+**Fix.**
+
+| Step | Change | Size |
+| ---- | ------ | ---- |
+| 1 | Decide the seam deliberately: either speak MCP from the backend (an MCP client against `/mcp`, which is what `core/mcp_client.py` in `agents` already implies) or give researcher-mcp explicit `@mcp.custom_route` REST endpoints beside the MCP app. The second is smaller and keeps the five call sites; the first is the contract the server was built to expose | Medium |
+| 2 | Add `/health` on whichever surface is chosen, and point the compose healthcheck at it | Trivial |
+| 3 | Rename `databases` → `indices` at all three call sites | Trivial |
+| 4 | Replace the `["acm", "ieee", "scopus"]` defaults — in `search_job.py`, `searches.py`, and `FullSearchControl.tsx` — with `DatabaseIndex` values sourced from `StudyDatabaseSelection` (G13c step 7) | Small |
+| 5 | **One contract test that starts the real researcher-mcp app and calls it from the backend's client code.** Everything above is a symptom of its absence; without it the next rename reintroduces the same class | Medium |
+| 6 | Replace the four `if resp.status_code == 200: … return []` guards with explicit unavailability errors, as `TestSearchUnavailableError` and `ScreeningUnavailableError` already do | Small |
+
+**Cost.** Medium, and it is the highest-priority item in this document — every other search gap is unobservable until it lands.
+
+---
+
+### G26 — Search result metadata is lost at ingest (F2-SF03) — **low, mechanical**
+
+**Required** (`todo2.md`, "Paper Metadata"). During search, extract the paper metadata and the abstract, where the index supplies them.
+
+**Current.** The retrieval half is right and the persistence half leaks. `PaperRecord` (`researcher-mcp/src/researcher_mcp/sources/base.py:36`) normalises eleven fields across every adapter — `doi`, `title`, `abstract`, `authors`, `year`, `venue`, `venue_type`, `url`, `open_access`, `source_database`, `raw_id`. `_upsert_paper` (`backend/src/backend/jobs/screening_pipeline.py:87`) persists seven of them.
+
+| Field | Fate |
+| ----- | ---- |
+| `title`, `abstract`, `doi`, `authors`, `year`, `venue` | ● Persisted. **The abstract is captured** — the todo's main ask is met |
+| `url` | ✗ **Silently dropped.** The code reads `paper_data.get("source_url")`, but the record's field is `url`. `Paper.source_url` is therefore always `None` |
+| `venue_type`, `open_access`, `raw_id` | ✗ Dropped — no column, and none is added |
+| `Paper.metadata_` | ✗ Never written, though its column comment is "Flexible bibliographic fields" — the obvious home for the three above |
+
+The `source_url` line is the instructive one: a `.get()` against a key that is never present cannot fail, cannot warn, and cannot be caught by a type checker, because both sides are `dict[str, Any]` across a JSON boundary. It reads as deliberate.
+
+**Consequence.** Beyond the empty column, the dropped fields are ones later phases want: `venue_type` is the natural discriminator for the PRISMA grey-literature arm (G14 step 2), `open_access` predicts whether `fetch_paper_pdf` will succeed, and `raw_id` is precisely the non-DOI identifier G24 needs for forward snowballing. Three gaps are each proposing to recover a value the search already had and threw away.
+
+**Fix.** Correct the key to `url`; add `venue_type` and `open_access` as columns (both are small and queried) and put `raw_id` alongside `source_database` in `metadata_`; parse the MCP response into `PaperRecord` on the backend side rather than passing a raw `dict`, so the next field mismatch is a validation error instead of a `None`.
+
+**Cost.** Low — one migration and one function. Blocked behind **G25**: until the transport works there is no `paper_data` to persist.
+
+---
+
+### G27 — The four workflows are parallel implementations, not one relaxed base (F3-SF04, F2-SF09, F2-SF10) — **high, structural**
+
+**Required** (`todo2.md`, "Unify the Workflows"). All workflows derive from the SLR workflow with aspects turned off or relaxed for SMS, Rapid Review, and Tertiary. All four handle validity and threats to validity, all four handle data synthesis, and all four produce a report.
+
+**Current.** Four independent implementations that share a `Study` row and little else.
+
+| Layer | SMS | SLR | Rapid | Tertiary |
+| ----- | --- | --- | ----- | -------- |
+| Phase gate | `phase_gate.py` | `slr_phase_gate.py` | `rr_phase_gate.py` | `tertiary_phase_gate.py` |
+| Protocol model | reuses `ReviewProtocol` | `ReviewProtocol` | `RapidReviewProtocol` | `TertiaryStudyProtocol` |
+| Frontend phases | `MAPPING_STUDY_PHASES` | `SLR_PHASES` | `RAPID_PHASES` | none — falls back to SMS (G19) |
+| API prefix | `/studies/…` | `/slr/…` | `/rapid/…` | `/tertiary/…` |
+
+Nothing is derived from anything. `studyTypeDispatch.tsx` is an honest map of four hand-written column definitions, and its header comment says so.
+
+**Against the three specific requirements:**
+
+| Requirement | SMS | SLR | Rapid | Tertiary |
+| ----------- | --- | --- | ----- | -------- |
+| Validity / threats to validity | ◐ `PUT /studies/{id}/validity` writes six Petersen dimensions to `Study.validity`, but `phase4/ValidityForm.tsx` is **unreachable** (G20) | ✗ no model, no view | ● `RRThreatToValidity`, auto-created from QA mode, with a UI | ✗ none |
+| Data synthesis | ✗ phase 5 renders `futureSprintPlaceholder(5)` | ● `SynthesisPage`, three strategies | ● `RRNarrativeSynthesisSection` | ● reuses `slr/synthesisApi` — but unreachable |
+| A report | ✗ only `POST /studies/{id}/export` → `svg_only \| json_only \| csv_json \| full_archive`, a data archive | ● `GET /slr/studies/{id}/export/slr-report` in Markdown / LaTeX / JSON / CSV | ● Evidence Briefing, HTML + PDF, with share tokens | ● `GET /tertiary/studies/{id}/report` — but unreachable |
+
+**SMS is the outlier on all three**, which is worth stating plainly given the repository is named for it: the mapping-study workflow — the platform's original and default study type — ends at screening. Phases 4 and 5 are placeholders, and what it can emit is a chart bundle.
+
+**Note the ordering with feature 012.** Two of the ✗ cells above are *reachability*, not absence: SMS validity and the entire Tertiary column are written and answer. Feature 012 converts those to ● without any new synthesis or report work. The genuinely missing pieces after 012 lands are SMS synthesis, an SMS report, SLR validity, and Tertiary validity.
+
+**Fix.** Two orders are possible and they differ in cost.
+
+- **Bottom-up (cheaper, recommended).** Land feature 012; then add SMS synthesis and an `SMSReportService` modelled on `slr_report_service.py`; then generalise validity into one study-type-agnostic `ThreatToValidity` model, migrating `RRThreatToValidity` into it. Each step delivers on its own.
+- **Top-down (what the todo literally asks).** Define an SLR-shaped base workflow with per-type capability flags — `requires_quality_assessment`, `requires_dual_screening`, `synthesis_approaches`, `report_template` — and re-express all four gates and phase maps against it. Structurally right, and it touches every phase gate, every protocol model, and all four frontend phase maps at once.
+
+The bottom-up route reaches the same feature matrix; only the top-down route makes a fifth study type cheap. That is the actual decision, and it is worth taking explicitly rather than by default.
+
+**Cost.** High for the top-down form. Medium for the bottom-up form, and much of it is already paid by feature 012.
+
+---
+
+### G28 — Grey literature is a manual register, not a discovery capability (F2-SF03, F3-SF02) — **high**
+
+**Required** (`todo2.md`, "Grey Literature"). Find relevant blog posts by web search and scrape them to Markdown with access metadata; search Master's theses and doctoral dissertations, download and convert the PDFs; extract from arXiv likewise; and let a user choose grey-literature types when setting up the search.
+
+**Current.** `GreyLiteratureSource` (`db/src/db/models/slr.py:446`) is a hand-typed row: `source_type`, `title`, `authors`, `year`, `url`, `description`, with `GreyLiteratureType = {technical_report, dissertation, rejected_publication, work_in_progress}`. CRUD endpoints and a `GreyLiteraturePanel` exist. **It records what a researcher found elsewhere. It finds nothing.**
+
+| Requirement | State | Detail |
+| ----------- | ----- | ------ |
+| Blog discovery by web search | ✗ | No web-search capability anywhere: `grep -rniE "\b(web_search\|duckduckgo\|serpapi\|tavily\|brave.search\|bing)\b"` over all five packages returns nothing |
+| Blog scraping to Markdown | ◐ | The parts exist and are not connected. `tools/scraper.py` fetches HTML with BeautifulSoup, but targets journal TOCs and author pages; `convert_paper_to_markdown` (`markitdown`) and `convert_url_to_markdown` handle the conversion |
+| Web-citation metadata (access date, post author, title) | ✗ | Nothing captures BibTeX `@online` fields. `Paper` has no access-date column, and `urldate` is the one field a web citation cannot be reconstructed without after the fact |
+| Thesis / dissertation search | ✗ | No ProQuest, EThOS, DART-Europe, NDLTD, or OpenAIRE adapter. `DISSERTATION` is a label on a manual row |
+| arXiv | ✗ | `ArxivSource` fetches PDFs by DOI and is constructed only by its own tests — see the correction under [G3](#g3--missing-search-modalities-f2-sf03--medium). No arXiv search; not a `DatabaseIndex` member |
+| UI to select grey-literature types during search setup | ✗ | `DatabaseSelectionPanel` renders exactly the nine `DatabaseIndex` members |
+
+**Why it matters beyond the todo.** Grey literature is load-bearing in three places already catalogued. G7 names Garousi/Rainer/Yasin as unencoded guidelines. G14 needs a grey-literature arm counted separately to select the PRISMA MLR base flow, and `Study.includes_grey_literature` is proposed there. G24 identifies exactly this population — grey literature, reports, theses, older proceedings — as what snowballing silently skips for want of a DOI. **The same set of documents is missing from search, from the PRISMA diagram, and from the citation walk**, and each entry proposes to solve it locally. They should be designed as one provenance model.
+
+**Fix sketch.**
+
+| Step | Change | Size |
+| ---- | ------ | ---- |
+| 1 | Extend `DatabaseIndex` with `arxiv`, and give `ArxivSource` a real `search()` against `export.arxiv.org/api/query` — its PDF half is written and its metadata is rich (authors, categories, versions) | Small |
+| 2 | Add a thesis source. OpenAIRE and DART-Europe are open APIs; NDLTD aggregates broadly; ProQuest needs a licence, so it should not be the first choice | Medium |
+| 3 | Add a `venue_type`-style provenance discriminator on `CandidatePaper` — the same field G14 step 2 needs — so grey records are countable through the funnel | Small + migration |
+| 4 | Add `@online` metadata columns (`accessed_at`, `site_name`, `post_author`) for web sources, populated at fetch time. **Access date must be stamped on retrieval**; it is unrecoverable later | Small + migration |
+| 5 | Add a web-search source behind the `DatabaseSource` protocol, then reuse `scrape_journal`'s fetch-and-parse path for the discovered pages | Medium |
+| 6 | Group the grey-literature indices in `DatabaseSelectionPanel` under their own heading, so the type selection the todo asks for is the index selection that already exists | Small |
+
+Steps 1 and 6 alone satisfy the arXiv requirement and give the UI something to select, and neither depends on the rest.
+
+**Cost.** High in aggregate, but it decomposes cleanly and step 1 is a day.
+
+---
+
+### G29 — Shipped agent prompts hardcode SMS and Software Engineering (F2-SF01) — **medium**
+
+**Required** (`todo.md`, "Models and Agents"). Agent prompt templates should express expertise in systematic mapping studies for **Software Engineering and Artificial Intelligence** — with the field ideally a variable — and later generalise to any study type.
+
+**Current.** The parameterisation exists and the defaults do not use it.
+
+*What works.* `build_study_context` (`services/agent_service.py:279`) derives `domain` from `Study.topic` and `study_type` from a label map; `render_system_message` renders an `Agent.system_message_template` with `role_name`, `role_description`, `persona_name`, `persona_description`, `domain`, `study_type`; the result is passed as `system_message_override`, honoured by **9 of 10** agent classes and wired from five jobs (screening, extraction, validity, quality, results). `SystemMessageEditor` lists all six variables. This is a real answer to "make the field a variable".
+
+*What does not.* The override fires only when a `Reviewer` row carries an `agent_id`. `Agent` rows are created **only** through `POST /admin/agents` — nothing seeds them, and neither `scripts/seed_e2e_user.py` nor any migration creates one. On a fresh install every agent therefore runs its file-backed prompt. There are 12 such files, and **9 of them name software engineering directly**:
+
+| Prompt | Line |
+| ------ | ---- |
+| `librarian/system.md:3` | "specialising in systematic mapping studies in software engineering" |
+| `domain_modeler/system.md:3` | "specialising in systematic mapping studies in software engineering" |
+| `expert/system.md:3` | "a domain expert in software engineering research … for a systematic mapping study" |
+| `quality_judge/system.md:3` | "for systematic mapping studies (SMS) in software engineering research" |
+| `validity/system.md:3` | "specialising in systematic mapping studies (SMS) in software engineering" |
+| `extractor`, `synthesiser`, `screener`, `agent_generator` | also name software engineering |
+| `protocol_reviewer`, `narrative_synthesiser`, `search_builder` | the remaining three — no domain named, but no variable either |
+
+Counted exactly:
+
+```text
+$ ls agents/src/agents/prompts/*/system.md | wc -l                       # 12
+$ grep -ril "software engineering" agents/src/agents/prompts/*/system.md # 9
+$ grep -rl  "{{ domain"            agents/src/agents/prompts/*/system.md # 1
+```
+
+That single file is `agent_generator/system.md`, and it does not consume `{{ domain }}` — it *documents* the variable for the templates it writes, naming "Software Engineering and Artificial Intelligence" as an example value. **No prompt the platform actually runs is domain-parameterised, and Artificial Intelligence appears in no other prompt at all.** `SearchStringBuilderAgent` is additionally the one class with no `system_message_override` parameter, so its prompt cannot be overridden even with an `Agent` row.
+
+**Consequence.** A user running the platform over an AI, HCI, or security corpus gets agents that tell the model they are software-engineering specialists. The system prompt is where domain framing does the most work, so this biases screening, extraction, and quality judgement — quietly, and in a way no test detects, because every test asserts structure rather than framing.
+
+**Fix.**
+
+1. Parameterise the twelve prompt files on `{{ domain }}` and `{{ study_type }}`, with `PromptLoader` supplying defaults when no study context is present. This alone closes the todo, because the file-backed path becomes domain-aware without needing an `Agent` row.
+2. Seed one `Agent` row per `AgentTaskType` at first run, the way feature 010 seeds four protocol templates — so the DB-backed path is populated rather than empty by default.
+3. Add `system_message_override` to `SearchStringBuilderAgent` for parity.
+4. Add a test asserting the rendered system message contains the study's topic, for every agent that takes an override.
+
+**Cost.** Low-medium — mostly prompt editing over an existing mechanism.
+
+---
+
+### G30 — The system message editor is not syntax-highlighted (F1-SF04) — **low, mechanical**
+
+**Claim.** `todo.md` asks for "a syntax-highlighted section which allows for the modification of the Agent's System message". `SystemMessageEditor.tsx` is a plain MUI `TextField multiline`; `frontend/package.json` contains no `prism`, `highlight.js`, `codemirror`, or `monaco` dependency.
+
+Everything around it is built: the variable list is rendered as helper text, an undo buffer is wired to `system_message_undo_buffer`, and `POST /admin/agents/{id}/generate-system-message` regenerates the template through `AgentGeneratorAgent`.
+
+**Remediation.** These templates are Jinja2 over Markdown. A dependency-free option is an overlay — a `<pre>` behind a transparent `<textarea>`, highlighting only `{{ … }}` and `{% … %}` — which costs no bundle weight and covers the case that matters, spotting a mistyped variable. If a full editor is wanted, CodeMirror 6 with the Jinja mode is the smaller of the two libraries and lazy-loads cleanly.
+
+Pairs naturally with **G17** (no task-type filter on the agents list): both are single controls in the same admin tab.
+
+**Cost.** Low.
+
+---
+
+### G31 — No user avatar (F3-SF01) — **low, additive**
+
+**Claim.** `todo2.md` asks for a user avatar settable in user settings. `User` (`db/src/db/models/users.py`) has no avatar column, and `GET /me` returns none. `SideNav.tsx:49` renders an MUI `Avatar` containing the user's initials.
+
+The only avatar machinery in the tree belongs to *agents*: `generate_persona_svg` (`services/agent_service.py:798`) asks an LLM for a persona SVG, validates it, and stores it in `Agent.persona_svg`.
+
+**Remediation.** Two shapes, and the choice is about deployment rather than UI. An uploaded image needs the object store G12 already wants for manual PDF upload — worth doing once, for both. A generated identicon or an SVG reusing the `persona_svg` validation path needs no storage at all and is a column plus a form field. Given F1-SF04's self-contained goal, the second is the better default with upload added alongside G12's store.
+
+**Cost.** Low.
+
+---
+
+### G32 — Agent improvement is manual (F1-SF04) — **medium, research-shaped**
+
+**Claim.** `todo2.md` asks for DSPy-based tooling to automate agent improvement alongside the existing DeepEval evaluation. **"dspy" occurs exactly once in the repository — in `todo2.md`.**
+
+The evaluation half is real: `agent-eval` depends on `deepeval>=1.0` and holds `evals/`, `judge/`, `pipelines/`, `commands/`, and a CLI. So the platform can score an agent and cannot act on the score — every prompt improvement is a human editing `system_message_template`.
+
+**What makes this a good fit here, and what does not.** The pieces DSPy needs are unusually well placed. `Agent.system_message_template` is already a first-class, versioned, database-stored artefact with an undo buffer — the optimisation target — and `agent-eval`'s DeepEval metrics are the objective function. `AgentGeneratorAgent` already occupies the "rewrite this prompt" slot that DSPy would take over, with a better search procedure behind it.
+
+What is missing is the training signal. DSPy optimisers need labelled examples — screening decisions with known-correct outcomes, extractions with a gold standard. The platform generates screening decisions constantly, but nothing marks a set as ground truth, and `PaperDecision.is_override` is the closest thing: a human overriding an AI decision is a labelled correction. **Harvesting overrides into an evaluation set is the prerequisite**, and it is worth doing whether or not DSPy follows, because it also gives G4's intra-rater work a corpus.
+
+**Fix sketch.** Build the override-derived gold set first; express one agent — the screener, which has the crispest objective — as a DSPy module over its existing prompt; wire a DeepEval metric as the optimiser's metric; run `BootstrapFewShot` or `MIPROv2` offline and write the winning template back through the existing undo-buffer path so a human approves before it takes effect. Never auto-promote: a prompt regression here silently changes every screening decision that follows.
+
+**Cost.** Medium-high, and genuinely research-shaped — the gold-set question is harder than the DSPy integration.
+
+---
+
+### G33 — Residual inline styles (F1-SF04) — **low**
+
+**Claim.** `todo2.md` asks to move from inline styles to consolidated per-component styles. The MUI migration (feature 004) is done — 92 files use the `sx` prop — but **80 `style={{…}}` props remain across 26 files**.
+
+| File | Count |
+| ---- | ----: |
+| `components/studies/NewStudyWizard.tsx` | 15 |
+| `components/shared/DiffViewer.tsx` | 7 |
+| `components/phase2/TestRetest.tsx` | 7 |
+| `components/phase1/SeedPapers.tsx` | 6 |
+| `phase2/{SearchStringEditor, PaperQueue, CriteriaForm}`, `phase1/PICOForm` | 5 each |
+| 18 further files | 1–4 each |
+
+`studyTypeDispatch.tsx` shows the mixed state within a single file: `sx` on the `Box` wrappers, raw `style` on the `<ul>` and `<li>` inside them.
+
+**Why it is not merely cosmetic.** Inline `style` cannot read theme tokens, so hardcoded literals like `background: '#f8fafc'` and `color: '#374151'` do not respond to the Light/Dark/System preference feature 004 shipped. The residue is therefore a live theming defect in the dark palette, not just an inconsistency — which makes the two worst offenders, `NewStudyWizard` and `DiffViewer`, the ones to convert first.
+
+**Remediation.** Convert `style` to `sx` and replace colour literals with `theme.palette` references. An ESLint rule (`react/forbid-dom-props` with `forbid: ['style']`) prevents regression; add it after the conversion, not before, or it fails the build on 80 sites.
+
+**Cost.** Low, and mechanical.
+
+---
+
+### G34 — Verification debt: unestablished mutation scores and a documented command that fails (F1-SF01) — **medium**
+
+Two findings from executing `todo.md`'s first item and `todo2.md`'s constitution item. Both concern the checks the project relies on to know its own state.
+
+**1 — No trustworthy mutation score exists.** `todo.md` asks for ≥ 85% mutants killed, and the constitution now requires it before any feature is marked complete (§ Mutation Testing). The tooling is done and hardened well past the original ask — cosmic-ray replaces mutmut, `run-mutation-safe.sh` isolates each run in a git worktree, and three independent guards prevent a repeat of the committed-mutant incident. But **every score on record disclaims itself**:
+
+| Report | Score | Status |
+| ------ | ----- | ------ |
+| `backend/cosmic-ray-survivors.md` | — | "⚠ This report is unreliable. Do not cite the score below." |
+| `agents`, `db`, `agent-eval`, `researcher-mcp` | 100% each | All four carry: "Re-run via the wrapper before relying on it" |
+| `frontend/stryker-survivors.md` | 94.96% | Scope is `src/services/**/*.ts` only — **no component is mutated** |
+
+So the gate is codified, the safety rails are built, and no package has a citable number. Closing this is a matter of running the wrapper five times and recording the results; the guards that make that safe are the part that was hard, and it is finished.
+
+**2 — The documented coverage command reports 0.00% and fails.** CLAUDE.md gives:
+
+```bash
+uv run --package sms-backend pytest backend/tests/ --cov=src/backend …
+```
+
+Every other command in that document runs from the repository root, where `src/backend` does not exist — so `--cov` matches nothing. Reproduced side by side:
+
+```text
+# from repo root, exactly as documented
+FAIL Required test coverage of 85% not reached. Total coverage: 0.00%
+95 passed
+
+# same package, cwd inside it
+Required test coverage of 85% reached. Total coverage: 86.34%
+95 passed
+```
+
+This bears directly on `todo.md`'s first item — "explain how to correctly run all types of tests, linters, and static analysis tools for the project correctly on the first try" — which is otherwise met: `ruff`, `ruff format`, and `mypy` all run clean from the root as documented. Coverage is the one command that does not, and it fails in the worst way: a red gate rather than an error, which reads as *your tests do not cover the code* rather than *you ran this from the wrong directory*. The real figures, measured correctly, are backend 86.23%, agents 87.42%, db 96.23%, agent-eval 86.34%, researcher-mcp 87.90%, frontend 91.06%.
+
+**3 — One oracle is not actually enforced.** CLAUDE.md states "Both oracles run in pre-commit and CI." `check_mutation_artifacts.py` and `check_shadowed_modules.py` do (`.pre-commit-config.yaml:9,19`; `ci.yml:35,40`). **`audit_unreachable_frontend.py` appears in neither** — the constitution's own v1.8.0 sync-impact report records this as a known outstanding violation of Principle X, and CLAUDE.md has not caught up.
+
+**Fix.** Make the coverage commands `cd`-prefixed or module-scoped (`--cov=backend`) and verify each from the root before committing the doc; wire `audit_unreachable_frontend.py` into pre-commit and CI — with feature 012 landed it should report zero, making it a genuine gate; run `run-mutation-safe.sh` across all five packages plus Stryker and replace the six disclaimed reports; widen Stryker's scope beyond `src/services`.
+
+**Cost.** Low in effort, mostly machine time. The point is that a documented command that fails and an unenforced oracle both erode the evidence base every other entry in this document rests on.
+
+---
+
 ### Neither oracle sees a backend route
 
 G22 and G23 are the built-but-never-wired defect on the backend, and both passed every gate in the repository. It is worth being explicit about why, because the two oracles added on 2026-08-06 can read as covering more than they do.
@@ -701,10 +1068,23 @@ G22 and G23 are the built-but-never-wired defect on the backend, and both passed
 
 Both reason about **imports**. A backend capability is reachable only through an HTTP route and, for a job, an enqueue call — neither of which an import graph models. `snowball_job.py` is imported by `worker.py` and registered with ARQ, so it looks alive to every static check while being unreachable to every user. The `run_snowball_search` string in G23 is worse still: it is not an import at all, so no tool in the repository can tell it apart from a correct name.
 
-**What would catch these.** Two checks, both cheap and neither yet written:
+**Extended — 2026-08-07.** G25 and the orphaned `ArxivSource` are the same blindness in two more organs, and they are worse than G22 because neither involves a name a tool could even in principle resolve.
+
+| Defect | Why every gate passed it |
+| ------ | ------------------------- |
+| **G25** — the backend posts to `/tools/search_papers`, a path researcher-mcp does not serve | A URL is a string. `ruff` and `mypy` see `str`; the tests mock `httpx` below the seam, so both sides are green while the contract between them is fiction |
+| **G25** — `{"databases": …}` against a parameter named `indices` | Crosses a JSON boundary as `dict[str, Any]`. Nothing types the wire format, on either side |
+| **G25** — `["acm", "ieee", "scopus"]` against registry keys `acm_dl`, `ieee_xplore`, `scopus` | Free strings, never validated against `DatabaseIndex`, and unknown indices are recorded in `sources_failed` rather than raised |
+| **`ArxivSource`** — constructed only by its own unit tests | Imported, so `check_shadowed_modules.py` is satisfied; outside `frontend/src`, so the reachability audit never looks; covered by tests, so coverage rises because of it |
+
+That last row is the sharpest form of the pattern this document keeps returning to: **its unit tests are the only thing keeping it alive, and they are also the only reason it looks healthy.** Test coverage measures whether code is executed, not whether anything but a test executes it.
+
+**What would catch these.** Four checks, all cheap and none yet written:
 
 1. Assert that every name `_arq_function_for_type` can return is the `__name__` of a function in `WorkerSettings.functions`. A plain unit test over both collections; it fails today.
 2. Assert that every `JobType` member has a route that enqueues it. This is the backend analogue of the frontend reachability audit and would have caught G22 on the day snowballing was written.
+3. **One contract test per cross-service seam** — start the real researcher-mcp ASGI app in-process and drive it with the backend's own client code. This is the only check that catches G25, and it catches all three of its layers at once, because a wrong path, a wrong parameter name, and a wrong index name all produce a failing call.
+4. **Assert every `DatabaseSource` implementation is reachable from `build_default_registry()`.** A source that no registry constructs is dead however well it is tested; this is `audit_unreachable_frontend.py`'s question asked of the source adapters, and it fails today on `ArxivSource`.
 
 Principle X requires an e2e test driving each user-facing feature through the UI, which subsumes both — but only for features someone remembered to route. A capability nobody exposed has no journey to write a test against, which is precisely how it stays hidden.
 
@@ -805,9 +1185,13 @@ Every gap assessed before 2026-08-06 was read against corrupted source, so each 
 
 ## Recommended sequence
 
+> **Reordered — 2026-08-07.** The intake put one item ahead of everything previously listed. **G25** is not a gap in the ordinary sense — it is a broken seam beneath the whole search subsystem, and while it stands, G1, G2, G13, G22, G24, G26 and G28 are all unobservable: their symptoms cannot be reproduced because the code path they describe returns nothing. Anything measured against search before it lands measures the outage.
+
 | Order | Item                                                                                           | Rationale                                                                                                                                                                                                                         |
 | ----- | ---------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | ~~0~~ | ~~**G13d** two defects in `_fetch_test_search_results`~~                                       | ✅ **Done 2026-08-05** — was writing fabricated pilot data on service failure                                                                                                                                                     |
+| **0** | **G25** researcher-mcp call surface, plus the contract test that pins it                       | **Ahead of everything.** No search in the platform returns a paper today. Every other search gap is unobservable until this lands, and four of the five call sites report success while failing                                   |
+| 0b    | **G34** part 2 — fix the coverage command; wire `audit_unreachable_frontend.py` into CI       | Minutes of work on the evidence base every other item is judged against                                                                                                                                                           |
 | 1     | **G10** report validation                                                                      | Greenfield, no schema change, operates on an existing structured object                                                                                                                                                           |
 | 2     | **G1** + **G14** steps 1–2 provenance                                                          | Design together — the PRISMA "other methods" arm and the snowball DAG need the same discriminator                                                                                                                                 |
 | 2b    | **G14** steps 3–6 flow diagram                                                                 | Follows the provenance work; reuses `visualization.py`'s existing SVG pattern                                                                                                                                                     |
@@ -820,7 +1204,14 @@ Every gap assessed before 2026-08-06 was read against corrupted source, so each 
 | 9     | **G7**, **G9**, **G12**, F1 docs                                                               | Additive, low coupling                                                                                                                                                                                                            |
 | —     | **G15** vLLM + LM Studio providers                                                             | Unordered — cheapest item on the list and independent of everything else; land whenever local inference is wanted                                                                                                                 |
 | 1b    | **G18**, **G19**, **G20** — see [feature 012](./features/012-wire-up-unreachable-workflows.md) | Designed together, since they are one defect shape and all three land in `StudyPage`. Promote near the top: G19 has the highest ratio of delivered value to work on the list, and until G18 lands F2-SF04 has no exercisable path |
-| —     | **G16**, **G17**, **G21** unreachable UI controls                                              | Unordered — each is a single control over machinery that is already written                                                                                                                                                       |
+| 6b    | **G26** search metadata at ingest                                                              | Lands with G2/G13 — three later gaps each propose to recover a field the search already had and dropped                                                                                                                            |
+| 7b    | **G28** grey literature as a real source                                                       | Follows G3; steps 1 and 6 (arXiv search + a UI grouping) are a day and close the arXiv ask on their own                                                                                                                            |
+| 8b    | **G27** workflow unification                                                                   | Take the bottom-up route unless a fifth study type is planned; feature 012 already pays for two of its ✗ cells. The SMS report and SMS synthesis are the substance                                                                |
+| 9b    | **G29** de-hardcode the agent prompts                                                          | Cheap, and it silently biases every screening and extraction decision until done                                                                                                                                                  |
+| —     | **G34** part 1 — run the mutation wrapper and record real scores                                | Unordered but overdue: the gate is codified, the rails are built, and no package has a citable number                                                                                                                              |
+| —     | **G16**, **G17**, **G21**, **G30** unreachable or absent UI controls                           | Unordered — each is a single control over machinery that is already written. G17 and G30 sit in the same admin tab                                                                                                                 |
+| —     | **G31** user avatar, **G33** inline-style residue                                              | Unordered and independent. G33 is a live dark-theme defect, not only a tidiness item                                                                                                                                               |
+| —     | **G32** DSPy-driven agent improvement                                                          | Last. Its prerequisite is a gold-standard evaluation set derived from human overrides, which is worth building on its own and also feeds G4                                                                                        |
 
 ---
 
@@ -831,3 +1222,18 @@ Features that are _stateful workflow_ — protocols, phase gates, screening, ext
 That is the predictable consequence of shipping ten features as sequential additive migrations `0014`–`0018`: changing the _shape_ of `CandidatePaper`, or splitting `Paper` from `Study`, would have forced backfills across every previously completed workflow. The remaining structural gaps are cheap to describe and expensive to add for exactly that reason — and they get more expensive with every study the platform runs.
 
 A second, cheaper pattern sits alongside it: **capabilities built but not connected**. G13a is the clearest case — the agent declares `seed_keywords`, the template renders it, the seed records exist, and the endpoint simply never passes the argument. G12's paper viewer is the same shape (endpoint with no frontend consumer), as is `ai_adequacy_judgment` (column written once, never updated). These cost little to close and are worth sweeping for beyond the instances catalogued here.
+
+**Updated 2026-08-07 — the second pattern is the dominant one, and it has a third form.** Folding in `todo.md` and `todo2.md` added ten gaps, and six are disconnection rather than absence:
+
+| Gap | Both halves exist | The missing edge |
+| --- | ----------------- | ---------------- |
+| **G25** | Nine working source adapters; a backend that wants to search | The URL between them names a route that does not exist |
+| **G26** | `PaperRecord.url` populated by every adapter | The reader asks for `source_url` |
+| **G13c** | `StudyDatabaseSelection`, a UI to set it, a `databases_queried` column | No search path reads the table, and the hardcoded default names two indices that do not exist |
+| **G28** | `ArxivSource`, `convert_url_to_markdown`, `scrape_journal` | Nothing constructs `ArxivSource`; nothing points the scraper at a blog |
+| **G29** | `{{ domain }}` plumbing through 9 agents and 5 jobs | No `Agent` row is ever seeded, so the plumbing never carries anything |
+| **G27** | Validity, synthesis and report machinery, three or four times over | No study type has all three, and SMS has none |
+
+So the codebase's characteristic defect is not missing capability. **It is a missing edge between two capabilities that are each finished, each tested, and each green.** The first pattern — flattened relational shape — is expensive and rare. This one is cheap and everywhere, and it is invisible to the whole toolchain: a linter sees valid syntax, a type checker sees compatible types, a unit test sees its own mock, and coverage rises when a test is the only caller.
+
+Which sharpens what the two oracles are for. `audit_unreachable_frontend.py` did not find a category of bug; it found *one instance* of the category, in the one language where an import graph happens to model reachability. The same question — **what constructs this, and what calls that** — is unasked of ARQ job registrations (G22, G23), of HTTP seams between services (G25), and of source-adapter registries (`ArxivSource`). Each needs its own oracle, and each is a short script. The four listed under [Neither oracle sees a backend route](#neither-oracle-sees-a-backend-route) are the ones this pass would have wanted.

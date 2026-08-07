@@ -1,4 +1,13 @@
-# Update Constitution
+> **Superseded 2026-08-07 — do not track work here.**
+> Every item below was checked against the repository and folded into
+> [`docs/feature-gaps.md`](./feature-gaps.md) → _Unified intake from `todo.md` and `todo2.md`_,
+> which records a verdict and supporting evidence for each one and assigns a gap ID to
+> whatever remains (G25–G34). The constitution section is done; almost nothing else is.
+> This file is kept unedited as a provenance record of the original asks.
+
+---
+
+# Update Speckit Constitution
 
 - [ ] Ensure that any new modules are correctly documented following doc comment requirements. Additionally, all files should have a doc comment at the top of the file
 - [ ] Before completing a feature and in addition to existing tests coverage requirements, all modified subprojects must be evaluated using mutation testing ensuring that 85% or greater mutants are killed.
