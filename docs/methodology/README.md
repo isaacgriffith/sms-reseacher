@@ -41,6 +41,7 @@ correction is marked **⚠ CORRECTION** inline.
 | 10 | [Reporting & evaluation](./10-reporting-and-evaluation.md) | SEGRESS, PRISMA 2020, DARE, flow diagrams, report evaluation |
 | 11 | [Caveats register](./11-caveats-register.md) | Consolidated traps, cross-referenced to the step they bite |
 | 12 | [Platform implications](./12-platform-implications.md) | What this means for the codebase, mapped to `feature-gaps.md` |
+| 13 | [Open science](./13-open-science.md) | Preregistration, replication packages, archival, licences, anonymisation |
 | — | **[PLAYBOOK](./PLAYBOOK.md)** | **How to extend these documents when new papers arrive** — see below |
 | — | [notes/](./notes/) | The per-paper extraction notes these chapters were composed from |
 

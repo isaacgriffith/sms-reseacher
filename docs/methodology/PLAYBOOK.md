@@ -384,7 +384,7 @@ Legend for *Depth*: **F** = read in full · **T** = targeted sections · **V** =
 | `cruzes_research_2011` | F | 13-method synthesis catalogue; the 49% / 20.4% audit | 08, 11, 12 |
 | `marshall_tools_2013` | F | **Zero tool support** for need-identification, protocol, quality | 12 |
 | `marshall_tools_2014` | F | DESMET feature analysis; best tool at 65.4% | 12 |
-| `mendez_open_2020` | F | Open-science disclosure; preregistration; licence traps | *(under-used — see below)* |
+| `mendez_open_2020` | F | Open-science disclosure; preregistration; licence traps; DOI archival | 13 |
 | `zhang_evidence-based_2020` | F | **Grey-literature use**, not general EBSE: 102 reviews, 90% no GL appraisal | 05, 12 |
 | `fatima_retrieving_2023` | F | Preprint scraping; **reports no accuracy figures** | 05 |
 | `stol_grounded_2016` | F | Grounded-theory variants; **method slurring** | 08 *(lightly)* |
@@ -417,7 +417,7 @@ Extracted but not yet fully worked into a chapter. Cheap wins for the next pass:
 
 | Paper | What is unused | Suggested home |
 | ----- | -------------- | -------------- |
-| `mendez_open_2020` | Six openness facets; preregistration and registered reports; replication packages; licence traps; DOI archival over personal URLs; the restricted-access pattern | A new **13 — Open science and reproducibility** chapter, or a section in 10 |
+| ~~`mendez_open_2020`~~ | ~~Six openness facets; preregistration; licence traps; DOI archival~~ | ✅ **Worked into [13 — Open science](./13-open-science.md)** 2026-08-07 |
 | `stol_grounded_2016` | Three GT variants and their coding procedures; the eleven core practices; **method slurring** and its disqualifying test | Extend 08; the method-slurring test generalises to *any* claimed method |
 | `basili_software_1992` | QIP and the Experience Factory; defect-slippage interpretation | 09, if GQM is expanded |
 | `garousi_benefitting_2020` | The process model of *how GL is authored*, locating validity threats in the author's invisible internal processes | 05 |
