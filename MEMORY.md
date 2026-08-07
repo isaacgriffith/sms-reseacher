@@ -276,6 +276,135 @@ file. Reformatting is a separate, deliberate change.
 
 ---
 
+## The documented coverage command reports 0.00% and fails the gate
+
+_2026-08-07_
+
+`CLAUDE.md` gives coverage commands in the form:
+
+```bash
+uv run --package sms-agent-eval pytest agent-eval/tests/ --cov=src/agent_eval …
+```
+
+Every other command in that file is run from the repository root. From the root, `src/agent_eval`
+does not exist, so `--cov` matches nothing. Reproduced side by side:
+
+```text
+# from repo root, exactly as documented
+FAIL Required test coverage of 85% not reached. Total coverage: 0.00%
+95 passed
+
+# same package, cwd inside it
+Required test coverage of 85% reached. Total coverage: 86.34%
+95 passed
+```
+
+**Why it matters.** It fails in the worst possible way — a **red gate rather than an error**. It
+reads as "your tests do not cover the code", which sends you looking for missing tests, when the
+actual fault is the working directory. The real figures are healthy: backend 86.23%, agents 87.42%,
+db 96.23%, agent-eval 86.34%, researcher-mcp 87.90%, frontend 91.06%.
+
+**How to apply.** `cd` into the package first, or use the module name (`--cov=backend`) rather than
+the path. Tracked as **G34** in `docs/feature-gaps.md`; the commands in `CLAUDE.md` have not been
+corrected yet.
+
+---
+
+## The 2007 SLR guidelines are amended — do not encode them as written
+
+_2026-08-07_
+
+Kitchenham & Charters 2007 is the foundational SLR process and the document most of this platform's
+workflow descends from. Kitchenham et al. **2013** lists **eleven changes its own authors
+recommend**, including two that reverse distinctive recommendations of the 2007 text:
+
+- **Remove** constructing structured questions and using them to build search strings — it produces
+  very complex strings needing per-library adaptation, and does not work for mapping studies.
+- **Remove** the data extractor / data checker split.
+
+The same paper says the 2007 quality-checklist guidance "is not useful", that it "should be removed",
+and — candidly — that "it is not clear what should replace them".
+
+**Why it matters.** A platform that encodes the 2007 text unmodified encodes advice its authors
+withdrew. PICOC in particular is still useful for *scoping a question* and must **not** be the
+mechanical source of a search string.
+
+**How to apply.** Read [`docs/methodology/01-slr.md`](./docs/methodology/01-slr.md), which presents
+the process as amended and lists all eleven changes with their effect on this codebase. Treat the
+2007 PDF as a historical source, not a specification.
+
+---
+
+## A standard can forbid the use you planned for it
+
+_2026-08-07_
+
+Gap **G10** specified a report checker validating against PRISMA 2020. PRISMA 2020 states it
+**"should not be used to assess the conduct or methodological quality of systematic reviews."** It
+measures reporting *completeness*. A "PRISMA score" presented as a quality score misuses the standard
+in precisely the way its authors warn against.
+
+The replacement was already available: **SEGRESS** is the only standard that marks every item
+required / optional / not-required **per review type**, which maps onto the four study types this
+platform models — a one-size checker would penalise a mapping study for omitting a certainty
+assessment SEGRESS marks *not required* for it. For quality, **DARE** (4 questions, 0/0.5/1) and the
+Petersen 2015 rubrics exist and were designed for it.
+
+**Why it matters.** The feature was specified against a standard that forbids the use. Nothing in the
+codebase would ever have caught it — the error was in the reading, not the code.
+
+**How to apply.** Before encoding any external instrument, check what its authors say it measures.
+This is now **Principle XI** in the constitution: "instruments MUST be applied to the construct their
+authors defined". The amended G10 splits into two features — a SEGRESS completeness checker and a
+DARE quality scorer.
+
+---
+
+## Extraction agents fail when told to reproduce copyrighted text verbatim
+
+_2026-08-07_
+
+Building `docs/methodology/` from 54 papers, **six of fifteen subagents died** with
+`API Error: Output blocked by content filtering policy` — always at the write step, after reading
+their papers successfully. Splitting batches did not help; one retry failed on a single paper.
+
+The cause was the instruction, not the tool. The prompts said "reproduce ALL items verbatim" and "do
+not summarise", so each agent was attempting to emit long verbatim reproductions of journal text.
+
+**Why it matters.** A meaningful share of the session went into re-dispatching agents into the same
+wall. The failure looked like a capacity or size problem — a 118 KB write succeeded while an 18 KB
+one failed — which sent the diagnosis in the wrong direction.
+
+**How to apply.** Instruct extraction agents to **synthesise in their own words**, quoting only where
+exact phrasing is load-bearing and keeping quotations under ~20 words. That is also the correct
+approach for a derived reference document, independent of the filter. The corrected prompt is in
+[`docs/methodology/PLAYBOOK.md`](./docs/methodology/PLAYBOOK.md), along with the other failure modes
+observed. Also check output before trusting a "completed" status — count `^## ` headings per notes
+file, because an agent can complete having written only its first paper.
+
+---
+
+## Two traps in the `research/` corpus itself
+
+_2026-08-07_
+
+- **`brereton_lessons_2007.pdf` and `kitchenham_lessons_2007.pdf` are byte-identical** (same MD5).
+  One paper filed twice. The corpus is **54 unique papers across 55 files**. This was found only
+  after one of them had been extracted twice.
+- **`basili_software_1992.pdf` is a scanned image with no text layer.** `pdftotext` yields a 24-byte
+  stub, and no OCR is installed. It is still readable — the Read tool handles page images directly,
+  up to 20 pages per request, and all 24 pages were recovered in two requests with nothing lost.
+
+**Why it matters.** A silent duplicate wastes an extraction and inflates any count derived from
+`ls research/ | wc -l`. A zero-word text extraction looks like a failed conversion rather than a
+scanned document, and is easy to mistake for a corrupt file.
+
+**How to apply.** Run `md5sum * | sort | awk '{print $1}' | uniq -d` and
+`wc -w txt/*.txt | sort -n | head` after any corpus change — both are steps 1 and 2 of the playbook.
+The paper register in the playbook records depth per paper, including which one needed vision.
+
+---
+
 ## Feature document numbering drifted from `specs/`
 
 _2026-08-06_
