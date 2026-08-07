@@ -89,7 +89,9 @@ async def seeded(db_engine):
                 study_id=study.id, description="Empirical studies only", order_index=1
             )
         )
-        search_string = SearchString(study_id=study.id, string_text="flaky AND test", is_active=True)
+        search_string = SearchString(
+            study_id=study.id, string_text="flaky AND test", is_active=True
+        )
         db.add(search_string)
         await db.flush()
 
@@ -219,4 +221,123 @@ async def test_provider_outage_fails_the_job_instead_of_rejecting_the_papers(see
     assert job.status is JobStatus.FAILED
     assert job.error_message
     assert job.completed_at is not None
+    assert execution.status is SearchExecutionStatus.FAILED
+
+
+# ---------------------------------------------------------------------------
+# run_snowball
+# ---------------------------------------------------------------------------
+
+
+@pytest_asyncio.fixture
+async def seeded_snowball(db_engine):
+    """Seed a study ready to snowball, with a queued snowball job."""
+    maker = async_sessionmaker(db_engine, expire_on_commit=False)
+    async with maker() as db:
+        study = Study(name="Flaky tests", study_type=StudyType.SMS, topic="flaky tests")
+        db.add(study)
+        await db.flush()
+
+        search_string = SearchString(study_id=study.id, string_text="flaky", is_active=True)
+        db.add(search_string)
+        await db.flush()
+
+        execution = SearchExecution(
+            study_id=study.id,
+            search_string_id=search_string.id,
+            status=SearchExecutionStatus.PENDING,
+            phase_tag="backward-search-1",
+        )
+        db.add(execution)
+        db.add(
+            BackgroundJob(
+                id="job-snowball",
+                study_id=study.id,
+                job_type=JobType.SNOWBALL_SEARCH,
+                status=JobStatus.QUEUED,
+            )
+        )
+        await db.commit()
+        yield maker, study.id, execution.id
+
+
+async def _run_snowball(maker, screener, study_id: int, execution_id: int):
+    """Run the real ``run_snowball`` against the test database."""
+    from backend.jobs.snowball_job import run_snowball
+
+    with (
+        patch("backend.core.database._session_maker", maker),
+        patch(
+            "backend.jobs.snowball_job._fetch_snowball_papers",
+            new=AsyncMock(return_value=_PAPERS),
+        ),
+        patch(
+            "backend.jobs.snowball_job._build_screener_with_context",
+            new=AsyncMock(return_value=screener),
+        ),
+    ):
+        return await run_snowball(
+            {}, study_id, "backward-search-1", ["10.1/seed"], "backward", execution_id
+        )
+
+
+async def test_snowball_completes_its_execution(seeded_snowball):
+    """A finished snowball marks its execution completed.
+
+    It previously left the execution at ``pending`` whatever happened, so
+    "failed" would have been the only status the run ever set — a signal with
+    nothing to contrast against.
+    """
+    maker, study_id, execution_id = seeded_snowball
+
+    await _run_snowball(maker, _RecordingScreener(), study_id, execution_id)
+
+    async with maker() as db:
+        execution = (await db.execute(select(SearchExecution))).scalars().one()
+        job = (await db.execute(select(BackgroundJob))).scalars().one()
+
+    assert execution.status is SearchExecutionStatus.COMPLETED
+    assert execution.completed_at is not None
+    assert job.status is JobStatus.COMPLETED
+
+
+async def test_snowball_screens_the_papers_it_discovers(seeded_snowball):
+    """Snowballed papers are screened, not rejected by a crash.
+
+    ``_process_snowball_batch`` shares the screening pass with the full search,
+    so it shared the defect: it passed a CandidatePaper that could not produce
+    a title.
+    """
+    maker, study_id, execution_id = seeded_snowball
+    screener = _RecordingScreener()
+
+    summary = await _run_snowball(maker, screener, study_id, execution_id)
+
+    assert {call["title"] for call in screener.calls} == {p["title"] for p in _PAPERS}
+    assert summary["accepted"] == 1
+    assert summary["rejected"] == 1
+
+
+async def test_snowball_provider_outage_fails_the_run(seeded_snowball):
+    """A provider outage fails the snowball run rather than stranding it.
+
+    Same contract as the full search: a job left RUNNING for ever is
+    indistinguishable from a slow one, and a partial sweep committed as though
+    it finished would misstate the PRISMA counts.
+    """
+    from backend.jobs.screening_pipeline import ScreeningUnavailableError
+
+    maker, study_id, execution_id = seeded_snowball
+
+    with pytest.raises(ScreeningUnavailableError):
+        await _run_snowball(maker, _FailingScreener(), study_id, execution_id)
+
+    async with maker() as db:
+        decisions = (await db.execute(select(PaperDecision))).scalars().all()
+        job = (await db.execute(select(BackgroundJob))).scalars().one()
+        execution = (await db.execute(select(SearchExecution))).scalars().one()
+
+    assert decisions == []
+    assert job.status is JobStatus.FAILED
+    assert job.error_message
     assert execution.status is SearchExecutionStatus.FAILED

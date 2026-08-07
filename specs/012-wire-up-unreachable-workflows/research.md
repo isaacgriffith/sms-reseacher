@@ -166,6 +166,43 @@ SLR pages) all take an explicit prop.
 
 ---
 
+## R9 — A failed search restarts; a failed re-screen resumes
+
+**Decision**: `run_full_search` and `run_snowball` **roll back** the partial sweep and mark the
+run failed. The re-screen job (T044) must do the **opposite**: keep every assessment it
+completed, report its coverage, and resume from the decision rows. It must not call
+`_fail_search_run`.
+
+**Rationale**: The two look alike and are not, and the difference is what an assessment costs to
+reproduce.
+
+A search sweep is a query against an external index. Re-running it is cheap, idempotent, and
+returns the same papers, so there is nothing worth preserving — while committing half a sweep as
+though it finished would misstate `SearchMetrics.total_identified`, and every PRISMA figure
+derived from it, with no record that it was partial. Restarting is both cheaper and more honest.
+
+A re-screen is the opposite on both counts. Each assessment is a provider call that was paid for,
+and FR-024 states the requirement directly: a run that fails part-way "MUST retain the
+assessments it completed" and "MUST report how many papers it covered". R5 already commits to
+deriving outstanding candidates from decision rows rather than a stored cursor, which only works
+if those rows survive the failure. Rolling them back would make the resume mechanism resume from
+nothing.
+
+The asymmetry is deliberate, and is the first thing to check if a re-screen ever appears to lose
+work. It is also recorded in `_fail_search_run`'s docstring, at the point of temptation: the
+helper will be right there, and reaching for it would look like reuse rather than a bug.
+
+**Alternatives considered**:
+
+- _One policy for all three jobs_ — rejected in both directions. Retaining a partial search
+  misreports the funnel; discarding a partial re-screen contradicts FR-024 and wastes provider
+  spend.
+- _Retain the search sweep and flag the execution partial_ — a real option, but it needs a
+  `partial` state on `SearchExecution` and a UI that explains it, for a run that is cheap to
+  repeat. Revisit only if searches become expensive or rate-limited enough that a restart hurts.
+
+---
+
 ## Resolved unknowns
 
 | Question                                       | Resolution                                        |
@@ -175,6 +212,7 @@ SLR pages) all take an explicit prop.
 | Can the screening pipeline be reused as-is?    | Composition yes; error handling must change (R3)  |
 | How is a concurrent run refused?               | `BackgroundJob` state query, `409` naming the run |
 | How does a restart know what is left?          | Derived from decision rows, no cursor (R5)        |
+| What happens to a run's work when it fails?    | Search restarts, re-screen resumes (R9)           |
 | How does Tertiary get hosted?                  | Takeover, plus `research_group_id` on the study   |
 
 No `NEEDS CLARIFICATION` markers remain.

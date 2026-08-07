@@ -112,7 +112,7 @@ async def test_run_snowball_returns_error_when_study_not_found():
     session_maker = _make_session_cm(db)
 
     with patch("backend.core.database._session_maker", session_maker):
-        from backend.jobs.search_job import run_snowball
+        from backend.jobs.snowball_job import run_snowball
 
         result = await run_snowball(
             {},
@@ -151,9 +151,11 @@ async def test_run_snowball_stopped_early_when_below_threshold():
     db.execute = AsyncMock(
         side_effect=[
             _r(study_mock),     # Study
-            _r(reviewer_mock),  # Reviewer
+            _r(None),           # SearchExecution — absent, so no status recorded
+            _r(None),           # BackgroundJob — snowball has no enqueue site yet
             inc_result,         # InclusionCriteria
             exc_result,         # ExclusionCriteria
+            _r(reviewer_mock),  # Reviewer
             _r(metrics_mock),   # SearchMetrics
         ]
     )
@@ -168,7 +170,7 @@ async def test_run_snowball_stopped_early_when_below_threshold():
         patch("backend.core.database._session_maker", session_maker),
         patch("backend.core.config.get_settings") as mock_settings,
         patch("httpx.AsyncClient") as mock_client,
-        patch("backend.jobs.search_job._build_screener_with_context", new=AsyncMock(return_value=stub_screener)),
+        patch("backend.jobs.snowball_job._build_screener_with_context", new=AsyncMock(return_value=stub_screener)),
     ):
         settings = MagicMock()
         settings.researcher_mcp_url = "http://localhost:8002/sse"
@@ -180,7 +182,7 @@ async def test_run_snowball_stopped_early_when_below_threshold():
         resp.json.return_value = {"citations": []}
         mock_client.return_value.__aenter__.return_value.post = AsyncMock(return_value=resp)
 
-        from backend.jobs.search_job import run_snowball
+        from backend.jobs.snowball_job import run_snowball
 
         result = await run_snowball(
             {},

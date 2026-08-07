@@ -245,15 +245,22 @@ async def _fail_search_run(
 ) -> None:
     """Roll back partial work and record the failure on the execution and job.
 
-    Without this a fault escaping ``run_full_search`` leaves the
-    ``BackgroundJob`` row at ``running`` for ever, so the UI cannot tell a
-    crashed search from a slow one — the same conflation of *failed* and *in
-    progress* that FR-024 forbids one layer down.
+    Shared by ``run_full_search`` and ``run_snowball``. Without it a fault
+    escaping either leaves the ``BackgroundJob`` row at ``running`` for ever,
+    so the UI cannot tell a crashed run from a slow one — the same conflation
+    of *failed* and *in progress* that FR-024 forbids one layer down.
 
     The rollback comes first and is deliberate: everything since the last
-    commit is a partial sweep of one database, and half a database's results
-    recorded as though the sweep completed would misstate the PRISMA counts.
-    A failed run is restarted, not resumed.
+    commit is a partial sweep, and half a sweep recorded as though it completed
+    would misstate the PRISMA counts. **A failed search or snowball is
+    restarted, not resumed** — re-running the query is cheap and idempotent, so
+    there is nothing to preserve.
+
+    The re-screen job (T044) must take the opposite policy, and deliberately:
+    FR-024 requires a failed re-screen to *retain* the assessments it completed
+    and report its coverage, because those assessments cost provider calls and
+    the run resumes from the decision rows rather than restarting. Do not reach
+    for this helper there. See research.md R9.
 
     Args:
         db: The session the run was using; left usable and committed.
@@ -287,7 +294,7 @@ async def _fail_search_run(
 
     await db.commit()
     logger.error(
-        "run_full_search: failed",
+        "search run failed",
         search_execution_id=search_execution_id,
         job_id=bg_job_id,
         error=str(exc),
@@ -561,164 +568,3 @@ def _update_search_progress(
         "current_database": db_name,
         "papers_found": papers_found,
     }
-
-
-# ---------------------------------------------------------------------------
-# run_snowball helpers (TREF3)
-# ---------------------------------------------------------------------------
-
-
-async def _fetch_snowball_papers(mcp_base_url: str, doi: str, direction: str) -> list[dict]:
-    """Fetch references (backward) or citations (forward) for a DOI via researcher-mcp."""
-    import httpx
-
-    tool = "get_references" if direction == "backward" else "get_citations"
-    key = "references" if direction == "backward" else "citations"
-    try:
-        async with httpx.AsyncClient(timeout=60.0) as client:
-            resp = await client.post(
-                f"{mcp_base_url}/tools/{tool}",
-                json={"doi": doi, "max_results": 50},
-            )
-            if resp.status_code == 200:
-                return resp.json().get(key, [])
-    except Exception as exc:
-        logger.warning("_fetch_snowball_papers: mcp error", doi=doi, exc=str(exc))
-    return []
-
-
-async def _process_snowball_batch(
-    db: AsyncSession,
-    papers_list: list[dict],
-    study_id: int,
-    search_execution_id: int,
-    phase_tag: str,
-    inclusion_criteria: list[dict],
-    exclusion_criteria: list[dict],
-    screener: Any,
-    ai_reviewer_id: int,
-) -> tuple[int, int, int, int]:
-    """Upsert, dedup, screen papers. Returns (new_non_dup, accepted, rejected, duplicates)."""
-    new_non_dup = accepted = rejected = duplicates = 0
-    for paper_data in papers_list:
-        cp, is_dup = await _process_single_candidate(
-            db, paper_data, study_id, search_execution_id, phase_tag
-        )
-        if is_dup:
-            duplicates += 1
-            continue
-        new_non_dup += 1
-        decision, reasons = await _run_screening_pass(
-            screener, cp, inclusion_criteria, exclusion_criteria
-        )
-        await _record_paper_decision(db, cp, ai_reviewer_id, decision, reasons)
-        if decision == "accepted":
-            accepted += 1
-        else:
-            rejected += 1
-        await db.flush()
-    return new_non_dup, accepted, rejected, duplicates
-
-
-def _snowball_threshold_reached(new_non_duplicate_count: int, snowball_threshold: int) -> bool:
-    """Return True when new papers discovered fall below the stopping threshold."""
-    return new_non_duplicate_count < snowball_threshold
-
-
-# ---------------------------------------------------------------------------
-# run_snowball (TREF3: orchestrates helpers)
-# ---------------------------------------------------------------------------
-
-
-async def run_snowball(
-    ctx: dict,
-    study_id: int,
-    phase_tag: str,
-    paper_dois: list[str],
-    direction: str,
-    search_execution_id: int,
-) -> dict:
-    """Execute iterative snowball sampling from a set of papers.
-
-    Calls ``get_references`` (backward) or ``get_citations`` (forward) via
-    the researcher-mcp, deduplicates, screens new papers, updates
-    SearchMetrics, and stops if new non-duplicate count < snowball_threshold.
-
-    Args:
-        ctx: ARQ context.
-        study_id: The study to snowball for.
-        phase_tag: Phase label (e.g. ``"backward-search-1"``).
-        paper_dois: List of DOIs of seed papers for snowball.
-        direction: ``"backward"`` (references) or ``"forward"`` (citations).
-        search_execution_id: The SearchExecution to record results against.
-
-    Returns:
-        Summary dict with counts.
-
-    """
-    from db.models import Study
-    from sqlalchemy import select
-
-    from backend.core.config import get_settings
-    from backend.core.database import _session_maker  # noqa: PLC2701
-
-    async with _session_maker() as db:
-        study_result = await db.execute(select(Study).where(Study.id == study_id))
-        study = study_result.scalar_one_or_none()
-        if study is None:
-            return {"error": "study not found"}
-
-        snowball_threshold = study.snowball_threshold or 5
-        inclusion_criteria, exclusion_criteria = await _load_criteria(db, study_id)
-        ai_reviewer = await _get_or_create_ai_reviewer(db, study_id)
-
-        settings = get_settings()
-        mcp_url = settings.researcher_mcp_url.removesuffix("/sse").removesuffix("/")
-
-        screener = await _build_screener_with_context(db, ai_reviewer, study_id)
-        total_new = total_accepted = total_rejected = total_duplicates = 0
-
-        for doi in paper_dois:
-            papers_list = await _fetch_snowball_papers(mcp_url, doi, direction)
-            new, accepted, rejected, dups = await _process_snowball_batch(
-                db,
-                papers_list,
-                study_id,
-                search_execution_id,
-                phase_tag,
-                inclusion_criteria,
-                exclusion_criteria,
-                screener,
-                ai_reviewer.id,
-            )
-            total_new += new
-            total_accepted += accepted
-            total_rejected += rejected
-            total_duplicates += dups
-
-        metrics = await _get_or_create_metrics(db, search_execution_id)
-        metrics.total_identified += total_new + total_duplicates
-        metrics.accepted += total_accepted
-        metrics.rejected += total_rejected
-        metrics.duplicates += total_duplicates
-        metrics.computed_at = datetime.now(UTC)
-        await db.commit()
-
-        stopped_early = _snowball_threshold_reached(total_new, snowball_threshold)
-        logger.info(
-            "run_snowball: completed",
-            study_id=study_id,
-            direction=direction,
-            new=total_new,
-            accepted=total_accepted,
-            stopped_early=stopped_early,
-        )
-        return {
-            "study_id": study_id,
-            "direction": direction,
-            "new_non_duplicate_count": total_new,
-            "accepted": total_accepted,
-            "rejected": total_rejected,
-            "duplicates": total_duplicates,
-            "stopped_early": stopped_early,
-        }

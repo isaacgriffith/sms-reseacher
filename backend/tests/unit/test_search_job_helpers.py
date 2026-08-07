@@ -344,7 +344,7 @@ def test_snowball_threshold_reached_returns_true_when_below_threshold():
 
     When fewer new papers than the threshold are found stopping should trigger.
     """
-    from backend.jobs.search_job import _snowball_threshold_reached
+    from backend.jobs.snowball_job import _snowball_threshold_reached
 
     assert _snowball_threshold_reached(3, 5) is True
 
@@ -354,7 +354,7 @@ def test_snowball_threshold_reached_returns_false_when_at_or_above():
 
     When enough new papers are found snowball should continue.
     """
-    from backend.jobs.search_job import _snowball_threshold_reached
+    from backend.jobs.snowball_job import _snowball_threshold_reached
 
     assert _snowball_threshold_reached(5, 5) is False
     assert _snowball_threshold_reached(10, 5) is False
@@ -375,7 +375,7 @@ async def test_fetch_snowball_papers_returns_empty_on_exception():
             side_effect=Exception("connection refused")
         )
 
-        from backend.jobs.search_job import _fetch_snowball_papers
+        from backend.jobs.snowball_job import _fetch_snowball_papers
 
         result = await _fetch_snowball_papers("http://localhost:8002", "10.1/test", "backward")
 
@@ -394,7 +394,7 @@ async def test_fetch_snowball_papers_returns_papers_on_success():
     with patch("httpx.AsyncClient") as mock_client:
         mock_client.return_value.__aenter__.return_value.post = AsyncMock(return_value=resp)
 
-        from backend.jobs.search_job import _fetch_snowball_papers
+        from backend.jobs.snowball_job import _fetch_snowball_papers
 
         result = await _fetch_snowball_papers("http://localhost:8002", "10.1/test", "backward")
 
@@ -1037,7 +1037,7 @@ async def test_process_snowball_batch_returns_zeros_for_empty_list():
     screener = MagicMock()
     screener.run = AsyncMock(return_value="accept")
 
-    from backend.jobs.search_job import _process_snowball_batch
+    from backend.jobs.snowball_job import _process_snowball_batch
 
     new_non_dup, accepted, rejected, dups = await _process_snowball_batch(
         db, [], 1, 1, "forward-1", [], [], screener, 5

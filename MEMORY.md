@@ -86,6 +86,51 @@ e2e test drives it through the UI, not when its components exist. Now Principle 
 
 ---
 
+## A shared pipeline can need opposite failure policies
+
+_2026-08-07_
+
+`run_full_search`, `run_snowball`, and the re-screen job (T044) all compose
+`jobs/screening_pipeline.py`. The first two **roll back** their partial work on failure via
+`_fail_search_run`. The re-screen job must **keep** its partial work. That is not an
+inconsistency to tidy up.
+
+**Why it matters.** A search sweep is a query against an external index: cheap to re-run, and
+committing half of one as though it finished misstates `SearchMetrics.total_identified` and every
+PRISMA figure below it. A re-screen assessment is a provider call that was paid for, and FR-024
+requires a failed run to retain what it completed — while R5 resumes by reading those very
+decision rows, so a rollback leaves it resuming from nothing. Sharing the helper would look like
+reuse and would silently delete the resume mechanism's only state.
+
+**How to apply.** Do not call `_fail_search_run` from the re-screen job. The reasoning is in
+`specs/012-wire-up-unreachable-workflows/research.md` R9 and repeated in the helper's own
+docstring, at the point of temptation. If a re-screen ever appears to lose work, check this first.
+
+---
+
+## Screening reads bibliography off the candidate, which composes the paper
+
+_2026-08-07_
+
+`CandidatePaper` has no `title` or `abstract` columns — it is a per-study join onto `Paper`, which
+is a globally shared record with a unique DOI and no `study_id`. It reaches them through a `paper`
+relationship with delegating properties. Both callers pass a `CandidatePaper` to the screening
+pass, which reads `.title` and `.abstract`.
+
+**Why it matters.** Before the relationship existed, every such read raised `AttributeError`,
+which a bare `except Exception` turned into `("rejected", [])`. The AI screener was never invoked
+for any paper in any search, and every candidate was rejected by a crash. Unit tests could not see
+it: a `MagicMock` answers to any attribute.
+
+**How to apply.** The relationship is `lazy="selectin"`, because a default lazy load raises
+`MissingGreenlet` on attribute access under an async session. Construct candidates with
+`CandidatePaper(paper=paper, ...)`, **not** `paper_id=paper.id` — setting only the FK leaves the
+relationship unloaded on a freshly flushed row, and the delegation fails again. Anything asserting
+the pipeline works must run against a real session, not a mock:
+`backend/tests/integration/test_search_pipeline_screening.py`.
+
+---
+
 ## Tests that guard on state hide missing features
 
 _2026-08-06_
