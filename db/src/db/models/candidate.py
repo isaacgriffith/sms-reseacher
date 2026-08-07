@@ -2,11 +2,15 @@
 
 import enum
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import JSON, DateTime, Enum, ForeignKey, Integer, String, UniqueConstraint, func
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from db.base import Base, enum_values
+
+if TYPE_CHECKING:
+    from db.models import Paper
 
 
 class CandidatePaperStatus(str, enum.Enum):
@@ -78,6 +82,34 @@ class CandidatePaper(Base):
     )
 
     __mapper_args__ = {"version_id_col": version_id}
+
+    # A candidate composes the paper it refers to rather than restating it.
+    # `Paper` is a globally shared bibliographic record — no `study_id`, DOI
+    # unique across the database — so the same paper is one row referenced by
+    # every study that finds it, and everything study-specific (status,
+    # duplicate link, conflict flag) lives here instead.
+    #
+    # `lazy="selectin"` because sessions here are async: a default lazy load
+    # fires on attribute access and raises MissingGreenlet outside an await.
+    # Construct with `CandidatePaper(paper=paper, ...)`, not `paper_id=`, so
+    # the attribute is populated without a round trip.
+    paper: Mapped[Paper] = relationship("Paper", lazy="selectin")
+
+    @property
+    def title(self) -> str:
+        """Delegate to the composed paper's title.
+
+        Screening and display code holds a candidate but needs the
+        bibliography. Without this it reads ``candidate.title``, gets an
+        ``AttributeError``, and — where that is caught — records the failure as
+        a screening decision.
+        """
+        return self.paper.title
+
+    @property
+    def abstract(self) -> str | None:
+        """Delegate to the composed paper's abstract. See :attr:`title`."""
+        return self.paper.abstract
 
     def __repr__(self) -> str:
         """Return a debug representation."""

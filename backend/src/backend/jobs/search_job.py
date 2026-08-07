@@ -7,6 +7,17 @@ from typing import TYPE_CHECKING, Any
 
 from backend.core.config import get_logger
 
+# The screening pipeline lives in its own module (plan.md C2) because the
+# re-screen job is its second consumer. Imported rather than copied so that a
+# fix to how a paper is judged applies to every job that judges one.
+from backend.jobs.screening_pipeline import (  # noqa: PLC2701 — same package
+    _build_screener_with_context,
+    _load_criteria,
+    _process_single_candidate,
+    _record_paper_decision,
+    _run_screening_pass,
+)
+
 logger = get_logger(__name__)
 
 if TYPE_CHECKING:
@@ -229,100 +240,58 @@ async def _fetch_database_results(mcp_base_url: str, db_name: str, query_text: s
     return []
 
 
-async def _upsert_paper(db: AsyncSession, paper_data: dict) -> Any:
-    """Upsert a Paper record by DOI, or create new if DOI is absent."""
-    from db.models import Paper
+async def _fail_search_run(
+    db: AsyncSession, search_execution_id: int, bg_job_id: str | None, exc: Exception
+) -> None:
+    """Roll back partial work and record the failure on the execution and job.
+
+    Without this a fault escaping ``run_full_search`` leaves the
+    ``BackgroundJob`` row at ``running`` for ever, so the UI cannot tell a
+    crashed search from a slow one — the same conflation of *failed* and *in
+    progress* that FR-024 forbids one layer down.
+
+    The rollback comes first and is deliberate: everything since the last
+    commit is a partial sweep of one database, and half a database's results
+    recorded as though the sweep completed would misstate the PRISMA counts.
+    A failed run is restarted, not resumed.
+
+    Args:
+        db: The session the run was using; left usable and committed.
+        search_execution_id: The execution to mark failed.
+        bg_job_id: The job to mark failed, if the run had one.
+        exc: The fault to record against the job.
+
+    """
+    from db.models.jobs import BackgroundJob, JobStatus
+    from db.models.search_exec import SearchExecution, SearchExecutionStatus
     from sqlalchemy import select
 
-    doi = paper_data.get("doi")
-    if doi:
-        existing = await db.execute(select(Paper).where(Paper.doi == doi))
-        paper = existing.scalar_one_or_none()
-        if paper:
-            return paper
-    paper = Paper(
-        title=paper_data.get("title", "Untitled"),
-        abstract=paper_data.get("abstract"),
-        doi=doi,
-        authors=paper_data.get("authors", []),
-        year=paper_data.get("year"),
-        venue=paper_data.get("venue"),
-        source_url=paper_data.get("source_url"),
-    )
-    db.add(paper)
-    await db.flush()
-    return paper
+    await db.rollback()
+    now = datetime.now(UTC)
 
-
-async def _process_single_candidate(
-    db: AsyncSession,
-    paper_data: dict,
-    study_id: int,
-    search_execution_id: int,
-    phase_tag: str,
-) -> tuple[Any, bool]:
-    """Create a CandidatePaper for paper_data. Returns (cp_or_None, is_duplicate)."""
-    from db.models.candidate import CandidatePaper, CandidatePaperStatus
-    from sqlalchemy import select
-
-    from backend.services.dedup import check_duplicate
-
-    paper = await _upsert_paper(db, paper_data)
-    dedup = await check_duplicate(
-        study_id=study_id,
-        doi=paper_data.get("doi"),
-        title=paper_data.get("title", "Untitled"),
-        authors=paper_data.get("authors"),
-        db=db,
-    )
-    existing_cp = (
-        await db.execute(
-            select(CandidatePaper).where(
-                CandidatePaper.study_id == study_id,
-                CandidatePaper.paper_id == paper.id,
-            )
-        )
+    search_exec = (
+        await db.execute(select(SearchExecution).where(SearchExecution.id == search_execution_id))
     ).scalar_one_or_none()
-    if existing_cp is not None:
-        return None, True
-    status = CandidatePaperStatus.DUPLICATE if dedup.is_duplicate else CandidatePaperStatus.PENDING
-    kwargs = {"duplicate_of_id": dedup.candidate_id} if dedup.is_duplicate else {}
-    cp = CandidatePaper(
-        study_id=study_id,
-        paper_id=paper.id,
+    if search_exec is not None:
+        search_exec.status = SearchExecutionStatus.FAILED
+        search_exec.completed_at = now
+
+    if bg_job_id is not None:
+        bg_job = (
+            await db.execute(select(BackgroundJob).where(BackgroundJob.id == bg_job_id))
+        ).scalar_one_or_none()
+        if bg_job is not None:
+            bg_job.status = JobStatus.FAILED
+            bg_job.error_message = str(exc)
+            bg_job.completed_at = now
+
+    await db.commit()
+    logger.error(
+        "run_full_search: failed",
         search_execution_id=search_execution_id,
-        phase_tag=phase_tag,
-        current_status=status,
-        **kwargs,
+        job_id=bg_job_id,
+        error=str(exc),
     )
-    db.add(cp)
-    await db.flush()
-    return cp, dedup.is_duplicate
-
-
-async def _run_screening_pass(
-    screener: Any,
-    paper: Any,
-    inclusion_criteria: list[dict],
-    exclusion_criteria: list[dict],
-) -> tuple[str, list]:
-    """Screen paper with ScreenerAgent. Returns (decision_str, reasons)."""
-    from agents.services.screener import ScreeningResult
-
-    try:
-        result = await screener.run(
-            inclusion_criteria=inclusion_criteria,
-            exclusion_criteria=exclusion_criteria,
-            abstract=paper.abstract or "",
-            title=paper.title,
-        )
-        if isinstance(result, ScreeningResult):
-            return result.decision, [r.model_dump() for r in result.reasons]
-        lower = str(result).lower()
-        return "accepted" if "accept" in lower else "rejected", []
-    except Exception as exc:
-        logger.warning("_run_screening_pass: screening error", exc=str(exc))
-        return "rejected", []
 
 
 async def _finalize_search_metrics(
@@ -387,13 +356,10 @@ async def run_full_search(ctx: dict, study_id: int, search_execution_id: int) ->
         Summary dict with candidate counts.
 
     """
-    from db.models import Study
     from db.models.jobs import BackgroundJob, JobStatus
-    from db.models.search import SearchString
     from db.models.search_exec import SearchExecution, SearchExecutionStatus
     from sqlalchemy import select
 
-    from backend.core.config import get_settings
     from backend.core.database import _session_maker  # noqa: PLC2701
 
     async with _session_maker() as db:
@@ -418,109 +384,129 @@ async def run_full_search(ctx: dict, study_id: int, search_execution_id: int) ->
             )
         )
         bg_job = job_result.scalars().first()
+        bg_job_id = bg_job.id if bg_job else None
         if bg_job:
             bg_job.status = JobStatus.RUNNING
             bg_job.started_at = datetime.now(UTC)
         await db.commit()
 
-        ss_result = await db.execute(
-            select(SearchString).where(SearchString.id == search_exec.search_string_id)
-        )
-        ss = ss_result.scalar_one_or_none()
-        if ss is None:
-            logger.error("run_full_search: SearchString not found")
-            return {"error": "search_string not found"}
-
-        inclusion_criteria, exclusion_criteria = await _load_criteria(db, study_id)
-        ai_reviewer = await _get_or_create_ai_reviewer(db, study_id)
-        metrics = await _get_or_create_metrics(db, search_execution_id)
-
-        settings = get_settings()
-        mcp_url = settings.researcher_mcp_url.removesuffix("/sse").removesuffix("/")
-        databases = search_exec.databases_queried or ["acm", "ieee", "scopus"]
-        phase_tag = search_exec.phase_tag
-
-        # T061: resolve agent context for the AI reviewer
-        screener = await _build_screener_with_context(db, ai_reviewer, study_id)
-        total_identified = accepted_count = rejected_count = duplicate_count = 0
-
-        for db_name in databases:
-            _update_search_progress(bg_job, db_name, databases, total_identified)
-            await db.commit()
-
-            papers = await _fetch_database_results(mcp_url, db_name, ss.string_text)
-            for paper_data in papers:
-                total_identified += 1
-                cp, is_dup = await _process_single_candidate(
-                    db, paper_data, study_id, search_execution_id, phase_tag
-                )
-                if is_dup:
-                    duplicate_count += 1
-                    continue
-                decision, reasons = await _run_screening_pass(
-                    screener, cp, inclusion_criteria, exclusion_criteria
-                )
-                await _record_paper_decision(db, cp, ai_reviewer.id, decision, reasons)
-                if decision == "accepted":
-                    accepted_count += 1
-                else:
-                    rejected_count += 1
-                await db.flush()
-
-        await _finalize_search_metrics(
-            db,
-            metrics,
-            search_exec,
-            bg_job,
-            total_identified,
-            accepted_count,
-            rejected_count,
-            duplicate_count,
-        )
-
-        # T065b: advance study.current_phase after search completes (mirrors pico.py pattern)
-        from backend.services.phase_gate import compute_current_phase
-
-        new_phase = await compute_current_phase(study_id, db)
-        study_result2 = await db.execute(select(Study).where(Study.id == study_id))
-        study_obj = study_result2.scalar_one_or_none()
-        if study_obj is not None:
-            study_obj.current_phase = max(study_obj.current_phase, new_phase)
-            await db.commit()
-
-        logger.info(
-            "run_full_search: completed",
-            study_id=study_id,
-            total=total_identified,
-            accepted=accepted_count,
-        )
-        return {
-            "search_execution_id": search_execution_id,
-            "total_identified": total_identified,
-            "accepted": accepted_count,
-            "rejected": rejected_count,
-            "duplicates": duplicate_count,
-        }
+        try:
+            return await _execute_search_sweep(
+                db, study_id, search_execution_id, search_exec, bg_job
+            )
+        except Exception as exc:
+            await _fail_search_run(db, search_execution_id, bg_job_id, exc)
+            raise
 
 
-async def _load_criteria(db: AsyncSession, study_id: int) -> tuple[list[dict], list[dict]]:
-    """Load inclusion and exclusion criteria for a study."""
-    from db.models.criteria import ExclusionCriterion, InclusionCriterion
+async def _execute_search_sweep(
+    db: AsyncSession,
+    study_id: int,
+    search_execution_id: int,
+    search_exec: Any,
+    bg_job: Any,
+) -> dict:
+    """Sweep every selected database, screening each paper it returns.
+
+    Split out of :func:`run_full_search` so that the caller can own one
+    ``try``: anything raised in here means the run did not complete, and the
+    job and execution rows must say so rather than sitting at ``running``.
+
+    Args:
+        db: Active async session, already carrying the run's started state.
+        study_id: The study being searched.
+        search_execution_id: The execution being run.
+        search_exec: The :class:`SearchExecution` row, already RUNNING.
+        bg_job: The :class:`BackgroundJob` row, or None if the run has none.
+
+    Returns:
+        Summary dict with candidate counts.
+
+    """
+    from db.models import Study
+    from db.models.search import SearchString
     from sqlalchemy import select
 
-    inc = await db.execute(
-        select(InclusionCriterion)
-        .where(InclusionCriterion.study_id == study_id)
-        .order_by(InclusionCriterion.order_index)
+    from backend.core.config import get_settings
+
+    ss_result = await db.execute(
+        select(SearchString).where(SearchString.id == search_exec.search_string_id)
     )
-    exc = await db.execute(
-        select(ExclusionCriterion)
-        .where(ExclusionCriterion.study_id == study_id)
-        .order_by(ExclusionCriterion.order_index)
+    ss = ss_result.scalar_one_or_none()
+    if ss is None:
+        logger.error("run_full_search: SearchString not found")
+        return {"error": "search_string not found"}
+
+    inclusion_criteria, exclusion_criteria = await _load_criteria(db, study_id)
+    ai_reviewer = await _get_or_create_ai_reviewer(db, study_id)
+    metrics = await _get_or_create_metrics(db, search_execution_id)
+
+    settings = get_settings()
+    mcp_url = settings.researcher_mcp_url.removesuffix("/sse").removesuffix("/")
+    databases = search_exec.databases_queried or ["acm", "ieee", "scopus"]
+    phase_tag = search_exec.phase_tag
+
+    # T061: resolve agent context for the AI reviewer
+    screener = await _build_screener_with_context(db, ai_reviewer, study_id)
+    total_identified = accepted_count = rejected_count = duplicate_count = 0
+
+    for db_name in databases:
+        _update_search_progress(bg_job, db_name, databases, total_identified)
+        await db.commit()
+
+        papers = await _fetch_database_results(mcp_url, db_name, ss.string_text)
+        for paper_data in papers:
+            total_identified += 1
+            cp, is_dup = await _process_single_candidate(
+                db, paper_data, study_id, search_execution_id, phase_tag
+            )
+            if is_dup:
+                duplicate_count += 1
+                continue
+            decision, reasons = await _run_screening_pass(
+                screener, cp, inclusion_criteria, exclusion_criteria
+            )
+            await _record_paper_decision(db, cp, ai_reviewer.id, decision, reasons)
+            if decision == "accepted":
+                accepted_count += 1
+            else:
+                rejected_count += 1
+            await db.flush()
+
+    await _finalize_search_metrics(
+        db,
+        metrics,
+        search_exec,
+        bg_job,
+        total_identified,
+        accepted_count,
+        rejected_count,
+        duplicate_count,
     )
-    inclusion = [{"id": c.id, "description": c.description} for c in inc.scalars().all()]
-    exclusion = [{"id": c.id, "description": c.description} for c in exc.scalars().all()]
-    return inclusion, exclusion
+
+    # T065b: advance study.current_phase after search completes (mirrors pico.py pattern)
+    from backend.services.phase_gate import compute_current_phase
+
+    new_phase = await compute_current_phase(study_id, db)
+    study_result2 = await db.execute(select(Study).where(Study.id == study_id))
+    study_obj = study_result2.scalar_one_or_none()
+    if study_obj is not None:
+        study_obj.current_phase = max(study_obj.current_phase, new_phase)
+        await db.commit()
+
+    logger.info(
+        "run_full_search: completed",
+        study_id=study_id,
+        total=total_identified,
+        accepted=accepted_count,
+    )
+    return {
+        "search_execution_id": search_execution_id,
+        "total_identified": total_identified,
+        "accepted": accepted_count,
+        "rejected": rejected_count,
+        "duplicates": duplicate_count,
+    }
 
 
 async def _get_or_create_ai_reviewer(db: AsyncSession, study_id: int) -> Any:
@@ -575,23 +561,6 @@ def _update_search_progress(
         "current_database": db_name,
         "papers_found": papers_found,
     }
-
-
-async def _record_paper_decision(
-    db: AsyncSession, cp: Any, reviewer_id: int, decision: str, reasons: list
-) -> None:
-    """Create PaperDecision and update CandidatePaper status."""
-    from db.models.candidate import CandidatePaperStatus, PaperDecision, PaperDecisionType
-
-    cp.current_status = CandidatePaperStatus(decision)
-    pd = PaperDecision(
-        candidate_paper_id=cp.id,
-        reviewer_id=reviewer_id,
-        decision=PaperDecisionType(decision),
-        reasons=reasons,
-        is_override=False,
-    )
-    db.add(pd)
 
 
 # ---------------------------------------------------------------------------
@@ -654,66 +623,6 @@ async def _process_snowball_batch(
 def _snowball_threshold_reached(new_non_duplicate_count: int, snowball_threshold: int) -> bool:
     """Return True when new papers discovered fall below the stopping threshold."""
     return new_non_duplicate_count < snowball_threshold
-
-
-async def _build_screener_with_context(db: Any, ai_reviewer: Any, study_id: int) -> Any:
-    """Build a ScreenerAgent with study-context rendering if an Agent record is linked.
-
-    Resolves the Agent record from the reviewer's ``agent_id``, loads the
-    Provider, renders the system message with the study context, and builds
-    a :class:`ScreenerAgent` with ``provider_config`` and
-    ``system_message_override`` set.  Falls back to a plain
-    :class:`ScreenerAgent` when no Agent is linked.
-
-    Args:
-        db: Active async database session.
-        ai_reviewer: The :class:`Reviewer` ORM record for the AI screener.
-        study_id: The study being searched (used to load study context).
-
-    Returns:
-        A configured :class:`ScreenerAgent` instance.
-
-    """
-    from agents.services.screener import ScreenerAgent
-    from db.models import Agent, AvailableModel, Provider, Study
-    from sqlalchemy import select
-
-    from backend.services.agent_service import (  # noqa: PLC0415
-        _build_provider_config,
-        build_study_context,
-        render_system_message,
-    )
-
-    if not ai_reviewer.agent_id:
-        return ScreenerAgent()
-
-    agent_result = await db.execute(select(Agent).where(Agent.id == ai_reviewer.agent_id))
-    agent = agent_result.scalar_one_or_none()
-    if agent is None or not agent.is_active:
-        return ScreenerAgent()
-
-    provider_result = await db.execute(select(Provider).where(Provider.id == agent.provider_id))
-    provider = provider_result.scalar_one_or_none()
-    model_result = await db.execute(
-        select(AvailableModel).where(AvailableModel.id == agent.model_id)
-    )
-    model = model_result.scalar_one_or_none()
-    provider_config = _build_provider_config(provider, model)
-
-    study_result = await db.execute(select(Study).where(Study.id == study_id))
-    study = study_result.scalar_one_or_none()
-    if study is not None:
-        ctx = build_study_context(study)
-        rendered = render_system_message(
-            agent.system_message_template, agent, ctx.domain, ctx.study_type
-        )
-    else:
-        rendered = None
-
-    return ScreenerAgent(
-        provider_config=provider_config,
-        system_message_override=rendered,
-    )
 
 
 # ---------------------------------------------------------------------------
@@ -813,129 +722,3 @@ async def run_snowball(
             "duplicates": total_duplicates,
             "stopped_early": stopped_early,
         }
-
-
-# ---------------------------------------------------------------------------
-# run_expert_seed_suggestion
-# ---------------------------------------------------------------------------
-
-
-async def run_expert_seed_suggestion(
-    ctx: dict,
-    study_id: int,
-    job_id: str,
-) -> dict:
-    """Call ExpertAgent and persist returned papers as SeedPaper records.
-
-    Updates the BackgroundJob status to ``running`` at the start and to
-    ``completed`` (with full agent output in ``progress_detail``) or ``failed``
-    on exit.  Inserts each returned paper as a :class:`SeedPaper` record with
-    ``added_by_agent="expert"``, deduplicating against existing DOIs.
-
-    Args:
-        ctx: ARQ context dict.
-        study_id: The study to generate expert seed suggestions for.
-        job_id: The BackgroundJob primary-key ID to update.
-
-    Returns:
-        A dict with ``{job_id, papers_added}``.
-
-    """
-    from db.models import Paper, Study
-    from db.models.jobs import BackgroundJob, JobStatus
-    from db.models.seeds import SeedPaper
-    from sqlalchemy import select
-
-    from backend.core.database import _session_maker  # noqa: PLC2701
-
-    async with _session_maker() as db:
-        # Mark job as running
-        job_result = await db.execute(select(BackgroundJob).where(BackgroundJob.id == job_id))
-        job = job_result.scalar_one_or_none()
-        if job is None:
-            logger.error("run_expert_seed_suggestion: job not found", job_id=job_id)
-            return {"error": "job not found"}
-
-        job.status = JobStatus.RUNNING
-        job.started_at = datetime.now(UTC)
-        await db.commit()
-
-        try:
-            # Load study data
-            study_result = await db.execute(select(Study).where(Study.id == study_id))
-            study = study_result.scalar_one_or_none()
-            if study is None:
-                raise ValueError(f"Study {study_id} not found")
-
-            meta: dict = study.metadata_ or {}
-
-            from agents.services.expert import ExpertAgent
-
-            agent = ExpertAgent()
-            papers = await agent.run(
-                topic=study.topic or study.name,
-                variant="PICO",
-                objectives=meta.get("research_objectives", []),
-                questions=meta.get("research_questions", []),
-            )
-
-            added = 0
-            for ep in papers:
-                # Deduplicate by DOI if available
-                paper: Paper | None = None
-                if ep.doi:
-                    existing = await db.execute(select(Paper).where(Paper.doi == ep.doi))
-                    paper = existing.scalar_one_or_none()
-
-                if paper is None:
-                    paper = Paper(
-                        title=ep.title,
-                        doi=ep.doi,
-                        authors=ep.authors,
-                        year=ep.year,
-                        venue=ep.venue,
-                    )
-                    db.add(paper)
-                    await db.flush()
-
-                # Skip if already a seed for this study
-                existing_seed = await db.execute(
-                    select(SeedPaper).where(
-                        SeedPaper.study_id == study_id,
-                        SeedPaper.paper_id == paper.id,
-                    )
-                )
-                if existing_seed.scalar_one_or_none() is None:
-                    db.add(
-                        SeedPaper(
-                            study_id=study_id,
-                            paper_id=paper.id,
-                            added_by_agent="expert",
-                        )
-                    )
-                    added += 1
-
-            progress_detail = {
-                "papers": [p.model_dump() for p in papers],
-                "papers_added": added,
-            }
-            job.status = JobStatus.COMPLETED
-            job.progress_pct = 100
-            job.progress_detail = progress_detail
-            job.completed_at = datetime.now(UTC)
-            await db.commit()
-
-            logger.info(
-                "run_expert_seed_suggestion: completed",
-                study_id=study_id,
-                papers_added=added,
-            )
-            return {"job_id": job_id, "papers_added": added}
-
-        except Exception as exc:
-            logger.error("run_expert_seed_suggestion: failed", study_id=study_id, error=str(exc))
-            job.status = JobStatus.FAILED
-            job.error_message = str(exc)
-            job.completed_at = datetime.now(UTC)
-            await db.commit()
-            return {"error": str(exc)}

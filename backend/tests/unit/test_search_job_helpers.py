@@ -5,6 +5,11 @@ _next_iteration_number, _load_criteria, _get_or_create_ai_reviewer,
 _get_or_create_metrics, _update_search_progress, _record_paper_decision,
 _snowball_threshold_reached, _fetch_snowball_papers, _upsert_paper,
 _build_screener_with_context, and run_expert_seed_suggestion.
+
+Some of those now live in ``backend.jobs.screening_pipeline`` (TREF4) and are
+imported from there. The rest are still imported from ``search_job``, which
+re-exports them — deliberately, since that re-export is what keeps every
+existing caller working and is worth exercising.
 """
 
 from __future__ import annotations
@@ -413,7 +418,7 @@ async def test_upsert_paper_creates_new_paper_when_no_doi():
 
     paper_data = {"title": "A Paper Without DOI", "abstract": "Abstract", "doi": None}
 
-    from backend.jobs.search_job import _upsert_paper
+    from backend.jobs.screening_pipeline import _upsert_paper
 
     result = await _upsert_paper(db, paper_data)
     db.add.assert_called_once()
@@ -434,7 +439,7 @@ async def test_upsert_paper_returns_existing_paper_when_found():
 
     paper_data = {"title": "Title", "doi": "10.1/existing"}
 
-    from backend.jobs.search_job import _upsert_paper
+    from backend.jobs.screening_pipeline import _upsert_paper
 
     result = await _upsert_paper(db, paper_data)
     # Should not add a new paper
@@ -512,7 +517,7 @@ async def test_run_expert_seed_suggestion_returns_error_when_job_not_found():
     session_maker = MagicMock(return_value=cm)
 
     with patch("backend.core.database._session_maker", session_maker):
-        from backend.jobs.search_job import run_expert_seed_suggestion
+        from backend.jobs.seed_suggestion_job import run_expert_seed_suggestion
 
         result = await run_expert_seed_suggestion({}, study_id=1, job_id="missing-job")
 
@@ -637,11 +642,20 @@ async def test_run_screening_pass_returns_screening_result():
     assert len(reasons) == 1
 
 
-async def test_run_screening_pass_returns_rejected_on_error():
-    """_run_screening_pass returns 'rejected' when screener.run raises.
+async def test_run_screening_pass_raises_rather_than_rejecting_on_error():
+    """_run_screening_pass raises when screener.run raises.
 
-    Exceptions from the screener should be caught and a rejection returned.
+    This previously asserted a rejection was returned, matching the behaviour
+    plan.md tracks as C3: a provider fault written to the database as a
+    judgement of the paper. Its full behaviour is covered in
+    test_screening_pipeline.py; this keeps the search job's own view of it
+    honest, since run_full_search and run_snowball both call through here.
     """
+    import pytest
+
+    from backend.jobs.screening_pipeline import ScreeningUnavailableError
+    from backend.jobs.search_job import _run_screening_pass
+
     screener = MagicMock()
     screener.run = AsyncMock(side_effect=Exception("screener error"))
 
@@ -649,11 +663,8 @@ async def test_run_screening_pass_returns_rejected_on_error():
     paper.abstract = "Abstract"
     paper.title = "Title"
 
-    from backend.jobs.search_job import _run_screening_pass
-
-    decision, reasons = await _run_screening_pass(screener, paper, [], [])
-    assert decision == "rejected"
-    assert reasons == []
+    with pytest.raises(ScreeningUnavailableError):
+        await _run_screening_pass(screener, paper, [], [])
 
 
 async def test_run_screening_pass_handles_non_screening_result():
@@ -732,7 +743,7 @@ async def test_process_single_candidate_returns_none_when_existing_cp():
 
     with (
         patch(
-            "backend.jobs.search_job._upsert_paper",
+            "backend.jobs.screening_pipeline._upsert_paper",
             new=AsyncMock(return_value=paper_mock),
         ),
         patch(
@@ -740,7 +751,7 @@ async def test_process_single_candidate_returns_none_when_existing_cp():
             new=AsyncMock(return_value=dedup_result),
         ),
     ):
-        from backend.jobs.search_job import _process_single_candidate
+        from backend.jobs.screening_pipeline import _process_single_candidate
 
         result, is_dup = await _process_single_candidate(
             db, {"doi": "10.1/x", "title": "Title"}, 1, 1, "initial"
@@ -770,7 +781,7 @@ async def test_process_single_candidate_creates_duplicate_candidate():
 
     with (
         patch(
-            "backend.jobs.search_job._upsert_paper",
+            "backend.jobs.screening_pipeline._upsert_paper",
             new=AsyncMock(return_value=paper_mock),
         ),
         patch(
@@ -778,7 +789,7 @@ async def test_process_single_candidate_creates_duplicate_candidate():
             new=AsyncMock(return_value=dedup_result),
         ),
     ):
-        from backend.jobs.search_job import _process_single_candidate
+        from backend.jobs.screening_pipeline import _process_single_candidate
 
         result, is_dup = await _process_single_candidate(
             db, {"doi": "10.1/dup", "title": "Dup Title"}, 1, 1, "initial"

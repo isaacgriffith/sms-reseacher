@@ -19,11 +19,11 @@ from backend.jobs.protocol_review_job import run_protocol_review
 from backend.jobs.quality_job import run_quality_eval
 from backend.jobs.results_job import run_export, run_generate_results
 from backend.jobs.search_job import (
-    run_expert_seed_suggestion,
     run_full_search,
     run_snowball,
     run_test_search,
 )
+from backend.jobs.seed_suggestion_job import run_expert_seed_suggestion
 from backend.jobs.synthesis_job import run_synthesis
 from backend.jobs.tertiary_extraction_job import run_tertiary_extraction
 from backend.jobs.validity_job import run_validity_prefill
