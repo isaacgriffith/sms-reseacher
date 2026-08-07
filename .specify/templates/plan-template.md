@@ -71,6 +71,8 @@ in the Complexity Tracking table below with justification.
 | Reachability (X) — every new component is routed or dispatched to; audit_unreachable_frontend.py exits clean                                                            |        |       |
 | Reachability (X) — every new APIRouter is registered; response schemas expose the fields the UI gates on                                                                |        |       |
 | Reachability (X) — every user-facing feature has an e2e test driving it through the UI against a live backend                                                           |        |       |
+| Methodology (XI) — changes to how a review is conducted checked against `docs/methodology/`; caveats register consulted                                                 |        |       |
+| Methodology (XI) — any method the system names is derivable from recorded steps, not asserted; instruments applied to the construct their authors defined              |        |       |
 | Test signalling (VI) — no state-conditional assertions or isVisible() guards; unbuilt features use test.fixme + gap citation                                            |        |       |
 
 ## Project Structure

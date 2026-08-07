@@ -291,7 +291,7 @@ With multiple developers:
 - Commit after each task or logical group
 - Stop at any checkpoint to validate story independently
 - Avoid: vague tasks, same file conflicts, cross-story dependencies that break independence
-- Constitution compliance: each task MUST respect Principles I–X (SOLID, Structural
+- Constitution compliance: each task MUST respect Principles I–XI (SOLID, Structural
   Quality, Code Clarity, Refactoring, GRASP/Patterns, Testing, Toolchain, Observability,
   Language-Specific, Reachability & Delivery Verification)
 - Refactoring tasks MUST precede dependent feature tasks and MUST have tests written first

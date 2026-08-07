@@ -1,6 +1,46 @@
 <!--
 SYNC IMPACT REPORT
 ==================
+Version change: 1.8.0 → 1.9.0
+Bump rationale: MINOR — one new principle added. Derived from the 54-paper methodology corpus
+  reviewed on 2026-08-07 and written up in docs/methodology/, which established that several
+  behaviours this platform already implements diverge from the methods they claim to follow.
+
+Added sections:
+  - XI. Methodological Fidelity — new principle. The platform automates published research
+    methods, so conformance to those methods is a correctness property. Requires: docs/methodology/
+    is the specification where it and the platform disagree; consult it before designing anything
+    touching how a review is conducted; a named method must be earned by recorded steps rather
+    than asserted (method slurring); encoded rules must cite a chapter and must not silently
+    resolve disagreements in the literature; instruments must be applied to the construct their
+    authors defined (PRISMA 2020 explicitly forbids its use for quality assessment); new papers
+    must be processed through docs/methodology/PLAYBOOK.md.
+
+Modified sections:
+  - Development Workflow step 1: "ten Core Principles" → "eleven".
+  - Governance: "Principles I–X" → "I–XI".
+  - Code Quality Standards table: 1 new row (Methodological fidelity).
+
+Templates updated:
+  ✅ .specify/templates/tasks-template.md — Notes footer: Principles I–X → I–XI.
+  ✅ .specify/templates/plan-template.md — Constitution Check: 1 new gate row (XI).
+  ⚠ .specify/templates/spec-template.md — no changes required (generic enough).
+
+Known outstanding violations (recorded, not silently accepted):
+  - The platform currently violates XI in at least three known ways, all catalogued: synthesis
+    strategies are named without their constitutive steps being performed (G8); the planned report
+    checker was specified against PRISMA 2020, which forbids quality use (G10, since amended); and
+    the Rapid Review workflow was framed around relaxed rigour rather than practitioner binding
+    (corrected in docs/all-together.md). G35–G43 record the remaining methodology-derived gaps.
+  - scripts/audit_unreachable_frontend.py is still not wired into CI; Principle X requires it.
+    Unchanged from 1.8.0. Tracked as G34.
+
+Deferred TODOs: none
+-->
+
+<!--
+SYNC IMPACT REPORT
+==================
 Version change: 1.7.0 → 1.8.0
 Bump rationale: MINOR — one new principle added plus materially expanded guidance in three
   existing ones. Derived from defects found while building out the e2e suite on 2026-08-06,
@@ -833,6 +873,45 @@ they were correct code nobody could run. Unit tests, type checking, and coverage
 cleanly on an unreachable module, so no existing gate detects this class. Reachability must
 therefore be asserted explicitly and mechanically.
 
+### XI. Methodological Fidelity
+
+This platform automates published research methods. Conformance to those methods is therefore a
+**correctness property, not a preference**: a workflow that departs from the method it claims to
+implement produces studies that are wrong in a way no test in this repository detects. The methods
+are documented in `docs/methodology/`, written from the 54-paper corpus in `research/`.
+
+- **The methodology documents are the specification.** Where the platform's behaviour and
+  `docs/methodology/` disagree, the documents are correct and the platform has a defect — unless the
+  divergence is recorded as a deliberate, justified deviation in `docs/feature-gaps.md`.
+- **Consult before designing.** Any change to how a review is conducted — search, screening,
+  selection, quality assessment, extraction, synthesis, validity, or reporting — MUST be checked
+  against the relevant chapter before design. `docs/methodology/11-caveats-register.md` is the
+  pre-design checklist.
+- **A named method MUST be earned by recorded steps.** Where the system names a method in its output
+  (a synthesis strategy, a search strategy, a review type), that name MUST be derivable from the
+  steps actually executed, not merely asserted by a user or a template. Claiming a method without
+  performing its constitutive practices is *method slurring*, and it is the single most common defect
+  in the literature this platform serves.
+- **Sources MUST be cited, and disagreements preserved.** Methodological rules encoded in the system
+  MUST trace to a chapter. Where the literature disagrees — and it does, on snowballing noise, on
+  grey literature in rapid reviews, on whether citing guidelines predicts quality — the system MUST
+  NOT silently pick a side. Surface the choice.
+- **Standards MUST be used for what they measure.** PRISMA 2020 states it MUST NOT be used to assess
+  methodological quality; it measures reporting completeness. Any instrument the system applies MUST
+  be applied to the construct its authors defined, and labelled accordingly.
+- **New research amends this contract.** When a paper is added to `research/`, it MUST be processed
+  through `docs/methodology/PLAYBOOK.md`, which carries the register of papers already examined, the
+  extraction prompts, and the rule that unresolved extraction uncertainty is recorded rather than
+  guessed.
+
+_Rationale_: Every other principle here protects the code. This one protects the output. The platform
+can be entirely correct as software and still produce an invalid systematic review, and the
+literature shows exactly how often that happens without tooling — 49% of published SE "systematic
+reviews" were really scoping studies, only 20.4% cited any synthesis method, and 54 reviews in one
+period used no defined search strategy at all. The methods are the product; drift from them is a
+defect of the highest severity, and it is invisible to type checking, coverage, and reachability
+alike.
+
 ## Code Quality Standards
 
 The following gates apply at specification, planning, and implementation time:
@@ -863,6 +942,7 @@ The following gates apply at specification, planning, and implementation time:
 | Logging                     | MUST use structlog; no print() in production paths                                                                                                                                                                                                                     |
 | Docker health checks        | Every compose service MUST have a healthcheck block                                                                                                                                                                                                                    |
 | Documentation               | All source files MUST have a module-level doc comment (Python module docstring / TS file-level JSDoc); all functions/methods/classes MUST have Google-style (Python) or JSDoc (TS) doc comments; CLI handlers: brief command description only — no Args/Returns/params |
+| Methodological fidelity     | Changes to how a review is conducted MUST be checked against `docs/methodology/` before design; any method the system names MUST be derivable from recorded steps; instruments MUST be applied to the construct their authors defined; new papers MUST be processed via `docs/methodology/PLAYBOOK.md` |
 | Feature completion docs     | `CLAUDE.md`, root `README.md`, affected subproject `README.md`s, root `CHANGELOG.md`, and affected subproject `CHANGELOG.md`s MUST all be updated before merge                                                                                                         |
 | React components            | MUST be functional; MUST have named props interface; MUST be ≤ 100 JSX lines                                                                                                                                                                                           |
 | React hooks                 | MUST follow Rules of Hooks (top-level only); complete dep arrays; no inline refs in deps                                                                                                                                                                               |
@@ -895,7 +975,7 @@ hierarchies where pure data is involved).
 The following workflow MUST be followed for every task in the implementation plan:
 
 1. **Spec → Plan → Tasks**: Specification, planning, and task generation MUST check all
-   ten Core Principles. Any violation found at planning time MUST surface as an explicit
+   eleven Core Principles. Any violation found at planning time MUST surface as an explicit
    task (refactor or redesign) — not deferred to "Polish".
 
 2. **Pre-implementation code review**: Before starting a task, examine the target file(s)
@@ -987,7 +1067,7 @@ and AI coding agents operating within this repository.
 
 **Compliance review**:
 
-- All PRs MUST verify compliance with Principles I–X before merging.
+- All PRs MUST verify compliance with Principles I–XI before merging.
 - AI agents MUST apply the Constitution Check gate in plan.md before generating code.
 - Complexity Tracking in plan.md MUST record any justified violations with rationale.
 - Testing Discipline gates (Principle VI) MUST be verified in CI before merge approval.
@@ -1001,4 +1081,4 @@ and AI coding agents operating within this repository.
   audit MUST exit clean, and every user-facing feature MUST have an e2e test that drives it
   through the UI.
 
-**Version**: 1.8.0 | **Ratified**: 2026-03-11 | **Last Amended**: 2026-08-06
+**Version**: 1.9.0 | **Ratified**: 2026-03-11 | **Last Amended**: 2026-08-07
