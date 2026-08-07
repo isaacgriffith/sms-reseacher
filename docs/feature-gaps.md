@@ -25,6 +25,7 @@
 | 2026-08-07 | **G22–G23 added**, both found while fixing the screening pipeline (`d8f6dcf`, `1e01097`). Snowballing is a registered job with no enqueue site, and admin job retry enqueues function names that are not registered, with arguments matching no job's signature — while reporting `200`. Neither is visible to the reachability oracles, which model imports rather than HTTP routes; see [Neither oracle sees a backend route](#neither-oracle-sees-a-backend-route) |
 | 2026-08-07 | **G22 resolved.** `POST /studies/{id}/snowball` plus a `SnowballControls` mount, with seeds defaulting to the study's accepted papers, a `409` naming any in-flight pass (FR-026), and a `422` rather than an empty run. 16 integration tests, 10 component tests. G23 remains open |
 | 2026-08-07 | **In-flight guard made bidirectional**, and **G24 added**: snowballing is DOI-keyed, so grey literature, reports, theses and older proceedings — the papers most likely to lack a DOI — are silently excluded from the walk. Both directions are recoverable, backward from stored full text and forward by resolving to a non-DOI identifier, but which citation index to prefer needs a research spike |
+| 2026-08-07 | **G10 amended** after the research pass behind [`docs/methodology/`](./methodology/). PRISMA 2020 states it "should not be used to assess the conduct or methodological quality of systematic reviews", so the planned checker measures **reporting completeness**, not rigour. SEGRESS replaces PRISMA as the primary standard, being the only one that marks each item required/optional/not-required **per review type**; quality scoring moves to DARE and the Petersen 2015 rubrics. The gap becomes two features rather than one |
 | 2026-08-07 | **`docs/todo.md` and `docs/todo2.md` folded in — G25–G34 added.** Every line of both was executed against the tree rather than read. Nine of 26 assessable items were already delivered and seven partial; the rest became gaps. The largest is **G25**: the backend addresses researcher-mcp over a REST API that server does not serve — `mcp.http_app()` exposes exactly one route, `/mcp`, so all five `POST /tools/…` and `GET /health` call sites fail, four of them silently. Every database search, PDF fetch and snowball walk in the platform runs through those calls. See [Unified intake](#unified-intake-from-todomd-and-todo2md) |
 
 ---
@@ -57,7 +58,7 @@
 | F2-SF08 | Text analysis        | ●      | —                                                                           |
 | F2-SF09 | Meta-analysis        | ◐      | G8 — no metasummary; thematic synthesis is not Cruzes/Dybå; G27 — SMS has no synthesis at all |
 | F2-SF10 | Report write-up      | ◐      | G9 — no Typst backend; G14 — no PRISMA 2020 flow diagram; G27 — SMS produces a data archive, not a report |
-| F2-SF11 | Report validation    | ✗      | G10 — no PRISMA/SEGRESS/trAIce checker; G14                                 |
+| F2-SF11 | Report validation    | ✗      | G10 — no checker. **Amended**: SEGRESS is the standard, per review type; PRISMA may not score quality; G14 |
 | F3-SF01 | Multiple users       | ◐      | G11 — role model mismatch, no user CRUD; G23 — job retry silently no-ops; G31 — no user avatar |
 | F3-SF02 | Document management  | ◐      | G12 — no manual fallback/store/viewer; G16 — SciHub toggle unreachable; G28 — grey literature is a register, not a source |
 | F3-SF03 | Security             | ●      | Capability matrix is coarse (G11); a live access-control defect was missed  |
@@ -272,6 +273,43 @@ What _is_ missing is the deliberate omission: the quality-assessment models (`Qu
 **Current.** Nothing. "SEGRESS" and "trAIce" do not appear in the codebase; "PRISMA" appears twice, both as prose inside the protocol-reviewer agent prompt.
 
 **Remediation sketch.** These are checklists, and `generate_report` already returns a structured `SLRReport`. A validator is a pure function over that structure — per-item `{satisfied, evidence_section, remediation}` — with no schema change required. **This is the highest value-per-unit-risk item in this document.**
+
+> **⚠ Amended 2026-08-07 — what this checker may and may not claim.** The research pass behind
+> [`docs/methodology/`](./methodology/) turned up a constraint that changes the feature's framing,
+> though not its value.
+>
+> **PRISMA 2020 states it "should not be used to assess the conduct or methodological quality of
+> systematic reviews."** It measures *reporting completeness*. A "PRISMA score" presented as a
+> quality or rigour score misuses the standard in precisely the way its authors warn against, so the
+> checker must be labelled and surfaced as completeness — "your report does not state X", never "your
+> review is weak".
+>
+> **SEGRESS should be the primary standard here, not PRISMA.** Two reasons. PRISMA 2020's own scope
+> is reviews of health-intervention effects and explicitly excludes qualitative synthesis; SEGRESS's
+> assessment is that PRISMA alone "will be of very limited value to SE researchers". And SEGRESS is
+> **the only standard that marks every item required / optional / not-required per review type** —
+> quantitative SR, mapping study, qualitative review, mixed-methods, tertiary. That maps directly onto
+> the four study types already modelled, and it matters: a one-size checker would penalise a mapping
+> study for omitting a certainty assessment that SEGRESS marks *not required* for it. The full
+> per-type applicability table is in
+> [`10-reporting-and-evaluation.md`](./methodology/10-reporting-and-evaluation.md).
+>
+> **For quality, use instruments designed for it.** The corpus supplies two, both cheaper to build
+> than a PRISMA checker and neither misusing its source:
+> - **DARE** — 4 questions scored Y=1 / P=0.5 / N=0, with full anchors, over data the platform
+>   already holds. Note Q4 is a *traceability* check (can a summary be traced to the papers behind
+>   it), which is answerable structurally rather than by asking a model. See
+>   [`04-tertiary.md`](./methodology/04-tertiary.md).
+> - **The Petersen 2015 rubrics** — five scored rubrics for mapping studies. These score **process
+>   actions taken**, not report prose, so they need access to recorded execution state rather than the
+>   generated report. See [`02-sms.md`](./methodology/02-sms.md).
+>
+> **Scope note.** "PRISMA-trAIce" remains absent from the corpus reviewed here, so the requirement to
+> validate against it is neither confirmed nor costed by this pass.
+>
+> Net effect on this gap: **unchanged in priority, changed in shape.** It is two features, not one —
+> a per-study-type *reporting completeness* checker (SEGRESS), and a *quality* scorer (DARE and the
+> Petersen rubrics). Conflating them is the error to avoid.
 
 ---
 
@@ -1192,7 +1230,7 @@ Every gap assessed before 2026-08-06 was read against corrupted source, so each 
 | ~~0~~ | ~~**G13d** two defects in `_fetch_test_search_results`~~                                       | ✅ **Done 2026-08-05** — was writing fabricated pilot data on service failure                                                                                                                                                     |
 | **0** | **G25** researcher-mcp call surface, plus the contract test that pins it                       | **Ahead of everything.** No search in the platform returns a paper today. Every other search gap is unobservable until this lands, and four of the five call sites report success while failing                                   |
 | 0b    | **G34** part 2 — fix the coverage command; wire `audit_unreachable_frontend.py` into CI       | Minutes of work on the evidence base every other item is judged against                                                                                                                                                           |
-| 1     | **G10** report validation                                                                      | Greenfield, no schema change, operates on an existing structured object                                                                                                                                                           |
+| 1     | **G10** report validation — **as two features**: a SEGRESS per-study-type completeness checker, and a DARE quality scorer | Greenfield, no schema change, operates on an existing structured object. See the amendment on G10 — PRISMA may not be used to score quality, and SEGRESS is the only standard with per-review-type applicability |
 | 2     | **G1** + **G14** steps 1–2 provenance                                                          | Design together — the PRISMA "other methods" arm and the snowball DAG need the same discriminator                                                                                                                                 |
 | 2b    | **G14** steps 3–6 flow diagram                                                                 | Follows the provenance work; reuses `visualization.py`'s existing SVG pattern                                                                                                                                                     |
 | 3     | **G6** Study/Paper split                                                                       | Every downstream count and pooled estimate depends on the unit of analysis being right                                                                                                                                            |
