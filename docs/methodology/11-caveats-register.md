@@ -135,6 +135,14 @@ These matter most, because following the guidance uncritically reproduces them.
 | G9 | **Content analysis counts what is easy to classify, not what matters** | [08](./08-extraction-and-synthesis.md) |
 | G10 | **Explain how tabulated data answers the questions** — otherwise no synthesis occurred | [01](./01-slr.md) |
 | G11 | **Translating codes to themes is not a single pass**; the stopping rule is saturation | [08](./08-extraction-and-synthesis.md) |
+| G12 | **Method slurring** — claiming a method without following its guidelines. The general name for G1–G4. Test: list the constitutive practices and check the study performed them | [08](./08-extraction-and-synthesis.md#part-4b--method-slurring-claiming-a-method-you-did-not-use) |
+| G13 | **Some methods cannot be applied retrospectively.** "Research cannot be reconstructed as [grounded theory] at write-up" — the method dictates the *order* of collection and analysis | [08](./08-extraction-and-synthesis.md) |
+| G14 | **Describing a method in principle is not a methods section.** Describe your own implementation, and your deviations from the guidance | [08](./08-extraction-and-synthesis.md) |
+| G15 | **If you borrowed techniques, name the techniques — not the method.** Coding, memoing and constant comparison exist independently of any method; invoking the method "clouds the issue" | [08](./08-extraction-and-synthesis.md) |
+| G16 | **Mixing method variants inconsistently is a checkable defect** — e.g. claiming classic grounded theory while performing axial coding | [08](./08-extraction-and-synthesis.md) |
+| G17 | **Theoretical sampling is not purposive sampling.** Selecting cases a priori for topical relevance is not theoretical sampling, which responds to gaps in the emerging theory | [08](./08-extraction-and-synthesis.md) |
+| G18 | **Only 16 of 98 studies gave a comprehensive account of their procedures**; 18 of 52 that claimed a method gave nothing beyond the bare claim | [08](./08-extraction-and-synthesis.md) |
+| G19 | **Declaring an epistemology inconsistent with your cited sources** — 4 of the 5 papers stating any epistemology cited sources contradicting it | [08](./08-extraction-and-synthesis.md) |
 
 ---
 

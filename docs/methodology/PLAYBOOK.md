@@ -387,7 +387,7 @@ Legend for *Depth*: **F** = read in full · **T** = targeted sections · **V** =
 | `mendez_open_2020` | F | Open-science disclosure; preregistration; licence traps; DOI archival | 13 |
 | `zhang_evidence-based_2020` | F | **Grey-literature use**, not general EBSE: 102 reviews, 90% no GL appraisal | 05, 12 |
 | `fatima_retrieving_2023` | F | Preprint scraping; **reports no accuracy figures** | 05 |
-| `stol_grounded_2016` | F | Grounded-theory variants; **method slurring** | 08 *(lightly)* |
+| `stol_grounded_2016` | F | Grounded-theory variants; **method slurring** and its disqualifying test | 08, 11 |
 
 ### Grey literature and practitioner evidence
 
@@ -418,6 +418,6 @@ Extracted but not yet fully worked into a chapter. Cheap wins for the next pass:
 | Paper | What is unused | Suggested home |
 | ----- | -------------- | -------------- |
 | ~~`mendez_open_2020`~~ | ~~Six openness facets; preregistration; licence traps; DOI archival~~ | ✅ **Worked into [13 — Open science](./13-open-science.md)** 2026-08-07 |
-| `stol_grounded_2016` | Three GT variants and their coding procedures; the eleven core practices; **method slurring** and its disqualifying test | Extend 08; the method-slurring test generalises to *any* claimed method |
+| ~~`stol_grounded_2016`~~ | ~~Method slurring and its disqualifying test~~ | ✅ **Worked into [08 Part 4b](./08-extraction-and-synthesis.md) and [11](./11-caveats-register.md)** 2026-08-07. *Still unused: the three GT variants' coding procedures and the eleven core practices, which would only matter if the platform ever supports grounded theory as a primary method* |
 | `basili_software_1992` | QIP and the Experience Factory; defect-slippage interpretation | 09, if GQM is expanded |
 | `garousi_benefitting_2020` | The process model of *how GL is authored*, locating validity threats in the author's invisible internal processes | 05 |

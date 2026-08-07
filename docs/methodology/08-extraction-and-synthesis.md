@@ -263,6 +263,174 @@ questions and the primary studies' designs, data collection and analysis methods
 
 ---
 
+## Part 4b — Method slurring: claiming a method you did not use
+
+**Source**: Stol, Ralph & Fitzgerald 2016, *Grounded Theory in Software Engineering Research: A
+Critical Review and Guidelines*. The term is taken from Baker, Wuest & Stern 1992.
+
+Stol et al. studied grounded theory specifically, but **the diagnosis and the remedy generalise to
+every method named in this chapter** — and they give the pathology behind the numbers this chapter
+opens with. Where Cruzes & Dybå found synthesis methods cited but not performed, Stol et al. supply
+the name for it, the reasons it happens, and a test.
+
+### The definition
+
+**Method slurring** is claiming to use a research method without actually following its guidelines.
+
+### The test — the most reusable thing in the paper
+
+For grounded theory, stated as a disqualifier:
+
+> If a study does not involve **simultaneous data collection and analysis, constant comparison,
+> coding, memoing and theory development**, it is **not** a grounded theory study.
+
+And behaviours that disqualify outright:
+
+> If researchers **collect most or all of their data before beginning analysis**, **collect or
+> categorise data according to existing theory**, or **base analysis on seed categories or
+> preconceived analytical frameworks**, they are not using grounded theory.
+
+**The generalised form**, which is what makes this belong in a chapter about synthesis: *for any
+named method, list the practices that constitute it, and check whether the study performed them.* If
+it did not, the study used something else, and should say so.
+
+Applied to the methods in [Part 4](#part-4--the-synthesis-method-catalogue):
+
+| Claimed method | Constitutive practices to check for |
+| -------------- | ----------------------------------- |
+| **Thematic synthesis** | Immersion · codes with operational definitions · translation of codes into themes · a higher-order model · a trustworthiness assessment ([Part 2](#part-2--thematic-synthesis-cruzes--dybå)) |
+| **Meta-ethnography** | Translation of studies into one another, *then* synthesis of the translations into concepts beyond the individual accounts |
+| **Qualitative metasummary** | Extract → group → abstract → **compute the two effect sizes** ([Part 3](#part-3--qualitative-metasummary-ribeiro-et-al)) |
+| **Meta-analysis** | Pooled effect sizes with a stated model, heterogeneity assessment, sensitivity analysis |
+| **Grounded theory** | The five practices above |
+| **Content analysis** | Predetermined categories, systematic rule application, frequency counts |
+
+> **⚠ The corpus already shows this test failing at scale.** Cruzes & Dybå reclassified nine reviews
+> claiming "classification analysis" — six became scoping studies. Three claiming vote counting were
+> all reclassified. Only **1 of 49** claimed meta-ethnographies survived scrutiny. Stol et al. found
+> **only 16 of 98** articles gave a comprehensive account of their procedures at all.
+
+### Why researchers do it
+
+Five reasons, and they are worth knowing because they are mostly not dishonesty:
+
+1. **To confer legitimacy.** The method is more structured, and therefore perceived as more
+   scientific, than an unnamed approach. Charmaz's complaint: researchers "have invoked grounded
+   theory as a methodological rationale" to justify doing qualitative research rather than adopting
+   its guidelines.
+2. **To avoid a detailed literature review.** The grounded-theory maxim about avoiding
+   over-familiarity with the literature becomes an excuse to skip necessary background work.
+3. **For simplicity.** It is easier to write "we used grounded theory" than to explain how a large
+   volume of unstructured text became a cohesive theory.
+4. **Because they do not understand the method.** Suddaby is quoted: a cursory citation to Glaser and
+   Strauss while describing little of the method; invited to elaborate, it becomes clear the term was
+   taken to mean "anything goes".
+5. **On a referee's suggestion.** Reviewers tell authors their method "looks like grounded theory",
+   and authors recast the work post hoc to satisfy them.
+
+### What it costs
+
+- **It undermines the method.** Using the term for any theory-building or qualitative analysis erodes
+  a method that prescribes a highly structured approach, and **engenders undue suspicion of genuine
+  studies, possibly hindering their publication.**
+- **It undermines other methods.** Recasting interpretive interview studies, positivist case studies
+  and ethnographies as grounded theory **implicitly disparages and devalues** them. "There is nothing
+  wrong with conducting an ethnography and researchers should not hesitate to label it as such."
+- **It misrepresents the research**, violating the principle that readers must be able to evaluate
+  quality from an accurate account of how data was collected and analysed.
+- **It defeats appraisal**, because readers cannot tell whether a study used the method or merely
+  referenced it.
+
+### The four recommendations
+
+1. **Study the method before starting.** It suffers from "apparent simplicity" — superficially it
+   looks like reading and categorising text. Read several books **before even deciding whether it is
+   the right method**. The decisive sentence, and the one with the sharpest implication for tooling:
+   > **"Research cannot be reconstructed as [grounded theory] at write-up."**
+
+   The method dictates the *order* of collection and analysis, so it cannot be applied retrospectively.
+2. **Describe your implementation, not the method in principle.** Several sampled studies gave
+   reasonable summaries of grounded theory and never explained their own practices. Describe how each
+   key practice was used, **and explicitly describe deviations**.
+3. **Avoid "borrowing" rhetoric.** If you used techniques from the literature, say you used those
+   techniques **without invoking the method**. Coding, memoing and constant comparison are part of any
+   qualitative analyst's toolbox and exist independently of any particular method. **"Bringing in GT
+   clouds the issue."**
+4. **Do not claim a method you did not use.** Name the method you did use. If you invented one,
+   explain it. **If you proceeded ad hoc, explain the "pragmatic, agile approach" rather than dressing
+   it up.**
+
+### Reporting questions worth reusing
+
+Stol et al. supply a reporting checklist and are explicit that it is **not** a compliance list — "no
+single article can or should include all of these items"; they are "questions to ask oneself". The
+ones that generalise beyond grounded theory:
+
+- **What variant of the method did you adopt, and what published guidance did you follow?**
+- **How and why did you adapt, or deviate from, that guidance?**
+- What was your initial research question, and what question emerged during the study — **preferably
+  state both**
+- What is your epistemological and ontological position?
+- Who collected and analysed the data — an individual or a team? If a team, who did what, and how was
+  it coordinated?
+- **Describe your coding, memoing and sorting with examples**
+- **Confirm that you employed constant comparison**
+- When did you stop collecting data, and how did saturation become apparent?
+- **Did you conduct a reliability check** — was your analysis reviewed by someone else? Who, how, what
+  did they find, what changed, and what was their expertise?
+- **How might your own biases, preconceptions, background and beliefs affect your analysis?**
+
+### Specific defects that are mechanically checkable
+
+These are the ones a tool could actually catch:
+
+| Defect | Why it is checkable |
+| ------ | ------------------- |
+| **Mixing variants inconsistently** — claiming classic grounded theory while doing axial coding, or Straussian while using Glaser's coding families | The variant and the technique are both stated |
+| **Citing conflicting seminal works without acknowledging the conflict** | Signals the authors have not read them |
+| **Declaring an interpretivist epistemology while citing objectivist sources** | Found in **4 of the 5** papers that stated any epistemology at all |
+| **"The method consists of three coding phases"** | A wrong summary — incomplete, and falsely implies three sequential phases |
+| **Theoretical sampling described as purposive sampling** | Selecting cases a priori for topical relevance is *not* theoretical sampling, which responds to gaps in the emerging theory and is indeterministic |
+| **Starting from a classification taken from the literature** | Highly suspect even under the more liberal variants |
+
+### The numbers
+
+From 98 articles across nine SE journals:
+
+- **52 (53%) explicitly claim grounded theory; 46 (47%) merely borrow its techniques**
+- **Only 16 of 98 (16%) provide a comprehensive account of their research procedures.** Of the 52
+  claimants: 30 give significant methodological detail, **18 give none beyond the bare claim**, and 4
+  deviate so sharply that the method was not used
+- **39 of the 52 claimants (75%) do not acknowledge that the method has variants.** Of the 13 who do,
+  5 claim classic and 8 Straussian; **none claim constructivist, and no article in the entire sample
+  cited Charmaz**
+- **Only 5 of 98 state an epistemological position** — all interpretivism, and **4 of those 5 cite
+  sources aligned with positivism**
+- Among the 30 detailed articles, practice reporting falls off sharply: data sources 29, coding 29,
+  theoretical saturation 15, simultaneous collection and analysis 13, constant comparison 13,
+  theoretical sampling 12, memoing 12, **memo sorting 4**
+- **8 articles produced cohesive theories; 10 produced mere description**
+
+> **⚙ IMPLEMENTATION.** Three things follow directly.
+>
+> **1. The method name must be earned by recorded steps.** The platform names a synthesis strategy in
+> its output. Stol et al.'s test says the name is only valid if the constitutive practices were
+> performed — so record *which steps ran* (codes created, themes derived, model built, trustworthiness
+> assessed) and derive the claim from that, rather than letting the user assert it. This is the same
+> conclusion the closing note of this chapter reaches from Cruzes & Dybå's side.
+>
+> **2. Some methods cannot be selected retrospectively.** "Research cannot be reconstructed as
+> grounded theory at write-up" because the method dictates the order of collection and analysis. A UI
+> that offers synthesis-strategy selection *after* extraction has completed is offering an invalid
+> choice for those methods. This is the same ordering constraint open science imposes on the analysis
+> plan — see [13](./13-open-science.md).
+>
+> **3. Deviations are reportable, not shameful.** Recommendation 2 asks for deviations to be described
+> explicitly, and SEGRESS asks for the same thing about the protocol. A platform that records
+> deviations makes the honest path the easy one — which is the whole argument for encoding process.
+
+---
+
 ## Part 5 — Quantitative synthesis
 
 From Kitchenham & Charters. Applicable when studies are homogeneous enough to pool.
