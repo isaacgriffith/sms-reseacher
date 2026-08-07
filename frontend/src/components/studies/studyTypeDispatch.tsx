@@ -35,6 +35,7 @@ import CriteriaForm from '../phase2/CriteriaForm';
 import SearchStringEditor from '../phase2/SearchStringEditor';
 import TestRetest from '../phase2/TestRetest';
 import PaperQueue from '../phase2/PaperQueue';
+import SnowballControls from '../phase2/SnowballControls';
 import JobProgressPanel from '../jobs/JobProgressPanel';
 import DatabaseSelectionPanel from './DatabaseSelectionPanel';
 import InterRaterPanel from '../slr/InterRaterPanel';
@@ -252,6 +253,15 @@ function renderSearchAndScreen({ study, activeJobId, onJobStarted }: PhaseContex
           >
             Run Full Search
           </Button>
+        </Box>
+        <Box sx={{ marginBottom: '1rem' }}>
+          <Typography
+            variant="subtitle2"
+            sx={{ margin: '0 0 0.5rem', fontSize: '0.875rem', color: '#374151' }}
+          >
+            Snowball Sampling
+          </Typography>
+          <SnowballControls studyId={study.id} onJobStarted={onJobStarted} />
         </Box>
         <JobProgressPanel jobId={activeJobId} />
       </Box>

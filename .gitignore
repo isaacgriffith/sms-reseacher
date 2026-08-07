@@ -73,3 +73,8 @@ test-results/
 playwright-report/
 # Vitest coverage temp output
 frontend/coverage-temp/
+
+# Reference papers backing the methodology (Kitchenham, Petersen, Wohlin, et al.).
+# Kept out of history deliberately: ~45 MB of binaries with no Git LFS configured,
+# and they are publisher-copyrighted rather than ours to redistribute.
+research/

@@ -3,8 +3,8 @@
 **Assessed**: 2026-08-05
 **Last updated**: 2026-08-07
 **Baseline**: `docs/base-features.md` (27 features, F1-SF01 – F3-SF04)
-**Evidence**: branch `012-wire-up-unreachable-workflows` at `1e01097`, working tree clean
-**Scope**: 23 gaps catalogued (G1–G23); 23 frontend modules still unreachable, pending feature 012
+**Evidence**: branch `012-wire-up-unreachable-workflows` at `4921f6d`, working tree clean
+**Scope**: 23 gaps catalogued (G1–G23), 1 resolved; 23 frontend modules still unreachable, pending feature 012
 
 **Method**: each feature traced to implementing code — ORM models, API routes, services, agents, source adapters, UI components — rather than to `specs/` intent.
 
@@ -21,6 +21,7 @@
 | 2026-08-06 | **Every gap claim resting on repaired source re-checked.** No verdict changed; four claims corrected, including G13d's root cause — see [Re-check of affected gap claims](#re-check-of-affected-gap-claims-2026-08-06)                                |
 | 2026-08-06 | **G21 broadened** to cover two package-shadowed backend modules, both since deleted (`fdd5220`). This document's claim that the backend had no reachability problem was withdrawn, and `scripts/check_shadowed_modules.py` now guards the class in CI |
 | 2026-08-07 | **G22–G23 added**, both found while fixing the screening pipeline (`d8f6dcf`, `1e01097`). Snowballing is a registered job with no enqueue site, and admin job retry enqueues function names that are not registered, with arguments matching no job's signature — while reporting `200`. Neither is visible to the reachability oracles, which model imports rather than HTTP routes; see [Neither oracle sees a backend route](#neither-oracle-sees-a-backend-route) |
+| 2026-08-07 | **G22 resolved.** `POST /studies/{id}/snowball` plus a `SnowballControls` mount, with seeds defaulting to the study's accepted papers, a `409` naming any in-flight pass (FR-026), and a `422` rather than an empty run. 16 integration tests, 10 component tests. G23 remains open |
 
 ---
 
@@ -44,7 +45,7 @@
 | F1-SF04 | Self-contained       | ◐      | 8 external API keys + an LLM provider; G15 — only Ollama self-hostable; G17 |
 | F2-SF01 | Protocol development | ●      | Guideline grounding is thin (see G7)                                        |
 | F2-SF02 | Protocol validation  | ◐      | AI review is SLR-only                                                       |
-| F2-SF03 | Automated searches   | ◐      | G1, G2, G3, G13, G22 — the largest cluster; snowballing cannot be started   |
+| F2-SF03 | Automated searches   | ◐      | G1, G2, G3, G13 — the largest cluster. G22 resolved: snowballing is startable |
 | F2-SF04 | Study selection      | ◐      | G4, G5; G18 — no UI to record a screening decision at all                   |
 | F2-SF05 | Quality assessment   | ◐      | G6 — no Study entity distinct from Paper; G21 — orphaned + shadowed modules |
 | F2-SF06 | Data extraction      | ◐      | G20 — extraction UI exists but phase 4 shows a placeholder                  |
@@ -72,7 +73,7 @@
 
 > **Correction — 2026-08-06.** "Discovery works" was true of the design and false of the code when this was written: `_process_snowball_batch` deduplicated with `Paper.doi > ep.doi` instead of `==`, and its counters ran `added = -1` / `added += 2`. Both were cosmic-ray mutants, repaired in `e47abd9`; the premise now holds. The gap itself is unchanged — the missing discovery edge is structural and has nothing to do with the mutants.
 
-> **Correction — 2026-08-07.** "Discovery works" was still too generous, twice over, and the paths above are stale. Both functions now live in `backend/src/backend/jobs/snowball_job.py` (`1e01097`). More importantly: **`run_snowball` has no enqueue site**, so none of this code has ever run for a user — see [G22](#g22--snowball-sampling-has-no-enqueue-site-f2-sf03--medium). And until `d8f6dcf` the screening pass inside it rejected every paper by crashing, because it was handed a `CandidatePaper` that could not produce a title. The structural gap this entry describes is unaffected, but it cannot be _observed_ until G22 is closed, and it was never observable before.
+> **Correction — 2026-08-07.** "Discovery works" was still too generous, twice over, and the paths above are stale. Both functions now live in `backend/src/backend/jobs/snowball_job.py` (`1e01097`). More importantly: **`run_snowball` had no enqueue site**, so none of this code had ever run for a user — see [G22](#g22--snowball-sampling-has-no-enqueue-site-f2-sf03--medium-resolved-2026-08-07), closed the same day. And until `d8f6dcf` the screening pass inside it rejected every paper by crashing, because it was handed a `CandidatePaper` that could not produce a title. The structural gap this entry describes is unaffected — but it was never observable before, and only becomes so now that a user can start a snowball run at all.
 
 **Remediation sketch.**
 
@@ -592,9 +593,9 @@ Frontend items remain open: mount `QualityScoreForm` in `QualityAssessmentPage` 
 
 ---
 
-### G22 — Snowball sampling has no enqueue site (F2-SF03) — **medium**
+### G22 — Snowball sampling has no enqueue site (F2-SF03) — **medium** _(resolved 2026-08-07)_
 
-**Claim.** `run_snowball` is a complete, registered ARQ job that nothing can start. It appears in `WorkerSettings.functions` (`backend/src/backend/jobs/worker.py:49`) and nowhere else: no endpoint enqueues it, no service calls it, no frontend control reaches it.
+**Claim.** `run_snowball` was a complete, registered ARQ job that nothing could start. It appears in `WorkerSettings.functions` (`backend/src/backend/jobs/worker.py:49`) and nowhere else: no endpoint enqueues it, no service calls it, no frontend control reaches it.
 
 ```bash
 grep -rn "run_snowball" --include=*.py backend/src/
@@ -608,9 +609,18 @@ This is the same defect class as G18–G20 — finished code no user can reach �
 
 **G1** (no discovery edge recorded per snowballed candidate) was written against this job as though it ran. It does not. G1 remains correct as a structural gap, but its symptom cannot be observed until this one is closed — and its opening line, "Discovery works", is true only of code that is never executed.
 
-**Fix.** A `POST /studies/{id}/snowball` endpoint mirroring `start_full_search`: create the `SearchExecution` and `BackgroundJob`, then enqueue. The job now records `running` → `completed` → `failed` on both rows (`1e01097`), so the existing `JobProgressPanel` can report it with no new frontend work. Gate it on the same in-flight check FR-026 defines, since snowballing screens candidates and would otherwise interleave with a search or re-screen over the same papers.
+**Remediation — ✅ done 2026-08-07.**
 
-**Cost.** Low — one endpoint, one control. The job, its failure handling, and its integration tests already exist.
+- `POST /studies/{id}/snowball` in `backend/src/backend/api/v1/searches.py`, on the router that already carries `start_full_search`. Creates the `SearchExecution` and `BackgroundJob`, then enqueues `run_snowball` with the five arguments its signature needs. `202 {job_id, search_execution_id, seed_count}`.
+- **Seeds default to the study's accepted papers.** That is what snowballing means in a mapping study — walk citations from the set that survived screening — and it is the only default a reviewer cannot get wrong. Explicit `paper_dois` override it; papers without a DOI are skipped, since neither `get_references` nor `get_citations` can resolve one.
+- **`409` naming the blocking run** while any `FULL_SEARCH` or `SNOWBALL_SEARCH` job is non-terminal, per FR-026. The payload carries `blocking_job_id` and `blocking_job_type`, so the UI can say which run is in the way rather than only that something is.
+- **`422` rather than an empty run** when there is nothing to snowball from. A run over zero seeds would complete instantly reporting zero new papers, which reads exactly like a search that found nothing.
+- `phase_tag` follows the direction (`backward-search` / `forward-search`). One tag for both would merge them in the PRISMA funnel.
+- `components/phase2/SnowballControls.tsx`, mounted in `renderSearchAndScreen` beside "Run Full Search". Both refusals are surfaced in an alert rather than swallowed — a `409` and a `422` are ordinary outcomes here, and hiding them leaves a button that appears to do nothing. Reachable from `main.tsx`; the audit count is unchanged at 23.
+- `_resolve_search_string` extracted, since `start_full_search` held the same fallback inline (Principle II).
+- 16 integration tests over the endpoint, 10 component tests over the control.
+
+**Still open.** The guard is one-directional: a snowball is refused while a full search runs, but `start_full_search` has no in-flight check, so a full search can still be started on top of a running snowball. Closing that changes an existing endpoint's behaviour and belongs with T046, which introduces the shared guard for re-screening.
 
 ---
 
