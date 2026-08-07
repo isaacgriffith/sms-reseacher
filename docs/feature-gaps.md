@@ -3,8 +3,8 @@
 **Assessed**: 2026-08-05
 **Last updated**: 2026-08-07
 **Baseline**: `docs/base-features.md` (27 features, F1-SF01 – F3-SF04)
-**Evidence**: branch `012-wire-up-unreachable-workflows` at `4921f6d`, working tree clean
-**Scope**: 23 gaps catalogued (G1–G23), 1 resolved; 23 frontend modules still unreachable, pending feature 012
+**Evidence**: branch `012-wire-up-unreachable-workflows` at `a855688`, working tree clean
+**Scope**: 24 gaps catalogued (G1–G24), 1 resolved; 23 frontend modules still unreachable, pending feature 012
 
 **Method**: each feature traced to implementing code — ORM models, API routes, services, agents, source adapters, UI components — rather than to `specs/` intent.
 
@@ -22,6 +22,7 @@
 | 2026-08-06 | **G21 broadened** to cover two package-shadowed backend modules, both since deleted (`fdd5220`). This document's claim that the backend had no reachability problem was withdrawn, and `scripts/check_shadowed_modules.py` now guards the class in CI |
 | 2026-08-07 | **G22–G23 added**, both found while fixing the screening pipeline (`d8f6dcf`, `1e01097`). Snowballing is a registered job with no enqueue site, and admin job retry enqueues function names that are not registered, with arguments matching no job's signature — while reporting `200`. Neither is visible to the reachability oracles, which model imports rather than HTTP routes; see [Neither oracle sees a backend route](#neither-oracle-sees-a-backend-route) |
 | 2026-08-07 | **G22 resolved.** `POST /studies/{id}/snowball` plus a `SnowballControls` mount, with seeds defaulting to the study's accepted papers, a `409` naming any in-flight pass (FR-026), and a `422` rather than an empty run. 16 integration tests, 10 component tests. G23 remains open |
+| 2026-08-07 | **In-flight guard made bidirectional**, and **G24 added**: snowballing is DOI-keyed, so grey literature, reports, theses and older proceedings — the papers most likely to lack a DOI — are silently excluded from the walk. Both directions are recoverable, backward from stored full text and forward by resolving to a non-DOI identifier, but which citation index to prefer needs a research spike |
 
 ---
 
@@ -45,7 +46,7 @@
 | F1-SF04 | Self-contained       | ◐      | 8 external API keys + an LLM provider; G15 — only Ollama self-hostable; G17 |
 | F2-SF01 | Protocol development | ●      | Guideline grounding is thin (see G7)                                        |
 | F2-SF02 | Protocol validation  | ◐      | AI review is SLR-only                                                       |
-| F2-SF03 | Automated searches   | ◐      | G1, G2, G3, G13 — the largest cluster. G22 resolved: snowballing is startable |
+| F2-SF03 | Automated searches   | ◐      | G1, G2, G3, G13, G24 — largest cluster. G22 resolved: snowballing is startable |
 | F2-SF04 | Study selection      | ◐      | G4, G5; G18 — no UI to record a screening decision at all                   |
 | F2-SF05 | Quality assessment   | ◐      | G6 — no Study entity distinct from Paper; G21 — orphaned + shadowed modules |
 | F2-SF06 | Data extraction      | ◐      | G20 — extraction UI exists but phase 4 shows a placeholder                  |
@@ -620,7 +621,9 @@ This is the same defect class as G18–G20 — finished code no user can reach �
 - `_resolve_search_string` extracted, since `start_full_search` held the same fallback inline (Principle II).
 - 16 integration tests over the endpoint, 10 component tests over the control.
 
-**Still open.** The guard is one-directional: a snowball is refused while a full search runs, but `start_full_search` has no in-flight check, so a full search can still be started on top of a running snowball. Closing that changes an existing endpoint's behaviour and belongs with T046, which introduces the shared guard for re-screening.
+**Guard made bidirectional — 2026-08-07.** It first landed one-directional: a snowball was refused while a full search ran, but not the reverse. `start_full_search` now calls the same `_reject_if_screening_in_flight`, so either order is refused with the same `409` payload. That made a second defect load-bearing — the full-search button's `catch { /* error handled by user */ }` discarded every failure, and a `409` is now an ordinary answer there — so the button moved into `FullSearchControl.tsx`, which surfaces refusals the way `SnowballControls` does. 8 further integration tests, 7 component tests.
+
+**Follow-on.** DOI-less papers are excluded from snowballing entirely; see [G24](#g24--snowballing-skips-papers-without-a-doi-f2-sf03--medium).
 
 ---
 
@@ -648,6 +651,42 @@ It also means job retry has no test that runs a retried job. The existing tests 
 **Fix.** Derive the function name from the registration rather than restating it — a `JobType` → callable map keyed on the imported functions, so a rename breaks at import time instead of at retry time, and a missing entry raises `KeyError` rather than yielding a plausible-looking string. Reconstruct each job's real arguments from the original `BackgroundJob` row, which is the only place a retry can learn what the first attempt was called with; `run_snowball` needs four values the row does not currently carry, so retry for that type stays unsupported until they are recorded. Cover it with a test that retries a failed job and asserts the worker dispatches it.
 
 **Cost.** Medium. The dispatch map is small; reconstructing arguments needs the job rows to record what each job was invoked with.
+
+---
+
+### G24 — Snowballing skips papers without a DOI (F2-SF03) — **medium**
+
+**Claim.** Both snowball directions are DOI-keyed, so a paper without one is silently excluded from the walk. `_accepted_paper_dois` filters on `Paper.doi IS NOT NULL` (`api/v1/searches.py`), and it has to: `get_references` requests `/paper/DOI:{doi}/references` from Semantic Scholar and falls back to CrossRef `works/{doi}`, while `get_citations` is the same shape (`researcher-mcp/src/researcher_mcp/tools/snowball.py`). Neither accepts a title.
+
+**Why it matters.** The excluded papers are not a random sample. Grey literature, technical reports, theses, workshop proceedings and older conference papers are exactly what lacks a registered DOI — and grey literature is a named requirement (G7, and the Rapid Review workflow's whole premise). A snowball that quietly walks only the DOI-bearing subset reports a citation neighbourhood narrower than the study's own accepted set, with nothing in the UI saying so. The seed count now returned by `POST /studies/{id}/snowball` makes the shortfall visible for the first time, but does not explain it.
+
+**Both directions are recoverable without a DOI, by different routes.**
+
+_Backward (references) — from a stored copy._ If the paper's full text was retrieved, its reference list can be extracted directly rather than asked for. The columns already exist: `Paper.full_text_markdown`, `full_text_source`, and `full_text_converted_at` were added by feature 006, populated via `fetch_paper_pdf` (Unpaywall, then optionally Sci-Hub) and `convert_pdf_to_markdown` (`markitdown`). A reference-section parser over that Markdown yields titles, and each title resolves to a `PaperRecord` through the existing `search_papers` fan-out. This is strictly better than the DOI path for the papers it covers, because it reports what the authors actually cited rather than what an index recorded.
+
+_Forward (citations) — resolve to some other identifier first._ **A DOI is not the only key a citation index accepts**, and the general shape of the fix is: match the paper by title and authors, obtain whatever identifier that index uses, then ask for citations by that identifier. Which index to prefer is an open question and **needs a research spike before implementation** — the candidates below differ in coverage, licensing, and rate limits, and no one of them dominates.
+
+| Route                | Identifier reached                                             | Already in the repo                                   | Notes                                                                                          |
+| -------------------- | -------------------------------------------------------------- | ----------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| **Semantic Scholar** | `paperId` (an S2 hash, **not** a DOI) via `/paper/search`      | `SemanticScholarSource.search_papers`, `get_paper`    | Likely the strongest first candidate: already the primary source for DOI-keyed snowballing, so the citation shape is known. `/paper/{id}/citations` accessor is what is missing. Also accepts `CorpusId:`, `arXiv:`, `PMID:`, `ACL:`, `MAG:` prefixes |
+| **OpenAlex**         | Work ID via title search                                       | `sources/open_alex.py`                                | `referenced_works` and `cited_by_api_url` are on the record itself. CC0, generous limits, strong coverage of non-DOI grey literature |
+| **Crossref**         | DOI recovered by bibliographic query                            | `sources/crossref.py`                                 | Not a citation index, but can *recover* a DOI from title plus authors, after which the existing DOI path applies unchanged. Cheapest to try |
+| **arXiv**            | arXiv ID                                                        | `sources/arxiv.py`                                    | Narrow but exact for preprints, which are a large slice of what lacks a DOI |
+| **Google Scholar**   | Scholar cluster id, then `citedby`                              | `GoogleScholarSource` (`scholarly`, `SCHOLARLY_PROXY_URL`) | Broadest coverage and the worst citizen: aggressive rate limiting, datacentre-IP blocking, and terms that discourage automation. Treat as a last resort, not the design centre |
+
+Crossref deserves separating from the rest: recovering a DOI turns the problem back into the one already solved, so it should be attempted before any citation index is chosen. Only papers that genuinely have no DOI anywhere need the alternative-identifier path.
+
+**Research needed.** Measure, on a sample of this project's own accepted-but-DOI-less papers: how many each route resolves, how the returned citation sets overlap, and how they compare against a DOI-bearing control walked both ways. The answer decides whether one source suffices, several are merged the way `search_papers` already fans out across nine databases, or the route is chosen per paper by what identifiers it has.
+
+**Sketch.**
+
+- Add a `get_references_from_full_text` MCP tool reading `Paper.full_text_markdown`, and a `get_citations_by_title` tool whose backing source is chosen by the spike above rather than fixed in advance.
+- Widen `_accepted_paper_dois` into a seed resolver returning a discriminated seed — DOI, stored full text, or title-and-authors — and let `run_snowball` dispatch per seed rather than requiring one identifier for all of them.
+- Report coverage on the response: how many accepted papers were reachable, by which route, and how many by none. FR-024's distinction between *assessed* and *never assessed* applies here too — a paper skipped for want of an identifier is not a paper with no references.
+
+**Risks.** Every candidate source rate-limits, and Scholar also blocks datacentre IPs — which is why `SCHOLARLY_PROXY_URL` exists. Whichever is chosen, **treat a block or a throttle as an unavailability error rather than an empty citation list**, exactly as `TestSearchUnavailableError` and `ScreeningUnavailableError` do elsewhere; a paper reported as uncited because the index refused the request is the same defect class as a paper rejected because the screener timed out. Title matching is also fuzzy in a way DOI lookup is not, so a match threshold and a record of which route produced each edge both belong in the design. Reference-list extraction from converted Markdown is lossy and needs its accuracy measured against a DOI-bearing sample before it is trusted — the same paper walked both ways is the natural check.
+
+**Cost.** Medium. Two MCP tools and a seed resolver; the storage, the converter, and the Scholar client are all in place.
 
 ---
 

@@ -25,16 +25,15 @@
 
 import type { ReactNode } from 'react';
 import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 
-import { api } from '../../services/api';
 import PICOForm from '../phase1/PICOForm';
 import SeedPapers from '../phase1/SeedPapers';
 import CriteriaForm from '../phase2/CriteriaForm';
 import SearchStringEditor from '../phase2/SearchStringEditor';
 import TestRetest from '../phase2/TestRetest';
 import PaperQueue from '../phase2/PaperQueue';
+import FullSearchControl from '../phase2/FullSearchControl';
 import SnowballControls from '../phase2/SnowballControls';
 import JobProgressPanel from '../jobs/JobProgressPanel';
 import DatabaseSelectionPanel from './DatabaseSelectionPanel';
@@ -235,24 +234,7 @@ function renderSearchAndScreen({ study, activeJobId, onJobStarted }: PhaseContex
           <Typography variant="subtitle1" sx={{ margin: 0, fontSize: '1rem', color: '#111827' }}>
             Full Paper Search
           </Typography>
-          <Button
-            variant="contained"
-            size="small"
-            onClick={async () => {
-              try {
-                const res = (await api.post(`/api/v1/studies/${study.id}/searches`, {
-                  databases: ['acm', 'ieee', 'scopus'],
-                  phase_tag: 'initial-search',
-                })) as { job_id: string; search_execution_id: number };
-                onJobStarted(res.job_id);
-              } catch {
-                // error handled by user
-              }
-            }}
-            sx={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}
-          >
-            Run Full Search
-          </Button>
+          <FullSearchControl studyId={study.id} onJobStarted={onJobStarted} />
         </Box>
         <Box sx={{ marginBottom: '1rem' }}>
           <Typography

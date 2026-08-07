@@ -64,8 +64,14 @@ async def start_full_search(
 
     Requires an active search string. Creates a BackgroundJob record and
     returns ``{job_id, search_execution_id}``.
+
+    Raises:
+        HTTPException: 403 if the caller is not a study member, 409 if another
+            automated pass is in flight, 422 if the study has no search string.
+
     """
     await require_study_member(study_id, current_user, db)
+    await _reject_if_screening_in_flight(db, study_id)
 
     ss = await _resolve_search_string(db, study_id)
 
