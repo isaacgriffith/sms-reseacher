@@ -1,19 +1,16 @@
 /**
- * Study page: phase router rendering phase 1–5 tabs based on unlocked_phases.
+ * Study page: study header, phase tabs, the protocol tab, and the per-phase
+ * body for the study's type.
+ *
+ * Phase bodies live in `components/studies/studyTypeDispatch.tsx`. This page
+ * owns what every study type shares — fetching the study, gating which phases
+ * are open, the protocol tab, and the reset dialog — and delegates the rest.
  */
 
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../services/api';
-import PICOForm from '../components/phase1/PICOForm';
-import SeedPapers from '../components/phase1/SeedPapers';
-import CriteriaForm from '../components/phase2/CriteriaForm';
-import SearchStringEditor from '../components/phase2/SearchStringEditor';
-import TestRetest from '../components/phase2/TestRetest';
-import JobProgressPanel from '../components/jobs/JobProgressPanel';
-import PaperQueue from '../components/phase2/PaperQueue';
-import DatabaseSelectionPanel from '../components/studies/DatabaseSelectionPanel';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
@@ -21,20 +18,7 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 import Typography from '@mui/material/Typography';
-import ProtocolEditorPage from './slr/ProtocolEditorPage';
-import QualityAssessmentPage from './slr/QualityAssessmentPage';
-import SynthesisPage from './slr/SynthesisPage';
-import ReportPage from './slr/ReportPage';
-import GreyLiteraturePage from './slr/GreyLiteraturePage';
 import { usePhases } from '../hooks/slr/useProtocol';
-import InterRaterPanel from '../components/slr/InterRaterPanel';
-import DiscussionFlowPanel from '../components/slr/DiscussionFlowPanel';
-import { useInterRaterRecords } from '../hooks/slr/useInterRater';
-import RRProtocolEditorPage from './rapid/ProtocolEditorPage';
-import RRSearchConfigPage from './rapid/SearchConfigPage';
-import RRQualityConfigPage from './rapid/QualityConfigPage';
-import RRNarrativeSynthesisPage from './rapid/NarrativeSynthesisPage';
-import RREvidenceBriefingPage from './rapid/EvidenceBriefingPage';
 import ProtocolGraph from '../components/protocols/ProtocolGraph';
 import ProtocolNodePanel from '../components/protocols/ProtocolNodePanel';
 import ExecutionStateView from '../components/protocols/ExecutionStateView';
@@ -44,63 +28,8 @@ import {
   useResetProtocol,
 } from '../hooks/protocols/useProtocol';
 import type { ProtocolNode } from '../services/protocols/protocolsApi';
-
-// ---------------------------------------------------------------------------
-// SLR Screening View (Phase 3 for SLR studies)
-// ---------------------------------------------------------------------------
-
-interface SLRScreeningViewProps {
-  studyId: number;
-}
-
-/**
- * Phase 3 screening view for SLR studies.
- * Shows the paper queue, inter-rater agreement panel, and discussion flow
- * when Kappa is below threshold.
- */
-function SLRScreeningView({ studyId }: SLRScreeningViewProps) {
-  const { data: irrData } = useInterRaterRecords(studyId);
-  const records = irrData?.records ?? [];
-  // Most recent record that is below threshold triggers the discussion panel
-  const lowKappaRecord =
-    [...records].reverse().find((r) => !r.threshold_met && r.phase === 'pre_discussion') ?? null;
-
-  return (
-    <Box>
-      <PaperQueue studyId={studyId} />
-      <Box sx={{ mt: 3 }}>
-        <InterRaterPanel studyId={studyId} />
-      </Box>
-      {lowKappaRecord && (
-        <Box sx={{ mt: 2 }}>
-          <DiscussionFlowPanel studyId={studyId} record={lowKappaRecord} disagreements={[]} />
-        </Box>
-      )}
-    </Box>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// StudyDetail interface
-// ---------------------------------------------------------------------------
-
-interface StudyDetail {
-  id: number;
-  name: string;
-  topic: string | null;
-  study_type: string;
-  status: string;
-  current_phase: number;
-  motivation: string | null;
-  research_objectives: string[];
-  research_questions: string[];
-  snowball_threshold: number;
-  unlocked_phases: number[];
-  /** The current user's role on this study — "lead" or "member". */
-  viewer_role: string;
-  created_at: string;
-  updated_at: string;
-}
+import { renderStudyPhase } from '../components/studies/studyTypeDispatch';
+import type { StudyDetail } from '../components/studies/studyTypeDispatch';
 
 const PHASE_META = [
   { phase: 0, label: 'Protocol', icon: '🔗' },
@@ -132,10 +61,11 @@ export default function StudyPage() {
     enabled: !!studyId,
   });
 
-  // For SLR studies, use the SLR phase gate to determine unlocked phases
-  const isSLR = study?.study_type === 'SLR';
-  const isRapid = study?.study_type === 'Rapid';
-  const { data: slrPhases } = usePhases(isSLR && study?.id ? study.id : 0);
+  // Phase *gating*, not phase rendering: SLR studies take their unlocked
+  // phases from the SLR phase-gate endpoint rather than from the study row.
+  // Which body each phase shows is decided by the dispatch map, not here.
+  const usesSlrPhaseGate = study?.study_type === 'SLR';
+  const { data: slrPhases } = usePhases(usesSlrPhaseGate && study?.id ? study.id : 0);
 
   // Protocol tab data (always available)
   const { data: assignment, isPending: assignmentPending } = useProtocolAssignment(study?.id ?? 0);
@@ -150,11 +80,11 @@ export default function StudyPage() {
   if (isLoading) return <Typography>Loading study…</Typography>;
   if (error || !study) return <Typography sx={{ color: 'red' }}>Failed to load study.</Typography>;
 
-  // SLR studies use the SLR phase gate; SMS studies use the study's unlocked_phases
-  // Phases 6 (Report) and 7 (Grey Literature) are always unlocked for SLR studies
-  // Phase 0 (Protocol) is always unlocked for all study types
+  // SLR studies use the SLR phase gate; other types use the study's own list.
+  // Phases 6 (Report) and 7 (Grey Literature) are always unlocked for SLRs.
+  // Phase 0 (Protocol) is always unlocked for every study type.
   const unlockedPhaseList =
-    isSLR && slrPhases ? [...slrPhases.unlocked_phases, 6, 7] : study.unlocked_phases;
+    usesSlrPhaseGate && slrPhases ? [...slrPhases.unlocked_phases, 6, 7] : study.unlocked_phases;
   const unlocked = new Set([0, ...unlockedPhaseList]);
 
   return (
@@ -264,7 +194,7 @@ export default function StudyPage() {
         </DialogActions>
       </Dialog>
 
-      {/* Phase content */}
+      {/* Phase 0 — the protocol tab, common to every study type */}
       {activePhase === 0 && study.id && (
         <Box>
           <Box
@@ -331,167 +261,14 @@ export default function StudyPage() {
         </Box>
       )}
 
-      {activePhase === 1 && study.id && isSLR && <ProtocolEditorPage studyId={study.id} />}
-
-      {activePhase === 1 && study.id && isRapid && <RRProtocolEditorPage studyId={study.id} />}
-
-      {activePhase === 1 && study.id && !isSLR && !isRapid && (
-        <Box>
-          {/* Research context summary */}
-          {(study.research_questions.length > 0 || study.research_objectives.length > 0) && (
-            <Box
-              sx={{
-                marginBottom: '2rem',
-                padding: '1rem',
-                background: '#f8fafc',
-                borderRadius: '0.5rem',
-              }}
-            >
-              {study.research_objectives.length > 0 && (
-                <Box sx={{ marginBottom: '0.75rem' }}>
-                  <Typography
-                    variant="subtitle2"
-                    sx={{ margin: '0 0 0.5rem', fontSize: '0.875rem', color: '#374151' }}
-                  >
-                    Research Objectives
-                  </Typography>
-                  <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
-                    {study.research_objectives.map((o, i) => (
-                      <li key={i} style={{ fontSize: '0.875rem', color: '#4b5563' }}>
-                        {o}
-                      </li>
-                    ))}
-                  </ul>
-                </Box>
-              )}
-              {study.research_questions.length > 0 && (
-                <Box>
-                  <Typography
-                    variant="subtitle2"
-                    sx={{ margin: '0 0 0.5rem', fontSize: '0.875rem', color: '#374151' }}
-                  >
-                    Research Questions
-                  </Typography>
-                  <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
-                    {study.research_questions.map((q, i) => (
-                      <li key={i} style={{ fontSize: '0.875rem', color: '#4b5563' }}>
-                        {q}
-                      </li>
-                    ))}
-                  </ul>
-                </Box>
-              )}
-            </Box>
-          )}
-
-          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
-            <PICOForm studyId={study.id} />
-            <SeedPapers studyId={study.id} />
-          </Box>
-        </Box>
-      )}
-
-      {activePhase === 2 && study.id && isRapid && <RRSearchConfigPage studyId={study.id} />}
-
-      {activePhase === 2 && study.id && !isRapid && (
-        <Box>
-          <Box sx={{ marginBottom: '2rem' }}>
-            <DatabaseSelectionPanel studyId={study.id} />
-          </Box>
-          <Box
-            sx={{
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
-              gap: '2rem',
-              marginBottom: '2rem',
-            }}
-          >
-            <CriteriaForm studyId={study.id} />
-            <SearchStringEditor studyId={study.id} />
-          </Box>
-          <TestRetest studyId={study.id} />
-        </Box>
-      )}
-
-      {activePhase === 3 && study.id && !isSLR && (
-        <Box>
-          <Box sx={{ marginBottom: '1.5rem' }}>
-            <Box
-              sx={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '1rem',
-              }}
-            >
-              <Typography
-                variant="subtitle1"
-                sx={{ margin: 0, fontSize: '1rem', color: '#111827' }}
-              >
-                Full Paper Search
-              </Typography>
-              <Button
-                variant="contained"
-                size="small"
-                onClick={async () => {
-                  try {
-                    const res = (await api.post(`/api/v1/studies/${study.id}/searches`, {
-                      databases: ['acm', 'ieee', 'scopus'],
-                      phase_tag: 'initial-search',
-                    })) as { job_id: string; search_execution_id: number };
-                    setActiveJobId(res.job_id);
-                  } catch {
-                    // error handled by user
-                  }
-                }}
-                sx={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}
-              >
-                Run Full Search
-              </Button>
-            </Box>
-            <JobProgressPanel jobId={activeJobId} />
-          </Box>
-          <PaperQueue studyId={study.id} />
-        </Box>
-      )}
-
-      {activePhase === 3 && study.id && isSLR && <SLRScreeningView studyId={study.id} />}
-
-      {activePhase === 4 && study.id && isSLR && (
-        <QualityAssessmentPage studyId={study.id} reviewerId={0} />
-      )}
-
-      {activePhase === 4 && study.id && isRapid && <RRQualityConfigPage studyId={study.id} />}
-
-      {activePhase === 4 && study.id && !isSLR && !isRapid && (
-        <Box sx={{ color: '#64748b' }}>
-          <Typography>Phase 4 content will be available in a future sprint.</Typography>
-        </Box>
-      )}
-
-      {activePhase === 5 && study.id && isSLR && <SynthesisPage studyId={study.id} />}
-
-      {activePhase === 5 && study.id && isRapid && <RRNarrativeSynthesisPage studyId={study.id} />}
-
-      {activePhase === 5 && study.id && !isSLR && !isRapid && (
-        <Box sx={{ color: '#64748b' }}>
-          <Typography>Phase 5 content will be available in a future sprint.</Typography>
-        </Box>
-      )}
-
-      {activePhase === 6 && study.id && isSLR && (
-        <ReportPage studyId={study.id} synthesisComplete={unlocked.has(5)} />
-      )}
-
-      {activePhase === 6 && study.id && isRapid && <RREvidenceBriefingPage studyId={study.id} />}
-
-      {activePhase === 7 && study.id && isSLR && <GreyLiteraturePage studyId={study.id} />}
-
-      {(activePhase === 6 || activePhase === 7) && study.id && !isSLR && !isRapid && (
-        <Box sx={{ color: '#64748b' }}>
-          <Typography>This feature is only available for SLR studies.</Typography>
-        </Box>
-      )}
+      {/* Phases 1–7 — dispatched on study type */}
+      {activePhase > 0 &&
+        renderStudyPhase(study.study_type, activePhase, {
+          study,
+          activeJobId,
+          onJobStarted: setActiveJobId,
+          unlocked,
+        })}
     </Box>
   );
 }
