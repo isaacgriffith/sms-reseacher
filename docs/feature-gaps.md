@@ -25,6 +25,7 @@
 | 2026-08-07 | **G22–G23 added**, both found while fixing the screening pipeline (`d8f6dcf`, `1e01097`). Snowballing is a registered job with no enqueue site, and admin job retry enqueues function names that are not registered, with arguments matching no job's signature — while reporting `200`. Neither is visible to the reachability oracles, which model imports rather than HTTP routes; see [Neither oracle sees a backend route](#neither-oracle-sees-a-backend-route) |
 | 2026-08-07 | **G22 resolved.** `POST /studies/{id}/snowball` plus a `SnowballControls` mount, with seeds defaulting to the study's accepted papers, a `409` naming any in-flight pass (FR-026), and a `422` rather than an empty run. 16 integration tests, 10 component tests. G23 remains open |
 | 2026-08-07 | **In-flight guard made bidirectional**, and **G24 added**: snowballing is DOI-keyed, so grey literature, reports, theses and older proceedings — the papers most likely to lack a DOI — are silently excluded from the walk. Both directions are recoverable, backward from stored full text and forward by resolving to a non-DOI identifier, but which citation index to prefer needs a research spike |
+| 2026-08-08 | **G45–G64 added — compliance audit against the methodology corpus.** Six parallel auditors checked each shipped feature against the research it claims to implement. The finding that reframes the catalogue: the severe defects are **not absences but misrepresentations** — a "Research Method" chart that renders venue data (**G47**), a validity section emitting three fixed threats regardless of study design (**G52**), quality rubrics carrying Petersen's names while scoring different constructs (**G46**), a research-type classifier testing novelty where the guideline tests setting (**G46**), a bespoke checklist auto-applied in DARE's slot (**G57**), and a search-string builder implementing the technique Kitchenham withdrew (**G45**). Structurally, **the protocol executor's quality gates gate nothing a user experiences** (**G49**, critical) — the four phase-gate services contain zero references to it — which makes most "enforce this as a gate" remediations elsewhere in this catalogue currently unbuildable. **G38** amended: its separated-scores point is an active contradiction, and its purpose-flag point needs a schema change |
 | 2026-08-08 | **G44 added.** `holst_transparent_2025` (PRISMA-trAIce) folded into the corpus as [14 — AI-assisted review reporting](./methodology/14-ai-assisted-review-reporting.md). AI decisions are already *attributable* here — `Reviewer.reviewer_type` plus `PaperDecision.reviewer_id` satisfy the AI-vs-human split most tools cannot retrofit — but not *reproducible*: the prompt behind a decision is lost once `Agent.system_message_template` is edited twice, sampling parameters are never persisted, and an override log cannot answer "what proportion of AI outputs were verified" because agreement leaves no row |
 | 2026-08-07 | **G35–G43 added from the methodology corpus.** Requirements the 54-paper research pass established that were not in this catalogue: protocol-as-preregistration with a validation snapshot; stopping rules and the *assessed vs never-assessed* distinction; escalatable reading depth and per-classification rationale; the quality-instrument shape (purpose flag, ordinal scales, separated scores); threat derivation from protocol configuration; GQM goal→question→field traceability; review-update as a workflow; terminology-variant search; and replication-package export with archival and licence discipline. Seven further requirements were folded into existing gaps rather than given IDs — see the table at the end of that section |
 | 2026-08-07 | **G10 amended** after the research pass behind [`docs/methodology/`](./methodology/). PRISMA 2020 states it "should not be used to assess the conduct or methodological quality of systematic reviews", so the planned checker measures **reporting completeness**, not rigour. SEGRESS replaces PRISMA as the primary standard, being the only one that marks each item required/optional/not-required **per review type**; quality scoring moves to DARE and the Petersen 2015 rubrics. The gap becomes two features rather than one |
@@ -1211,7 +1212,24 @@ the only way a reader can check the call.
 
 ---
 
-### G38 — The quality-instrument model is the wrong shape (F2-SF05) — **medium**
+### G38 — The quality-instrument model is the wrong shape (F2-SF05) — **medium, raised to high 2026-08-08**
+
+> **⚠ AMENDED 2026-08-08 by the G45–G64 compliance audit. Two of this gap's three points are worse
+> than originally recorded.**
+>
+> - **The separated-scores point is an active contradiction, not an absence.**
+>   `backend/src/backend/services/quality_assessment_service.py:compute_aggregate_score` computes one
+>   `sum(score × weight) / sum(weight)` across **every** item on a checklist, and
+>   `QualityChecklistItem` (`db/src/db/models/slr.py:206-245`) has no field distinguishing a
+>   methodological item from a reporting one. Any checklist mixing the two is **summed into a single
+>   number**, which caveat **F2** calls bad practice explicitly.
+> - **The purpose-flag point needs a schema change, not a column.**
+>   `QualityAssessmentChecklist.study_id` is `unique=True` (`db/src/db/models/slr.py:177`), so a study
+>   can hold exactly **one** checklist. The corpus requires quality data used to *select* studies to
+>   live on separate forms from data used to *analyse* them — structurally foreclosed today. This
+>   raises remediation cost from "add a column" to "relax a uniqueness constraint and migrate".
+> - **Partly mitigating**: ordinal scales already exist (`ChecklistScoringMethod.SCALE_1_3` /
+>   `SCALE_1_5` alongside `BINARY`), so point 2 of this gap is closer to met than points 1 and 3.
 
 **Required.** Three properties the corpus establishes, none currently modelled:
 
@@ -1426,6 +1444,551 @@ particular has no section structure its items map onto.
 
 ---
 
+## G45–G64 — compliance audit against the methodology corpus
+
+Added 2026-08-08. Where G35–G43 asked *what does the research require that we have not built*, this
+pass asked the harder question: **does what we already shipped comply with the research?**
+
+The answer changes the character of the catalogue. Most entries below are not absences — they are
+**misrepresentations**: code that carries a name from the literature while doing something the
+literature corrects, forbids, or never described. A missing feature is visible to its user. A chart
+labelled "Research Method" that renders venue data is not.
+
+Every code claim below was verified against the tree at commit `d97416f`.
+
+> **⚠ Read this before triaging.** Six of these findings share a single property: **a researcher
+> using the platform cannot tell they are affected.** G45, G46, G47, G51, G52 and G57 all produce
+> plausible, well-formed output that is wrong for reasons invisible from the UI. They should be
+> triaged ahead of larger but honest gaps.
+
+---
+
+### G45 — Search-string generation implements the technique Kitchenham withdrew (F2-SF02) — **high**
+
+**Required.** Kitchenham 2013 **amendment 1 withdrew** mechanical search-string construction from
+structured questions, because the resulting strings are over-complex and need per-library adaptation
+— caveat **C4** in [11](./methodology/11-caveats-register.md). For **mapping studies** the rule is
+sharper still: use **Population and Intervention only**, because comparison, outcome and context
+"may restrict the search too much and remove articles from the topic area"
+([02](./methodology/02-sms.md), Petersen 2008).
+
+**Current.** `agents/src/agents/prompts/search_builder/system.md:11` instructs the model to "Connect
+PICO/C components with AND", and line 25 fixes the output shape as
+`"(<population terms>) AND (<intervention terms>) AND (<outcome terms>)"`. The agent
+(`agents/src/agents/services/search_builder.py`) accepts population, intervention, comparison,
+outcome and context and threads all of them in. **It takes no study-type parameter**, so the SMS
+P+I-only rule cannot be applied even in principle, and `backend/src/backend/api/v1/search_strings.py`
+gates nothing on study type.
+
+**Why it matters.** Two independent violations in one prompt, found independently by two auditors
+approaching from different chapters. The failure is silent: the generated string looks rigorous and
+comprehensive, and over-restriction is invisible without a recall measurement the platform does not
+take (**G13**).
+
+**Remediation sketch.** Pass `study_type` into the agent; for mapping studies emit P and I only; drop
+the mandatory-AND output template in favour of a simpler string, and record the string's provenance so
+**G13**'s recall evaluation can compare alternatives.
+
+**Cost.** Low — a prompt change plus one plumbed parameter. **See
+[06](./methodology/06-search-and-selection.md), [02](./methodology/02-sms.md).**
+
+---
+
+### G46 — Shipped agent prompts encode criteria the corpus explicitly corrects (F2-SF04, F2-SF06) — **high**
+
+**Required.** Two specific corrections, both flagged in the research as the ones most consequential to
+get right:
+- **Research type is not about novelty.** Validation versus evaluation research is "lab versus
+  real-world industrial context", caveat **E2** in [11](./methodology/11-caveats-register.md).
+- **Petersen's rubric 2 ("Choosing the search strategy") scores how many of the three strategy types**
+  — database, manual, snowball — **were used**, 0/1/2. Rubric 3 ("Evaluating the search") scores the
+  four search-evaluation actions ([02](./methodology/02-sms.md)).
+
+**Current.** `agents/src/agents/prompts/extractor/system.md:11` defines R1 Evaluation as "an empirical
+evaluation of an **existing** technique/tool" — a novelty test the guideline does not use.
+`agents/src/agents/prompts/quality_judge/system.md:19-25` scores rubric 2 on database breadth plus
+test-retest, never checking whether manual search or snowballing were used; rubric 3 scores reviewer
+count and conflict resolution, none of the four search-evaluation actions.
+
+**Why it matters.** The classifier reproduces exactly the mechanism behind the corpus's own finding
+that **73% of papers were designated incorrectly**. The rubrics are worse than wrong — they are wrong
+*under Petersen's names*, and `specs/002-sms-workflow/spec.md` sells them as fidelity to his published
+anchors. A single-database study validated by test-retest scores 2/2 here and 0/2 under Petersen.
+
+**Remediation sketch.** Rewrite R1/R2 around setting rather than novelty. Re-anchor rubric 2 on
+strategy-type count and rubric 3 on the four evaluation actions. Add a fixture test per rubric
+asserting the published anchor cases.
+
+**Cost.** Low — prompt text plus tests. Distinct from **G29**, which concerns hardcoded *scope*, not
+wrong *criteria*. **See [02](./methodology/02-sms.md), [07](./methodology/07-quality-assessment.md).**
+
+---
+
+### G47 — The "Research Method" chart renders venue data (F2-SF06) — **high**
+
+**Required.** Petersen 2015's current recommendation is three topic-independent facets: **venue,
+research type, and research method** ([02](./methodology/02-sms.md)).
+
+**Current.** `backend/src/backend/services/visualization.py:112-113` —
+`elif chart_type == "research_method": key = ext.get("venue_type") or "other"`. `RESEARCH_METHOD`
+exists only as a `ChartType` enum value (`db/src/db/models/results.py:22`). **There is no
+`research_method` extraction field, agent output, or column anywhere.** The chart is titled "Papers by
+Research Method" and labelled the same in `ChartGallery.tsx`.
+
+**Why it matters.** This is not a missing facet; it is a duplicate of the venue chart presented as a
+different one. A researcher reading it believes they have coverage data on case study versus
+controlled experiment versus simulation. They have journal-versus-conference counts. Any map published
+from this chart states something the data cannot support.
+
+**Remediation sketch.** Either add a real `research_method` extraction field and classify into it, or
+**remove the chart**. Shipping it is worse than not having it. Removal is the safe immediate action;
+the field is the correct eventual one.
+
+**Cost.** Low to remove, medium to implement. **See [02](./methodology/02-sms.md).**
+
+---
+
+### G48 — The bubble chart is a one-dimensional scatter (F2-SF06) — **medium**
+
+**Required.** A bubble plot is **two x-y scatterplots sharing an axis**, with bubbles at category
+**intersections** sized by article count — the point being to show one facet's distribution *within*
+another. Report **count and percentage** per category with facet totals
+([02](./methodology/02-sms.md), Petersen 2008).
+
+**Current.** `backend/src/backend/services/visualization.py:51-82` plots label/value pairs along one
+x-axis at `y=0` with size proportional to value — a single-facet chart. No percentage is computed
+anywhere in the file; `_build_classification_data` returns raw counts with no facet-total denominator.
+`specs/002-sms-workflow/spec.md` FR-034 itself asks for eight *single* dimensions, so the spec never
+requested the crossed form.
+
+**Why it matters.** The defining analytical feature of the bubble plot — crossing two facets — is
+absent, and the corpus names bubble plots and heatmaps specifically for that purpose. This is a spec
+defect as much as a code one.
+
+**Remediation sketch.** Accept a facet pair, plot at intersections, and emit count plus percentage
+with facet totals. Amend FR-034 to request pairs.
+
+**Cost.** Medium. **See [02](./methodology/02-sms.md).**
+
+---
+
+### G49 — The protocol executor's quality gates gate nothing a user experiences (F3-SF04) — **critical**
+
+**Required.** The corpus's central design principle is that the platform "should make the *process*
+rigorous and visible, not make the *judgement* disappear", delivered through **enforced gates**
+([12](./methodology/12-platform-implications.md)).
+`docs/features/009-research-protocol-definition.md` states the executor "replaces the hardcoded
+`phase_gate` service" and that tasks "are blocked until quality gates pass".
+
+**Current.** **It replaces nothing.** The four services that compute `unlocked_phases` —
+`phase_gate.py`, `slr_phase_gate.py`, `rr_phase_gate.py`, `tertiary_phase_gate.py`, dispatched from
+`backend/src/backend/api/v1/studies/__init__.py` — contain **zero references** to
+`TaskExecutionState`, `ProtocolExecutor` or `protocol_executor` (verified by grep across all four).
+They gate on the narrative protocols' `status == VALIDATED`. In the UI, `ExecutionStateView` is
+mounted in a **separate Protocol tab**, while the phase tabs that actually unlock screening,
+extraction, synthesis and reporting are dispatched independently.
+
+**Why it matters.** A researcher can configure a `human_sign_off` gate before extraction, watch it
+fail in the Protocol tab, and extract data in the Phase 4 tab regardless. **The entire quality-gate
+subsystem is a fully-functional decorative twin of the real gating system.** This invalidates the
+premise that any methodological caveat can be enforced as a gate today, for every study type — which
+makes it a precondition for **G51** and for most of the "enforceable as a gate" remediations
+throughout this catalogue.
+
+**Remediation sketch.** Make the phase-gate dispatch consult `TaskExecutionState` where a protocol is
+assigned, falling back to the narrative status where it is not. Alternatively retire the four phase
+gates in favour of the executor, which is what the PRD claims already happened.
+
+**Cost.** High, structural — but it is the keystone: several other gaps' remediations assume gates
+work. **See [12](./methodology/12-platform-implications.md).**
+
+---
+
+### G50 — Editing an assigned protocol silently destroys the study's execution history (F3-SF04) — **high**
+
+**Required.** A record of what a study's process actually did must survive edits to the process
+definition — the commitment property in [13](./methodology/13-open-science.md), and caveat **H1**,
+"report deviations from the protocol; the failure is not deviating but concealing it".
+
+**Current.** `backend/src/backend/services/protocol_service.py:937-941` deletes every `ProtocolEdge`
+and `ProtocolNode` and recreates them with new primary keys, **with no check against
+`StudyProtocolAssignment`**. `task_execution_state.node_id` carries `ondelete="CASCADE"` to
+`protocol_node.id` (`db/alembic/versions/0018_research_protocol_definition.py:892`), so every assigned
+study loses its whole execution history — activation and completion timestamps, gate-failure detail —
+and nothing re-seeds it. No frontend warning exists.
+
+**Why it matters.** **The codebase already knows this class of operation needs a guard, and wrote one
+twice**: `delete_protocol` returns 409 when assignments exist, and `assign_protocol` calls
+`_assert_no_progress`. The guard is missing from precisely the third path — edit-in-place — which is
+what the dual editor exists to invoke. Loss is silent and unrecoverable.
+
+**Remediation sketch.** Guard `update_protocol` on `study_assignments`: refuse, or fork a new protocol
+version and re-point the assignment, preserving the old node rows. Add the confirmation dialog the
+other two paths imply.
+
+**Cost.** Low — the pattern exists twice in the same file. **See
+[13](./methodology/13-open-science.md).**
+
+---
+
+### G51 — Default templates permit extraction before appraisal, and the gate that would stop it does not exist (F2-SF06) — **high**
+
+**Required.** The sharpest methodological warning in the corpus: **extraction decoupled from quality
+appraisal produces results "very quickly [that] will be wrong"** — caveat **E9**, and the first of the
+three cautions in [12](./methodology/12-platform-implications.md). Quoted in this repo's own
+`CLAUDE.md`.
+
+**Current.** Three failures stacked:
+1. **The seeded templates do not order it.** In the SLR template, `extract_data`'s only incoming edge
+   is from `full_text_review`; `assess_quality` and `check_irr` are *siblings*, not predecessors
+   (`0018_research_protocol_definition.py:384-386`). `activate_eligible_tasks` activates a node when
+   all edge-predecessors are complete — so extraction may run before, during, or entirely without
+   appraisal. The same shape recurs in **Tertiary** and **Rapid**.
+2. **The metric reader does not exist.** A `qa_completeness == 1.0` gate is unbuildable: grep for
+   `qa_completeness` across `backend/src`, `db/src`, `frontend/src` returns **nothing**. The real
+   registry (`protocol_executor.py:123-127`) is `kappa_coefficient`, `accepted_paper_count`,
+   `test_set_recall`, `coverage_recall`.
+3. **Even a correct gate would not fire**, per **G49**.
+
+**Why it matters.** Fixing any one layer alone changes nothing, which is why this is one gap and not
+three. Of six seeded gates, **five are `completion_check`, which returns `passed=True`
+unconditionally** (`_eval_completion_check`, `protocol_executor.py:184-199`) — it verifies only that
+someone clicked complete. Two working readers, `test_set_recall` and `coverage_recall`, are wired into
+zero templates.
+
+**Remediation sketch.** Add the appraisal→extraction edge to the SLR, Tertiary and Rapid templates;
+implement a `qa_completeness` reader; land **G49** so the gate binds. Validate `metric_name` in
+`QualityGateEditor.tsx` against the reader registry — it is currently free text, and a typo fails
+forever with an empty remediation string.
+
+**Cost.** Medium, and dependent on **G49**. **See [12](./methodology/12-platform-implications.md),
+[08](./methodology/08-extraction-and-synthesis.md).**
+
+---
+
+### G52 — Generated validity sections are boilerplate in SLR and absent in Tertiary (F2-SF10) — **high**
+
+**Required.** Every identified threat must carry a **mitigation or an explicit acknowledgement that it
+is not mitigated**; caveat **H6**: "a threats section without mitigations or acknowledgements is
+decoration" ([09](./methodology/09-threats-to-validity.md), Ampatzoglou step 4). Every study type
+needs one, mapping studies included.
+
+**Current.** `backend/src/backend/services/slr_report_service.py:_build_validity` returns a **fixed
+string** for every SLR — "Potential threats to validity include publication bias, database coverage
+limitations, and inter-rater variability during screening" — optionally appending the protocol's
+search-strategy text. It is not conditioned on whether the study used one database, one reviewer, or
+snowballing; it carries no mitigation and no acknowledgement flag. `TertiaryReport`
+(`backend/src/backend/services/tertiary_report_service.py:52-86`) has **no validity field at all** —
+grep for `validity|threat` in that file returns zero.
+
+**Why it matters.** The SLR case is the exact failure the source names by name, shipped in the only
+report path that emits validity text. The Tertiary case is worse: there is nowhere to put one.
+`docs/features/003-slr-workflow.md:63` advertises a "validity discussion", so the PRD's promise is met
+in name only.
+
+**Remediation sketch.** Derive threats from actual study configuration — the Rapid Review's
+`RRThreatToValidity` auto-derivation is the working model to generalise (**G39**) — and require a
+mitigation or an explicit "acknowledged, not mitigated" flag per threat. Add the field to
+`TertiaryReport`.
+
+**Cost.** Medium. **See [09](./methodology/09-threats-to-validity.md).**
+
+---
+
+### G53 — Report schemas omit κ, Abstract, typed Title and Opening (F2-SF10) — **medium**
+
+**Required.** SEGRESS **requires methods of assessing agreement (item 8) and reporting agreement
+statistics (items 16a, 18)** — SE reviews use κ, where PRISMA leaves it implicit. Item 1 requires the
+title to **name the review type and topic**; a new **"Opening"** item requires broad problem → area →
+niche → focus; items 1–9, including the Abstract, are required for **every** review type
+([10](./methodology/10-reporting-and-evaluation.md)).
+
+**Current.** The platform genuinely computes and stores κ — `inter_rater_service.py`,
+`InterRaterAgreementRecord` with pre/post-discussion phases — but
+`backend/src/backend/services/slr_report_service.py` **never reads it**: `kappa` and
+`InterRaterAgreement` appear zero times. `abstract` appears zero times in either report service. The
+title is hardcoded `f"SLR Report: {study_name}"`, not derived from `StudyType`.
+
+**Why it matters.** The κ omission is a pure wiring gap — the number exists, computed, one join away.
+The schema omissions are a precondition for **G10**: a SEGRESS checker built against these Pydantic
+models would have nothing to check items 1–4 against.
+
+**Remediation sketch.** Join `InterRaterAgreementRecord` into report generation and render both
+phases. Add `abstract` and `opening` fields; derive the title from `StudyType`.
+
+**Cost.** Low. **See [10](./methodology/10-reporting-and-evaluation.md).**
+
+---
+
+### G54 — Grey literature has no appraisal instrument (F2-SF03) — **high**
+
+**Required.** Garousi's **20-item grey-literature quality checklist**, scored 1 / 0.5 / 0 across eight
+categories with an inclusion threshold of **10/20**, plus the **seven-question inclusion decision
+aid** whose rationale must be stated and reported ([05](./methodology/05-grey-literature-mlr.md)). The
+chapter calls this "required by the guidelines, wanted by experts, and performed by almost nobody" —
+and **90% of reviews using grey literature perform no grey-specific appraisal** (caveat **F10**).
+
+**Current.** `db/src/db/models/slr.py:446` — `GreyLiteratureSource` has six content fields
+(`source_type`, `title`, `authors`, `year`, `url`, `description`). No score, no checklist link, no
+per-item rows. Grep for `garousi|20-item|decision aid` across all five packages returns nothing.
+
+**Why it matters.** Distinct from **G28**, which is about *discovery* — grey literature not being
+findable. This is *appraisal*: even the sources a researcher has manually registered cannot be scored.
+Different remediation, different table. The corpus identifies this as its single highest-value product
+opportunity, and it is bounded and additive rather than structural.
+
+**Remediation sketch.** A `GreyLiteratureAppraisal` table of 20 scored items keyed to the source, the
+0/0.5/1 scale, the 10/20 threshold surfaced as an inclusion recommendation, and a decision-aid capture
+form storing the stated rationale.
+
+**Cost.** Medium, additive. **See [05](./methodology/05-grey-literature-mlr.md).**
+
+---
+
+### G55 — Citation intent is fetched from Semantic Scholar, then discarded (F2-SF03) — **high**
+
+**Required.** Step 4 of backward snowballing is to **examine the place of the reference in the text and
+its surrounding context** — "the step that distinguishes the method from mechanical
+reference-following" ([06](./methodology/06-search-and-selection.md), Wohlin 2014). Caveat **D3**:
+title-only screening lost **5 of 11** papers in Wohlin's own study.
+
+**Current.** `researcher-mcp/src/researcher_mcp/tools/snowball.py:84` requests the `intents` field,
+line 95 reads it, line 102 maps it to an intent enum. Downstream, grep for `intent` across
+`backend/src/backend/jobs/` and `db/src/db/models/candidate.py` returns **nothing** — no column, no
+consumer. Snowballed candidates are screened on title and abstract exactly like database hits.
+`docs/features/010-database-search-and-retrieval.md:252-259` specifies the intent field, without
+naming anything that consumes it.
+
+**Why it matters.** The signal that would implement Wohlin's distinguishing step is already fetched and
+paid for, then dropped one layer later. Unusually cheap to fix for the methodological value returned.
+
+**Remediation sketch.** Persist `citation_intent` on `CandidatePaper`, surface it in the screening UI,
+and pass it to the screening agent so context informs the decision.
+
+**Cost.** Low. **See [06](./methodology/06-search-and-selection.md).**
+
+---
+
+### G56 — No per-database search date or years covered (F2-SF03) — **medium**
+
+**Required.** Per digital library, record the database name, the search strategy used, the **date of
+search**, and the years covered — plus a rationale for the choice of libraries
+([06](./methodology/06-search-and-selection.md)). Caveat **H3**: **search dates go unreported**, the
+specific omission that motivated a SEGRESS change to item 5.
+
+**Current.** `db/src/db/models/search_exec.py:53-55` — `databases_queried` is a flat JSON list of index
+names with a single execution-level `started_at`/`completed_at`. No per-database date, no years-covered
+field, no record of venues deliberately not searched.
+
+**Why it matters.** The corpus calls this "trivially recordable by software… a small, clean win", and
+it is a direct SEGRESS conformance item. A search re-run against one database later cannot be
+distinguished from the original sweep.
+
+**Remediation sketch.** Promote `databases_queried` to a child table with per-database
+`searched_at`, `years_from`, `years_to`, and `strategy`.
+
+**Cost.** Low. **See [06](./methodology/06-search-and-selection.md).**
+
+---
+
+### G57 — Tertiary studies ship a bespoke checklist in DARE's slot (F2-SF05) — **high**
+
+**Required.** **DARE is the instrument for tertiary studies**, because their primary studies are
+secondary studies — four questions scored Y = 1 / P = 0.5 / N = 0 with published anchors
+([07](./methodology/07-quality-assessment.md), [04](./methodology/04-tertiary.md)). SEGRESS routes
+tertiary studies to the mapping-study reporting profile *except* that quality assessment returns, with
+DARE as the instrument.
+
+**Current.** `backend/src/backend/services/tertiary_qa_service.py:20-83` **auto-seeds** a bespoke
+six-item checklist, "Secondary Study Quality Assessment", each item scored `SCALE_1_3`. Its items
+mirror the PRD's six bullets. **`DARE` appears nowhere in the codebase** — verified across
+`backend/src`, `db/src`, `frontend/src`, `agents/src`.
+
+**Why it matters.** This is not DARE's absence as a future feature (**G10** covers that). It is a
+different, un-cited instrument **automatically applied** in DARE's place for every Tertiary study
+created, on a different scale, with no anchors and no provenance. Scores are not comparable to any
+published tertiary study, and caveat **F8** — mapping studies score structurally lower on DARE — cannot
+even be reasoned about.
+
+**Remediation sketch.** Seed DARE's four questions with their 0/0.5/1 anchors as the default Tertiary
+checklist, keeping the bespoke six as an optional supplement. Restoring DARE's dropped fifth
+(synthesis) criterion as an optional item is recommended by caveat **A7**.
+
+**Cost.** Low — the checklist mechanism is a template system already. **See
+[07](./methodology/07-quality-assessment.md), [04](./methodology/04-tertiary.md).**
+
+---
+
+### G58 — Quantitative data has no home on the extraction form (F2-SF06) — **medium**
+
+**Required.** The extraction form must capture everything the questions and quality criteria need, and
+**numerical data are a prerequisite for meta-analysis**; the form is defined and piloted at protocol
+time ([08](./methodology/08-extraction-and-synthesis.md)).
+
+**Current.** `db/src/db/models/extraction.py:42-95` — `DataExtraction` has no `effect_size`, `se`,
+`ci_lower`/`ci_upper` or `sample_size` columns. The synthesis strategies take these via a
+caller-supplied `parameters["papers"]`, and `SynthesisConfigForm.tsx` presents them as **blank,
+freely-typed fields** appended per paper. Nothing pre-populates them from an extraction record and
+nothing writes them back.
+
+**Why it matters.** Every pooled effect size the platform reports rests on numbers a researcher
+retyped at synthesis-configuration time, with no audit trail, no reuse between runs, and **no
+traceability from a Forest plot back to the extraction that produced its inputs**. The statistics are
+sound; their provenance is not.
+
+**Remediation sketch.** Add the quantitative fields to `DataExtraction`, pre-populate the synthesis
+form from accepted papers' extractions, and treat manual entry as an override that is recorded.
+
+**Cost.** Medium. **See [08](./methodology/08-extraction-and-synthesis.md).**
+
+---
+
+### G59 — Rapid Review protocol changes are neither justified nor preserved (F2-SF11) — **high**
+
+**Required.** A Rapid Review protocol "is naturally inclined to change during the review… **changes
+after protocol definition must be documented and justified transparently**"
+([03](./methodology/03-rapid-review.md), Cartaxo 2020). Caveat **B10**. The chapter calls this the
+method's central rule.
+
+**Current.** `backend/src/backend/services/rr_protocol_service.py:66-71` —
+`update_protocol(study_id, data, acknowledge_invalidation, db)` takes **no justification parameter**,
+and grep for `change_reason|justification|amendment|deviation` across that service and
+`db/src/db/models/rapid_review.py` returns **zero**. Editing a validated protocol resets it to `DRAFT`
+and **mutates the row in place**, so no prior version survives to diff against.
+
+**Why it matters.** This is the RR-specific instance of **G35**, and sharper: for SLR a protocol change
+is an exception, whereas for RR the method *expects* it, so this fires on the normal path. RR is also
+the one workflow confirmed to **destroy** prior state rather than merely fail to snapshot it.
+
+**Remediation sketch.** Require a justification string on any post-validation edit; snapshot the prior
+protocol; render the change history in the Evidence Briefing's limitations section, where the
+disclosure regime already renders threats.
+
+**Cost.** Low. **See [03](./methodology/03-rapid-review.md).**
+
+---
+
+### G60 — Rapid Review synthesis cannot express recommendations, and its completion gate cannot detect their absence (F2-SF10) — **high**
+
+**Required.** "**Conclusions and recommendations are mandatory, not optional**… avoid presenting a
+report with findings only" ([03](./methodology/03-rapid-review.md)). Caveat **H8**: an RR report with
+findings but no recommendations **fails the method**. A practitioner in the source study said what was
+missing was "a conclusion, the researcher's comments".
+
+**Current.** `db/src/db/models/rapid_review.py:277-318` — `RRNarrativeSynthesisSection` has
+`narrative_text`, `ai_draft_text`, `is_complete`. No recommendations or conclusion column.
+`narrative_synthesis_service.is_synthesis_complete` gates on `all(s.is_complete)` — a boolean a
+researcher sets, satisfiable by pure description. Grep for `recommendation` across the model, the
+service and `agents/src/agents/prompts/narrative_synthesiser/system.md` returns **zero**: the AI
+drafting prompt never asks for one either.
+
+**Why it matters.** The corpus names this as the single thing practitioners said was missing from an
+otherwise well-received format, and the platform's completion gate is structurally incapable of
+detecting it. The Evidence Briefing can be published in the failing state.
+
+**Remediation sketch.** Add a `recommendations` field per section or per study, require it non-empty
+for completion, and add it to the drafting prompt and the briefing template.
+
+**Cost.** Low. **See [03](./methodology/03-rapid-review.md).**
+
+---
+
+### G61 — Rapid Review's three-substep screening is not modelled (F2-SF04) — **medium**
+
+**Required.** The RR's defining procedural departure from SLR/SMS two-substep screening is a **three**
+-substep pass: **title-only → abstract → full content**, the title-only stage being the speed
+mechanism, with an acknowledged false-negative cost that must be recorded rather than hidden
+([03](./methodology/03-rapid-review.md)).
+
+**Current.** `db/src/db/models/candidate.py:16-30` — `CandidatePaperStatus` and `PaperDecisionType`
+are flat and identical for every study type. Grep for `title_only` across `backend/src` and `db/src`
+returns nothing. No per-study-type screening substep exists.
+
+**Why it matters.** RR cannot express the one screening procedure its source paper calls RR-specific,
+and therefore cannot record the concession — which is exactly what the concession→threat derivation
+(**G39**, `RRThreatToValidity`) would need in order to raise the corresponding validity threat. Related
+to **G37** (reading depth) but distinct: that is about escalation *within* a stage, this is a stage
+that does not exist.
+
+**Remediation sketch.** Add a screening-substep marker to `PaperDecision` and let the RR phase gate
+sequence three substeps; auto-derive the title-only threat when the stage is used.
+
+**Cost.** Medium. **See [03](./methodology/03-rapid-review.md).**
+
+---
+
+### G62 — SLR duplicate-publication handling is promised but absent (F2-SF03) — **medium**
+
+**Required.** **Never include the same data twice**; use the **most complete** report while consulting
+all versions, and **amendment 7 requires reporting how duplicates were handled** — caveat **E10**
+([01](./methodology/01-slr.md)).
+
+**Current.** `docs/features/003-slr-workflow.md:41` explicitly promises "**Version Deduplication**:
+when both a conference paper and its journal version exist, only the most recent version is retained".
+`backend/src/backend/services/dedup.py` implements only **bibliographic-identity** dedup — exact DOI,
+or fuzzy title ≥ 0.90 plus author overlap. That catches one publication indexed by two databases, not
+two *different* publications reporting one *study*. `candidate.py:61`'s `duplicate_of_id` carries no
+narrative of how the duplicate was handled, and no report section discloses it.
+
+**Why it matters.** A named, specified SLR feature with no implementation, plus an amendment-level
+reporting requirement with no field to satisfy it. Closely tied to **G6** — conference-versus-journal
+duplication is precisely the case where a paper is not a study.
+
+**Remediation sketch.** Detect same-study-different-venue candidates (author set plus title
+similarity plus year proximity), let a reviewer confirm the link, retain the most complete version,
+and emit a duplicate-handling statement in the report.
+
+**Cost.** Medium; depends on **G6** for the clean model. **See [01](./methodology/01-slr.md).**
+
+---
+
+### G63 — Tertiary's consensus-and-minority-report extraction protocol is unimplemented (F2-SF06) — **high**
+
+**Required.** [04](./methodology/04-tertiary.md) carries **the only fully specified multi-rater
+extraction protocol in the corpus**: two researchers extract independently **with a justification per
+answer** → consensus → a **third reviewer independently extracts all studies** → the two original
+extractors discuss disagreements against the third's extraction, with **the third deliberately
+excluded from the final discussion** so no individual dominates.
+
+**Current.** `db/src/db/models/tertiary.py:177-254` — `TertiaryDataExtraction` is single-extractor: one
+`extracted_by_agent`, one `validated_by_reviewer_id`, one scalar `reviewer_quality_rating`. No second
+extractor, no consensus record, no third-reviewer pass, **no per-answer justification field**.
+
+**Why it matters.** The chapter flags the exact misreading this code embodies: the third reviewer
+"supplies an independent reading but must not adjudicate", which is "deliberately different" from the
+tie-breaker pattern the platform implies. Justification per answer is described as mandatory, not
+optional metadata — and it is the same field **G37** wants for classification rationale.
+
+**Remediation sketch.** Model extraction as N independent passes with per-answer justification, a
+consensus record, and an arbitrator role flagged as non-adjudicating and excluded from the resolution
+step.
+
+**Cost.** High, structural. **See [04](./methodology/04-tertiary.md).**
+
+---
+
+### G64 — Narrative and thematic synthesis run no sensitivity analysis (F2-SF06) — **medium**
+
+**Required.** "**Sensitivity analysis is required regardless of approach** — repeat over subsets…
+with a descriptive synthesis it is more subjective but still owed"
+([08](./methodology/08-extraction-and-synthesis.md)).
+
+**Current.** `backend/src/backend/services/synthesis_strategies.py` — `NarrativeSynthesisStrategy.run`
+and `ThematicAnalysisStrategy.run`, the two Tertiary strategies, return a `SynthesisOutput` with only
+`qualitative_themes` set. Neither accepts a `subsets` or `exclude_paper_ids` parameter nor populates
+`sensitivity_analysis`. The three SLR-side strategies all do.
+
+**Why it matters.** The capability exists three times over in the same file; the two Tertiary
+strategies simply did not receive it, so Tertiary conclusions are the least testable in the platform
+despite sitting furthest from the primary evidence.
+
+**Remediation sketch.** Add `exclude_paper_ids` to both strategies and populate `sensitivity_analysis`,
+mirroring `QualitativeSynthesizer`.
+
+**Cost.** Low. **See [08](./methodology/08-extraction-and-synthesis.md).**
+
+---
+
 ### Requirements folded into existing gaps rather than given new IDs
 
 | Requirement | Gap it belongs to | Note |
@@ -1435,6 +1998,13 @@ particular has no section structure its items map onto.
 | **Publishable coding schema and coding rules** | **G8** | Persisting codes as first-class rows serves both the synthesis method and the open-science fallback when data cannot be released — one change, two justifications |
 | **Exclusion after inclusion, with a reason** | **G14** | Papers pass full-text screening and still fail during extraction; the flow diagram must show it, and "excluded with reasons, per reason" is a PRISMA requirement |
 | **Grey-source metadata minimum** — URL, access date stamped at retrieval, author, title, outlet, archived copy | **G28** | The access date is unrecoverable after the fact. 24.8% of grey items in one study had **no URL recorded at all** |
+| **Anti-fishing rule** — anticipated sources of heterogeneity must be named in the protocol, not post hoc | **G39** | `ReviewProtocol` has no such field; heterogeneity appears only as a run-time `heterogeneity_threshold` parameter chosen when synthesis is executed. Caveat **G7** |
+| **Complementary questions** — the questions the review deliberately does *not* answer | **G35** | Staples & Niazi report this sharpened both selection and extraction. `ReviewProtocol.research_questions` is the only RQ-shaped field. Caveat **B7** |
+| **The graph protocol engine has no committed state** | **G35** | `ResearchProtocol` (`db/src/db/models/protocols.py`) has only `version_id` for optimistic locking — no draft→validated lifecycle — so the engine cannot express "committed" in the sense G35's remediation assumes |
+| **No threats-to-validity task type outside Rapid** | **G39** | The `ProtocolTaskType` allowlist permits `IDENTIFY_THREATS_TO_VALIDITY` only for Rapid studies, so generalising `RRThreatToValidity` needs an allowlist change in the graph engine too |
+| **No GQM-linked node data type** | **G40** | `NodeDataType` has no research-question or goal-linked member, so even after a GQM join table exists the protocol graph has no typed slot to carry traceability between nodes |
+| **SMS keywording is one-shot, not iterative open coding** | **G8** | The "merge or rename codes as the structure settles" step has no implementation; the subtopic chart counts raw keyword strings. Widens G8's scope from SLR thematic synthesis to SMS keywording |
+| **Tertiary reviewer allocation** — two of five drawn at random plus one constant reviewer, at both screening steps | **G5** | A specific recipe from one worked tertiary study rather than a universal requirement; recorded for completeness, priority debatable |
 | **Manual search is not optional** | **G3** | Petersen 2015 says it "may be more effective"; Kitchenham 2013 requires manual search of recent proceedings to cover indexing lag |
 | **Two disjoint seed sets** — one to build the string, one to evaluate it | **G13a** | Using one set for both measures memorisation, not recall |
 
