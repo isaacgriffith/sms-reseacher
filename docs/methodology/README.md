@@ -158,8 +158,14 @@ Known limits, recorded rather than hidden:
 > citation key used throughout these documents. Note that **`research/` is gitignored**, so this
 > deletion is not recorded in version control.
 >
-> Second intake trap, still live: **`kitchenham_systematic_2010` carries no `.pdf` extension**, so
-> `research/*.pdf` globs silently miss it. It is a valid 22-page PDF.
+> **Second intake trap, also resolved 2026-08-08.** `kitchenham_systematic_2010` carried **no `.pdf`
+> extension**, so every `research/*.pdf` glob silently skipped it — including the first duplicate
+> check run during this pass. Renamed to `kitchenham_systematic_2010.pdf`; the citation key is
+> unchanged, so no register entry moved. `research/` now contains 55 files, all `.pdf`.
+>
+> A footnote on how it was mis-measured: `file` reported this PDF as **22 pages** and `pdfinfo`
+> reports **14**. `pdfinfo` parses the page tree and is authoritative; `file` guesses. Size a corpus
+> with `pdfinfo`, as [Stage 1](./PLAYBOOK.md#stage-1--intake) already does.
 
 ### Process definitions and standards — the normative core
 

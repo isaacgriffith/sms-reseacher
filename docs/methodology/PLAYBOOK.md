@@ -98,7 +98,8 @@ for f in *; do printf "%5s  %s\n" "$(pdfinfo "$f" 2>/dev/null | awk '/^Pages:/{p
 # Dedupe on extracted text instead (run after Stage 2), then eyeball title + page count.
 md5sum "$SCRATCH"/txt/*.txt | sort | awk '{print $1}' | uniq -d
 
-# Note `ls -A`, not `*.pdf`: at least one corpus file has no extension.
+# Enumerate with `ls -A`, not `*.pdf`. Every file carries the extension today, but one did not
+# until 2026-08-08 and a `*.pdf` glob skipped it silently for months. Nothing enforces this.
 ls -A
 ```
 
@@ -359,8 +360,17 @@ These are the parts worth keeping even if the mechanics change.
 > second, so the surviving filename is the correct one. `research/` is gitignored, so the deletion is
 > not in version control.
 >
-> Second intake trap, still live: **`kitchenham_systematic_2010` has no `.pdf` extension**, so every
-> `*.pdf` glob in this playbook silently skips it. Use `ls -A` or `find`, not `*.pdf`.
+> **Second intake trap, also resolved 2026-08-08.** `kitchenham_systematic_2010` had **no `.pdf`
+> extension**, so every `*.pdf` glob in this playbook silently skipped it — including the duplicate
+> check above, on its first run. Renamed to `kitchenham_systematic_2010.pdf`. The citation key never
+> carried the extension, so no register row changed.
+>
+> **The habit survives the fix**: keep enumerating with `ls -A`, because the next paper dropped into
+> `research/` may arrive the same way and nothing enforces the extension.
+>
+> Related measurement trap: `file` reported that PDF as **22 pages**, `pdfinfo` as **14**. `pdfinfo`
+> parses the page tree and is authoritative; `file` guesses from the header. Stage 1 below uses
+> `pdfinfo` — keep it that way.
 
 Legend for *Depth*: **F** = read in full · **T** = targeted sections · **V** = read as page images
 (no text layer).
