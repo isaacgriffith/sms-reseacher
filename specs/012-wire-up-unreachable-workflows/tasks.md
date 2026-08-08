@@ -50,8 +50,17 @@ database by `backend/tests/integration/test_search_pipeline_screening.py`.
 
 ## Phase 1: Setup (Shared Infrastructure)
 
-- [ ] T001 Record the baseline in `specs/012-wire-up-unreachable-workflows/quickstart.md` by running `python3 scripts/audit_unreachable_frontend.py` (expect 23 unreachable), `grep -rn "future sprint" frontend/src` (expect 2), and `grep -c "test.fixme" frontend/e2e/screen-paper.spec.ts` (expect 3) — if any already passes, the plan needs revisiting before work starts
-- [ ] T002 [P] Verify the baseline is clean by running every hook in `.pre-commit-config.yaml` via `uv run pre-commit run --all-files`, so later gate failures are attributable to this feature rather than pre-existing
+- [X] T001 Record the baseline in `specs/012-wire-up-unreachable-workflows/quickstart.md` by running `python3 scripts/audit_unreachable_frontend.py` (expect 23 unreachable), `grep -rn "future sprint" frontend/src` (expect 2), and `grep -c "test.fixme" frontend/e2e/screen-paper.spec.ts` (expect 3) — if any already passes, the plan needs revisiting before work starts
+
+  > Recorded 2026-08-08. Nothing has started passing, so the plan stands. Audit: 23, exit 1.
+  > `test.fixme`: 3 in `screen-paper.spec.ts`, 8 suite-wide — both unchanged. The `"future sprint"`
+  > grep returned **4**, not 2, and the discrepancy is TREF2's doing: two literal `<Typography>`
+  > lines in `StudyPage.tsx` became one `futureSprintPlaceholder(phase)` factory in
+  > `studyTypeDispatch.tsx`, which TREF1's characterisation test then names three times. One
+  > production occurrence, three assertions about it. **T032 is therefore a replacement, not a
+  > deletion** — see the note in `quickstart.md`.
+
+- [X] T002 [P] Verify the baseline is clean by running every hook in `.pre-commit-config.yaml` via `uv run pre-commit run --all-files`, so later gate failures are attributable to this feature rather than pre-existing — 9/9 pass on 2026-08-08
 
 ---
 
@@ -60,12 +69,43 @@ database by `backend/tests/integration/test_search_pipeline_screening.py`.
 > Test fixtures every story's e2e depends on. Without these the four journeys cannot be driven
 > against a live backend, which FR-021 requires.
 
-- [ ] T003 Extend `scripts/seed_e2e_user.py` with a Tertiary study owned by the seeded research group, so US2 has something to open
-- [ ] T004 [P] Extend `scripts/seed_e2e_user.py` with a study holding accepted papers and at least one extraction record, so US3 has data to display
-- [ ] T005 [P] Extend `scripts/seed_e2e_user.py` with a candidate paper carrying two disagreeing reviewer decisions, so US1 can exercise the conflict path
-- [ ] T006 [P] Extend `scripts/seed_e2e_user.py` with a second research-group study, so Tertiary seed import has a source to offer
+- [X] T003 Extend `scripts/seed_e2e_user.py` with a Tertiary study owned by the seeded research group, so US2 has something to open — `_seed_tertiary_study`. Deliberately carries **no** protocol row: phase 1 is always unlocked for a Tertiary study, and seeding a *validated* protocol would skip past the first step of the journey T025 exists to exercise
+- [X] T004 [P] Extend `scripts/seed_e2e_user.py` with a study holding accepted papers and at least one extraction record, so US3 has data to display — `_seed_extraction_fixture`. Two **additional** accepted papers on the main study rather than a re-status of `SEED_PAPERS`, which `screen-paper.spec.ts` needs to stay pending; one carries an extraction, one is left bare so the view has a populated row and an empty one
+- [X] T005 [P] Extend `scripts/seed_e2e_user.py` with a candidate paper carrying two disagreeing reviewer decisions, so US1 can exercise the conflict path — `_seed_conflict_fixture`. Both reviewers are **human**: `papers.py` filters to `ReviewerType.HUMAN` before comparing outcomes, so a human-versus-AI pair would leave `conflict_flag` false however much they disagree
+- [X] T006 [P] Extend `scripts/seed_e2e_user.py` with a second research-group study, so Tertiary seed import has a source to offer — `_seed_seed_import_source`. Typed SMS (the panel filters to SMS/SLR/Rapid) and carrying **accepted** papers (`import_seed_study` raises `ValueError` on a source with none), so it both lists and imports
 
 **Checkpoint**: `uv run python scripts/seed_e2e_user.py` is idempotent and creates every fixture the four journeys need.
+
+---
+
+## Defects found during implementation
+
+> Found while reading code this feature depends on, not by looking for them. Each lands as its own
+> `fix:` commit carrying no feature change (Principle IV), placed at the point where the work that
+> depends on it begins.
+
+- [ ] TFIX1 **The SMS phase 4/5 unlock query has no `study_id` filter.** `get_unlocked_phases` in `backend/src/backend/services/phase_gate.py` gates phases 4 and 5 on `select(DataExtraction).where(DataExtraction.extraction_status != ExtractionStatus.PENDING)` — a query over the whole table. One non-pending extraction *anywhere in the database* unlocks phases 4 and 5 for *every* SMS study, including studies with no papers, no search, and no extraction of their own. Fix by joining `CandidatePaper` and constraining `CandidatePaper.study_id == study_id`, which is what `tertiary_phase_gate.py` already does for its own phase 5. **Blocks US3**: T028 asserts phases 4 and 5 render extraction and quality reporting, and until this is fixed that test can pass for the wrong reason — T004's seeded extraction unlocks those phases globally, so T028 would be green even if the study under test had nothing of its own to show. Land it **before** T029
+
+  > **Reproduced 2026-08-08** against the fixtures T003–T006 create. `E2E Source Mapping Study`
+  > (study 3) holds two accepted papers and **zero** `DataExtraction` rows of its own. Given a PICO
+  > so the gate reaches the phase 4/5 query rather than returning early at phase 2,
+  > `get_unlocked_phases(3)` returns `[1, 2, 3, 4, 5]` — phases 4 and 5 unlocked solely because
+  > study 1 has an extraction. A demonstrated defect, not an inference from reading.
+  >
+  > Add a regression test alongside the fix: two SMS studies both past phase 3, an extraction on
+  > the first only, asserting the second does not reach phase 4. Without that assertion the defect
+  > stays invisible to the suite, which is how it survived this long.
+
+- [ ] TFIX2 **`alembic upgrade head` does not work from the repository root.** `alembic.ini` lives in `db/`, there is no root `alembic.ini`, and the root `pyproject.toml` has no `[tool.alembic]` section — so `uv run alembic upgrade head` from the repo root fails with `FAILED: No 'script_location' key found in configuration.` It is documented in the root position in **two** places a newcomer follows first: `CLAUDE.md` ("Database Migrations", all three commands, plus the manual stack startup under e2e) and this feature's own `quickstart.md` (Setup). Fix the documented commands to `(cd db && uv run alembic upgrade head)` — the same treatment the coverage commands already got — or add a root `alembic.ini` pointing at `db/alembic`. **Blocks no code, blocks every fresh setup**, including the `quickstart.md` Setup block this feature tells a reader to run before anything else
+
+  > Found while setting up a database to verify T003–T006. Related, and worth stating where a
+  > reader will hit it: **the migrations do not run on SQLite at all.** `0014` calls `add_column`
+  > with a foreign-key constraint outside batch mode, and the SQLite dialect raises
+  > `NotImplementedError: No support for ALTER of constraints`. A local SQLite database therefore
+  > has to be built with `Base.metadata.create_all`, which is what the `db` test suite does — the
+  > documented `alembic upgrade head` path is PostgreSQL-only. Neither file says so, and
+  > `CLAUDE.md`'s manual e2e startup explicitly pairs `alembic upgrade head` with
+  > `DATABASE_URL=sqlite+aiosqlite:///./dev.db`, which cannot work.
 
 ---
 
@@ -288,13 +328,18 @@ in one commit — a required field and its callers must move together.
 
 | Phase               | Tasks       | Count  |
 | ------------------- | ----------- | ------ |
-| Refactoring (C1–C3) | TREF1–TREF6 | 6      |
-| Setup               | T001–T002   | 2      |
-| Foundational        | T003–T006   | 4      |
+| Refactoring (C1–C3) | TREF1–TREF9 | 9      |
+| Setup ✅            | T001–T002   | 2      |
+| Foundational ✅     | T003–T006   | 4      |
+| Defects found       | TFIX1–TFIX2 | 2      |
 | US1 (P1) 🎯 MVP     | T007–T019   | 13     |
 | US2 (P2)            | T020–T026   | 7      |
 | US3 (P3)            | T027–T033   | 7      |
 | US4 (P4)            | T034–T050   | 17     |
 | Polish              | T051–T055   | 5      |
 | Documentation       | TDOC1–TDOC7 | 7      |
-| **Total**           |             | **68** |
+| **Total**           |             | **73** |
+
+TREF1–TREF9, T001–T006 are complete. **TFIX1 must land before T029**, or T028 passes for the
+wrong reason; TFIX2 is documentation and can land at any time, but the sooner the better — it is
+the first command in `quickstart.md`.

@@ -46,6 +46,39 @@ grep -c "test.fixme" frontend/e2e/screen-paper.spec.ts
 Baseline as of 2026-08-06: 23 unreachable modules, 2 placeholders, 8 `test.fixme` across the
 suite (3 in `screen-paper.spec.ts`).
 
+### Re-verified 2026-08-08, after TREF1–TREF9 landed (T001)
+
+Nothing has started passing, so the plan stands. One count moved, and it is worth knowing why
+before T032 is written:
+
+| Check                                           | 2026-08-06 | 2026-08-08 | Reading                                     |
+| ----------------------------------------------- | ---------- | ---------- | ------------------------------------------- |
+| `audit_unreachable_frontend.py`                 | 23, exit 1 | 23, exit 1 | Unchanged — the refactors moved no boundary |
+| `grep -rn "future sprint" frontend/src`         | 2          | **4**      | See below                                   |
+| `grep -c "test.fixme" e2e/screen-paper.spec.ts` | 3          | 3          | Unchanged                                   |
+| `test.fixme` suite-wide                         | 8          | 8          | 4 database-selection · 3 screen-paper · 1 admin/test_agent_wizard |
+| `uv run pre-commit run --all-files` (T002)      | —          | 9/9 pass   | Later gate failures are attributable here   |
+
+**The placeholder grep went up while the defect went down.** TREF2 replaced the two literal
+`<Typography>` lines in `StudyPage.tsx` with a single `futureSprintPlaceholder(phase)` factory in
+`frontend/src/components/studies/studyTypeDispatch.tsx`, and TREF1's characterisation test names
+the string three times to prove the extraction preserved behaviour. One production occurrence,
+three assertions about it.
+
+Consequences for later tasks:
+
+- **T032 is a replacement, not a removal.** Nothing here is deleted to make a grep pass. The
+  placeholder goes away because T029–T031 register real renderers for phases 4 and 5 —
+  `ExtractionPage`, `ValidityForm`, `QualityReport` — and `futureSprintPlaceholder` is then
+  referenced by nothing. `StudyPage.tsx` itself stays; it already delegates to the dispatch map,
+  and after TREF2 no longer contains the placeholder string at all. If the placeholder were
+  stripped before its replacement were wired, phases 4 and 5 would render blank — a worse state
+  than an honest "not yet available", and one the reachability audit would not catch, because the
+  audit answers *is this module imported*, not *does this phase show anything*.
+- **T028** and the definition-of-done grep below must exclude test files, or they will fail on the
+  very assertions that prove the placeholder is gone. A grep count is a poor oracle: it cannot
+  tell an assertion about a defect from the defect.
+
 ---
 
 ## Build order
