@@ -32,6 +32,7 @@ type ConflictState =
 interface DecisionRequestBody {
   decision: string;
   reasons: object[];
+  annotation: string | null;
   observed_status: string;
   overrides_decision_id?: number;
 }
@@ -111,8 +112,8 @@ export default function ReviewerPanel({
     },
   });
 
-  const buildReasons = (): object[] => [
-    ...selectedReasons.map((id) => {
+  const buildReasons = (): object[] =>
+    selectedReasons.map((id) => {
       const inc = inclusion.find((c) => c.id === id);
       const exc = exclusion.find((c) => c.id === id);
       return {
@@ -120,11 +121,7 @@ export default function ReviewerPanel({
         criterion_type: inc ? 'inclusion' : 'exclusion',
         text: (inc ?? exc)?.description ?? '',
       };
-    }),
-    ...(annotationText.trim()
-      ? [{ criterion_type: 'annotation', text: annotationText.trim() }]
-      : []),
-  ];
+    });
 
   const performSubmit = (opts?: {
     observedStatusOverride?: string;
@@ -137,6 +134,7 @@ export default function ReviewerPanel({
     const body: DecisionRequestBody = {
       decision: selectedDecision,
       reasons: buildReasons(),
+      annotation: annotationText.trim() ? annotationText.trim() : null,
       observed_status: opts?.observedStatusOverride ?? observedStatus,
       ...(effectiveOverrideId != null ? { overrides_decision_id: effectiveOverrideId } : {}),
     };

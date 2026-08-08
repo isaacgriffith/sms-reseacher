@@ -63,6 +63,7 @@ const MOCK_DECISIONS = [
     reviewer_id: 1,
     decision: 'accepted' as const,
     reasons: [{ text: 'Peer-reviewed' }],
+    annotation: null,
     is_override: false,
     overrides_decision_id: null,
   },
@@ -72,6 +73,7 @@ const MOCK_DECISIONS = [
     reviewer_id: 2,
     decision: 'rejected' as const,
     reasons: null,
+    annotation: null,
     is_override: false,
     overrides_decision_id: null,
   },
@@ -154,6 +156,46 @@ describe('PaperCard', () => {
       mockApi.get.mockResolvedValue([overrideDecision]);
       renderWithQuery(<PaperCard {...BASE_PROPS} />);
       await waitFor(() => expect(screen.getByText(/override/i)).toBeTruthy());
+    });
+  });
+
+  describe('Annotation rendering (TFIX3: dedicated field, with legacy fallback)', () => {
+    it('renders the annotation when the decision carries the new `annotation` field', async () => {
+      const decisionWithAnnotation = {
+        ...MOCK_DECISIONS[0],
+        annotation: 'Reviewer note via new field',
+      };
+      mockApi.get.mockResolvedValue([decisionWithAnnotation]);
+      renderWithQuery(<PaperCard {...BASE_PROPS} />);
+
+      await waitFor(() => expect(screen.getByText('Reviewer note via new field')).toBeTruthy());
+    });
+
+    it('still renders the annotation for legacy rows that smuggled it into `reasons` as a fake criterion', async () => {
+      const legacyDecision = {
+        ...MOCK_DECISIONS[0],
+        annotation: null,
+        reasons: [
+          { criterion_id: 1, criterion_type: 'inclusion', text: 'Peer-reviewed' },
+          { criterion_type: 'annotation', text: 'Legacy note in reasons' },
+        ],
+      };
+      mockApi.get.mockResolvedValue([legacyDecision]);
+      renderWithQuery(<PaperCard {...BASE_PROPS} />);
+
+      await waitFor(() => expect(screen.getByText('Legacy note in reasons')).toBeTruthy());
+      // The criteria list should render "Peer-reviewed" but the annotation entry must not
+      // also appear as a criterion list item — it renders once, in the annotation slot.
+      expect(screen.getByText('Peer-reviewed')).toBeTruthy();
+      expect(screen.getAllByText('Legacy note in reasons')).toHaveLength(1);
+    });
+
+    it('does not render an annotation slot when neither the new field nor a legacy reason is present', async () => {
+      mockApi.get.mockResolvedValue([MOCK_DECISIONS[0]]);
+      renderWithQuery(<PaperCard {...BASE_PROPS} />);
+
+      await waitFor(() => expect(screen.getByText(/audit trail/i)).toBeTruthy());
+      expect(screen.queryByTestId('decision-annotation')).toBeNull();
     });
   });
 

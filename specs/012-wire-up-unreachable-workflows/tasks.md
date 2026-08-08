@@ -107,7 +107,29 @@ database by `backend/tests/integration/test_search_pipeline_screening.py`.
   > `CLAUDE.md`'s manual e2e startup explicitly pairs `alembic upgrade head` with
   > `DATABASE_URL=sqlite+aiosqlite:///./dev.db`, which cannot work.
 
-- [ ] TFIX3 **`PaperDecision` has no `annotation` column, and the annotation masquerades as a criterion.** `data-model.md` lists `annotation` among `PaperDecision`'s fields. There is no such column (`db/src/db/models/candidate.py`). `ReviewerPanel.tsx:82-83` instead appends the free text to the `reasons` JSON array as `{"criterion_type": "annotation", "text": "…"}`. The capability works, so nothing is broken for a user — but FR-002 says reasons are "drawn from the study's criteria", and an annotation carried as a pseudo-reason is counted by anything that counts reasons, including any future agreement or criteria-frequency analysis. Either add a real `annotation` column (a migration, which `data-model.md` says this feature does not have) or state the encoding explicitly in `data-model.md` and make every reader of `reasons` filter `criterion_type == "annotation"`. **Low severity, high staleness risk** — recorded because the documentation currently describes a field that does not exist
+- [X] TFIX3 **`PaperDecision` has no `annotation` column, and the annotation masquerades as a criterion.** `data-model.md` lists `annotation` among `PaperDecision`'s fields. There is no such column (`db/src/db/models/candidate.py`). `ReviewerPanel.tsx:82-83` instead appends the free text to the `reasons` JSON array as `{"criterion_type": "annotation", "text": "…"}`. The capability works, so nothing is broken for a user — but FR-002 says reasons are "drawn from the study's criteria", and an annotation carried as a pseudo-reason is counted by anything that counts reasons, including any future agreement or criteria-frequency analysis. Either add a real `annotation` column (a migration, which `data-model.md` says this feature does not have) or state the encoding explicitly in `data-model.md` and make every reader of `reasons` filter `criterion_type == "annotation"`. **Low severity, high staleness risk** — recorded because the documentation currently describes a field that does not exist
+
+  > **Resolved 2026-08-08 — the user chose the column.** Migration `0020` adds a nullable
+  > `paper_decision.annotation`; `annotation` becomes its own field on `DecisionRequest`,
+  > `ResolveConflictRequest` and `DecisionResponse`; `ReviewerPanel` sends it top-level and no
+  > longer appends a fake criterion to `reasons`. Empty input sends `null`, not `""` — those are
+  > different claims about whether the reviewer wrote anything.
+  >
+  > One fact that reframed the severity while the options were being weighed: **nothing
+  > analytical reads `reasons` today.** The only consumer is `PaperCard`'s display list, and the
+  > AI screening pipeline writes reasons but never annotations. The pollution was prospective,
+  > not active — it would have bitten criteria-frequency and criteria-based agreement analysis,
+  > which the methodology corpus calls for and which is not built yet.
+  >
+  > **No data migration.** Existing rows keep their embedded pseudo-reason, and `PaperCard`
+  > renders either encoding: it pulls `criterion_type == "annotation"` entries out of the
+  > criteria list into the annotation slot, falling back to the new column when present. Old rows
+  > display correctly, and a legacy annotation never appears in both places.
+  >
+  > This pushes the rescreen migration from `0020` to **`0021`** — corrected on T041, T043,
+  > `plan.md`, `data-model.md`, `quickstart.md` and `CLAUDE.md`. A reserved gap was considered
+  > and rejected: alembic chains on `down_revision`, so a placeholder number would depend on
+  > whoever writes the next migration remembering to splice in before it.
 
 - [X] TFIX4 **The screening UI asks the researcher to type their own database id.** `ReviewerPanel.tsx` renders a numeric "Reviewer ID" input, and `canSubmit` is false until it is filled. Its own comment concedes the point: *"simplified — in real use would be populated from auth context"*. FR-005 requires that any member of a study can record a decision; requiring them to know their internal `reviewer.id` is not that. There is **no endpoint that resolves the current user's reviewer row** — `grep` finds no `/reviewers` route anywhere under `backend/src/backend/api/v1/`, so this cannot be fixed in the frontend alone. Add `GET /api/v1/studies/{id}/reviewers` (or return the caller's `reviewer_id` on `StudyDetail`, alongside the existing `viewer_role`), then have `ReviewerPanel` resolve it and drop the input. **Blocks T018 and T019**
 
@@ -245,12 +267,12 @@ database by `backend/tests/integration/test_search_pipeline_screening.py`.
 - [ ] T038 [P] [US4] Integration test in `backend/tests/integration/test_screening_runs.py`: `422` when the study has no candidate papers
 - [ ] T039 [P] [US4] Integration test in `backend/tests/integration/test_screening_runs.py`: a run failing part-way retains its assessments, reports coverage, is not marked complete, and a restart covers only the remainder (FR-024)
 - [ ] T040 [P] [US4] Integration test in `backend/tests/integration/test_screening_runs.py`: decisions recorded by a human survive a run untouched (FR-019)
-- [ ] T041 [P] [US4] Migration test in `db/tests/integration/test_migrations.py`: `0020` upgrades and downgrades cleanly — **against PostgreSQL**, since `0014` alters a constraint outside batch mode and SQLite refuses it outright (TFIX2)
+- [ ] T041 [P] [US4] Migration test in `db/tests/integration/test_migrations.py`: `0021` upgrades and downgrades cleanly — **against PostgreSQL**, since `0014` alters a constraint outside batch mode and SQLite refuses it outright (TFIX2)
 
 ### Implementation for User Story 4
 
 - [ ] T042 [US4] Add `RESCREEN = "rescreen"` to `JobType` in `db/src/db/models/jobs.py` (R1)
-- [ ] T043 [US4] Create Alembic migration `db/alembic/versions/0020_rescreen_job_type.py` adding the value to `background_job_type_enum`, with a working `downgrade()` (R1 — the PRD's "no migration" claim is wrong on this point). **Revision `0020`, revising `0019`, not `0019` as originally planned**: `0019_candidate_citation_intent` landed on this branch after the plan was written and now holds head. Alembic rejects a duplicate revision id, so the number in `plan.md`, `data-model.md`, `research.md` R1, and `CLAUDE.md` is stale — confirmed with `(cd db && uv run alembic heads)` → `0019 (head)`
+- [ ] T043 [US4] Create Alembic migration `db/alembic/versions/0021_rescreen_job_type.py` adding the value to `background_job_type_enum`, with a working `downgrade()` (R1 — the PRD's "no migration" claim is wrong on this point). **Revision `0021`, revising `0020`, not `0019` as originally planned**: `0019_candidate_citation_intent` landed on this branch after the plan was written and now holds head. Alembic rejects a duplicate revision id, so the number in `plan.md`, `data-model.md`, `research.md` R1, and `CLAUDE.md` is stale — confirmed with `(cd db && uv run alembic heads)` → `0019 (head)`
 - [ ] T044 [US4] Create `backend/src/backend/jobs/rescreen_job.py` composing the extracted screening pipeline, creating one reviewer per round and deriving outstanding candidates from decision rows (R2, R5). **On failure it must commit the assessments it completed and record its coverage — it must NOT call `_fail_search_run`, which rolls back** (R9). The search jobs restart because re-running a query is cheap; a re-screen resumes because each assessment is a paid provider call and R5's cursor-free resume reads the very rows a rollback would destroy
 - [ ] T045 [US4] Register the re-screen job in `backend/src/backend/jobs/worker.py`
 - [ ] T046 [US4] Create `backend/src/backend/api/v1/screening_runs.py` implementing `POST /studies/{id}/screening-runs` with the 202/409/422 responses per `contracts/screening-runs.md`, gated on `require_study_member` (FR-023)
@@ -390,7 +412,7 @@ TREF1–TREF9, T001–T006, T007–T017, TFIX1 and TFIX2 are complete. T018–T0
 **TFIX4**; US2–US4 and Phase 7 remain.
 
 TFIX2 turned up a further staleness while it was being fixed, corrected in place rather than
-given a number of its own: **the rescreen migration is `0020`, not `0019`.**
+given a number of its own: **the rescreen migration is `0021`, not `0019`.**
 `0019_candidate_citation_intent` landed on this branch after the plan was written and now holds
 head, and alembic rejects a duplicate revision id — confirmed with
 `(cd db && uv run alembic heads)` → `0019 (head)`. Corrected on T041, T043, `plan.md`,

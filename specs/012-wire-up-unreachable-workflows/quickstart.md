@@ -101,7 +101,7 @@ Principle IV.
 | 4a   | **C5** — required observed state + migrate existing decision tests  | Same change as journey 1. ~10 existing calls stop working; migrating them is part of the task |
 | 5    | Journey 2 — `research_group_id`, then Tertiary via the dispatch map | P2; one edge makes 13 modules reachable                                                       |
 | 6    | Journey 3 — phases 4 and 5 over the existing components             | P3                                                                                            |
-| 7    | Journey 4 — migration `0020`, endpoint, ARQ job                     | P4; the only genuinely new capability                                                         |
+| 7    | Journey 4 — migration `0021`, endpoint, ARQ job                     | P4; the only genuinely new capability                                                         |
 | 8    | Wire the reachability audit into CI                                 | Turns the oracle into a regression gate                                                       |
 
 Steps 1–3 are `refactor:` / `fix:` commits and must not carry feature changes (Principle IV).
@@ -165,7 +165,7 @@ Also required before merge:
 | Trap                                                                                    | Guard                                                         |
 | --------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
 | Components unreachable for months were unit-tested against mocks, never a live server   | Exercise each through e2e before calling its part done        |
-| `JobType.RESCREEN` needs a migration — a Python enum member alone fails on insert       | Migration `0020` with a working `downgrade()` — **not** `0019`, which is now taken |
+| `JobType.RESCREEN` needs a migration — a Python enum member alone fails on insert       | Migration `0021` with a working `downgrade()` — `0019` and `0020` are both taken |
 | The enum column persists values, not names, via `values_callable`                       | Stored value is `"rescreen"`. See MEMORY.md                   |
 | Reusing the shared AI reviewer makes two rounds indistinguishable                       | One reviewer per round, recorded in `agent_config` (R2)       |
 | `_run_screening_pass` currently turns a provider fault into a rejection                 | Fix in step 3, with its own test, before journey 4            |

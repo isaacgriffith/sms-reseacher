@@ -175,6 +175,9 @@ class DecisionRequest(BaseModel):
     observed_status: str
     reasons: list[dict] = []
     overrides_decision_id: int | None = None
+    # NEW (TFIX3): a free-text note distinct from `reasons` — see
+    # PaperDecision.annotation for why the two are not interchangeable.
+    annotation: str | None = None
 
 
 class DecisionResponse(BaseModel):
@@ -185,6 +188,7 @@ class DecisionResponse(BaseModel):
     reviewer_id: int
     decision: str
     reasons: list | None
+    annotation: str | None = None
     is_override: bool
     overrides_decision_id: int | None
     decided_at: str | None = None
@@ -195,6 +199,7 @@ class ResolveConflictRequest(BaseModel):
 
     decision: str
     reasons: list[dict] = []
+    annotation: str | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -448,6 +453,7 @@ async def _finalize_decision(
         reviewer_id=pd.reviewer_id,
         decision=pd.decision.value,
         reasons=pd.reasons,
+        annotation=pd.annotation,
         is_override=pd.is_override,
         overrides_decision_id=pd.overrides_decision_id,
         decided_at=pd.created_at.isoformat() if pd.created_at else None,
@@ -493,6 +499,7 @@ async def submit_decision(
         reviewer_id=reviewer.id,
         decision=decision_enum,
         reasons=body.reasons or None,
+        annotation=body.annotation,
         is_override=body.overrides_decision_id is not None,
         overrides_decision_id=body.overrides_decision_id,
     )
@@ -557,6 +564,7 @@ async def resolve_conflict(
         reviewer_id=reviewer.id,
         decision=decision_enum,
         reasons=body.reasons or None,
+        annotation=body.annotation,
         is_override=True,
     )
     db.add(pd)
@@ -614,6 +622,7 @@ async def list_decisions(
             reviewer_id=d.reviewer_id,
             decision=d.decision.value,
             reasons=d.reasons,
+            annotation=d.annotation,
             is_override=bool(d.is_override),
             overrides_decision_id=d.overrides_decision_id,
             decided_at=d.created_at.isoformat() if d.created_at else None,

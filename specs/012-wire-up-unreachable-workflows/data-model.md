@@ -4,7 +4,7 @@
 **Date**: 2026-08-06
 
 Nearly every entity here already exists. This document states what each contributes to the
-feature, which invariants the requirements impose on it, and the **one** change that needs a
+feature, which invariants the requirements impose on it, and the **two** changes that need a
 migration.
 
 ---
@@ -13,15 +13,23 @@ migration.
 
 | Entity          | Change                                                 | Migration?                   |
 | --------------- | ------------------------------------------------------ | ---------------------------- |
-| `JobType`       | New member `RESCREEN = "rescreen"`                     | **Yes** — `0020`, enum value |
+| `PaperDecision` | New column `annotation: str \| None` (**TFIX3**)        | **Yes** — `0020`, add column |
+| `JobType`       | New member `RESCREEN = "rescreen"`                     | **Yes** — `0021`, enum value |
 | `Reviewer`      | Round metadata inside the existing `agent_config` JSON | No — column already nullable |
 | `StudyDetail`   | New response field `research_group_id: int`            | No — response schema only    |
+| `DecisionRequest` | `reviewer_id` **removed** (**TFIX4**)                | No — request schema only     |
 | Everything else | Unchanged                                              | No                           |
 
-No table is created, dropped, or altered. No column is added. The migration adds a single value
-to the `background_job_type_enum` PostgreSQL type and must provide a working `downgrade()`.
+No table is created or dropped. `0020` adds one nullable column to `paper_decision`; `0021` adds
+a single value to the `background_job_type_enum` PostgreSQL type. Both provide a working
+`downgrade()`.
 
-> **The revision is `0020`, not `0019` as first planned.** `0019_candidate_citation_intent` landed
+> **This document originally claimed one migration and no new columns.** Both statements were
+> true when written and are recorded here as corrected rather than quietly rewritten, because
+> the count is cited in `plan.md` and `CLAUDE.md` and a stale count is how `0019` was planned
+> onto a number another migration had already taken.
+
+> **The revision is `0021`, not `0019` as first planned.** `0019_candidate_citation_intent` landed
 > on this branch after this document was written and now holds head, and alembic rejects a
 > duplicate revision id. Confirm before writing it: `(cd db && uv run alembic heads)` — and note
 > that alembic runs from `db/`, not the repository root.

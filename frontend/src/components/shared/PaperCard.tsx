@@ -25,6 +25,7 @@ interface Decision {
   reviewer_id: number;
   decision: 'accepted' | 'rejected' | 'duplicate';
   reasons: Array<{ criterion_id?: number; criterion_type?: string; text: string }> | null;
+  annotation: string | null;
   is_override: boolean;
   overrides_decision_id: number | null;
   decided_at: string | null;
@@ -253,6 +254,16 @@ function DecisionEntry({ decision }: { decision: Decision }) {
       })
     : null;
 
+  // Criteria-only reasons: legacy rows smuggled the annotation into `reasons` as a
+  // { criterion_type: 'annotation', text } entry (pre-TFIX3, no data migration). Exclude
+  // those from the criteria list — they belong in the annotation slot below.
+  const criteriaReasons = (decision.reasons ?? []).filter((r) => r.criterion_type !== 'annotation');
+  const legacyAnnotationText = (decision.reasons ?? []).find(
+    (r) => r.criterion_type === 'annotation',
+  )?.text;
+  // Prefer the new dedicated field; fall back to the legacy encoding so old rows keep displaying.
+  const annotationText = decision.annotation ?? legacyAnnotationText ?? null;
+
   return (
     <Box sx={{ display: 'flex', gap: '0.625rem', alignItems: 'flex-start' }}>
       <Box
@@ -307,13 +318,29 @@ function DecisionEntry({ decision }: { decision: Decision }) {
             </Typography>
           )}
         </Box>
-        {decision.reasons && decision.reasons.length > 0 && (
+        {criteriaReasons.length > 0 && (
           <Box component="ul" sx={{ margin: '0.25rem 0 0', paddingLeft: '1rem' }}>
-            {decision.reasons.map((r, i) => (
+            {criteriaReasons.map((r, i) => (
               <Box component="li" key={i} sx={{ fontSize: '0.75rem', color: '#4b5563' }}>
                 {r.text}
               </Box>
             ))}
+          </Box>
+        )}
+        {annotationText && (
+          <Box
+            data-testid="decision-annotation"
+            sx={{
+              margin: '0.375rem 0 0',
+              padding: '0.375rem 0.5rem',
+              background: '#f8fafc',
+              borderLeft: '2px solid #9ca3af',
+              fontSize: '0.75rem',
+              fontStyle: 'italic',
+              color: '#4b5563',
+            }}
+          >
+            {annotationText}
           </Box>
         )}
       </Box>

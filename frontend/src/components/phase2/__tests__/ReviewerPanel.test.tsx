@@ -119,7 +119,7 @@ describe('ReviewerPanel', () => {
       expect(body).not.toHaveProperty('reviewer_id');
     });
 
-    it('includes annotation text in reasons when override note is entered', async () => {
+    it('sends annotation text as its own top-level field, not inside reasons, when override note is entered', async () => {
       mockApi.post.mockResolvedValue({ id: 100, decision: 'rejected', is_override: false });
       renderWithQuery(<ReviewerPanel {...BASE_PROPS} />);
 
@@ -130,10 +130,14 @@ describe('ReviewerPanel', () => {
       fireEvent.click(screen.getByRole('button', { name: /submit decision/i }));
 
       await waitFor(() => {
-        const callBody = mockApi.post.mock.calls[0][1] as { reasons: object[] };
-        expect(callBody.reasons).toContainEqual(
-          expect.objectContaining({ text: 'Override note here' }),
-        );
+        const callBody = mockApi.post.mock.calls[0][1] as {
+          annotation: string | null;
+          reasons: Array<{ criterion_type?: string }>;
+        };
+        expect(callBody.annotation).toBe('Override note here');
+        // TFIX3 regression guard: the annotation must never be smuggled into `reasons`
+        // as a fake criterion again.
+        expect(callBody.reasons.find((r) => r.criterion_type === 'annotation')).toBeUndefined();
       });
     });
 
@@ -425,8 +429,8 @@ describe('ReviewerPanel', () => {
     });
   });
 
-  describe('Annotation in reasons', () => {
-    it('does not include annotation reason when annotation textarea is empty', async () => {
+  describe('Annotation field (TFIX3: dedicated column, not a fake criterion)', () => {
+    it('sends annotation as null (not "") when annotation textarea is empty', async () => {
       mockApi.post.mockResolvedValue({ id: 1, decision: 'accepted' });
 
       renderWithQuery(<ReviewerPanel {...BASE_PROPS} />);
@@ -435,15 +439,12 @@ describe('ReviewerPanel', () => {
       fireEvent.click(screen.getByRole('button', { name: /submit decision/i }));
 
       await waitFor(() => {
-        const body = mockApi.post.mock.calls[0][1] as {
-          reasons: Array<{ criterion_type: string }>;
-        };
-        const annotationReason = body.reasons.find((r) => r.criterion_type === 'annotation');
-        expect(annotationReason).toBeUndefined();
+        const body = mockApi.post.mock.calls[0][1] as { annotation: string | null };
+        expect(body.annotation).toBeNull();
       });
     });
 
-    it('does not include annotation reason when annotation is only whitespace', async () => {
+    it('sends annotation as null when annotation is only whitespace', async () => {
       mockApi.post.mockResolvedValue({ id: 1, decision: 'accepted' });
 
       renderWithQuery(<ReviewerPanel {...BASE_PROPS} />);
@@ -454,11 +455,28 @@ describe('ReviewerPanel', () => {
       fireEvent.click(screen.getByRole('button', { name: /submit decision/i }));
 
       await waitFor(() => {
+        const body = mockApi.post.mock.calls[0][1] as { annotation: string | null };
+        expect(body.annotation).toBeNull();
+      });
+    });
+
+    it('never includes an entry with criterion_type "annotation" in reasons, regardless of annotation text', async () => {
+      mockApi.post.mockResolvedValue({ id: 1, decision: 'accepted' });
+
+      renderWithQuery(<ReviewerPanel {...BASE_PROPS} />);
+      fireEvent.click(screen.getByRole('button', { name: /^accepted$/i }));
+      fireEvent.change(screen.getByPlaceholderText(/optional annotation/i), {
+        target: { value: 'Some free-text note' },
+      });
+      fireEvent.click(screen.getByRole('button', { name: /submit decision/i }));
+
+      await waitFor(() => {
         const body = mockApi.post.mock.calls[0][1] as {
-          reasons: Array<{ criterion_type: string }>;
+          annotation: string | null;
+          reasons: Array<{ criterion_type?: string }>;
         };
-        const annotationReason = body.reasons.find((r) => r.criterion_type === 'annotation');
-        expect(annotationReason).toBeUndefined();
+        expect(body.annotation).toBe('Some free-text note');
+        expect(body.reasons.some((r) => r.criterion_type === 'annotation')).toBe(false);
       });
     });
   });
@@ -617,6 +635,21 @@ describe('ReviewerPanel', () => {
       expect(
         (screen.getByPlaceholderText(/optional annotation/i) as HTMLTextAreaElement).value,
       ).toBe('Keep me around');
+
+      // The annotation must survive the re-confirmation resubmit as its own field (FR-025),
+      // and must not reappear inside reasons as a fake criterion.
+      mockApi.post.mockResolvedValueOnce({ id: 2, decision: 'accepted' });
+      fireEvent.click(screen.getByRole('button', { name: /confirm and resubmit/i }));
+
+      await waitFor(() => {
+        const lastCall = mockApi.post.mock.calls.at(-1);
+        const body = lastCall?.[1] as {
+          annotation: string | null;
+          reasons: Array<{ criterion_type?: string }>;
+        };
+        expect(body.annotation).toBe('Keep me around');
+        expect(body.reasons.some((r) => r.criterion_type === 'annotation')).toBe(false);
+      });
     });
   });
 });

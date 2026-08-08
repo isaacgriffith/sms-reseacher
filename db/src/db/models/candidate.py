@@ -4,7 +4,17 @@ import enum
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import JSON, DateTime, Enum, ForeignKey, Integer, String, UniqueConstraint, func
+from sqlalchemy import (
+    JSON,
+    DateTime,
+    Enum,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+    func,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from db.base import Base, enum_values
@@ -143,6 +153,16 @@ class PaperDecision(Base):
         nullable=False,
     )
     reasons: Mapped[list | None] = mapped_column(JSON, nullable=True)
+    # Free-text reviewer note, distinct from `reasons`. FR-002
+    # (specs/012-wire-up-unreachable-workflows/data-model.md) treats "one or more
+    # reasons drawn from the study's criteria" and "a free-text annotation" as two
+    # separate things. A note is not a criterion: folding it into the `reasons`
+    # JSON array (as the frontend previously did, via a synthetic
+    # {"criterion_type": "annotation", ...} entry) would inflate criteria-frequency
+    # and criteria-based inter-rater-agreement analysis with values that were never
+    # criteria. Nullable because most decisions carry no note, and "" would be
+    # indistinguishable from "the reviewer wrote nothing".
+    annotation: Mapped[str | None] = mapped_column(Text, nullable=True)
     is_override: Mapped[bool] = mapped_column(
         Integer, nullable=False, default=False, server_default="0"
     )

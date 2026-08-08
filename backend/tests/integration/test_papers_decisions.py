@@ -456,6 +456,120 @@ class TestSubmitDecision:
         assert get_resp.json()["conflict_flag"] is False
 
 
+class TestDecisionAnnotation:
+    """annotation is a free-text field distinct from `reasons` (TFIX3, FR-002)."""
+
+    @pytest.mark.asyncio
+    async def test_annotation_persisted_and_returned_from_submit_decision(
+        self, client, alice, db_engine
+    ) -> None:
+        """An annotation sent with a decision is persisted and echoed back."""
+        user, _ = alice
+        study_id = await _setup_study(client, db_engine, user)
+        cp_id = await _insert_candidate_paper(db_engine, study_id)
+
+        resp = await client.post(
+            f"/api/v1/studies/{study_id}/papers/{cp_id}/decisions",
+            json={
+                "decision": "accepted",
+                "observed_status": "pending",
+                "reasons": [],
+                "annotation": "Strong empirical evidence, worth a closer read.",
+            },
+            headers=_bearer(user.id),
+        )
+        assert resp.status_code == 201
+        assert resp.json()["annotation"] == "Strong empirical evidence, worth a closer read."
+
+    @pytest.mark.asyncio
+    async def test_annotation_defaults_to_null_not_empty_string(
+        self, client, alice, db_engine
+    ) -> None:
+        """A decision with no annotation returns null, not an empty string."""
+        user, _ = alice
+        study_id = await _setup_study(client, db_engine, user)
+        cp_id = await _insert_candidate_paper(db_engine, study_id)
+
+        resp = await client.post(
+            f"/api/v1/studies/{study_id}/papers/{cp_id}/decisions",
+            json={
+                "decision": "accepted",
+                "observed_status": "pending",
+                "reasons": [],
+            },
+            headers=_bearer(user.id),
+        )
+        assert resp.status_code == 201
+        assert resp.json()["annotation"] is None
+
+    @pytest.mark.asyncio
+    async def test_annotation_returned_from_list_decisions(self, client, alice, db_engine) -> None:
+        """An annotation set on submission is readable back via GET .../decisions."""
+        user, _ = alice
+        study_id = await _setup_study(client, db_engine, user)
+        cp_id = await _insert_candidate_paper(db_engine, study_id)
+
+        await client.post(
+            f"/api/v1/studies/{study_id}/papers/{cp_id}/decisions",
+            json={
+                "decision": "accepted",
+                "observed_status": "pending",
+                "reasons": [],
+                "annotation": "Follow up with authors about dataset access.",
+            },
+            headers=_bearer(user.id),
+        )
+
+        resp = await client.get(
+            f"/api/v1/studies/{study_id}/papers/{cp_id}/decisions",
+            headers=_bearer(user.id),
+        )
+        assert resp.status_code == 200
+        items = resp.json()
+        assert len(items) == 1
+        assert items[0]["annotation"] == "Follow up with authors about dataset access."
+
+    @pytest.mark.asyncio
+    async def test_annotation_survives_resolve_conflict_path(
+        self, client, alice, bob, db_engine
+    ) -> None:
+        """An annotation sent with a conflict resolution is persisted and returned."""
+        alice_user, _ = alice
+        bob_user, _ = bob
+        study_id = await _setup_study(client, db_engine, alice_user)
+        await _add_study_member(db_engine, study_id, bob_user.id)
+        cp_id = await _insert_candidate_paper(db_engine, study_id)
+
+        for uid, dec, observed in [
+            (alice_user.id, "accepted", "pending"),
+            (bob_user.id, "rejected", "accepted"),
+        ]:
+            await client.post(
+                f"/api/v1/studies/{study_id}/papers/{cp_id}/decisions",
+                json={
+                    "decision": dec,
+                    "observed_status": observed,
+                    "reasons": [],
+                },
+                headers=_bearer(uid),
+            )
+
+        resp = await client.post(
+            f"/api/v1/studies/{study_id}/papers/{cp_id}/resolve-conflict",
+            json={
+                "decision": "accepted",
+                "reasons": [],
+                "annotation": "Binding call: alice's inclusion criteria reading is correct.",
+            },
+            headers=_bearer(alice_user.id),
+        )
+        assert resp.status_code == 201
+        assert (
+            resp.json()["annotation"]
+            == "Binding call: alice's inclusion criteria reading is correct."
+        )
+
+
 class TestResolveConflict:
     """POST /studies/{study_id}/papers/{candidate_id}/resolve-conflict."""
 
