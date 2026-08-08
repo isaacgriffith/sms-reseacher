@@ -19,13 +19,15 @@ from __future__ import annotations
 
 from backend.core.auth import hash_password
 from db.models import Paper, Study, StudyType
-from db.models.candidate import CandidatePaper, CandidatePaperStatus
+from db.models.candidate import CandidatePaper, CandidatePaperStatus, PaperDecision
+from db.models.criteria import ExclusionCriterion, InclusionCriterion
 from db.models.pico import PICOComponent, PICOVariant
 from db.models.search import SearchString
 from db.models.search_exec import SearchExecution, SearchExecutionStatus
+from db.models.slr import ReviewProtocol, ReviewProtocolStatus, SynthesisApproach
 from db.models.study import Reviewer, ReviewerType, StudyMember, StudyMemberRole
 from db.models.users import GroupMembership, GroupRole, ResearchGroup, User
-from sqlalchemy import select
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
@@ -360,3 +362,153 @@ async def ensure_pico(session: AsyncSession, study: Study) -> None:
             )
         )
         print(f"created PICO component for study {study.id} (unlocks phase 2)")
+
+
+async def ensure_criteria(
+    session: AsyncSession,
+    study: Study,
+    inclusion: list[str],
+    exclusion: list[str],
+) -> None:
+    """Give *study* screening criteria if it has none.
+
+    ``ReviewerPanel`` renders its reason selector only when
+    ``/criteria/{inclusion,exclusion}`` returns rows, so without these a
+    reviewer can record a decision but cannot attach a reason to it — and
+    FR-002 requires reasons "drawn from the study's criteria".
+
+    Args:
+        session: Active async session.
+        study: The study to scaffold.
+        inclusion: Inclusion criterion descriptions, in display order.
+        exclusion: Exclusion criterion descriptions, in display order.
+
+    """
+    for model, descriptions in (
+        (InclusionCriterion, inclusion),
+        (ExclusionCriterion, exclusion),
+    ):
+        existing = (
+            (await session.execute(select(model).where(model.study_id == study.id)))
+            .scalars()
+            .first()
+        )
+        if existing is not None:
+            continue
+        for order_index, description in enumerate(descriptions):
+            session.add(
+                model(
+                    study_id=study.id,
+                    description=description,
+                    order_index=order_index,
+                )
+            )
+        print(
+            f"created {len(descriptions)} {model.__tablename__} rows "
+            f"for study {study.id}"
+        )
+
+
+async def reset_screening_queue(
+    session: AsyncSession, study: Study, dois: list[str]
+) -> None:
+    """Return the candidates for *dois* to an undecided, pending state.
+
+    ``screen-paper.spec.ts`` records real decisions, and the suite is run
+    repeatedly against a database it also writes to. Without this, run 2 submits
+    against a candidate that already holds the reviewer's decision and gets the
+    409 ``unacknowledged_prior_decision`` that FR-022 requires — so the spec
+    would have to branch on which run it is, and Principle VI forbids the
+    conditional that would take.
+
+    Resetting rather than branching follows the precedent already in this
+    script: the TOTP counters are cleared on every run because the lockout spec
+    deliberately locks its account.
+
+    Scoped to *dois* deliberately. The conflict fixture's two disagreeing
+    decisions are the subject of their own assertions and must survive.
+
+    Args:
+        session: Active async session.
+        study: The study whose queue is reset.
+        dois: DOIs of the candidates to return to pending.
+
+    """
+    candidates = (
+        (
+            await session.execute(
+                select(CandidatePaper)
+                .join(Paper, CandidatePaper.paper_id == Paper.id)
+                .where(CandidatePaper.study_id == study.id, Paper.doi.in_(dois))
+            )
+        )
+        .scalars()
+        .all()
+    )
+    if not candidates:
+        return
+
+    candidate_ids = [c.id for c in candidates]
+    stale = (
+        await session.execute(
+            select(func.count())
+            .select_from(PaperDecision)
+            .where(PaperDecision.candidate_paper_id.in_(candidate_ids))
+        )
+    ).scalar_one()
+    if not stale:
+        return
+
+    await session.execute(
+        delete(PaperDecision).where(PaperDecision.candidate_paper_id.in_(candidate_ids))
+    )
+    for candidate in candidates:
+        candidate.current_status = CandidatePaperStatus.PENDING
+        candidate.conflict_flag = False
+    await session.flush()
+    print(
+        f"reset {len(candidates)} queue candidates on study {study.id} "
+        f"({stale} decisions cleared)"
+    )
+
+
+async def ensure_validated_review_protocol(
+    session: AsyncSession, study: Study
+) -> ReviewProtocol:
+    """Return *study*'s SLR protocol, creating a **validated** one if absent.
+
+    ``slr_phase_gate.get_slr_unlocked_phases`` returns ``[1]`` and stops unless
+    a protocol exists with ``status == VALIDATED``, so screening on an SLR
+    study is unreachable without this. Unlike the Tertiary fixture — which
+    deliberately omits its protocol so the US2 journey can create one through
+    the UI — the SLR study exists to be screened, and driving protocol
+    validation first would put phase 1 in the way of every screening spec.
+
+    Args:
+        session: Active async session.
+        study: The SLR study to scaffold.
+
+    Returns:
+        The existing or newly created protocol.
+
+    """
+    protocol = (
+        await session.execute(
+            select(ReviewProtocol).where(ReviewProtocol.study_id == study.id)
+        )
+    ).scalar_one_or_none()
+    if protocol is None:
+        protocol = ReviewProtocol(
+            study_id=study.id,
+            status=ReviewProtocolStatus.VALIDATED,
+            background="Seeded protocol for the e2e screening journey.",
+            research_questions=["How effective is code review at scale?"],
+            pico_population="Industrial software teams",
+            pico_intervention="Modern code review",
+            pico_outcome="Defect detection rate",
+            synthesis_approach=SynthesisApproach.DESCRIPTIVE,
+        )
+        session.add(protocol)
+        await session.flush()
+        print(f"created validated review protocol for study {study.id} (unlocks 2-3)")
+    return protocol

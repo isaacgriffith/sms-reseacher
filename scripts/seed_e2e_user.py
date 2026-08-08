@@ -22,8 +22,12 @@ Users, group, memberships    Every spec — logging in and reaching ``/groups``
   - 2 accepted + extraction  T004 — phases 4 and 5 (extraction, validity,
                              quality report) have data to display
   - 1 conflicted candidate   T005 — the disagreement path in the reviewer panel
+  - inclusion/exclusion      T019 — the reviewer panel renders its reason
+    criteria                 selector only for a study that has criteria
 ``E2E Tertiary Study``       T003 — the Tertiary workspace has something to open
 ``E2E Source Mapping Study`` T006 — Tertiary seed import has a source to offer
+``E2E SLR Seed Study``       T019 — recording a decision on an SLR study, whose
+                             phase 3 unlocks on different conditions from SMS
 ===========================  =================================================
 
 Usage::
@@ -49,6 +53,7 @@ from db.models.search_exec import SearchExecution
 from db.models.users import ResearchGroup, User
 from seed_helpers import (
     ensure_candidate,
+    ensure_criteria,
     ensure_group,
     ensure_group_membership,
     ensure_human_reviewer,
@@ -57,6 +62,8 @@ from seed_helpers import (
     ensure_search_execution,
     ensure_study,
     ensure_study_members,
+    ensure_validated_review_protocol,
+    reset_screening_queue,
     upsert_user,
 )
 from sqlalchemy import select
@@ -91,6 +98,7 @@ TERTIARY_STUDY_NAME = os.environ.get(
     "E2E_TERTIARY_STUDY_NAME", "E2E Tertiary Seed Study"
 )
 SOURCE_STUDY_NAME = os.environ.get("E2E_SOURCE_STUDY_NAME", "E2E Source Mapping Study")
+SLR_STUDY_NAME = os.environ.get("E2E_SLR_STUDY_NAME", "E2E SLR Seed Study")
 
 #: Papers seeded into the screening queue so the accept/reject controls render.
 SEED_PAPERS = [
@@ -119,6 +127,27 @@ CONFLICT_PAPER = (
 SOURCE_PAPERS = [
     ("A systematic mapping of DevOps adoption", "10.1000/e2e-source-1"),
     ("Microservice migration patterns: a review", "10.1000/e2e-source-2"),
+]
+
+#: T019 — pending candidates on the SLR study, so its screening queue has rows
+#: to decide on. Distinct DOIs from SEED_PAPERS: ``Paper`` is keyed on DOI and
+#: shared across studies, so reusing them would point both studies' candidates
+#: at the same bibliographic rows and make a failure ambiguous to read.
+SLR_PAPERS = [
+    ("Effectiveness of code review at scale", "10.1000/e2e-slr-1"),
+    ("Static analysis adoption: a controlled trial", "10.1000/e2e-slr-2"),
+]
+
+#: T019 — the reviewer panel renders its reason selector only when the study
+#: has criteria, and FR-002 requires reasons "drawn from the study's criteria".
+#: Seeded on both screening studies so the e2e can select a real one.
+INCLUSION_CRITERIA = [
+    "Peer-reviewed and published in a journal or conference",
+    "Reports empirical results",
+]
+EXCLUSION_CRITERIA = [
+    "Not written in English",
+    "Fewer than four pages",
 ]
 # ---------------------------------------------------------------------------
 # Feature 012 fixtures (T003–T006)
@@ -329,6 +358,54 @@ async def _seed_seed_import_source(
     return study
 
 
+async def _seed_slr_study(
+    session: AsyncSession, group: ResearchGroup, members: list[User]
+) -> Study:
+    """T019 — an SLR study sitting at phase 3, with papers waiting to be screened.
+
+    ``screen-paper.spec.ts`` records a decision on both an SMS and an SLR study,
+    because the two reach the same ``ScreeningView`` down different paths and
+    only an SLR study exercises the second one. It cannot reuse the study
+    ``slr-workflow.spec.ts`` builds through the wizard: that one sits at phase 1
+    with no candidates, so screening is locked and there is nothing to decide.
+
+    The unlock conditions differ from SMS and are the reason this fixture is not
+    simply ``_seed_main_study`` with another ``study_type``.
+    ``slr_phase_gate.get_slr_unlocked_phases`` gates phase 2 on a **validated**
+    ``ReviewProtocol`` and phase 3 on a completed ``SearchExecution``, where the
+    SMS gate reads PICO instead of a protocol.
+
+    Args:
+        session: Active async session.
+        group: Owning research group.
+        members: Users granted study membership.
+
+    Returns:
+        The SLR study.
+
+    """
+    study = await ensure_study(
+        session,
+        name=SLR_STUDY_NAME,
+        topic="Code review effectiveness in industrial software teams",
+        study_type=StudyType.SLR,
+        group=group,
+    )
+    await ensure_study_members(session, study, members)
+    await ensure_validated_review_protocol(session, study)
+    await ensure_criteria(session, study, INCLUSION_CRITERIA, EXCLUSION_CRITERIA)
+    execution = await ensure_search_execution(
+        session, study, '("code review" AND "defect detection")'
+    )
+    for title, doi in SLR_PAPERS:
+        paper = await ensure_paper(session, title, doi)
+        await ensure_candidate(
+            session, study, paper, execution, CandidatePaperStatus.PENDING
+        )
+    await reset_screening_queue(session, study, [doi for _, doi in SLR_PAPERS])
+    return study
+
+
 # ---------------------------------------------------------------------------
 # Entry point
 # ---------------------------------------------------------------------------
@@ -392,6 +469,7 @@ async def _seed_main_study(
     )
     await ensure_study_members(session, study, members)
     await ensure_pico(session, study)
+    await ensure_criteria(session, study, INCLUSION_CRITERIA, EXCLUSION_CRITERIA)
     execution = await ensure_search_execution(
         session, study, '("agile" AND "automated testing")'
     )
@@ -407,6 +485,7 @@ async def _seed_main_study(
 
     await _seed_extraction_fixture(session, study, execution)
     await _seed_conflict_fixture(session, study, execution, members[0], members[1])
+    await reset_screening_queue(session, study, [doi for _, doi in SEED_PAPERS])
     return study
 
 
@@ -431,6 +510,7 @@ async def seed() -> None:
         main_study = await _seed_main_study(session, group, members)
         tertiary_study = await _seed_tertiary_study(session, group, members)
         source_study = await _seed_seed_import_source(session, group, members)
+        slr_study = await _seed_slr_study(session, group, members)
 
         await session.commit()
 
@@ -439,6 +519,7 @@ async def seed() -> None:
         print(f"  E2E_STUDY_ID={main_study.id}")
         print(f"  E2E_TERTIARY_STUDY_ID={tertiary_study.id}")
         print(f"  E2E_SOURCE_STUDY_ID={source_study.id}")
+        print(f"  E2E_SLR_STUDY_ID={slr_study.id}")
 
     await engine.dispose()
 

@@ -23,6 +23,19 @@ uv run python scripts/seed_e2e_user.py
 > Package names are not directory names — `agents` and `db`, not `sms-agents` / `sms-db`.
 > See [MEMORY.md](../../MEMORY.md).
 >
+> **The backend must listen on the port the Vite proxy defaults to (8000).** `VITE_API_URL` is not
+> only the proxy target — `frontend/src/services/api.ts` uses it as the browser's base URL too,
+> and the backend registers no `CORSMiddleware`, so pointing it at a second backend makes every
+> request fail preflight in the browser while `curl` through the proxy still returns 200. If port
+> 8000 is already held, stop whatever holds it rather than moving the backend — and check that it
+> is stopped: `uvicorn` prints `Application startup complete` **before** it binds, so a bind
+> failure appears _after_ the success line and a health check will answer from the old process.
+>
+> **Seed with the same `SECRET_KEY` the backend runs with.** The TOTP secrets are Fernet-encrypted
+> under a key derived from it, and the seed writes them only when the account is not already
+> 2FA-enabled — so a mismatched key leaves a secret that cannot be decrypted, and
+> `two-factor-auth.spec.ts` fails with `Internal Server Error` rather than anything diagnostic.
+>
 > **Alembic runs from `db/`, and only against PostgreSQL.** `alembic.ini` lives there, so from the
 > repository root the command fails with `FAILED: No 'script_location' key found in configuration`
 > — which is also why `docker compose up -d` comes first rather than a local SQLite file.
@@ -57,13 +70,13 @@ suite (3 in `screen-paper.spec.ts`).
 Nothing has started passing, so the plan stands. One count moved, and it is worth knowing why
 before T032 is written:
 
-| Check                                           | 2026-08-06 | 2026-08-08 | Reading                                     |
-| ----------------------------------------------- | ---------- | ---------- | ------------------------------------------- |
-| `audit_unreachable_frontend.py`                 | 23, exit 1 | 23, exit 1 | Unchanged — the refactors moved no boundary |
-| `grep -rn "future sprint" frontend/src`         | 2          | **4**      | See below                                   |
-| `grep -c "test.fixme" e2e/screen-paper.spec.ts` | 3          | 3          | Unchanged                                   |
+| Check                                           | 2026-08-06 | 2026-08-08 | Reading                                                           |
+| ----------------------------------------------- | ---------- | ---------- | ----------------------------------------------------------------- |
+| `audit_unreachable_frontend.py`                 | 23, exit 1 | 23, exit 1 | Unchanged — the refactors moved no boundary                       |
+| `grep -rn "future sprint" frontend/src`         | 2          | **4**      | See below                                                         |
+| `grep -c "test.fixme" e2e/screen-paper.spec.ts` | 3          | 3          | Unchanged                                                         |
 | `test.fixme` suite-wide                         | 8          | 8          | 4 database-selection · 3 screen-paper · 1 admin/test_agent_wizard |
-| `uv run pre-commit run --all-files` (T002)      | —          | 9/9 pass   | Later gate failures are attributable here   |
+| `uv run pre-commit run --all-files` (T002)      | —          | 9/9 pass   | Later gate failures are attributable here                         |
 
 **The placeholder grep went up while the defect went down.** TREF2 replaced the two literal
 `<Typography>` lines in `StudyPage.tsx` with a single `futureSprintPlaceholder(phase)` factory in
@@ -80,7 +93,7 @@ Consequences for later tasks:
   and after TREF2 no longer contains the placeholder string at all. If the placeholder were
   stripped before its replacement were wired, phases 4 and 5 would render blank — a worse state
   than an honest "not yet available", and one the reachability audit would not catch, because the
-  audit answers *is this module imported*, not *does this phase show anything*.
+  audit answers _is this module imported_, not _does this phase show anything_.
 - **T028** and the definition-of-done grep below must exclude test files, or they will fail on the
   very assertions that prove the placeholder is gone. A grep count is a poor oracle: it cannot
   tell an assertion about a defect from the defect.
@@ -162,11 +175,11 @@ Also required before merge:
 
 ## Traps specific to this feature
 
-| Trap                                                                                    | Guard                                                         |
-| --------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
-| Components unreachable for months were unit-tested against mocks, never a live server   | Exercise each through e2e before calling its part done        |
+| Trap                                                                                    | Guard                                                                            |
+| --------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| Components unreachable for months were unit-tested against mocks, never a live server   | Exercise each through e2e before calling its part done                           |
 | `JobType.RESCREEN` needs a migration — a Python enum member alone fails on insert       | Migration `0021` with a working `downgrade()` — `0019` and `0020` are both taken |
-| The enum column persists values, not names, via `values_callable`                       | Stored value is `"rescreen"`. See MEMORY.md                   |
-| Reusing the shared AI reviewer makes two rounds indistinguishable                       | One reviewer per round, recorded in `agent_config` (R2)       |
-| `_run_screening_pass` currently turns a provider fault into a rejection                 | Fix in step 3, with its own test, before journey 4            |
-| Adding `isTertiary` beside `isSLR` / `isRapid` is the cheapest change and the wrong one | Step 1 first — this is how the Tertiary UI became unreachable |
+| The enum column persists values, not names, via `values_callable`                       | Stored value is `"rescreen"`. See MEMORY.md                                      |
+| Reusing the shared AI reviewer makes two rounds indistinguishable                       | One reviewer per round, recorded in `agent_config` (R2)                          |
+| `_run_screening_pass` currently turns a provider fault into a rejection                 | Fix in step 3, with its own test, before journey 4                               |
+| Adding `isTertiary` beside `isSLR` / `isRapid` is the cheapest change and the wrong one | Step 1 first — this is how the Tertiary UI became unreachable                    |

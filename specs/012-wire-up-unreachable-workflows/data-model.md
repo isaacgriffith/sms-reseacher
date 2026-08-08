@@ -11,14 +11,14 @@ migration.
 
 ## Change summary
 
-| Entity          | Change                                                 | Migration?                   |
-| --------------- | ------------------------------------------------------ | ---------------------------- |
-| `PaperDecision` | New column `annotation: str \| None` (**TFIX3**)        | **Yes** — `0020`, add column |
-| `JobType`       | New member `RESCREEN = "rescreen"`                     | **Yes** — `0021`, enum value |
-| `Reviewer`      | Round metadata inside the existing `agent_config` JSON | No — column already nullable |
-| `StudyDetail`   | New response field `research_group_id: int`            | No — response schema only    |
-| `DecisionRequest` | `reviewer_id` **removed** (**TFIX4**)                | No — request schema only     |
-| Everything else | Unchanged                                              | No                           |
+| Entity            | Change                                                 | Migration?                   |
+| ----------------- | ------------------------------------------------------ | ---------------------------- |
+| `PaperDecision`   | New column `annotation: str \| None` (**TFIX3**)       | **Yes** — `0020`, add column |
+| `JobType`         | New member `RESCREEN = "rescreen"`                     | **Yes** — `0021`, enum value |
+| `Reviewer`        | Round metadata inside the existing `agent_config` JSON | No — column already nullable |
+| `StudyDetail`     | New response field `research_group_id: int`            | No — response schema only    |
+| `DecisionRequest` | `reviewer_id` **removed** (**TFIX4**)                  | No — request schema only     |
+| Everything else   | Unchanged                                              | No                           |
 
 No table is created or dropped. `0020` adds one nullable column to `paper_decision`; `0021` adds
 a single value to the `background_job_type_enum` PostgreSQL type. Both provide a working
@@ -195,10 +195,17 @@ queued ──> running ──> complete        all candidates assessed by this r
 
 | Rule                                                                                   | Source         |
 | -------------------------------------------------------------------------------------- | -------------- |
-| A decision carries at least one reason                                                 | FR-002         |
+| A decision **may** carry reasons, drawn from the study's own criteria                  | FR-002         |
 | A second decision by the same reviewer on the same paper links to the one it overrides | FR-022         |
 | A submission is rejected if the paper's status changed since the reviewer saw it       | FR-025         |
 | Any study member may write; the lead is not required                                   | FR-005, FR-023 |
 | A re-screen is refused while another assessment of the same candidates is in flight    | FR-026         |
 | A failed run retains its assessments and reports coverage                              | FR-024         |
 | An automated round never alters a human decision                                       | FR-019         |
+
+> **The FR-002 row previously read "A decision carries at least one reason."** FR-002 says
+> _"MUST **allow** one or more reasons"_ — allow, not require — and `DecisionRequest` declares
+> `reasons: list[dict] = []` with no validator. The row stated a constraint its own cited
+> requirement does not contain, and had it been implemented it would have rejected valid
+> submissions. Corrected 2026-08-08 while writing T019's e2e, which drives the reason selector
+> precisely because FR-002 requires the capability to _exist_.
