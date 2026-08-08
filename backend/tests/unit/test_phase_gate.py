@@ -4,7 +4,8 @@ Covers:
 - get_unlocked_phases: Phase 1 always unlocked
 - get_unlocked_phases: Phase 2 unlocked when PICO saved
 - get_unlocked_phases: Phase 3 unlocked when SearchExecution completed
-- get_unlocked_phases: Phases 4+5 unlocked when extraction non-pending
+- get_unlocked_phases: Phases 4+5 unlocked when extraction non-pending, and
+  only by an extraction belonging to the study being asked about (TFIX1)
 - compute_staleness_flags: search stale when pico_saved_at > search_run_at
 - compute_staleness_flags: extraction stale when search_run_at > extraction_started_at
 - compute_current_phase: returns max unlocked phase
@@ -31,6 +32,9 @@ import db.models.users  # noqa: F401
 import pytest
 import pytest_asyncio
 from db.base import Base
+from db.models import Paper
+from db.models.candidate import CandidatePaper, CandidatePaperStatus
+from db.models.extraction import DataExtraction, ExtractionStatus, ResearchType
 from db.models.pico import PICOComponent
 from db.models.search import SearchString
 from db.models.search_exec import SearchExecution, SearchExecutionStatus
@@ -175,6 +179,117 @@ class TestGetUnlockedPhasesPhase3:
 
         result = await get_unlocked_phases(STUDY_ID, db_session)
         assert 3 not in result
+
+
+class TestGetUnlockedPhasesPhases4And5:
+    """Phases 4 and 5 require a non-pending DataExtraction *for this study*.
+
+    The cross-study case is the one that matters. ``get_unlocked_phases``
+    already asserts study isolation for phase 2 (see
+    ``test_pico_for_different_study_does_not_unlock``), and phases 4 and 5 need
+    the same guarantee: a study's own extraction work is what unlocks its
+    reporting phases, not somebody else's.
+    """
+
+    async def _reach_phase_3(self, db_session, study_id: int) -> SearchExecution:
+        """Give *study_id* a PICO and a completed search, and return the execution.
+
+        Phases 4 and 5 are only ever evaluated for a study that already reached
+        phase 3, so a test that skips this exits at the phase 2 return and
+        proves nothing about the phase 4/5 query.
+        """
+        db_session.add(PICOComponent(study_id=study_id, variant="PICO", population="X"))
+        ss = SearchString(study_id=study_id, version=1, string_text="(TDD)")
+        db_session.add(ss)
+        await db_session.flush()
+        execution = SearchExecution(
+            study_id=study_id,
+            search_string_id=ss.id,
+            status=SearchExecutionStatus.COMPLETED,
+            phase_tag="initial-search",
+            databases_queried=["acm"],
+        )
+        db_session.add(execution)
+        await db_session.flush()
+        return execution
+
+    async def _add_extraction(
+        self,
+        db_session,
+        study_id: int,
+        doi: str,
+        status: ExtractionStatus,
+    ) -> None:
+        """Attach one extraction with *status* to a new candidate of *study_id*."""
+        execution = await self._reach_phase_3(db_session, study_id)
+        paper = Paper(title=f"Paper {doi}", doi=doi)
+        db_session.add(paper)
+        await db_session.flush()
+        candidate = CandidatePaper(
+            study_id=study_id,
+            paper=paper,
+            search_execution_id=execution.id,
+            phase_tag="initial-search",
+            current_status=CandidatePaperStatus.ACCEPTED,
+        )
+        db_session.add(candidate)
+        await db_session.flush()
+        db_session.add(
+            DataExtraction(
+                candidate_paper_id=candidate.id,
+                research_type=ResearchType.EVALUATION,
+                venue_type="conference",
+                extraction_status=status,
+            )
+        )
+        await db_session.commit()
+
+    @pytest.mark.asyncio
+    async def test_own_non_pending_extraction_unlocks_4_and_5(self, db_session) -> None:
+        """A non-pending extraction on this study unlocks phases 4 and 5."""
+        await self._add_extraction(
+            db_session, STUDY_ID, "10.1000/own-1", ExtractionStatus.AI_COMPLETE
+        )
+
+        result = await get_unlocked_phases(STUDY_ID, db_session)
+        assert 4 in result
+        assert 5 in result
+
+    @pytest.mark.asyncio
+    async def test_own_pending_extraction_does_not_unlock(self, db_session) -> None:
+        """A pending extraction is not progress — phases 4 and 5 stay locked."""
+        await self._add_extraction(
+            db_session, STUDY_ID, "10.1000/own-pending", ExtractionStatus.PENDING
+        )
+
+        result = await get_unlocked_phases(STUDY_ID, db_session)
+        assert 4 not in result
+        assert 5 not in result
+
+    @pytest.mark.asyncio
+    async def test_extraction_for_different_study_does_not_unlock(self, db_session) -> None:
+        """Another study's extraction must not unlock this study's phases 4 and 5.
+
+        Regression test for the defect recorded as TFIX1: the gate query
+        filtered on ``extraction_status`` but not on the study, so one
+        non-pending extraction anywhere in the database unlocked reporting for
+        every mapping study that had reached phase 3.
+        """
+        await self._add_extraction(db_session, 999, "10.1000/other-1", ExtractionStatus.AI_COMPLETE)
+        await self._reach_phase_3(db_session, STUDY_ID)
+        await db_session.commit()
+
+        result = await get_unlocked_phases(STUDY_ID, db_session)
+        assert result == [1, 2, 3]
+
+    @pytest.mark.asyncio
+    async def test_current_phase_ignores_another_studys_extraction(self, db_session) -> None:
+        """compute_current_phase inherits the isolation, reading the same list."""
+        await self._add_extraction(db_session, 999, "10.1000/other-2", ExtractionStatus.AI_COMPLETE)
+        await self._reach_phase_3(db_session, STUDY_ID)
+        await db_session.commit()
+
+        assert await compute_current_phase(STUDY_ID, db_session) == 3
 
 
 class TestComputeCurrentPhase:

@@ -5,7 +5,8 @@ Phase unlock rules (enforced at service layer, not DB):
   - Phase 1: always accessible
   - Phase 2: pico_components non-empty
   - Phase 3: at least one SearchExecution with status=completed
-  - Phase 4 & 5: at least one DataExtraction with status != pending
+  - Phase 4 & 5: at least one DataExtraction with status != pending, on a
+    CandidatePaper belonging to *this* study
 
 Staleness rules (FR-008a):
   - Phase 2 data is stale if PICO was re-saved after the last search ran.
@@ -67,14 +68,23 @@ async def get_unlocked_phases(study_id: int, db: AsyncSession) -> list[int]:
     except ImportError:
         return unlocked
 
-    # Phases 4 & 5: at least one non-pending DataExtraction
+    # Phases 4 & 5: at least one non-pending DataExtraction *belonging to this
+    # study*. DataExtraction carries no study_id of its own — it hangs off a
+    # CandidatePaper — so the scope has to come from the join. Without it the
+    # query reads the whole table, and one extraction anywhere in the database
+    # unlocks reporting for every mapping study that has reached phase 3.
     try:
+        from db.models.candidate import CandidatePaper  # type: ignore[import]
         from db.models.extraction import DataExtraction, ExtractionStatus  # type: ignore[import]
 
         extraction_result = await db.execute(
-            select(DataExtraction).where(
+            select(DataExtraction.id)
+            .join(CandidatePaper, DataExtraction.candidate_paper_id == CandidatePaper.id)
+            .where(
+                CandidatePaper.study_id == study_id,
                 DataExtraction.extraction_status != ExtractionStatus.PENDING,
             )
+            .limit(1)
         )
         if extraction_result.scalar_one_or_none() is not None:
             unlocked.extend([4, 5])
