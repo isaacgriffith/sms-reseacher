@@ -21,6 +21,15 @@ jobs:
         uses: astral-sh/setup-uv@v7
         with:
           version: "latest"
+          # setup-uv v4 defaulted enable-cache to "false"; v7 defaults it to
+          # "auto", which turns caching on because uv.lock exists. Every Python
+          # job then derives the same cache key from platform + lockfile hash and
+          # races to reserve it, so all but the winner log "Unable to reserve
+          # cache ... another job may be creating this cache". A distinct suffix
+          # per job gives each its own key. Cost is a few extra cache entries of
+          # otherwise-identical content; set enable-cache: false instead if that
+          # storage matters more than the restore speedup.
+          cache-suffix: lint
 
       - name: Set up Python
         run: uv python install 3.14
@@ -112,6 +121,7 @@ jobs:
         uses: astral-sh/setup-uv@v7
         with:
           version: "latest"
+          cache-suffix: test-${{ matrix.package }}
 
       - name: Set up Python
         run: uv python install 3.14
@@ -239,6 +249,7 @@ jobs:
         uses: astral-sh/setup-uv@v7
         with:
           version: "latest"
+          cache-suffix: e2e
 
       - name: Set up Python
         run: uv python install 3.14
