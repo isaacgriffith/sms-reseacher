@@ -28,6 +28,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.types import JSON
 
 from db.base import Base, enum_values
+from db.models.slr import SynthesisApproach
 
 
 class TertiaryProtocolStatus(str, enum.Enum):
@@ -93,13 +94,28 @@ class TertiaryStudyProtocol(Base):
     search_strategy: Mapped[str | None] = mapped_column(Text, nullable=True)
     quality_threshold: Mapped[float | None] = mapped_column(Float, nullable=True)
 
-    # Uses the existing SynthesisApproach enum from the SLR workflow.
-    # Stored as the string enum name; validated at the application layer.
+    # Uses the existing SynthesisApproach enum from the SLR workflow — the
+    # same `synthesis_approach_enum` Postgres type `ReviewProtocol` and
+    # `SynthesisResult` already declare in slr.py, so no migration is needed
+    # here; the type already carries all five members.
+    #
+    # Previously hand-listed as three bare strings ("meta_analysis",
+    # "descriptive", "qualitative"), omitting "narrative" and "thematic" even
+    # though the Postgres type has always had them and
+    # `TertiaryProtocolForm.tsx` has always offered both as options. Writing
+    # either value succeeded (the DB type accepts it), but every subsequent
+    # read — including the `db.refresh()` right after that same write —
+    # raised `LookupError` against the incomplete three-value list, so a
+    # `TertiaryStudyProtocol` saved with either value 500'd forever after,
+    # including on its own save. Found via T025 (`tertiary-workflow.spec.ts`)
+    # exercising the "Narrative" option in the field the form actually
+    # offers. Matching `slr.py`'s own columns — `Enum(SynthesisApproach,
+    # values_callable=enum_values, ...)` — keeps the two from drifting apart
+    # like this again.
     synthesis_approach: Mapped[str | None] = mapped_column(
         Enum(
-            "meta_analysis",
-            "descriptive",
-            "qualitative",
+            SynthesisApproach,
+            values_callable=enum_values,
             name="synthesis_approach_enum",
             create_constraint=False,
         ),
