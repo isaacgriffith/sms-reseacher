@@ -14,7 +14,6 @@ marked **NEW** does not exist today.
 
 ```jsonc
 {
-  "reviewer_id": 7,
   "decision": "accepted",           // accepted | rejected | duplicate
   "observed_status": "pending",     // NEW, REQUIRED — see below
   "reasons": [
@@ -23,6 +22,31 @@ marked **NEW** does not exist today.
   "overrides_decision_id": null     // int when superseding the caller's own earlier decision
 }
 ```
+
+### `reviewer_id` — **REMOVED** (TFIX4)
+
+Who is reviewing is a property of **who is asking**, not a parameter the caller chooses. The
+backend resolves it from the session: `(study_id, current_user.user_id)` → the caller's `human`
+`Reviewer` row, created on demand if absent.
+
+Creating on demand is what makes FR-005 true — *any member of a study* can record a decision.
+Reviewer rows are otherwise only created at study creation from the `reviewers` list, so a member
+added later had no row and therefore no way to screen.
+
+This closes three defects at once, and they are worth naming because each looked like a UI nicety
+and was actually an attribution bug:
+
+| Where | What it did |
+| ----- | ----------- |
+| `ReviewerPanel.tsx` | Asked the researcher to **type their own database id**, and refused to submit until they did. Its own comment: *"simplified — in real use would be populated from auth context"* |
+| `submit_decision` | Checked only that the supplied `reviewer_id` belonged to the **study**, never that it belonged to the **caller** — so any member could record a decision under a colleague's name |
+| `PaperCard.tsx:389` | Resolved a conflict as `onResolve(lastTwo[0]?.reviewer_id ?? 0, …)` — attributing the binding resolution to **the first disagreeing reviewer**, or to reviewer `0` |
+
+`ResolveConflictRequest` loses `reviewer_id` for the same reason and by the same mechanism.
+
+Not fixed here, recorded as **TFIX5**: `studyTypeDispatch.tsx:304` passes
+`<QualityAssessmentPage … reviewerId={0} />`, hardcoded, so SLR quality scores are attributed to
+reviewer `0`. Same root cause, different workflow.
 
 ### `observed_status` — **NEW, required**
 
@@ -108,7 +132,8 @@ belong to this study` when the reviewer is not on the study.
 ## Check order
 
 1. Study membership (`require_study_member`) — as today
-2. Reviewer belongs to the study — 422 as today
+2. **Resolve the caller's reviewer row** from the session, creating it if absent (replaces the
+   former "reviewer belongs to the study" 422, which no longer has an input to validate)
 3. Candidate exists — 404 as today
 4. `decision` parses to `PaperDecisionType` — 422 as today
 5. **`observed_status` matches `current_status`** — 409 `stale_state`

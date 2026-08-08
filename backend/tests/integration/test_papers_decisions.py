@@ -1,9 +1,10 @@
 """Integration tests for paper decision endpoints.
 
 Covers:
-- POST /papers/{id}/decisions: reviewer-not-in-study → 422
+- POST /papers/{id}/decisions: reviewer_id is resolved from the session, not
+  the request body (TFIX4) — a non-member is rejected with 403
 - POST /papers/{id}/decisions: is_override=True recorded when overrides_decision_id provided
-- POST two disagreeing human decisions → conflict_flag=True on CandidatePaper
+- POST two disagreeing human decisions (by two different users) → conflict_flag=True
 - POST /papers/{id}/resolve-conflict clears conflict_flag and sets binding status
 - 401 when unauthenticated
 """
@@ -15,8 +16,9 @@ from db.models import Paper
 from db.models.candidate import CandidatePaper, CandidatePaperStatus
 from db.models.search import SearchString
 from db.models.search_exec import SearchExecution, SearchExecutionStatus
-from db.models.study import Reviewer, ReviewerType
+from db.models.study import Reviewer, StudyMember, StudyMemberRole
 from db.models.users import GroupMembership, GroupRole, ResearchGroup
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from backend.core.auth import create_access_token
@@ -53,16 +55,20 @@ async def _setup_study(client, db_engine, user) -> int:
     return resp.json()["id"]
 
 
-async def _insert_reviewer(
-    db_engine, study_id: int, reviewer_type: ReviewerType = ReviewerType.HUMAN
-) -> int:
-    """Insert a Reviewer record; return reviewer id."""
+async def _add_study_member(
+    db_engine, study_id: int, user_id: int, role: StudyMemberRole = StudyMemberRole.MEMBER
+) -> None:
+    """Insert a StudyMember row so *user_id* passes ``require_study_member``.
+
+    ``_setup_study`` only makes its creating user a member; tests that need a
+    second authenticated user (e.g. two disagreeing human reviewers) must add
+    that user as a study member explicitly or they 403 before ever reaching
+    the reviewer-resolution logic under test.
+    """
     maker = async_sessionmaker(db_engine, expire_on_commit=False)
     async with maker() as session:
-        reviewer = Reviewer(study_id=study_id, reviewer_type=reviewer_type)
-        session.add(reviewer)
+        session.add(StudyMember(study_id=study_id, user_id=user_id, role=role))
         await session.commit()
-        return reviewer.id
 
 
 async def _insert_candidate_paper(db_engine, study_id: int) -> int:
@@ -108,45 +114,44 @@ class TestSubmitDecision:
         assert resp.status_code == 401
 
     @pytest.mark.asyncio
-    async def test_reviewer_not_in_study_returns_422(self, client, alice, bob, db_engine) -> None:
-        """Reviewer that belongs to a different study → 422."""
+    async def test_non_member_returns_403(self, client, alice, bob, db_engine) -> None:
+        """A user who is not a member of the study → 403.
+
+        TFIX4 removed ``reviewer_id`` from the request body — there is no
+        longer a client-supplied reviewer to validate against the study, so
+        the guarantee that matters is study membership itself
+        (``require_study_member``), checked before reviewer resolution.
+        """
         alice_user, _ = alice
+        bob_user, _ = bob
         study_id = await _setup_study(client, db_engine, alice_user)
         cp_id = await _insert_candidate_paper(db_engine, study_id)
-
-        # Reviewer inserted for a different (fake) study
-        wrong_study_id = study_id + 999
-        maker = async_sessionmaker(db_engine, expire_on_commit=False)
-        async with maker() as session:
-            reviewer = Reviewer(study_id=wrong_study_id, reviewer_type=ReviewerType.HUMAN)
-            session.add(reviewer)
-            await session.commit()
-            wrong_reviewer_id = reviewer.id
 
         resp = await client.post(
             f"/api/v1/studies/{study_id}/papers/{cp_id}/decisions",
             json={
-                "reviewer_id": wrong_reviewer_id,
                 "decision": "accepted",
                 "observed_status": "pending",
                 "reasons": [],
             },
-            headers=_bearer(alice_user.id),
+            headers=_bearer(bob_user.id),
         )
-        assert resp.status_code == 422
+        assert resp.status_code == 403
 
     @pytest.mark.asyncio
     async def test_accepted_decision_recorded(self, client, alice, db_engine) -> None:
-        """Valid accepted decision → 201 with correct decision field."""
+        """Valid accepted decision → 201 with correct decision field.
+
+        No pre-existing Reviewer row is created for alice — the session
+        resolver creates one on demand (TFIX4 / FR-005).
+        """
         user, _ = alice
         study_id = await _setup_study(client, db_engine, user)
         cp_id = await _insert_candidate_paper(db_engine, study_id)
-        reviewer_id = await _insert_reviewer(db_engine, study_id)
 
         resp = await client.post(
             f"/api/v1/studies/{study_id}/papers/{cp_id}/decisions",
             json={
-                "reviewer_id": reviewer_id,
                 "decision": "accepted",
                 "observed_status": "pending",
                 "reasons": [],
@@ -156,7 +161,7 @@ class TestSubmitDecision:
         assert resp.status_code == 201
         body = resp.json()
         assert body["decision"] == "accepted"
-        assert body["reviewer_id"] == reviewer_id
+        assert isinstance(body["reviewer_id"], int)
         assert body["is_override"] is False
 
     @pytest.mark.asyncio
@@ -167,13 +172,11 @@ class TestSubmitDecision:
         user, _ = alice
         study_id = await _setup_study(client, db_engine, user)
         cp_id = await _insert_candidate_paper(db_engine, study_id)
-        reviewer_id = await _insert_reviewer(db_engine, study_id)
 
         # First decision
         resp1 = await client.post(
             f"/api/v1/studies/{study_id}/papers/{cp_id}/decisions",
             json={
-                "reviewer_id": reviewer_id,
                 "decision": "rejected",
                 "observed_status": "pending",
                 "reasons": [],
@@ -188,7 +191,6 @@ class TestSubmitDecision:
         resp2 = await client.post(
             f"/api/v1/studies/{study_id}/papers/{cp_id}/decisions",
             json={
-                "reviewer_id": reviewer_id,
                 "decision": "accepted",
                 "observed_status": "rejected",
                 "reasons": [],
@@ -203,77 +205,83 @@ class TestSubmitDecision:
 
     @pytest.mark.asyncio
     async def test_two_disagreeing_human_reviewers_sets_conflict_flag(
-        self, client, alice, db_engine
+        self, client, alice, bob, db_engine
     ) -> None:
-        """Two human reviewers with different decisions set conflict_flag=True."""
-        user, _ = alice
-        study_id = await _setup_study(client, db_engine, user)
-        cp_id = await _insert_candidate_paper(db_engine, study_id)
-        reviewer1_id = await _insert_reviewer(db_engine, study_id, ReviewerType.HUMAN)
-        reviewer2_id = await _insert_reviewer(db_engine, study_id, ReviewerType.HUMAN)
+        """Two different users deciding differently set conflict_flag=True.
 
-        # Reviewer 1: accepted
+        Each authenticates separately, so the two reviewer rows are resolved
+        from their own sessions rather than supplied by the caller.
+        """
+        alice_user, _ = alice
+        bob_user, _ = bob
+        study_id = await _setup_study(client, db_engine, alice_user)
+        await _add_study_member(db_engine, study_id, bob_user.id)
+        cp_id = await _insert_candidate_paper(db_engine, study_id)
+
+        # Alice: accepted
         resp1 = await client.post(
             f"/api/v1/studies/{study_id}/papers/{cp_id}/decisions",
             json={
-                "reviewer_id": reviewer1_id,
                 "decision": "accepted",
                 "observed_status": "pending",
                 "reasons": [],
             },
-            headers=_bearer(user.id),
+            headers=_bearer(alice_user.id),
         )
         assert resp1.status_code == 201
 
-        # Reviewer 2: rejected → should trigger conflict. Reviewer 2 observes the
-        # candidate after reviewer 1's decision moved current_status to "accepted".
+        # Bob: rejected → should trigger conflict. Bob observes the candidate
+        # after alice's decision moved current_status to "accepted".
         resp2 = await client.post(
             f"/api/v1/studies/{study_id}/papers/{cp_id}/decisions",
             json={
-                "reviewer_id": reviewer2_id,
                 "decision": "rejected",
                 "observed_status": "accepted",
                 "reasons": [],
             },
-            headers=_bearer(user.id),
+            headers=_bearer(bob_user.id),
         )
         assert resp2.status_code == 201
 
         # Check CandidatePaper has conflict_flag=True via GET
         get_resp = await client.get(
             f"/api/v1/studies/{study_id}/papers/{cp_id}",
-            headers=_bearer(user.id),
+            headers=_bearer(alice_user.id),
         )
         assert get_resp.status_code == 200
         assert get_resp.json()["conflict_flag"] is True
 
     @pytest.mark.asyncio
-    async def test_agreeing_human_reviewers_no_conflict(self, client, alice, db_engine) -> None:
-        """Two human reviewers with the same decision → conflict_flag=False."""
-        user, _ = alice
-        study_id = await _setup_study(client, db_engine, user)
-        cp_id = await _insert_candidate_paper(db_engine, study_id)
-        reviewer1_id = await _insert_reviewer(db_engine, study_id, ReviewerType.HUMAN)
-        reviewer2_id = await _insert_reviewer(db_engine, study_id, ReviewerType.HUMAN)
+    async def test_agreeing_human_reviewers_no_conflict(
+        self, client, alice, bob, db_engine
+    ) -> None:
+        """Two different users deciding the same way leave conflict_flag False.
 
-        # Reviewer 1 observes "pending"; reviewer 2 observes "accepted" — the status
-        # left behind by reviewer 1's decision, since both decide "accepted".
-        for rid, observed in [(reviewer1_id, "pending"), (reviewer2_id, "accepted")]:
+        Agreement is not disagreement, however many reviewers recorded it.
+        """
+        alice_user, _ = alice
+        bob_user, _ = bob
+        study_id = await _setup_study(client, db_engine, alice_user)
+        await _add_study_member(db_engine, study_id, bob_user.id)
+        cp_id = await _insert_candidate_paper(db_engine, study_id)
+
+        # Alice observes "pending"; bob observes "accepted" — the status left
+        # behind by alice's decision, since both decide "accepted".
+        for uid, observed in [(alice_user.id, "pending"), (bob_user.id, "accepted")]:
             resp = await client.post(
                 f"/api/v1/studies/{study_id}/papers/{cp_id}/decisions",
                 json={
-                    "reviewer_id": rid,
                     "decision": "accepted",
                     "observed_status": observed,
                     "reasons": [],
                 },
-                headers=_bearer(user.id),
+                headers=_bearer(uid),
             )
             assert resp.status_code == 201
 
         get_resp = await client.get(
             f"/api/v1/studies/{study_id}/papers/{cp_id}",
-            headers=_bearer(user.id),
+            headers=_bearer(alice_user.id),
         )
         assert get_resp.json()["conflict_flag"] is False
 
@@ -283,13 +291,11 @@ class TestSubmitDecision:
         user, _ = alice
         study_id = await _setup_study(client, db_engine, user)
         cp_id = await _insert_candidate_paper(db_engine, study_id)
-        reviewer_id = await _insert_reviewer(db_engine, study_id)
 
         reasons = [{"criterion_id": 1, "criterion_type": "inclusion", "text": "Peer-reviewed"}]
         resp = await client.post(
             f"/api/v1/studies/{study_id}/papers/{cp_id}/decisions",
             json={
-                "reviewer_id": reviewer_id,
                 "decision": "accepted",
                 "observed_status": "pending",
                 "reasons": reasons,
@@ -314,14 +320,11 @@ class TestSubmitDecision:
         user, _ = alice
         study_id = await _setup_study(client, db_engine, user)
         cp_id = await _insert_candidate_paper(db_engine, study_id)
-        reviewer1_id = await _insert_reviewer(db_engine, study_id, ReviewerType.HUMAN)
-        reviewer2_id = await _insert_reviewer(db_engine, study_id, ReviewerType.HUMAN)
 
-        # Reviewer 1 decides, moving current_status from "pending" to "accepted".
+        # First decision, moving current_status from "pending" to "accepted".
         resp1 = await client.post(
             f"/api/v1/studies/{study_id}/papers/{cp_id}/decisions",
             json={
-                "reviewer_id": reviewer1_id,
                 "decision": "accepted",
                 "observed_status": "pending",
                 "reasons": [],
@@ -330,11 +333,13 @@ class TestSubmitDecision:
         )
         assert resp1.status_code == 201
 
-        # Reviewer 2 still believes the paper is "pending" — stale view.
+        # Same reviewer still believes the paper is "pending" — stale view. The
+        # stale-state check (order 5) fires before the unacknowledged-prior
+        # check (order 6), so this 409s as stale_state even though it is also
+        # this reviewer's second decision.
         resp2 = await client.post(
             f"/api/v1/studies/{study_id}/papers/{cp_id}/decisions",
             json={
-                "reviewer_id": reviewer2_id,
                 "decision": "rejected",
                 "observed_status": "pending",
                 "reasons": [],
@@ -358,12 +363,10 @@ class TestSubmitDecision:
         user, _ = alice
         study_id = await _setup_study(client, db_engine, user)
         cp_id = await _insert_candidate_paper(db_engine, study_id)
-        reviewer_id = await _insert_reviewer(db_engine, study_id)
 
         resp1 = await client.post(
             f"/api/v1/studies/{study_id}/papers/{cp_id}/decisions",
             json={
-                "reviewer_id": reviewer_id,
                 "decision": "rejected",
                 "observed_status": "pending",
                 "reasons": [],
@@ -373,13 +376,13 @@ class TestSubmitDecision:
         assert resp1.status_code == 201
         first_decision_id = resp1.json()["id"]
 
-        # Second submission by the same reviewer, no overrides_decision_id. Its
-        # observed_status matches the current stored status ("rejected"), so it
-        # clears the stale-state check and reaches the unacknowledged-prior check.
+        # Second submission by the same authenticated user (session-resolved to
+        # the same reviewer), no overrides_decision_id. Its observed_status
+        # matches the current stored status ("rejected"), so it clears the
+        # stale-state check and reaches the unacknowledged-prior check.
         resp2 = await client.post(
             f"/api/v1/studies/{study_id}/papers/{cp_id}/decisions",
             json={
-                "reviewer_id": reviewer_id,
                 "decision": "accepted",
                 "observed_status": "rejected",
                 "reasons": [],
@@ -406,12 +409,10 @@ class TestSubmitDecision:
         user, _ = alice
         study_id = await _setup_study(client, db_engine, user)
         cp_id = await _insert_candidate_paper(db_engine, study_id)
-        reviewer_id = await _insert_reviewer(db_engine, study_id)
 
         resp1 = await client.post(
             f"/api/v1/studies/{study_id}/papers/{cp_id}/decisions",
             json={
-                "reviewer_id": reviewer_id,
                 "decision": "rejected",
                 "observed_status": "pending",
                 "reasons": [],
@@ -424,7 +425,6 @@ class TestSubmitDecision:
         resp2 = await client.post(
             f"/api/v1/studies/{study_id}/papers/{cp_id}/decisions",
             json={
-                "reviewer_id": reviewer_id,
                 "decision": "accepted",
                 "observed_status": "rejected",
                 "reasons": [],
@@ -466,36 +466,35 @@ class TestResolveConflict:
         assert resp.status_code == 401
 
     @pytest.mark.asyncio
-    async def test_resolve_clears_conflict_flag(self, client, alice, db_engine) -> None:
+    async def test_resolve_clears_conflict_flag(self, client, alice, bob, db_engine) -> None:
         """Resolving a conflict sets conflict_flag=False on the candidate."""
-        user, _ = alice
-        study_id = await _setup_study(client, db_engine, user)
+        alice_user, _ = alice
+        bob_user, _ = bob
+        study_id = await _setup_study(client, db_engine, alice_user)
+        await _add_study_member(db_engine, study_id, bob_user.id)
         cp_id = await _insert_candidate_paper(db_engine, study_id)
-        reviewer1_id = await _insert_reviewer(db_engine, study_id, ReviewerType.HUMAN)
-        reviewer2_id = await _insert_reviewer(db_engine, study_id, ReviewerType.HUMAN)
 
-        # Create conflict. Reviewer 1 observes "pending"; reviewer 2 observes
-        # "accepted" — the status left behind by reviewer 1's decision.
-        for rid, dec, observed in [
-            (reviewer1_id, "accepted", "pending"),
-            (reviewer2_id, "rejected", "accepted"),
+        # Create conflict. Alice observes "pending"; bob observes "accepted" —
+        # the status left behind by alice's decision.
+        for uid, dec, observed in [
+            (alice_user.id, "accepted", "pending"),
+            (bob_user.id, "rejected", "accepted"),
         ]:
             await client.post(
                 f"/api/v1/studies/{study_id}/papers/{cp_id}/decisions",
                 json={
-                    "reviewer_id": rid,
                     "decision": dec,
                     "observed_status": observed,
                     "reasons": [],
                 },
-                headers=_bearer(user.id),
+                headers=_bearer(uid),
             )
 
         # Resolve
         resp = await client.post(
             f"/api/v1/studies/{study_id}/papers/{cp_id}/resolve-conflict",
-            json={"reviewer_id": reviewer1_id, "decision": "accepted", "reasons": []},
-            headers=_bearer(user.id),
+            json={"decision": "accepted", "reasons": []},
+            headers=_bearer(alice_user.id),
         )
         assert resp.status_code == 201
         assert resp.json()["is_override"] is True
@@ -503,43 +502,42 @@ class TestResolveConflict:
         # Verify conflict cleared
         get_resp = await client.get(
             f"/api/v1/studies/{study_id}/papers/{cp_id}",
-            headers=_bearer(user.id),
+            headers=_bearer(alice_user.id),
         )
         assert get_resp.json()["conflict_flag"] is False
 
     @pytest.mark.asyncio
-    async def test_resolve_sets_binding_status(self, client, alice, db_engine) -> None:
+    async def test_resolve_sets_binding_status(self, client, alice, bob, db_engine) -> None:
         """Resolve-conflict updates CandidatePaper status to the binding decision."""
-        user, _ = alice
-        study_id = await _setup_study(client, db_engine, user)
+        alice_user, _ = alice
+        bob_user, _ = bob
+        study_id = await _setup_study(client, db_engine, alice_user)
+        await _add_study_member(db_engine, study_id, bob_user.id)
         cp_id = await _insert_candidate_paper(db_engine, study_id)
-        reviewer1_id = await _insert_reviewer(db_engine, study_id, ReviewerType.HUMAN)
-        reviewer2_id = await _insert_reviewer(db_engine, study_id, ReviewerType.HUMAN)
 
-        for rid, dec, observed in [
-            (reviewer1_id, "accepted", "pending"),
-            (reviewer2_id, "rejected", "accepted"),
+        for uid, dec, observed in [
+            (alice_user.id, "accepted", "pending"),
+            (bob_user.id, "rejected", "accepted"),
         ]:
             await client.post(
                 f"/api/v1/studies/{study_id}/papers/{cp_id}/decisions",
                 json={
-                    "reviewer_id": rid,
                     "decision": dec,
                     "observed_status": observed,
                     "reasons": [],
                 },
-                headers=_bearer(user.id),
+                headers=_bearer(uid),
             )
 
         await client.post(
             f"/api/v1/studies/{study_id}/papers/{cp_id}/resolve-conflict",
-            json={"reviewer_id": reviewer1_id, "decision": "rejected", "reasons": []},
-            headers=_bearer(user.id),
+            json={"decision": "rejected", "reasons": []},
+            headers=_bearer(alice_user.id),
         )
 
         get_resp = await client.get(
             f"/api/v1/studies/{study_id}/papers/{cp_id}",
-            headers=_bearer(user.id),
+            headers=_bearer(alice_user.id),
         )
         assert get_resp.json()["current_status"] == "rejected"
 
@@ -549,11 +547,10 @@ class TestResolveConflict:
         user, _ = alice
         study_id = await _setup_study(client, db_engine, user)
         cp_id = await _insert_candidate_paper(db_engine, study_id)
-        reviewer_id = await _insert_reviewer(db_engine, study_id)
 
         resp = await client.post(
             f"/api/v1/studies/{study_id}/papers/{cp_id}/resolve-conflict",
-            json={"reviewer_id": reviewer_id, "decision": "accepted", "reasons": []},
+            json={"decision": "accepted", "reasons": []},
             headers=_bearer(user.id),
         )
         assert resp.status_code == 422
@@ -588,18 +585,17 @@ class TestListDecisions:
         user, _ = alice
         study_id = await _setup_study(client, db_engine, user)
         cp_id = await _insert_candidate_paper(db_engine, study_id)
-        reviewer_id = await _insert_reviewer(db_engine, study_id)
 
-        await client.post(
+        post_resp = await client.post(
             f"/api/v1/studies/{study_id}/papers/{cp_id}/decisions",
             json={
-                "reviewer_id": reviewer_id,
                 "decision": "accepted",
                 "observed_status": "pending",
                 "reasons": [],
             },
             headers=_bearer(user.id),
         )
+        reviewer_id = post_resp.json()["reviewer_id"]
 
         resp = await client.get(
             f"/api/v1/studies/{study_id}/papers/{cp_id}/decisions",
@@ -610,3 +606,98 @@ class TestListDecisions:
         assert len(items) == 1
         assert items[0]["decision"] == "accepted"
         assert items[0]["reviewer_id"] == reviewer_id
+
+
+class TestSessionReviewerResolution:
+    """Reviewer identity is resolved from the session (TFIX4), never the request body."""
+
+    @pytest.mark.asyncio
+    async def test_decisions_attributed_to_calling_users_reviewer(
+        self, client, alice, bob, db_engine
+    ) -> None:
+        """A decision is attributed to the calling user's own reviewer row.
+
+        Two users deciding on one candidate produce two distinct reviewer_ids,
+        each mapping back to the user who authenticated — the guarantee TFIX4
+        exists to provide, and the one a client-supplied reviewer_id could not
+        make.
+        """
+        alice_user, _ = alice
+        bob_user, _ = bob
+        study_id = await _setup_study(client, db_engine, alice_user)
+        await _add_study_member(db_engine, study_id, bob_user.id)
+        cp_id = await _insert_candidate_paper(db_engine, study_id)
+
+        alice_resp = await client.post(
+            f"/api/v1/studies/{study_id}/papers/{cp_id}/decisions",
+            json={"decision": "accepted", "observed_status": "pending", "reasons": []},
+            headers=_bearer(alice_user.id),
+        )
+        assert alice_resp.status_code == 201
+        alice_reviewer_id = alice_resp.json()["reviewer_id"]
+
+        bob_resp = await client.post(
+            f"/api/v1/studies/{study_id}/papers/{cp_id}/decisions",
+            json={"decision": "rejected", "observed_status": "accepted", "reasons": []},
+            headers=_bearer(bob_user.id),
+        )
+        assert bob_resp.status_code == 201
+        bob_reviewer_id = bob_resp.json()["reviewer_id"]
+
+        assert alice_reviewer_id != bob_reviewer_id
+
+        maker = async_sessionmaker(db_engine, expire_on_commit=False)
+        async with maker() as session:
+            alice_reviewer = await session.get(Reviewer, alice_reviewer_id)
+            bob_reviewer = await session.get(Reviewer, bob_reviewer_id)
+        assert alice_reviewer is not None
+        assert bob_reviewer is not None
+        assert alice_reviewer.user_id == alice_user.id
+        assert bob_reviewer.user_id == bob_user.id
+
+    @pytest.mark.asyncio
+    async def test_member_with_no_reviewer_row_gets_one_created_on_demand(
+        self, client, alice, db_engine
+    ) -> None:
+        """A member with no reviewer row can still screen, and gets exactly one.
+
+        Reviewer rows are otherwise created only at study creation, so a member
+        added later had no row and no way to record a decision at all. FR-005
+        requires that any member can. The second decision must reuse the row
+        rather than mint another, or one researcher would look like several.
+        """
+        user, _ = alice
+        study_id = await _setup_study(client, db_engine, user)
+        cp_id = await _insert_candidate_paper(db_engine, study_id)
+
+        first_resp = await client.post(
+            f"/api/v1/studies/{study_id}/papers/{cp_id}/decisions",
+            json={"decision": "rejected", "observed_status": "pending", "reasons": []},
+            headers=_bearer(user.id),
+        )
+        assert first_resp.status_code == 201
+        first_reviewer_id = first_resp.json()["reviewer_id"]
+
+        second_resp = await client.post(
+            f"/api/v1/studies/{study_id}/papers/{cp_id}/decisions",
+            json={
+                "decision": "accepted",
+                "observed_status": "rejected",
+                "reasons": [],
+                "overrides_decision_id": first_resp.json()["id"],
+            },
+            headers=_bearer(user.id),
+        )
+        assert second_resp.status_code == 201
+        assert second_resp.json()["reviewer_id"] == first_reviewer_id
+
+        maker = async_sessionmaker(db_engine, expire_on_commit=False)
+        async with maker() as session:
+            result = await session.execute(
+                select(Reviewer).where(
+                    Reviewer.study_id == study_id,
+                    Reviewer.user_id == user.id,
+                )
+            )
+            reviewer_rows = result.scalars().all()
+        assert len(reviewer_rows) == 1

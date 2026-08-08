@@ -145,7 +145,6 @@ describe('ScreeningView', () => {
       fireEvent.click(screen.getByRole('button', { name: /^accepted$/i }));
       await waitFor(() => screen.getByText('Peer-reviewed'));
       fireEvent.click(screen.getByLabelText('Peer-reviewed'));
-      fireEvent.change(screen.getByPlaceholderText(/reviewer id/i), { target: { value: '7' } });
       fireEvent.change(screen.getByPlaceholderText(/optional annotation/i), {
         target: { value: 'Looks solid on second read' },
       });
@@ -180,7 +179,6 @@ describe('ScreeningView', () => {
       await waitFor(() => screen.getByTestId('reviewer-panel'));
 
       fireEvent.click(screen.getByRole('button', { name: /^accepted$/i }));
-      fireEvent.change(screen.getByPlaceholderText(/reviewer id/i), { target: { value: '7' } });
 
       mockApi.post.mockRejectedValueOnce(
         new ApiError(409, {

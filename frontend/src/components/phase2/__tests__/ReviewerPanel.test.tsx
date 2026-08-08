@@ -6,9 +6,8 @@
  * - Submit Decision heading renders
  * - Accept / Reject / Duplicate buttons rendered
  * - Submit button disabled when no decision selected
- * - Submit button disabled when reviewer ID not set
- * - Submit button enabled when decision + reviewer ID provided
- * - api.post called with correct payload on submit
+ * - Submit button enabled once a decision is chosen (TFIX4: no reviewer id entry required)
+ * - api.post called with correct payload on submit, and never with reviewer_id (TFIX4)
  * - Override annotation textarea present
  * - Success and error states from mutation
  */
@@ -71,9 +70,10 @@ describe('ReviewerPanel', () => {
       expect(screen.getByRole('button', { name: /^duplicate$/i })).toBeTruthy();
     });
 
-    it('renders reviewer ID input', () => {
+    it('does not render a reviewer ID input (TFIX4: reviewer resolved from session)', () => {
       renderWithQuery(<ReviewerPanel {...BASE_PROPS} />);
-      expect(screen.getByPlaceholderText(/reviewer id/i)).toBeTruthy();
+      expect(screen.queryByPlaceholderText(/reviewer id/i)).toBeNull();
+      expect(screen.queryByText(/^reviewer id$/i)).toBeNull();
     });
 
     it('renders override annotation textarea', () => {
@@ -89,45 +89,34 @@ describe('ReviewerPanel', () => {
       expect(submitBtn).toHaveProperty('disabled', true);
     });
 
-    it('submit button is disabled when decision selected but no reviewer ID', () => {
+    it('submit button is enabled once a decision is chosen, with no reviewer id entered anywhere', () => {
       renderWithQuery(<ReviewerPanel {...BASE_PROPS} />);
       fireEvent.click(screen.getByRole('button', { name: /^accepted$/i }));
-      const submitBtn = screen.getByRole('button', { name: /submit decision/i });
-      expect(submitBtn).toHaveProperty('disabled', true);
-    });
-
-    it('submit button is enabled when decision and reviewer ID both set', () => {
-      renderWithQuery(<ReviewerPanel {...BASE_PROPS} />);
-      fireEvent.click(screen.getByRole('button', { name: /^accepted$/i }));
-      fireEvent.change(screen.getByPlaceholderText(/reviewer id/i), {
-        target: { value: '7' },
-      });
       const submitBtn = screen.getByRole('button', { name: /submit decision/i });
       expect(submitBtn).toHaveProperty('disabled', false);
     });
   });
 
   describe('Decision submission', () => {
-    it('calls api.post with reviewer_id, decision, and reasons on submit', async () => {
+    it('calls api.post with decision and reasons, and never with reviewer_id, on submit', async () => {
       mockApi.post.mockResolvedValue({ id: 99, decision: 'accepted', is_override: false });
       renderWithQuery(<ReviewerPanel {...BASE_PROPS} />);
 
       fireEvent.click(screen.getByRole('button', { name: /^accepted$/i }));
-      fireEvent.change(screen.getByPlaceholderText(/reviewer id/i), {
-        target: { value: '5' },
-      });
       fireEvent.click(screen.getByRole('button', { name: /submit decision/i }));
 
       await waitFor(() => {
         expect(mockApi.post).toHaveBeenCalledWith(
           expect.stringContaining('/decisions'),
           expect.objectContaining({
-            reviewer_id: 5,
             decision: 'accepted',
             reasons: expect.any(Array),
           }),
         );
       });
+
+      const body = mockApi.post.mock.calls[0][1] as Record<string, unknown>;
+      expect(body).not.toHaveProperty('reviewer_id');
     });
 
     it('includes annotation text in reasons when override note is entered', async () => {
@@ -135,9 +124,6 @@ describe('ReviewerPanel', () => {
       renderWithQuery(<ReviewerPanel {...BASE_PROPS} />);
 
       fireEvent.click(screen.getByRole('button', { name: /^rejected$/i }));
-      fireEvent.change(screen.getByPlaceholderText(/reviewer id/i), {
-        target: { value: '3' },
-      });
       fireEvent.change(screen.getByPlaceholderText(/optional annotation/i), {
         target: { value: 'Override note here' },
       });
@@ -156,9 +142,6 @@ describe('ReviewerPanel', () => {
       renderWithQuery(<ReviewerPanel {...BASE_PROPS} />);
 
       fireEvent.click(screen.getByRole('button', { name: /^accepted$/i }));
-      fireEvent.change(screen.getByPlaceholderText(/reviewer id/i), {
-        target: { value: '1' },
-      });
       fireEvent.click(screen.getByRole('button', { name: /submit decision/i }));
 
       await waitFor(() => expect(screen.getByText(/decision submitted/i)).toBeTruthy());
@@ -169,9 +152,6 @@ describe('ReviewerPanel', () => {
       renderWithQuery(<ReviewerPanel {...BASE_PROPS} />);
 
       fireEvent.click(screen.getByRole('button', { name: /^rejected$/i }));
-      fireEvent.change(screen.getByPlaceholderText(/reviewer id/i), {
-        target: { value: '2' },
-      });
       fireEvent.click(screen.getByRole('button', { name: /submit decision/i }));
 
       await waitFor(() => expect(screen.getByText(/failed to submit decision/i)).toBeTruthy());
@@ -236,7 +216,6 @@ describe('ReviewerPanel', () => {
       await waitFor(() => screen.getByText('No grey lit'));
       fireEvent.click(screen.getByLabelText('No grey lit'));
 
-      fireEvent.change(screen.getByPlaceholderText(/reviewer id/i), { target: { value: '7' } });
       fireEvent.click(screen.getByRole('button', { name: /submit decision/i }));
 
       await waitFor(() => {
@@ -273,21 +252,6 @@ describe('ReviewerPanel', () => {
     });
   });
 
-  describe('Reviewer ID input', () => {
-    it('setting reviewer ID to empty string makes submit disabled', () => {
-      renderWithQuery(<ReviewerPanel {...BASE_PROPS} />);
-
-      fireEvent.click(screen.getByRole('button', { name: /^accepted$/i }));
-      const reviewerInput = screen.getByPlaceholderText(/reviewer id/i);
-      fireEvent.change(reviewerInput, { target: { value: '5' } });
-      // Then clear it
-      fireEvent.change(reviewerInput, { target: { value: '' } });
-
-      const submitBtn = screen.getByRole('button', { name: /submit decision/i });
-      expect((submitBtn as HTMLButtonElement).disabled).toBe(true);
-    });
-  });
-
   describe('onDecisionSubmitted callback', () => {
     it('calls onDecisionSubmitted callback after successful submission', async () => {
       const onSubmitted = vi.fn();
@@ -296,7 +260,6 @@ describe('ReviewerPanel', () => {
       renderWithQuery(<ReviewerPanel {...BASE_PROPS} onDecisionSubmitted={onSubmitted} />);
 
       fireEvent.click(screen.getByRole('button', { name: /^accepted$/i }));
-      fireEvent.change(screen.getByPlaceholderText(/reviewer id/i), { target: { value: '1' } });
       fireEvent.click(screen.getByRole('button', { name: /submit decision/i }));
 
       await waitFor(() => {
@@ -309,7 +272,6 @@ describe('ReviewerPanel', () => {
 
       renderWithQuery(<ReviewerPanel {...BASE_PROPS} />);
       fireEvent.click(screen.getByRole('button', { name: /^rejected$/i }));
-      fireEvent.change(screen.getByPlaceholderText(/reviewer id/i), { target: { value: '2' } });
 
       expect(() =>
         fireEvent.click(screen.getByRole('button', { name: /submit decision/i })),
@@ -336,7 +298,6 @@ describe('ReviewerPanel', () => {
       // Toggle it back off
       fireEvent.click(screen.getByLabelText('Peer reviewed'));
 
-      fireEvent.change(screen.getByPlaceholderText(/reviewer id/i), { target: { value: '1' } });
       fireEvent.click(screen.getByRole('button', { name: /submit decision/i }));
 
       await waitFor(() => {
@@ -359,7 +320,6 @@ describe('ReviewerPanel', () => {
       await waitFor(() => screen.getByText('Must use RCT'));
 
       fireEvent.click(screen.getByLabelText('Must use RCT'));
-      fireEvent.change(screen.getByPlaceholderText(/reviewer id/i), { target: { value: '2' } });
       fireEvent.click(screen.getByRole('button', { name: /submit decision/i }));
 
       await waitFor(() => {
@@ -380,7 +340,6 @@ describe('ReviewerPanel', () => {
 
       renderWithQuery(<ReviewerPanel {...BASE_PROPS} />);
       fireEvent.click(screen.getByRole('button', { name: /^duplicate$/i }));
-      fireEvent.change(screen.getByPlaceholderText(/reviewer id/i), { target: { value: '1' } });
       fireEvent.click(screen.getByRole('button', { name: /submit decision/i }));
 
       await waitFor(() => {
@@ -393,13 +352,6 @@ describe('ReviewerPanel', () => {
   });
 
   describe('Negative state assertions', () => {
-    it('submit disabled when reviewer ID set but no decision selected', () => {
-      renderWithQuery(<ReviewerPanel {...BASE_PROPS} />);
-      fireEvent.change(screen.getByPlaceholderText(/reviewer id/i), { target: { value: '5' } });
-      const submitBtn = screen.getByRole('button', { name: /submit decision/i });
-      expect((submitBtn as HTMLButtonElement).disabled).toBe(true);
-    });
-
     it('error message NOT shown initially before any submission', () => {
       renderWithQuery(<ReviewerPanel {...BASE_PROPS} />);
       expect(screen.queryByText(/failed to submit/i)).toBeNull();
@@ -436,10 +388,9 @@ describe('ReviewerPanel', () => {
       expect(screen.queryByText('Exclusion Criteria')).toBeNull();
     });
 
-    it('deselecting decision (clicking again) with reviewerId entered makes submit disabled', () => {
+    it('deselecting decision (clicking again) makes submit disabled', () => {
       renderWithQuery(<ReviewerPanel {...BASE_PROPS} />);
       fireEvent.click(screen.getByRole('button', { name: /^accepted$/i }));
-      fireEvent.change(screen.getByPlaceholderText(/reviewer id/i), { target: { value: '3' } });
       // Deselect by clicking same button again
       fireEvent.click(screen.getByRole('button', { name: /^accepted$/i }));
       const submitBtn = screen.getByRole('button', { name: /submit decision/i });
@@ -461,7 +412,6 @@ describe('ReviewerPanel', () => {
       fireEvent.click(screen.getByRole('button', { name: /^accepted$/i }));
       await waitFor(() => screen.getByText('Must be RCT'));
       fireEvent.click(screen.getByLabelText('Must be RCT'));
-      fireEvent.change(screen.getByPlaceholderText(/reviewer id/i), { target: { value: '1' } });
       fireEvent.click(screen.getByRole('button', { name: /submit decision/i }));
 
       await waitFor(() => {
@@ -481,7 +431,6 @@ describe('ReviewerPanel', () => {
 
       renderWithQuery(<ReviewerPanel {...BASE_PROPS} />);
       fireEvent.click(screen.getByRole('button', { name: /^accepted$/i }));
-      fireEvent.change(screen.getByPlaceholderText(/reviewer id/i), { target: { value: '1' } });
       // Leave annotation empty
       fireEvent.click(screen.getByRole('button', { name: /submit decision/i }));
 
@@ -499,7 +448,6 @@ describe('ReviewerPanel', () => {
 
       renderWithQuery(<ReviewerPanel {...BASE_PROPS} />);
       fireEvent.click(screen.getByRole('button', { name: /^accepted$/i }));
-      fireEvent.change(screen.getByPlaceholderText(/reviewer id/i), { target: { value: '1' } });
       fireEvent.change(screen.getByPlaceholderText(/optional annotation/i), {
         target: { value: '   ' },
       });
@@ -521,7 +469,6 @@ describe('ReviewerPanel', () => {
       renderWithQuery(<ReviewerPanel {...BASE_PROPS} observedStatus="pending" />);
 
       fireEvent.click(screen.getByRole('button', { name: /^accepted$/i }));
-      fireEvent.change(screen.getByPlaceholderText(/reviewer id/i), { target: { value: '1' } });
       fireEvent.click(screen.getByRole('button', { name: /submit decision/i }));
 
       await waitFor(() => {
@@ -539,7 +486,6 @@ describe('ReviewerPanel', () => {
       );
 
       fireEvent.click(screen.getByRole('button', { name: /^accepted$/i }));
-      fireEvent.change(screen.getByPlaceholderText(/reviewer id/i), { target: { value: '1' } });
       fireEvent.click(screen.getByRole('button', { name: /submit decision/i }));
 
       await waitFor(() => {
@@ -555,7 +501,6 @@ describe('ReviewerPanel', () => {
       renderWithQuery(<ReviewerPanel {...BASE_PROPS} observedStatus="pending" />);
 
       fireEvent.click(screen.getByRole('button', { name: /^accepted$/i }));
-      fireEvent.change(screen.getByPlaceholderText(/reviewer id/i), { target: { value: '1' } });
       fireEvent.click(screen.getByRole('button', { name: /submit decision/i }));
 
       await waitFor(() => {
@@ -577,7 +522,6 @@ describe('ReviewerPanel', () => {
       renderWithQuery(<ReviewerPanel {...BASE_PROPS} observedStatus="pending" />);
 
       fireEvent.click(screen.getByRole('button', { name: /^rejected$/i }));
-      fireEvent.change(screen.getByPlaceholderText(/reviewer id/i), { target: { value: '4' } });
       fireEvent.click(screen.getByRole('button', { name: /submit decision/i }));
 
       await waitFor(() => expect(screen.getByText(/status is now/i)).toBeTruthy());
@@ -595,7 +539,6 @@ describe('ReviewerPanel', () => {
       renderWithQuery(<ReviewerPanel {...BASE_PROPS} observedStatus="pending" />);
 
       fireEvent.click(screen.getByRole('button', { name: /^rejected$/i }));
-      fireEvent.change(screen.getByPlaceholderText(/reviewer id/i), { target: { value: '4' } });
       fireEvent.click(screen.getByRole('button', { name: /submit decision/i }));
       await waitFor(() => expect(screen.getByText(/status is now/i)).toBeTruthy());
 
@@ -618,7 +561,6 @@ describe('ReviewerPanel', () => {
       renderWithQuery(<ReviewerPanel {...BASE_PROPS} observedStatus="pending" />);
 
       fireEvent.click(screen.getByRole('button', { name: /^accepted$/i }));
-      fireEvent.change(screen.getByPlaceholderText(/reviewer id/i), { target: { value: '4' } });
       fireEvent.click(screen.getByRole('button', { name: /submit decision/i }));
 
       await waitFor(() => expect(screen.getByText(/already recorded/i)).toBeTruthy());
@@ -634,7 +576,6 @@ describe('ReviewerPanel', () => {
       renderWithQuery(<ReviewerPanel {...BASE_PROPS} observedStatus="pending" />);
 
       fireEvent.click(screen.getByRole('button', { name: /^accepted$/i }));
-      fireEvent.change(screen.getByPlaceholderText(/reviewer id/i), { target: { value: '4' } });
       fireEvent.click(screen.getByRole('button', { name: /submit decision/i }));
       await waitFor(() => expect(screen.getByText(/already recorded/i)).toBeTruthy());
 
@@ -666,7 +607,6 @@ describe('ReviewerPanel', () => {
       fireEvent.click(screen.getByRole('button', { name: /^accepted$/i }));
       await waitFor(() => screen.getByText('Peer-reviewed'));
       fireEvent.click(screen.getByLabelText('Peer-reviewed'));
-      fireEvent.change(screen.getByPlaceholderText(/reviewer id/i), { target: { value: '4' } });
       fireEvent.change(screen.getByPlaceholderText(/optional annotation/i), {
         target: { value: 'Keep me around' },
       });

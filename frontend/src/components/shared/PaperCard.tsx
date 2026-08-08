@@ -72,7 +72,7 @@ export default function PaperCard({
   });
 
   const resolveConflict = useMutation({
-    mutationFn: (body: { reviewer_id: number; decision: string; reasons: object[] }) =>
+    mutationFn: (body: { decision: string; reasons: object[] }) =>
       api.post(`/api/v1/studies/${studyId}/papers/${candidateId}/resolve-conflict`, body),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['decisions', studyId, candidateId] });
@@ -232,9 +232,7 @@ export default function PaperCard({
       {conflictFlag && decisions.length >= 2 && (
         <ConflictResolutionPanel
           decisions={decisions}
-          onResolve={(reviewerId, decision) =>
-            resolveConflict.mutate({ reviewer_id: reviewerId, decision, reasons: [] })
-          }
+          onResolve={(decision) => resolveConflict.mutate({ decision, reasons: [] })}
           isResolving={resolveConflict.isPending}
         />
       )}
@@ -329,7 +327,7 @@ function ConflictResolutionPanel({
   isResolving,
 }: {
   decisions: Decision[];
-  onResolve: (reviewerId: number, decision: string) => void;
+  onResolve: (decision: string) => void;
   isResolving: boolean;
 }) {
   // Show the two most recent conflicting human decisions side-by-side
@@ -386,7 +384,7 @@ function ConflictResolutionPanel({
         {(['accepted', 'rejected'] as const).map((decision) => (
           <Button
             key={decision}
-            onClick={() => onResolve(lastTwo[0]?.reviewer_id ?? 0, decision)}
+            onClick={() => onResolve(decision)}
             disabled={isResolving}
             variant="contained"
             sx={{

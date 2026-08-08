@@ -167,7 +167,6 @@ async def get_candidate_paper(
 class DecisionRequest(BaseModel):
     """Body for POST /studies/{study_id}/papers/{candidate_id}/decisions."""
 
-    reviewer_id: int
     decision: str  # "accepted", "rejected", "duplicate"
     # NEW, required (contracts/paper-decisions.md): the CandidatePaper.current_status
     # as the reviewer was shown it, not a duplicate of `decision` — this is the
@@ -194,7 +193,6 @@ class DecisionResponse(BaseModel):
 class ResolveConflictRequest(BaseModel):
     """Body for POST resolve-conflict."""
 
-    reviewer_id: int
     decision: str
     reasons: list[dict] = []
 
@@ -219,16 +217,47 @@ async def _load_candidate(study_id: int, candidate_id: int, db: AsyncSession) ->
     return cp
 
 
-async def _require_reviewer_in_study(reviewer_id: int, study_id: int, db: AsyncSession) -> None:
-    """Verify reviewer belongs to study, raise 422 if not."""
+async def _resolve_session_reviewer(
+    study_id: int, current_user: CurrentUser, db: AsyncSession
+) -> Reviewer:
+    """Resolve the calling user's human Reviewer row for a study, creating it if absent.
+
+    Who is reviewing is a property of who is asking, not a value the caller
+    supplies (TFIX4, contracts/paper-decisions.md). Reviewer rows are otherwise
+    only created at study creation from the ``reviewers`` list, so a member
+    added later would have no row and no way to screen — creating one on
+    demand here is what makes FR-005 ("any member of a study can record a
+    decision") true.
+
+    Args:
+        study_id: The study the reviewer must belong to.
+        current_user: The authenticated caller whose reviewer row is resolved.
+        db: Active async session.
+
+    Returns:
+        The caller's existing or newly created human Reviewer row for the
+        study. Newly created rows are flushed but not committed.
+
+    """
     result = await db.execute(
-        select(Reviewer).where(Reviewer.id == reviewer_id, Reviewer.study_id == study_id)
-    )
-    if result.scalar_one_or_none() is None:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Reviewer does not belong to this study",
+        select(Reviewer).where(
+            Reviewer.study_id == study_id,
+            Reviewer.user_id == current_user.user_id,
+            Reviewer.reviewer_type == ReviewerType.HUMAN,
         )
+    )
+    reviewer = result.scalar_one_or_none()
+    if reviewer is not None:
+        return reviewer
+
+    reviewer = Reviewer(
+        study_id=study_id,
+        reviewer_type=ReviewerType.HUMAN,
+        user_id=current_user.user_id,
+    )
+    db.add(reviewer)
+    await db.flush()
+    return reviewer
 
 
 def _parse_decision_type(decision: str) -> PaperDecisionType:
@@ -446,24 +475,22 @@ async def submit_decision(
     """Create a PaperDecision, update CandidatePaper status, and flag conflicts.
 
     Raises:
-        HTTPException: 422 for an invalid reviewer/decision; 409 for a stale
+        HTTPException: 422 for an invalid decision; 409 for a stale
             ``observed_status`` (FR-025/FR-027) or an unacknowledged prior
             decision by the same reviewer (FR-022).
 
     """
     await require_study_member(study_id, current_user, db)
-    await _require_reviewer_in_study(body.reviewer_id, study_id, db)
+    reviewer = await _resolve_session_reviewer(study_id, current_user, db)
     cp = await _load_candidate(study_id, candidate_id, db)
 
     decision_enum = _parse_decision_type(body.decision)
     _assert_observed_status(cp, body.observed_status)
-    await _assert_no_unacknowledged_prior(
-        candidate_id, body.reviewer_id, body.overrides_decision_id, db
-    )
+    await _assert_no_unacknowledged_prior(candidate_id, reviewer.id, body.overrides_decision_id, db)
 
     pd = PaperDecision(
         candidate_paper_id=candidate_id,
-        reviewer_id=body.reviewer_id,
+        reviewer_id=reviewer.id,
         decision=decision_enum,
         reasons=body.reasons or None,
         is_override=body.overrides_decision_id is not None,
@@ -483,7 +510,7 @@ async def submit_decision(
         audit_after={
             "candidate_paper_id": candidate_id,
             "decision": body.decision,
-            "reviewer_id": body.reviewer_id,
+            "reviewer_id": reviewer.id,
         },
     )
 
@@ -513,7 +540,7 @@ async def resolve_conflict(
     clears conflict_flag.
     """
     await require_study_member(study_id, current_user, db)
-    await _require_reviewer_in_study(body.reviewer_id, study_id, db)
+    reviewer = await _resolve_session_reviewer(study_id, current_user, db)
 
     cp = await _load_candidate(study_id, candidate_id, db)
 
@@ -527,7 +554,7 @@ async def resolve_conflict(
 
     pd = PaperDecision(
         candidate_paper_id=candidate_id,
-        reviewer_id=body.reviewer_id,
+        reviewer_id=reviewer.id,
         decision=decision_enum,
         reasons=body.reasons or None,
         is_override=True,

@@ -184,7 +184,7 @@ describe('PaperCard', () => {
       await waitFor(() => expect(screen.getByText(/resolve as rejected/i)).toBeTruthy());
     });
 
-    it('calls api.post with correct body when resolve button clicked', async () => {
+    it('calls api.post with correct body when resolve button clicked, and never with reviewer_id (TFIX4)', async () => {
       mockApi.get.mockResolvedValue(MOCK_DECISIONS);
       mockApi.post.mockResolvedValue({ id: 3, decision: 'accepted', is_override: true });
       renderWithQuery(<PaperCard {...BASE_PROPS} conflictFlag={true} />);
@@ -199,6 +199,9 @@ describe('PaperCard', () => {
           expect.objectContaining({ decision: 'accepted' }),
         );
       });
+
+      const body = mockApi.post.mock.calls[0][1] as Record<string, unknown>;
+      expect(body).not.toHaveProperty('reviewer_id');
     });
 
     it('does not show resolution panel when fewer than 2 decisions', async () => {

@@ -30,7 +30,6 @@ type ConflictState =
   | null;
 
 interface DecisionRequestBody {
-  reviewer_id: number;
   decision: string;
   reasons: object[];
   observed_status: string;
@@ -67,7 +66,6 @@ export default function ReviewerPanel({
   const [selectedDecision, setSelectedDecision] = useState<DecisionType | null>(null);
   const [selectedReasons, setSelectedReasons] = useState<number[]>([]);
   const [annotationText, setAnnotationText] = useState('');
-  const [reviewerId, setReviewerId] = useState<number | null>(null);
   const [conflict, setConflict] = useState<ConflictState>(null);
 
   const { data: inclusion = [] } = useQuery<Criterion[]>({
@@ -132,12 +130,11 @@ export default function ReviewerPanel({
     observedStatusOverride?: string;
     overridesDecisionIdOverride?: number;
   }) => {
-    if (!selectedDecision || reviewerId === null) return;
+    if (!selectedDecision) return;
 
     const effectiveOverrideId = opts?.overridesDecisionIdOverride ?? overridesDecisionId;
 
     const body: DecisionRequestBody = {
-      reviewer_id: reviewerId,
       decision: selectedDecision,
       reasons: buildReasons(),
       observed_status: opts?.observedStatusOverride ?? observedStatus,
@@ -165,7 +162,7 @@ export default function ReviewerPanel({
     );
   };
 
-  const canSubmit = selectedDecision !== null && reviewerId !== null && !submitDecision.isPending;
+  const canSubmit = selectedDecision !== null && !submitDecision.isPending;
 
   return (
     <Box
@@ -183,30 +180,6 @@ export default function ReviewerPanel({
       >
         Submit Decision
       </Typography>
-
-      {/* Reviewer ID input (simplified — in real use would be populated from auth context) */}
-      <Box sx={{ marginBottom: '0.875rem' }}>
-        <Typography
-          component="label"
-          sx={{
-            display: 'block',
-            fontSize: '0.8125rem',
-            fontWeight: 600,
-            color: '#374151',
-            marginBottom: '0.375rem',
-          }}
-        >
-          Reviewer ID
-        </Typography>
-        <TextField
-          type="number"
-          value={reviewerId ?? ''}
-          onChange={(e) => setReviewerId(e.target.value ? Number(e.target.value) : null)}
-          placeholder="Enter reviewer ID…"
-          size="small"
-          fullWidth
-        />
-      </Box>
 
       {/* Decision buttons */}
       <Box sx={{ marginBottom: '0.875rem' }}>

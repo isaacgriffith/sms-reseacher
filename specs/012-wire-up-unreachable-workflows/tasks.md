@@ -109,7 +109,7 @@ database by `backend/tests/integration/test_search_pipeline_screening.py`.
 
 - [ ] TFIX3 **`PaperDecision` has no `annotation` column, and the annotation masquerades as a criterion.** `data-model.md` lists `annotation` among `PaperDecision`'s fields. There is no such column (`db/src/db/models/candidate.py`). `ReviewerPanel.tsx:82-83` instead appends the free text to the `reasons` JSON array as `{"criterion_type": "annotation", "text": "…"}`. The capability works, so nothing is broken for a user — but FR-002 says reasons are "drawn from the study's criteria", and an annotation carried as a pseudo-reason is counted by anything that counts reasons, including any future agreement or criteria-frequency analysis. Either add a real `annotation` column (a migration, which `data-model.md` says this feature does not have) or state the encoding explicitly in `data-model.md` and make every reader of `reasons` filter `criterion_type == "annotation"`. **Low severity, high staleness risk** — recorded because the documentation currently describes a field that does not exist
 
-- [ ] TFIX4 **The screening UI asks the researcher to type their own database id.** `ReviewerPanel.tsx` renders a numeric "Reviewer ID" input, and `canSubmit` is false until it is filled. Its own comment concedes the point: *"simplified — in real use would be populated from auth context"*. FR-005 requires that any member of a study can record a decision; requiring them to know their internal `reviewer.id` is not that. There is **no endpoint that resolves the current user's reviewer row** — `grep` finds no `/reviewers` route anywhere under `backend/src/backend/api/v1/`, so this cannot be fixed in the frontend alone. Add `GET /api/v1/studies/{id}/reviewers` (or return the caller's `reviewer_id` on `StudyDetail`, alongside the existing `viewer_role`), then have `ReviewerPanel` resolve it and drop the input. **Blocks T018 and T019**
+- [X] TFIX4 **The screening UI asks the researcher to type their own database id.** `ReviewerPanel.tsx` renders a numeric "Reviewer ID" input, and `canSubmit` is false until it is filled. Its own comment concedes the point: *"simplified — in real use would be populated from auth context"*. FR-005 requires that any member of a study can record a decision; requiring them to know their internal `reviewer.id` is not that. There is **no endpoint that resolves the current user's reviewer row** — `grep` finds no `/reviewers` route anywhere under `backend/src/backend/api/v1/`, so this cannot be fixed in the frontend alone. Add `GET /api/v1/studies/{id}/reviewers` (or return the caller's `reviewer_id` on `StudyDetail`, alongside the existing `viewer_role`), then have `ReviewerPanel` resolve it and drop the input. **Blocks T018 and T019**
 
   > This is why US1's e2e is not written yet. An e2e could type `1` and pass — the seed fixtures
   > make reviewer ids deterministic — but it would be asserting that a screen no researcher can
@@ -121,6 +121,27 @@ database by `backend/tests/integration/test_search_pipeline_screening.py`.
   > the study (`_require_reviewer_in_study`), not that it belongs to the caller. Whoever fixes
   > TFIX4 should decide whether the endpoint starts rejecting a `reviewer_id` that is not the
   > caller's own — which would be a second, deliberate tightening in the shape of FR-027.
+
+  > **Resolved 2026-08-08.** The user's call, and it is better than any of the three options I
+  > put up: *"have the reviewer ID be associated with the User ID and be held within the session
+  > context. Thus, when the user records a decision on a paper, the reviewer id is pulled from
+  > the current session."* `reviewer_id` is **deleted** from `DecisionRequest` and
+  > `ResolveConflictRequest`; `_resolve_session_reviewer(study_id, current_user, db)` resolves the
+  > caller's `human` reviewer row from `(study_id, current_user.user_id)`, creating it on demand
+  > so a member added after study creation can screen at all — which is what FR-005 actually
+  > requires. `_require_reviewer_in_study` is gone; it validated an input that no longer exists.
+  >
+  > Removing the field closed the impersonation hole as a side effect rather than as a separate
+  > tightening, so no FR-027-shaped decision was needed. It also fixed a third instance nobody had
+  > catalogued: `PaperCard` resolved conflicts as `onResolve(lastTwo[0]?.reviewer_id ?? 0, …)`,
+  > attributing the binding resolution to the first disagreeing reviewer, or to reviewer `0`.
+  >
+  > The integration tests improved as a consequence: the multi-reviewer cases now authenticate as
+  > two real users (`alice`, `bob`) instead of inserting two synthetic reviewer rows, which is
+  > what the feature actually models. `test_reviewer_not_in_study_returns_422` was replaced by
+  > `test_non_member_returns_403` — the guarantee that now carries the weight.
+
+- [ ] TFIX5 **SLR quality scores are attributed to reviewer `0`.** `frontend/src/components/studies/studyTypeDispatch.tsx:304` renders `<QualityAssessmentPage studyId={study.id} reviewerId={0} />` — hardcoded, with no comment. `QualityScoreForm` sends that straight through as `reviewer_id` to the quality-score endpoint, and reads back `scores?.reviewer_scores.find((r) => r.reviewer_id === reviewerId)`, so every reviewer sees and writes the same phantom reviewer `0`. Same root cause as TFIX4 — reviewer identity treated as a client parameter rather than a property of who is asking — in a different workflow. Fix it the same way: resolve from the session server-side and delete the prop. **Consequence if left**: Cohen's κ over quality scores is computed across reviewers who are all recorded as the same person, so inter-rater agreement on quality assessment is meaningless. Found while doing TFIX4; not fixed there because quality assessment is SLR phase 4, outside US1's screening scope
 
 ---
 
@@ -356,14 +377,14 @@ in one commit — a required field and its callers must move together.
 | Refactoring (C1–C3) | TREF1–TREF9 | 9      |
 | Setup ✅            | T001–T002   | 2      |
 | Foundational ✅     | T003–T006   | 4      |
-| Defects found       | TFIX1–TFIX4 | 4      |
+| Defects found       | TFIX1–TFIX5 | 5      |
 | US1 (P1) 🎯 MVP     | T007–T019   | 13     |
 | US2 (P2)            | T020–T026   | 7      |
 | US3 (P3)            | T027–T033   | 7      |
 | US4 (P4)            | T034–T050   | 17     |
 | Polish              | T051–T055   | 5      |
 | Documentation       | TDOC1–TDOC7 | 7      |
-| **Total**           |             | **75** |
+| **Total**           |             | **76** |
 
 TREF1–TREF9, T001–T006, T007–T017, TFIX1 and TFIX2 are complete. T018–T019 are blocked on
 **TFIX4**; US2–US4 and Phase 7 remain.
