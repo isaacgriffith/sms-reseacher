@@ -25,6 +25,7 @@
 | 2026-08-07 | **G22–G23 added**, both found while fixing the screening pipeline (`d8f6dcf`, `1e01097`). Snowballing is a registered job with no enqueue site, and admin job retry enqueues function names that are not registered, with arguments matching no job's signature — while reporting `200`. Neither is visible to the reachability oracles, which model imports rather than HTTP routes; see [Neither oracle sees a backend route](#neither-oracle-sees-a-backend-route) |
 | 2026-08-07 | **G22 resolved.** `POST /studies/{id}/snowball` plus a `SnowballControls` mount, with seeds defaulting to the study's accepted papers, a `409` naming any in-flight pass (FR-026), and a `422` rather than an empty run. 16 integration tests, 10 component tests. G23 remains open |
 | 2026-08-07 | **In-flight guard made bidirectional**, and **G24 added**: snowballing is DOI-keyed, so grey literature, reports, theses and older proceedings — the papers most likely to lack a DOI — are silently excluded from the walk. Both directions are recoverable, backward from stored full text and forward by resolving to a non-DOI identifier, but which citation index to prefer needs a research spike |
+| 2026-08-08 | **G90–G98 added — agent code and prompt alignment.** Four reviewers audited the ten agent services and twelve prompt directories against the corpus. The theme: **the agents are grounded in the corpus at the level of vocabulary, not procedure** — right category names, right rubric count, right validity dimensions, then criteria and anchors the corpus does not contain. Highest-value: the **expert agent seeds the quasi-gold-standard recall metric with unverified LLM-recalled papers** (G92), so a hallucinated DOI can certify the search; **structured screening never happens** because the prompt never requests JSON, so every call falls through to a substring match on "accept" and discards all criterion attribution (G91); the **screener is told to apply criteria strictly** where the corpus says interpret liberally first (G90); the **agent generator writes methodology-free prompts** that can silently replace corpus-grounded defaults (G93); and the **quality judge scores absent telemetry as work not done** (G94), making one rubric anchor unreachable by construction. **G46 amended**: four of five Petersen rubrics carry anchors that are not Petersen's, not two. **G5, G8 and G69 amended** — the third screening value means "duplicate" not "uncertain"; there is a second orphaned synthesis implementation; and the librarian actively steers the snowball start set toward one prestige community |
 | 2026-08-08 | **G65–G89 added, and G47/G53/G55 fixed.** A coverage audit enumerated **~700 normative requirements** across all 14 methodology chapters and classified each as CODE / GAP / UNCOVERED / N/A. Chapters **09, 12 and 13 came back with zero uncovered requirements** — the G35–G43 pass had mined them thoroughly. The uncovered material concentrates in **05, 06, 08 and 10**, the chapters furthest from the platform's original SMS scope. Highest-value findings: **ten of thirteen catalogued synthesis methods do not exist** (G65), **no effect measure is ever computed** (G66), **GRADE is absent though SEGRESS calls it essential** (G67), **no multi-extractor workflow for SLR or SMS** (G68, the general case of G63), and **grey literature is never archived** (G70) though a quarter of it is already dead. Three fixes landed with tests: the "Research Method" chart no longer renders venue data (G47), Cohen's κ now reaches the SLR report (G53), and snowball citation intent is persisted rather than discarded (G55, migration 0019) |
 | 2026-08-08 | **G45–G64 added — compliance audit against the methodology corpus.** Six parallel auditors checked each shipped feature against the research it claims to implement. The finding that reframes the catalogue: the severe defects are **not absences but misrepresentations** — a "Research Method" chart that renders venue data (**G47**), a validity section emitting three fixed threats regardless of study design (**G52**), quality rubrics carrying Petersen's names while scoring different constructs (**G46**), a research-type classifier testing novelty where the guideline tests setting (**G46**), a bespoke checklist auto-applied in DARE's slot (**G57**), and a search-string builder implementing the technique Kitchenham withdrew (**G45**). Structurally, **the protocol executor's quality gates gate nothing a user experiences** (**G49**, critical) — the four phase-gate services contain zero references to it — which makes most "enforce this as a gate" remediations elsewhere in this catalogue currently unbuildable. **G38** amended: its separated-scores point is an active contradiction, and its purpose-flag point needs a schema change |
 | 2026-08-08 | **G44 added.** `holst_transparent_2025` (PRISMA-trAIce) folded into the corpus as [14 — AI-assisted review reporting](./methodology/14-ai-assisted-review-reporting.md). AI decisions are already *attributable* here — `Reviewer.reviewer_type` plus `PaperDecision.reviewer_id` satisfy the AI-vs-human split most tools cannot retrofit — but not *reproducible*: the prompt behind a decision is lost once `Agent.system_message_template` is edited twice, sampling parameters are never persisted, and an override log cannot answer "what proportion of AI outputs were verified" because agreement leaves no row |
@@ -206,6 +207,13 @@ Beyond the required eight, adapters also exist for Inspec, Springer, Semantic Sc
 
 ### G5 — Selection decision rules (F2-SF04) — **high**
 
+> **⚠ AMENDED 2026-08-08.** The three-valued vote is not merely absent — where a third value *does*
+> exist it means something else. `agents/src/agents/services/screener.py:26` types `decision` as
+> `"accepted" | "rejected" | "duplicate"`. **"Duplicate" is bibliographic housekeeping, not epistemic
+> uncertainty**, so honouring caveat **D4** means correcting the enum's meaning and adding a value, not
+> just adding one. The screener prompt compounds it by offering the model only `include | exclude`
+> (`prompts/screener/system.md:19`), so even the existing third value is unreachable from the agent.
+
 **Required.** A defined, extensible set of decision rules governing include/exclude, applied when reviewers disagree (per Petersen & Bin Ali, 2011).
 
 **Current.** No such concept. The only "decision rules" in the tree are the **R1–R6 research-type classification** rules in `agents/src/agents/prompts/extractor/system.md:5` and `db/src/db/models/extraction.py:24` — these classify a paper's research type, they do not govern selection. Disagreement handling exists mechanically (`CandidatePaper.conflict_flag`, `PaperDecision.is_override` / `overrides_decision_id`, `frontend/src/components/slr/DiscussionFlowPanel.tsx`) but resolution is entirely manual with no encoded policy.
@@ -251,6 +259,15 @@ What _is_ missing is the deliberate omission: the quality-assessment models (`Qu
 ---
 
 ### G8 — Qualitative synthesis (F2-SF09) — **high**
+
+> **⚠ AMENDED 2026-08-08.** There are **two** implementations of this defect, not one. Besides
+> `synthesis_strategies.py` cited below, `agents/src/agents/services/synthesiser.py` and
+> `prompts/synthesiser/` are a second single-pass LLM synthesis — Summary / Key Findings /
+> Contradictions / Conclusion, with no codes, no code→theme translation and no trustworthiness step.
+> It appears **orphaned**: the only non-test caller found is `agent_eval`'s synthesiser eval, and
+> `synthesis_strategies.py` makes its own LLM calls without importing it. Remediating
+> `synthesis_strategies.py` alone would leave this prompt in the tree, unaudited and still reachable
+> through the agent registry.
 
 **Required.** Qualitative Metasummary (Ribeiro et al. 2014) and Thematic Synthesis (Cruzes & Dybå 2011).
 
@@ -1497,6 +1514,33 @@ the mandatory-AND output template in favour of a simpler string, and record the 
 
 ### G46 — Shipped agent prompts encode criteria the corpus explicitly corrects (F2-SF04, F2-SF06) — **high**
 
+> **⚠ AMENDED 2026-08-08 by the agent review. The rubric problem is worse than two of five.**
+>
+> - **Rubric 1 ("Need for review")** drifts too. Petersen's level-2 anchor is "provided **and defined
+>   in correspondence with the target audience**"; `quality_judge/system.md:11-17` scores 2 for a
+>   "well-defined target population, topic, and research objectives" and never mentions audience
+>   correspondence. Its level-1 anchor is also re-pointed, from *whether motivations and questions were
+>   provided* to *whether population/scope is vague*.
+> - **Rubric 4 ("Extraction and classification")** drifts. Petersen's level-2 anchor requires
+>   "**research type and method classified**"; `quality_judge/system.md:36-43` substitutes
+>   single-vs-multiple reviewer and inter-rater-agreement anchors and never checks classification at
+>   all — which is doubly odd given the platform *does* classify research type.
+> - **So four of the five rubrics carry anchors that are not Petersen's**, under Petersen's names, in a
+>   feature the spec sells as fidelity to his published scale. Rubric 5 is the exception and is
+>   defensible: it is *stricter* than the published binary, which [09](./methodology/09-threats-to-validity.md)
+>   explicitly invites.
+> - **Research-type R-numbering.** `extractor/system.md:11-17` labels R3=Validation, R4=Philosophical,
+>   R5=Opinion, R6=Personal Experience; the corpus table has R3=Experience paper, R4=Validation
+>   research, R5=Philosophical, R6=Opinion. **Do not simply "fix" the prompt to match the doc**: the
+>   corpus flags its own R3/R5/R6 alignment as not having survived text extraction and says to verify
+>   against the PDF first. Only the R4 mismatch rests on an unflagged cell. The remediation is to check
+>   Petersen's printed table — already tracked in the README reliability table — not to trust either
+>   side. The labels are cosmetic today because `extractor.py` persists semantic strings, not
+>   R-numbers; the risk is a future maintainer anchoring to the wrong map.
+> - Related: the prompt converts Petersen's **condition matrix** into a priority cascade ("apply the
+>   first matching rule"). The corpus specifies no tie-break order, so this is an invention — a
+>   defensible one, resolving real ambiguity, but it should be labelled as a platform decision.
+
 **Required.** Two specific corrections, both flagged in the research as the ones most consequential to
 get right:
 - **Research type is not about novelty.** Validation versus evaluation research is "lab versus
@@ -2124,6 +2168,13 @@ types, was not in the catalogue. G6 is adjacent but concerns the unit of analysi
 
 ### G69 — Snowball start-set composition is unmodelled, and it is the method's single point of failure (F2-SF03) — **high**
 
+> **⚠ AMENDED 2026-08-08.** The platform does not merely fail to check start-set diversity — one agent
+> actively works against it. `agents/src/agents/prompts/librarian/system.md:11` instructs the seed
+> suggester to "Prioritise well-cited, peer-reviewed papers from venues such as IEEE TSE, EMSE, JSS,
+> ICSE, FSE, ASE, MSR, ESEM", with no mention of Wohlin's cluster, author, year or publisher
+> diversity criteria. That steers the start set toward a single high-prestige community — the precise
+> concentration Badampudi's missed-category result warns about.
+
 **Required.** The start set should draw on different clusters and communities unlikely to cite each
 other, be large enough, span authors, years and publishers, derive keywords from the research
 questions, and use Google Scholar specifically to avoid publisher bias. Wohlin adds a **partitioning
@@ -2542,6 +2593,244 @@ the only approximation and carries no reason.
 because the concession has no representation to derive from.
 
 **Cost.** Low-medium.
+
+---
+
+## G90–G98 — agent code and prompt alignment with the methodology corpus
+
+Added 2026-08-08. Earlier passes audited the platform's *data model, services and reports*. This one
+audits the **agents** — the LLM prompts and the service code around them — against the research they
+are supposed to implement. Four reviewers, one per agent cluster.
+
+**Prompts fail differently from code, and the difference drives how these are ranked.** A prompt that
+states an invented threshold or a mis-transcribed anchor produces output that is *indistinguishable*
+from a correct one: a "Petersen rubric score" computed against fabricated anchors looks exactly like a
+real one. So **unsupported invention is treated here as a first-class defect**, not a stylistic note.
+
+The severe findings cluster into one theme: **the agents are grounded in the corpus at the level of
+vocabulary, not procedure.** They use the right category names, the right rubric count, the right
+validity dimensions — and then apply criteria, anchors and thresholds that the corpus does not
+contain. G46 already recorded two instances; this pass found the pattern is systemic.
+
+> **⚠ Verification status.** The load-bearing claims below were checked against the tree directly.
+> Lower-severity items carry the reviewer's own confidence rating inline. Where a finding rests on an
+> uncertain baseline, that is stated rather than hidden.
+
+---
+
+### G90 — The screener is told to apply criteria strictly; the corpus says do the opposite (F2-SF04) — **high**
+
+**Required.** "**Interpret criteria liberally at first.** Get the full text unless the paper is
+clearly excludable" — [06](./methodology/06-search-and-selection.md) and
+[01](./methodology/01-slr.md), the Ali & Petersen selection process. The liberal-first pass exists
+because SE abstracts are too poor to exclude on (caveat **D1**).
+
+**Current.** `agents/src/agents/prompts/screener/system.md:10` — "Apply the inclusion and exclusion
+criteria strictly." That is the only strictness instruction in the file, and nothing distinguishes an
+initial liberal pass from a later strict one.
+
+**Why it matters.** It inverts the corpus's explicit rule for the exact step it governs. The effect is
+systematic over-rejection of borderline papers — silently, by design, and invisibly, because a
+confidently-worded exclusion reads the same either way. This is a one-line prompt fix with an outsized
+effect on recall.
+
+**Cost.** Trivial. **See [06](./methodology/06-search-and-selection.md).**
+
+---
+
+### G91 — Structured screening never happens: the prompt never asks for JSON, so every call falls through to a keyword sniff (F2-SF04) — **high**
+
+**Required.** Ali & Petersen tie each decision to the specific criteria that drove it; the platform's
+`ScreeningResult`/`CriterionRef` model exists to carry that attribution.
+
+**Current.** `agents/src/agents/services/screener.py` builds `[IC1]`/`[EC1]`-tagged criteria text and,
+in structured mode, calls `json.loads` on the response. But
+`agents/src/agents/prompts/screener/system.md:16-21` unconditionally specifies a *free-text* format —
+`Decision: include | exclude` / `Reason: …` — and neither prompt template branches on
+`structured_output` (verified: no occurrence of `structured` anywhere under `prompts/screener/`). The
+parse therefore fails on every structured call and the fallback at `screener.py:148-157` fires:
+it lowercases the text, sniffs for `"accept"` / `"duplicate"`, and returns **`reasons=[]`**.
+
+Compounding it, the handler is `except json.JSONDecodeError, Exception:` — valid Python 3.14 (PEP 758
+permits unparenthesised exception tuples), but it catches **bare `Exception`**, so a
+`model_validate` failure on otherwise-good JSON degrades to the same keyword guess rather than
+surfacing.
+
+**Why it matters.** The one mode the criterion-attribution data model exists to serve discards all
+criterion-level justification, and does so silently — the fallback always succeeds. Every structured
+screening decision is currently a substring match on the word "accept".
+
+**Remediation sketch.** Branch the prompt on `structured_output` and specify the JSON schema; narrow
+the except to `(json.JSONDecodeError, ValidationError)`; log when the fallback fires instead of
+swallowing it.
+
+**Cost.** Low. **See [06](./methodology/06-search-and-selection.md).**
+
+---
+
+### G92 — The expert agent seeds the quasi-gold standard with unverified, LLM-recalled papers (F2-SF02) — **high**
+
+**Required.** The quasi-gold standard is built from an **initial manual search**; those known papers
+then measure the automated search's quasi-sensitivity ([06](./methodology/06-search-and-selection.md),
+Kitchenham 2013 amendment 2). Its evidential value comes entirely from being independent of the
+search being tested.
+
+**Current.** `agents/src/agents/prompts/expert/system.md` asks an LLM to name relevant papers, guarded
+only by prose ("do not hallucinate titles").
+`backend/src/backend/jobs/seed_suggestion_job.py:87-95` inserts each returned title/DOI/authors/year
+into `Paper` **with no verification against any bibliographic source**, then records it as
+`SeedPaper(added_by_agent="expert")`. `backend/src/backend/jobs/search_job.py:107` computes
+`recall = len(seed_dois & result_dois) / len(seed_dois)` over exactly those rows.
+
+**Why it matters.** A hallucinated or misremembered DOI enters the set that certifies the search
+worked. The failure is silent and bidirectional: a fabricated DOI no database can return **deflates**
+recall and prompts pointless string-widening; a plausible-but-wrong DOI that happens to match
+**inflates** it. This is also the third independent problem found in the same metric — **G13a** notes
+the seed set is used for construction and evaluation without a disjoint split, and this adds that the
+set may not be real.
+
+**Remediation sketch.** Resolve every LLM-suggested DOI/title against Crossref or Semantic Scholar
+before persisting; drop or flag what does not resolve; mark agent-suggested seeds distinctly from
+manually-entered ones so recall can be computed over verified seeds only.
+
+**Cost.** Low — the resolution path already exists in `researcher-mcp`.
+**See [06](./methodology/06-search-and-selection.md).**
+
+---
+
+### G93 — The agent generator writes methodology-free prompts that can replace corpus-grounded ones (F1-SF04) — **high**
+
+**Required.** Constitution Principle XI makes conformance to the documented methods a **correctness
+property**, and [08 Part 4b](./methodology/08-extraction-and-synthesis.md) holds that a method claim
+"must be earned by recorded steps". The platform's hand-written prompts show what that looks like:
+`quality_judge` encodes five scored rubrics, `extractor` the R1–R6 decision rules, `validity` the six
+Petersen & Gencel dimensions.
+
+**Current.** `agents/src/agents/prompts/agent_generator/system.md:40` asks only for "Behavioral
+guidelines appropriate to the task type", and its quality criteria (lines 47-56) ask the model to
+"constrain the agent's behaviour" — with **no reference to any corpus source**, and no requirement to
+match the rigour of the prompt it may supersede. Per **G29**, once an `Agent` row exists it overrides
+the file-backed prompt for 9 of 10 agent classes.
+
+**Why it matters.** This is the leverage point. An admin creating an agent through the wizard can
+silently replace a corpus-grounded default with a freely-invented persona, and nothing compares the
+two. Every defect this review found in a hand-written prompt is at least *auditable*; a generated one
+is not, because there is no source to audit it against.
+
+**Remediation sketch.** Have the generator inject the relevant methodology constraints per task type,
+and require any generated system message to cite the chapter it implements. At minimum, warn when a
+generated agent would override a corpus-grounded default.
+
+**Cost.** Medium. **See [12](./methodology/12-platform-implications.md).**
+
+---
+
+### G94 — The quality judge scores absent telemetry as work not done (F2-SF05) — **high**
+
+**Required.** Caveat **F1**: "**Unreported does not mean not done**"
+([07](./methodology/07-quality-assessment.md)).
+
+**Current.** `agents/src/agents/prompts/quality_judge/system.md:56` — "If a field is missing or empty,
+treat it as **not done** (score toward 0 for that rubric)."
+
+**Why it matters.** The corpus states F1 about *primary studies*; here the same inference is applied to
+**the platform's own execution snapshot**, which makes it worse rather than analogous. A concrete
+instance: rubric 2's score-2 anchor requires the study to document keyword-selection rationale, but no
+field in the snapshot ever carries such a string. That anchor is therefore **unreachable by
+construction** — the researcher is scored down for a gap in the platform's instrumentation, and the
+report says they did not do the work.
+
+**Remediation sketch.** Distinguish "recorded as not done" from "not captured", and have the judge
+return *unscored* for the latter rather than 0. Any rubric anchor referencing data the snapshot cannot
+carry is a bug in the snapshot, not a finding about the study.
+
+**Cost.** Low. **See [07](./methodology/07-quality-assessment.md).**
+
+---
+
+### G95 — The validity agent produces threats without requiring mitigations (F2-SF11) — **high**
+
+**Required.** Ampatzoglou's step 4: every identified threat carries **a mitigation or an explicit
+acknowledgement that it is not mitigated**. Caveat **H6**: "a threats section without mitigations or
+acknowledgements is decoration" ([09](./methodology/09-threats-to-validity.md)).
+
+**Current.** `agents/src/agents/prompts/validity/system.md` structures output around Petersen &
+Gencel's six dimensions — correctly, see below — but offers only loose per-dimension "Threats:"
+prompts, walks no TV-numbered checklist, and has no field forcing a mitigation. `ValidityResult`
+(`agents/src/agents/services/validity.py`) validates only that each of the six strings is non-empty.
+
+**Why it matters.** Distinct from **G52**, which concerns the *report service's* fixed boilerplate.
+This agent is better behaved — it is genuinely grounded in the study's configuration — but its output
+is the text a researcher is most likely to paste straight into a paper, and nothing stops it being
+exactly the decoration H6 names.
+
+**Cost.** Low. **See [09](./methodology/09-threats-to-validity.md).**
+
+---
+
+### G96 — The protocol reviewer cannot see two of the ten protocol components (F2-SF01) — **medium**
+
+**Required.** Kitchenham & Charters' ten protocol components include **study selection procedures**
+(how many assessors, how disagreements resolve) and **quality assessment checklists and procedures**.
+The three internal consistency checks are: search strings ← RQs, extracted data ← RQs, analysis ← RQs
+([01](./methodology/01-slr.md)).
+
+**Current.** `agents/src/agents/prompts/protocol_reviewer/system.md:20-23` lists 13 "mandatory
+sections"; neither reviewer-count/disagreement-resolution nor quality-assessment-checklist is among
+them. This is structural, not only prompt-level: `ReviewProtocol` has no column for either, and
+`QualityAssessmentChecklist` lives in a separate table never passed to `ProtocolReviewerAgent.review()`.
+Separately, consistency check **#1** (search strings ← RQs) is absent — lines 25-27 ask only whether
+the strategy is "plausible for the research domain". Checks #2 and #3 are present and correct.
+
+**Why it matters.** The one agent whose job is to catch protocol gaps *before* search begins is
+structurally blind to two of the ten things a protocol must contain.
+
+**Cost.** Medium — needs protocol-model fields, not just prompt text.
+**See [01](./methodology/01-slr.md).**
+
+---
+
+### G97 — Shipped prompts state criteria, scales and thresholds the corpus does not contain (F2-SF04, F2-SF06) — **medium**
+
+**Required.** Where the corpus specifies an instrument, the platform should use *that* instrument.
+Where it does not, the platform should not present an invented one as though it were methodological.
+
+**Current.** Six instances found, none traceable to any corpus source:
+
+| Agent | Invention | What the corpus says |
+| ----- | --------- | -------------------- |
+| `search_builder/system.md:13` | "Apply **MeSH/EMTREE** thesaurus terms" | Medical/pharma indexing vocabularies appearing **nowhere** in the corpus. The named SE sources — **SWEBOK**, IEEE and ISO/IEC standards ([02](./methodology/02-sms.md)) — are absent from the prompt. For an SE topic this likely elicits fabricated pseudo-vocabulary |
+| `extractor/system.md:34` | `venue_type` as a flat 8-value enum | The **Finnish Ministry of Education classification**, three top levels, including patents, ICT software, book sections and trade journals — none representable ([02](./methodology/02-sms.md)) |
+| `domain_modeler/system.md:34` | Nine fixed relationship types (`uses`/`extends`/`evaluates`/…) | The corpus defines four **code** types, no relationship vocabulary ([08](./methodology/08-extraction-and-synthesis.md)) |
+| `domain_modeler/system.md:42` | "at least 3 and at most 30 concepts" | The stated funnel is 30–40 codes → 15–20 themes → **5–7** higher-order themes |
+| `librarian/system.md:41-42` | "between 3 and 10 papers", "between 2 and 5 authors" | Wohlin: start-set size "depends on the focus and size of the area, which may not be known beforehand". Caveat **C3** calls the start set the method's single point of failure |
+| `protocol_reviewer/system.md:29-31,37-38` | Criteria must be "mutually exclusive and collectively exhaustive"; timetable "must not indicate a completed study" | Neither appears in the corpus. The only MECE-adjacent mention says DARE anchors are explicitly *not* a strict mutually-exclusive classification |
+
+**Why it matters.** Each is applied by an LLM as though it were a methodological standard, and each
+produces confident output. The domain-model relationship graph in particular is persisted and rendered
+to the user as a research artefact.
+
+**Remediation sketch.** For each: cite a corpus source, or delete it, or mark it explicitly as a
+platform heuristic rather than methodology. Replace MeSH/EMTREE with SWEBOK and IEEE/ISO standards.
+
+**Cost.** Low per item. **See [02](./methodology/02-sms.md), [08](./methodology/08-extraction-and-synthesis.md).**
+
+---
+
+### G98 — The extractor asks for one of the four code types (F2-SF06) — **low**
+
+**Required.** Cruzes & Dybå name four code types useful in SE: **conceptual, relationship, subject,
+and context-characteristic** ([08](./methodology/08-extraction-and-synthesis.md)).
+
+**Current.** `agents/src/agents/prompts/extractor/system.md:24` — "Populate `open_codings` with
+meaningful **conceptual** codes". Only that type is requested, and the output schema has no field
+distinguishing code type at all.
+
+**Why it matters.** Distinct from **G74** (context-description *data fields* missing from the model)
+and **G8** (codes not persisted as first-class rows): this is the prompt never asking in the first
+place, so even a fixed model would receive only one type.
+
+**Cost.** Low. **See [08](./methodology/08-extraction-and-synthesis.md).**
 
 ---
 
