@@ -1,7 +1,7 @@
 # Extraction notes
 
 **Intermediate artefacts.** These are the structured per-paper extractions that
-[`docs/methodology/`](../) was composed from — 14 files, ~203,000 words, covering all 54 papers in
+[`docs/methodology/`](../) was composed from — 15 files, ~207,000 words, covering all 55 papers in
 `research/`.
 
 They are **denser than the chapters and closer to the sources**, and deliberately hold material the

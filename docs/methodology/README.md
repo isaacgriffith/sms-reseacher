@@ -1,7 +1,10 @@
 # Secondary Study Methodology — Research Basis
 
 **Compiled**: 2026-08-07
-**Corpus**: `research/` — 55 PDFs, **54 unique papers** (see [Corpus manifest](#corpus-manifest))
+**Corpus**: `research/` — **55 PDFs, 55 unique papers**, one file per paper
+(see [Corpus manifest](#corpus-manifest))
+**Last extended**: 2026-08-07 — `holst_transparent_2025` added, producing
+[14 — AI-assisted review reporting](./14-ai-assisted-review-reporting.md)
 **Purpose**: the research-backed process definitions this platform automates. Where the platform's
 behaviour and this document disagree, **this document is the specification and the platform is the
 defect** — unless the disagreement is recorded below as a deliberate deviation.
@@ -42,6 +45,7 @@ correction is marked **⚠ CORRECTION** inline.
 | 11 | [Caveats register](./11-caveats-register.md) | Consolidated traps, cross-referenced to the step they bite |
 | 12 | [Platform implications](./12-platform-implications.md) | What this means for the codebase, mapped to `feature-gaps.md` |
 | 13 | [Open science](./13-open-science.md) | Preregistration, replication packages, archival, licences, anonymisation |
+| 14 | [AI-assisted review reporting](./14-ai-assisted-review-reporting.md) | PRISMA-trAIce — disclosing AI used **as a tool** in conducting the review. **Proposal stage, not consensus** |
 | — | **[PLAYBOOK](./PLAYBOOK.md)** | **How to extend these documents when new papers arrive** — see below |
 | — | [notes/](./notes/) | The per-paper extraction notes these chapters were composed from |
 
@@ -54,7 +58,7 @@ any paper to `research/` and folding it in here.
 
 It contains three things:
 
-1. **The paper register** — all **54 papers already examined**, with the depth each was read to and
+1. **The paper register** — all **55 papers already examined**, with the depth each was read to and
    which chapters each fed. Check a new paper against this first; the corpus already contains one
    duplicate pair that cost an extraction before it was caught.
 2. **The pipeline, with ready-to-use prompts** — six stages from intake to verification, including a
@@ -77,7 +81,7 @@ method-slurring test. Those are the cheapest wins available and need no new read
 
 ### The extraction notes are committed too
 
-[`notes/`](./notes/) holds the **14 structured per-paper extractions** (~203,000 words) these
+[`notes/`](./notes/) holds the **15 structured per-paper extractions** (~207,000 words) these
 chapters were composed from. They are denser than the chapters and closer to the sources, keeping
 material the chapters did not need — full mitigation lists, complete rubric anchors, per-paper
 empirical tables, and every uncertainty flagged during extraction.
@@ -122,13 +126,40 @@ Known limits, recorded rather than hidden:
 | **Yasin, Gul, Kamei** | Yasin Table 16 and Table 9's seventh category, and Gul Figure 1 tier labels, are **images** and were not extracted. Kamei's RQ1 category counts sum to 260 against 150 reported. |
 | **`basili_software_1992.pdf`** | Scanned image, no text layer, no OCR available. Read successfully as page images. |
 | **Counts marked *(derived)*** | Obtained by tallying appendix study-ID lists because the source figures are images. |
+| **Holst Figure 1** | The PRISMA-trAIce flow diagram is an **image**. Only the caption survived extraction, so the adapted diagram's field labels and placement are **not recoverable from the text layer** and must be read from the PDF page image or the project's GitHub repository before implementation. See [14](./14-ai-assisted-review-reporting.md). |
+| **Holst Multimedia Appendix 1** | The per-item elaboration, rationale, sources and examples ship as a **separate 29 KB DOCX that is not in `research/`**. Every item paraphrase in [14](./14-ai-assisted-review-reporting.md) rests on Table 1 alone. |
+| **Holst item count** | A defect **in the source itself**: its Results text says the checklist "comprises 14 items"; its Table 1 lists **17**. Flagged, not reconciled. |
 
 ---
 
 ## Corpus manifest
 
-54 unique papers. `brereton_lessons_2007.pdf` and `kitchenham_lessons_2007.pdf` are **byte-identical
-(same MD5)** — one paper filed twice; recommend deleting one.
+**55 papers in 55 files — the corpus is now free of duplicates.**
+
+> **⚠ CORRECTION, 2026-08-08 — the long-standing duplicate is resolved, and the reason it survived
+> is worth keeping.** This section previously recorded `brereton_lessons_2007.pdf` and
+> `kitchenham_lessons_2007.pdf` as **"byte-identical (same MD5)"**. **The PDFs never were.**
+> `594213333bce00ecc2d5fe473453bc9c` versus `7f7a5e680339d51b6354995ef0573a35`; 302,812 versus
+> 303,196 bytes; first difference at byte 38,887. Two separate downloads of one paper, not one file
+> copied.
+>
+> What *was* byte-identical is their **`pdftotext` output** (MD5 `02de16e2…`, recorded in
+> [`notes/batch1-slr-lessons.md`](./notes/batch1-slr-lessons.md)). That true observation about the
+> **text extractions** was transposed into a false claim about the **PDFs**, and the false version
+> propagated into this file, `PLAYBOOK.md` and `MEMORY.md`.
+>
+> **Consequence for intake:** the `md5sum` duplicate check in
+> [`PLAYBOOK.md` Stage 1](./PLAYBOOK.md#stage-1--intake) **cannot find a pair like this and did
+> not**. Duplicate detection must run on extracted text, or on title and page count — not on PDF
+> bytes.
+>
+> **Resolved 2026-08-08** by deleting `kitchenham_lessons_2007.pdf`. Brereton is the paper's first
+> author and Kitchenham the second, so the surviving filename is the correct one and matches the
+> citation key used throughout these documents. Note that **`research/` is gitignored**, so this
+> deletion is not recorded in version control.
+>
+> Second intake trap, still live: **`kitchenham_systematic_2010` carries no `.pdf` extension**, so
+> `research/*.pdf` globs silently miss it. It is a valid 22-page PDF.
 
 ### Process definitions and standards — the normative core
 
@@ -151,10 +182,11 @@ Known limits, recorded rather than hidden:
 | `wieringa_requirements_2006` | The research-type facet |
 | `basili_goal_1994` / `basili_software_1992` | GQM |
 | `petersen_identifying_2011` | Study-selection strategies |
+| `holst_transparent_2025` | **PRISMA-trAIce** — reporting AI used *as a tool* in the review. **A proposal, not a consensus standard**; filed here for subject matter, not authority |
 
 ### Evidence, lessons and critique
 
-`brereton_lessons_2007` (= `kitchenham_lessons_2007`) · `bailey_lessons_2007` ·
+`brereton_lessons_2007` · `bailey_lessons_2007` ·
 `staples_experiences_2007` · `dyba_applying_2007` · `da_silva_six_2011` ·
 `badampudi_experiences_2015` · `kitchenham_systematic_2009` · `babar_systematic_2009` ·
 `mourao_investigating_2017` · `wohlin_reliability_2013` · `wohlin_second-generation_2016` ·

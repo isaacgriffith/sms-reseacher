@@ -72,7 +72,7 @@ A `uv` workspace of five Python packages plus a Vite/React frontend.
 | `frontend/`       | (npm)                | React 18 + MUI v5 SPA, TanStack Query, Playwright e2e                      |
 | `scripts/`        | —                    | Operational tooling (see below)                                            |
 | `docs/`           | —                    | Feature PRDs, gap register, and `methodology/` — the research-backed review processes |
-| `research/`       | —                    | The 54-paper corpus `docs/methodology/` is built from                      |
+| `research/`       | —                    | The 55-paper corpus `docs/methodology/` is built from                      |
 | `specs/`          | —                    | Per-feature speckit specs, plans, and task lists                           |
 
 ### Scripts

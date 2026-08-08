@@ -22,7 +22,7 @@ Reviews, and Tertiary Studies.
 
 ### The research basis
 
-`docs/methodology/` holds the process definitions this platform automates, written from the 54-paper
+`docs/methodology/` holds the process definitions this platform automates, written from the 55-paper
 corpus in `research/`. **Consult it before designing anything that touches how a review is
 conducted** — search, screening, quality assessment, extraction, synthesis, validity, or reporting.
 
@@ -33,7 +33,7 @@ Fastest entry points:
 | A quick pre-design check | [`11-caveats-register.md`](./docs/methodology/11-caveats-register.md) — ~80 traps indexed by the step each bites |
 | What this means for the codebase | [`12-platform-implications.md`](./docs/methodology/12-platform-implications.md) — mapped to `feature-gaps.md` gap IDs |
 | The process for one study type | `01-slr.md` · `02-sms.md` · `03-rapid-review.md` · `04-tertiary.md` |
-| **Adding new papers to the corpus** | [`PLAYBOOK.md`](./docs/methodology/PLAYBOOK.md) — the pipeline, ready-to-use prompts, and a register of all 54 papers already examined so effort is not duplicated |
+| **Adding new papers to the corpus** | [`PLAYBOOK.md`](./docs/methodology/PLAYBOOK.md) — the pipeline, ready-to-use prompts, and a register of all 55 papers already examined so effort is not duplicated |
 
 Three constraints worth knowing before they surprise you:
 

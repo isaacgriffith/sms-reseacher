@@ -25,6 +25,7 @@
 | 2026-08-07 | **G22–G23 added**, both found while fixing the screening pipeline (`d8f6dcf`, `1e01097`). Snowballing is a registered job with no enqueue site, and admin job retry enqueues function names that are not registered, with arguments matching no job's signature — while reporting `200`. Neither is visible to the reachability oracles, which model imports rather than HTTP routes; see [Neither oracle sees a backend route](#neither-oracle-sees-a-backend-route) |
 | 2026-08-07 | **G22 resolved.** `POST /studies/{id}/snowball` plus a `SnowballControls` mount, with seeds defaulting to the study's accepted papers, a `409` naming any in-flight pass (FR-026), and a `422` rather than an empty run. 16 integration tests, 10 component tests. G23 remains open |
 | 2026-08-07 | **In-flight guard made bidirectional**, and **G24 added**: snowballing is DOI-keyed, so grey literature, reports, theses and older proceedings — the papers most likely to lack a DOI — are silently excluded from the walk. Both directions are recoverable, backward from stored full text and forward by resolving to a non-DOI identifier, but which citation index to prefer needs a research spike |
+| 2026-08-08 | **G44 added.** `holst_transparent_2025` (PRISMA-trAIce) folded into the corpus as [14 — AI-assisted review reporting](./methodology/14-ai-assisted-review-reporting.md). AI decisions are already *attributable* here — `Reviewer.reviewer_type` plus `PaperDecision.reviewer_id` satisfy the AI-vs-human split most tools cannot retrofit — but not *reproducible*: the prompt behind a decision is lost once `Agent.system_message_template` is edited twice, sampling parameters are never persisted, and an override log cannot answer "what proportion of AI outputs were verified" because agreement leaves no row |
 | 2026-08-07 | **G35–G43 added from the methodology corpus.** Requirements the 54-paper research pass established that were not in this catalogue: protocol-as-preregistration with a validation snapshot; stopping rules and the *assessed vs never-assessed* distinction; escalatable reading depth and per-classification rationale; the quality-instrument shape (purpose flag, ordinal scales, separated scores); threat derivation from protocol configuration; GQM goal→question→field traceability; review-update as a workflow; terminology-variant search; and replication-package export with archival and licence discipline. Seven further requirements were folded into existing gaps rather than given IDs — see the table at the end of that section |
 | 2026-08-07 | **G10 amended** after the research pass behind [`docs/methodology/`](./methodology/). PRISMA 2020 states it "should not be used to assess the conduct or methodological quality of systematic reviews", so the planned checker measures **reporting completeness**, not rigour. SEGRESS replaces PRISMA as the primary standard, being the only one that marks each item required/optional/not-required **per review type**; quality scoring moves to DARE and the Petersen 2015 rubrics. The gap becomes two features rather than one |
 | 2026-08-07 | **`docs/todo.md` and `docs/todo2.md` folded in — G25–G34 added.** Every line of both was executed against the tree rather than read. Nine of 26 assessable items were already delivered and seven partial; the rest became gaps. The largest is **G25**: the backend addresses researcher-mcp over a REST API that server does not serve — `mcp.http_app()` exposes exactly one route, `/mcp`, so all five `POST /tools/…` and `GET /health` call sites fail, four of them silently. Every database search, PDF fetch and snowball walk in the platform runs through those calls. See [Unified intake](#unified-intake-from-todomd-and-todo2md) |
@@ -1104,9 +1105,9 @@ This bears directly on `todo.md`'s first item — "explain how to correctly run 
 
 ---
 
-## G35–G43 — requirements from the methodology corpus
+## G35–G44 — requirements from the methodology corpus
 
-Added 2026-08-07 from [`docs/methodology/`](./methodology/), chapters 12 and 13. These are
+Added 2026-08-07 from [`docs/methodology/`](./methodology/), chapters 12, 13 and 14. These are
 requirements the research establishes that **were not previously in this catalogue**. Requirements
 that merely confirm an existing gap are recorded as notes on that gap instead, and listed at the end
 of this section.
@@ -1366,6 +1367,62 @@ SE venues, **more than 50% of authors disclosed their data.**
 
 **Cost.** Medium. Zenodo and figshare both have APIs. **See
 [13 — Open science](./methodology/13-open-science.md).**
+
+---
+
+### G44 — AI decisions are attributable but not reproducible (F2-SF04, F2-SF06) — **medium**
+
+**Required.** PRISMA-trAIce — the first reporting standard covering **AI used as a tool inside the
+review** rather than AI as the subject of one — asks a review to disclose, per tool: identity and
+version (M2), the stage and task (M3), inputs (M4), outputs **and any automated post-processing
+applied before a human saw them** (M5), **the full prompts and the sampling parameters** (M6),
+thresholds and settings (M7), the **human oversight regime** (M8), **AI performance against a human
+reference standard** (M9/R2), data governance (M10), and an **AI-versus-human split of every
+screening decision** (R1).
+
+**Current.** The platform is unusually well placed on the hardest item and badly placed on the
+cheapest one.
+
+| Item | State |
+| ---- | ----- |
+| **R1** — AI vs human decision split | **Satisfied in the schema.** `Reviewer.reviewer_type` distinguishes human from AI and `PaperDecision.reviewer_id` points at it, so every decision is already attributable. This is the item most tools cannot retrofit |
+| **M2** — tool identity | **Mostly satisfied.** `Agent.model_id` → `AvailableModel`, `Agent.provider_id` → `Provider` |
+| **M3** — stage and task | **Mostly satisfied.** `Agent.task_type` plus the ARQ job that ran it |
+| **M8f** — discrepancy resolution | **Partial.** `PaperDecision.is_override` and `overrides_decision_id` record human overrides of AI decisions as a chain |
+| **M6** — prompts and parameters | **Absent.** `Agent.system_message_template` is mutable with a single-level `system_message_undo_buffer`; sampling parameters are function-signature defaults (`temperature=0.0`, `max_tokens=2048`) in `agents/src/agents/core/llm_client.py:104-105`, persisted nowhere |
+| **M8e** — proportion manually verified | **Unanswerable.** Only overrides are recorded; a human who reviews an AI decision and *agrees* leaves no row, so the denominator does not exist |
+| **M9 / R2** — AI performance vs human reference | **Absent.** Cohen's κ exists for SLR *quality scores* between reviewers; nothing computes screening agreement between an AI reviewer and a human one |
+| **M5** — output post-processing | **Absent.** No record of normalisation, thresholding or filtering applied between model output and what a reviewer sees |
+
+**Why it matters.** Two consequences, one of them irreversible.
+
+- **A review conducted over months cannot answer M6 after the fact.** Editing an agent's system
+  message twice destroys the prompt that produced every earlier decision. This is not a reporting
+  inconvenience — it means the review is **not reproducible**, and reproducibility is the property
+  the whole checklist exists to protect. The data is unrecoverable once lost, which puts this ahead
+  of gaps whose remediation can wait.
+- **M8e and M9 are what separate disclosure from evidence.** The methodology corpus's sharpest
+  warning is that extraction decoupled from appraisal produces results "very quickly [that] will be
+  wrong". A verification rate and an AI-versus-human agreement statistic are the only artefacts this
+  platform could produce that answer that objection with evidence rather than process. **The two
+  chapters disagree on whether disclosure alone suffices, and that disagreement is recorded
+  unresolved** — see [14](./methodology/14-ai-assisted-review-reporting.md).
+
+**Remediation sketch.** An append-only `AgentInvocation` row per AI decision, holding the rendered
+prompt, model ID and version, sampling parameters, raw output, and post-processing applied, joined to
+`PaperDecision`. A `verified_by_reviewer_id` / `verified_at` pair on `PaperDecision` so agreement is
+recorded as an event and M8e's denominator exists. Reuse of the existing κ computation across an
+(AI reviewer, human reviewer) pair for M9/R2. R1's counts then fall out of a `GROUP BY
+reviewer_type` and feed the flow diagram in **G14**.
+
+**Caveat on scope.** PRISMA-trAIce is **a proposal, not a consensus standard** — no Delphi process,
+no user study, items not empirically validated — and it carries **no per-review-type applicability
+table**, so it says nothing about mapping studies, rapid reviews or tertiary studies. Treat it as a
+specification for what to record, not as a conformance score to publish. The Evidence Briefing in
+particular has no section structure its items map onto.
+
+**Cost.** Medium. The invocation record is additive and the attribution half already exists. **See
+[14 — AI-assisted review reporting](./methodology/14-ai-assisted-review-reporting.md).**
 
 ---
 

@@ -878,7 +878,7 @@ therefore be asserted explicitly and mechanically.
 This platform automates published research methods. Conformance to those methods is therefore a
 **correctness property, not a preference**: a workflow that departs from the method it claims to
 implement produces studies that are wrong in a way no test in this repository detects. The methods
-are documented in `docs/methodology/`, written from the 54-paper corpus in `research/`.
+are documented in `docs/methodology/`, written from the 55-paper corpus in `research/`.
 
 - **The methodology documents are the specification.** Where the platform's behaviour and
   `docs/methodology/` disagree, the documents are correct and the platform has a defect — unless the

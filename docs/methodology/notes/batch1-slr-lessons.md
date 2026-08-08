@@ -8,6 +8,11 @@ words; short attributed quotations only where exact phrasing matters.
 > Khalil (2007), *JSS* 80(1):571–583. There is only one paper here, not two. Kitchenham is the
 > second author, so a citation key of `kitchenham_lessons_2007` in the corpus resolves to the same
 > work. Extracted once below.
+>
+> **Update 2026-08-08.** This note is about the **text extractions**, and it is correct about them.
+> It was later mis-cited elsewhere as a claim that the two **PDFs** were byte-identical — they were
+> not, differing by 384 bytes. The duplicate has since been resolved by deleting
+> `kitchenham_lessons_2007.pdf`; `brereton_lessons_2007.pdf` remains.
 
 ---
 

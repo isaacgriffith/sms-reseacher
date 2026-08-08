@@ -198,6 +198,7 @@ not report prose — a complementary axis to SEGRESS's reporting completeness.
 | **DARE** | Review quality | Any secondary study | **Yes** — 0–4 in 0.5 steps |
 | **GRADE / CERQual** | Certainty in the evidence body | Quantitative / qualitative | Yes — 4 levels |
 | **Petersen rubrics** | Process actions taken | Mapping studies | Yes — 0–2 or 0–3 per rubric |
+| **PRISMA-trAIce** | Reporting completeness of **AI *tool* use** | Reviews conducted with AI assistance | No — a checklist, and **a proposal, not a consensus standard**. See [14](./14-ai-assisted-review-reporting.md) |
 
 ---
 

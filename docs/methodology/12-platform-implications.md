@@ -85,6 +85,9 @@ Things not currently in the gap catalogue.
 | N13 | **Quality-instrument purpose flag** — selection or analysis — because it determines whether scores must precede extraction | [07](./07-quality-assessment.md) |
 | N14 | **Per-item ordinal scales**, not booleans. Every real instrument uses 0/0.5/1 or ordinal anchors | [07](./07-quality-assessment.md) |
 | N15 | **Separate methodological and reporting quality scores.** Never summed | [07](./07-quality-assessment.md) |
+| N16 | **An immutable per-decision AI provenance record**: the prompt text as sent, the model and version, and the sampling parameters, captured at decision time rather than read back from a mutable template | [14](./14-ai-assisted-review-reporting.md) |
+| N17 | **Verification events, distinct from override events.** "What proportion of AI outputs were manually verified" is unanswerable from an override log, because agreement leaves no row | [14](./14-ai-assisted-review-reporting.md) |
+| N18 | **AI-versus-human agreement as a first-class metric**, with consensus human decisions as the reference standard. The corpus's existing agreement machinery is human-versus-human only | [14](./14-ai-assisted-review-reporting.md) |
 
 ---
 
@@ -102,7 +105,8 @@ Things not currently in the gap catalogue.
 
 ## The caution to carry into every design decision
 
-Three findings that constrain how far automation should go:
+Four findings that constrain how far automation should go — the first three on whether to automate,
+the fourth on what must be recorded when you do:
 
 > **1. Extraction decoupled from appraisal produces confident wrong answers.** Kitchenham et al.
 > distrust automated extraction "unless our ability to evaluate the quality of different studies
@@ -118,6 +122,15 @@ Three findings that constrain how far automation should go:
 > **3. Threat TV21 — unfamiliarity with the research field — is mitigated by *becoming familiar*.**
 > The recommended actions are exhaustive related-work reading and involving senior researchers in
 > analysis and interpretation.
+
+> **4. And there is now a standard that expects the platform to say all of this out loud.**
+> PRISMA-trAIce ([14](./14-ai-assisted-review-reporting.md)) requires a review to disclose which tool
+> made which decision, at which stage, on which prompt, with what proportion checked by a human of
+> what qualification. **This platform is the tool that checklist is about.** It is a proposal rather
+> than an endorsed standard, so it binds nothing — but it is the most concrete available
+> specification of what "the process is rigorous and visible" would have to mean in stored data, and
+> it disagrees with caution 1 above on whether disclosure is sufficient. That disagreement is
+> recorded unresolved in [14](./14-ai-assisted-review-reporting.md).
 
 Taken together: **encoded guidance and enforced gates are worth most to inexperienced reviewers, who
 currently do worst — and automation that removes the need to engage with the literature conceals

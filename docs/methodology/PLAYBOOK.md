@@ -3,7 +3,7 @@
 **Purpose**: reproduce the process that produced `docs/methodology/` when new papers are added to
 `research/`, without re-reading what has already been read.
 
-**Read [The paper register](#the-paper-register) first.** It lists all 54 papers already examined and
+**Read [The paper register](#the-paper-register) first.** It lists all 55 papers already examined and
 which chapters each fed. Anything already there does not need re-extraction unless a chapter is being
 rewritten.
 
@@ -36,7 +36,7 @@ mkdir -p "$SCRATCH/txt"
 
 ## Where the notes live
 
-**[`docs/methodology/notes/`](./notes/) — committed to the repository.** 14 files, ~203,000 words.
+**[`docs/methodology/notes/`](./notes/) — committed to the repository.** 15 files, ~207,000 words.
 
 These are the structured extractions the chapters were composed from. They are **denser than the
 chapters and closer to the sources**, holding material that did not make the cut — full mitigation
@@ -52,7 +52,7 @@ the `pdftotext` dumps are disposable.
 | ---------- | ------ |
 | `kitchenham_guidelines_2007.md` | Kitchenham & Charters 2007 — its own file, being the longest source |
 | `corpus-notes.md` | Petersen et al. 2008; plus the reconciliation of the four pre-existing repo docs |
-| `batch1-slr-lessons.md` | brereton (= kitchenham_lessons) · bailey · staples · dyba · badampudi · da_silva |
+| `batch1-slr-lessons.md` | brereton · bailey · staples · dyba · badampudi · da_silva |
 | `batch2-sms-tertiary.md` | petersen_guidelines_2015 · kitchenham_systematic_2010 · _2009 · _2013 · babar · mourao |
 | `batch3a-snowballing.md` | wohlin_guidelines_2014 · wohlin_second-generation_2016 · wohlin_reliability_2013 |
 | `batch4-rapid-reviews-tools.md` | cartaxo · kitchenham_how_2023 · wyrich · marshall_2013 · marshall_2014 |
@@ -64,6 +64,7 @@ the `pdftotext` dumps are disposable.
 | `batch9a-synthesis.md` | cruzes_recommended · ribeiro · cruzes_research |
 | `batch9b-selection-classification.md` | petersen_identifying **only** — this batch died partway; its other two papers were re-extracted into `batch10` |
 | `batch10-remaining.md` | wieringa · mendez · zhang · stol · fatima |
+| `ai-assisted-review-reporting.md` | holst_transparent_2025 — added 2026-08-07; **the first topic-named notes file**, per the naming rule below |
 
 > **⚠ Naming is historical, not semantic.** The `batchN` names record which agent produced which file
 > during the original run, and the numbering has gaps (`3a`, `6a`/`6b`, `9a`/`9b`) because failed
@@ -92,8 +93,13 @@ cd "$RESEARCH"
 # Page counts and sizes
 for f in *; do printf "%5s  %s\n" "$(pdfinfo "$f" 2>/dev/null | awk '/^Pages:/{print $2}')" "$f"; done | sort -rn
 
-# Detect duplicate files — this corpus already contained one identical pair
-md5sum * | sort | awk '{print $1}' | uniq -d
+# Detect duplicates. NOT on PDF bytes — that check missed this corpus's only real duplicate for
+# months, because two downloads of one paper differ in metadata while their text is identical.
+# Dedupe on extracted text instead (run after Stage 2), then eyeball title + page count.
+md5sum "$SCRATCH"/txt/*.txt | sort | awk '{print $1}' | uniq -d
+
+# Note `ls -A`, not `*.pdf`: at least one corpus file has no extension.
+ls -A
 ```
 
 Cross off anything already in [the register](#the-paper-register). For each genuinely new paper,
@@ -336,8 +342,25 @@ These are the parts worth keeping even if the mechanics change.
 
 ## The paper register
 
-**54 unique papers, 55 files.** `brereton_lessons_2007.pdf` and `kitchenham_lessons_2007.pdf` are
-**byte-identical** — one paper filed twice; deleting one is recommended.
+**55 unique papers, 55 files — one file per paper.**
+
+> **⚠ CORRECTION, 2026-08-08 — the duplicate is gone, and the intake check that missed it is
+> wrong.** This register previously recorded `brereton_lessons_2007.pdf` and
+> `kitchenham_lessons_2007.pdf` as **byte-identical**. **The PDFs never were**: different MD5s
+> (`5942133…` / `7f7a5e6…`), 302,812 vs 303,196 bytes, first difference at byte 38,887 — two
+> downloads of one 13-page paper. What was genuinely byte-identical was their **`pdftotext` output**
+> (`02de16e2…`), a true fact about the *text* recorded in `notes/batch1-slr-lessons.md` and
+> transposed into a false one about the *PDFs*.
+>
+> **So the `md5sum * | uniq -d` step in [Stage 1](#stage-1--intake) cannot catch a duplicate like
+> this, and did not.** Fixed there: dedupe on extracted text, then on title and page count.
+>
+> `kitchenham_lessons_2007.pdf` was **deleted 2026-08-08**; Brereton is first author and Kitchenham
+> second, so the surviving filename is the correct one. `research/` is gitignored, so the deletion is
+> not in version control.
+>
+> Second intake trap, still live: **`kitchenham_systematic_2010` has no `.pdf` extension**, so every
+> `*.pdf` glob in this playbook silently skips it. Use `ls -A` or `find`, not `*.pdf`.
 
 Legend for *Depth*: **F** = read in full · **T** = targeted sections · **V** = read as page images
 (no text layer).
@@ -366,12 +389,13 @@ Legend for *Depth*: **F** = read in full · **T** = targeted sections · **V** =
 | `basili_goal_1994` | F | GQM, three-level model | 09 |
 | `basili_software_1992` | **V** | GQM goal template (scanned; no text layer) | 09 |
 | `petersen_identifying_2011` | F | Study-selection strategies and decision rules | 06 |
+| `holst_transparent_2025` | F | **PRISMA-trAIce** — 17-item checklist for reporting AI used *as a tool* in a review; adapted flow diagram. **Proposal, not consensus** | 14, 10, 11, 12 |
 
 ### Evidence, lessons and critique
 
 | Paper | Depth | Contributes | Chapters fed |
 | ----- | :---: | ----------- | ------------ |
-| `brereton_lessons_2007` **( = `kitchenham_lessons_2007`)** | F | 10-stage/3-phase model; lessons L1–L19; transferability table | 01, 11 |
+| `brereton_lessons_2007` | F | 10-stage/3-phase model; lessons L1–L19; transferability table. *(Was also filed as `kitchenham_lessons_2007`; that copy was deleted 2026-08-08)* | 01, 11 |
 | `bailey_lessons_2007` | F | Search-engine non-overlap, quantified | 06, 11 |
 | `staples_experiences_2007` | F | Complementary research questions; unit of analysis | 01, 11 |
 | `dyba_applying_2007` | F | 11-item rigour/credibility/relevance checklist; κ = 0.80 | 06, 07 |

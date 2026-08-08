@@ -396,9 +396,14 @@ file, because an agent can complete having written only its first paper.
 
 _2026-08-07_
 
-- **`brereton_lessons_2007.pdf` and `kitchenham_lessons_2007.pdf` are byte-identical** (same MD5).
-  One paper filed twice. The corpus is **54 unique papers across 55 files**. This was found only
-  after one of them had been extracted twice.
+- **~~`brereton_lessons_2007.pdf` and `kitchenham_lessons_2007.pdf` are byte-identical~~ — this was
+  wrong, and the way it was wrong is the lesson.** The two **PDFs** had different MD5s and differed
+  by 384 bytes. What was byte-identical was their **`pdftotext` output**; a true claim about the text
+  extractions was recorded as a false claim about the files, and propagated into three documents
+  before anyone re-ran the check. **A duplicate check on PDF bytes finds nothing** — dedupe on
+  extracted text, or on title plus page count. Resolved 2026-08-08 by deleting
+  `kitchenham_lessons_2007.pdf` (Brereton is first author); the corpus is now **55 papers in 55
+  files**. Note `research/` is gitignored, so corpus changes never appear in a diff.
 - **`basili_software_1992.pdf` is a scanned image with no text layer.** `pdftotext` yields a 24-byte
   stub, and no OCR is installed. It is still readable — the Read tool handles page images directly,
   up to 20 pages per request, and all 24 pages were recovered in two requests with nothing lost.

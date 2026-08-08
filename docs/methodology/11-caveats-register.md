@@ -175,3 +175,19 @@ These matter most, because following the guidance uncritically reproduces them.
 | I7 | **Two independent reviews of the same topic shared only 33 of 44 papers** | [06](./06-search-and-selection.md) |
 | I8 | **A mitigation for one threat can create another** — snowballing and grey literature mitigate publication bias but introduce their own risks | [09](./09-threats-to-validity.md) |
 | I9 | **Non-expert reviewers omit well-known studies and cannot reason about findings** (TV21) — automation that hides the process conceals this rather than fixing it | [09](./09-threats-to-validity.md) |
+
+---
+
+## J — Using AI as a tool inside the review
+
+All from `holst_transparent_2025`, whose own status is the first entry.
+
+| # | Trap | Chapter |
+| - | ---- | ------- |
+| J1 | **PRISMA-trAIce is a proposal, not a consensus standard** — no Delphi, no user study, items not empirically validated. It is a design specification, not an authority | [14](./14-ai-assisted-review-reporting.md) |
+| J2 | **Disclosure is not validity.** The checklist makes AI use visible; it does not make it sound. A fully conforming report may describe an unsound review in complete detail | [14](./14-ai-assisted-review-reporting.md) |
+| J3 | **AI performance evaluation is the one optional item** — M9/R2 are hedged "if applicable and feasible", so a conforming review can disclose that an LLM screened everything and offer no evidence it screened correctly | [14](./14-ai-assisted-review-reporting.md) |
+| J4 | **There is no per-review-type applicability table**, unlike SEGRESS. The checklist is written for the SLR and is silent on mapping studies, rapid reviews and tertiary studies — an Evidence Briefing has no section structure for its items to attach to | [14](./14-ai-assisted-review-reporting.md), [10](./10-reporting-and-evaluation.md) |
+| J5 | **The prompt is part of the method, and it moves.** M6 requires the full prompts and the sampling parameters. A mutable prompt template with no per-decision snapshot cannot answer it after the template is edited | [14](./14-ai-assisted-review-reporting.md) |
+| J6 | **Verification and disagreement are different events.** M8e asks what *proportion* of AI outputs a human verified; an override log records only the ones a human overturned, so agreement leaves no trace and the denominator is unrecoverable | [14](./14-ai-assisted-review-reporting.md) |
+| J7 | **The standard's own infrastructure is grey literature** — a personal GitHub account and a Discord server, with the steering committee stated as intent. Stamp the version and access date of any checklist you encode, per H9 | [14](./14-ai-assisted-review-reporting.md), [05](./05-grey-literature-mlr.md) |
