@@ -107,6 +107,21 @@ database by `backend/tests/integration/test_search_pipeline_screening.py`.
   > `CLAUDE.md`'s manual e2e startup explicitly pairs `alembic upgrade head` with
   > `DATABASE_URL=sqlite+aiosqlite:///./dev.db`, which cannot work.
 
+- [ ] TFIX3 **`PaperDecision` has no `annotation` column, and the annotation masquerades as a criterion.** `data-model.md` lists `annotation` among `PaperDecision`'s fields. There is no such column (`db/src/db/models/candidate.py`). `ReviewerPanel.tsx:82-83` instead appends the free text to the `reasons` JSON array as `{"criterion_type": "annotation", "text": "…"}`. The capability works, so nothing is broken for a user — but FR-002 says reasons are "drawn from the study's criteria", and an annotation carried as a pseudo-reason is counted by anything that counts reasons, including any future agreement or criteria-frequency analysis. Either add a real `annotation` column (a migration, which `data-model.md` says this feature does not have) or state the encoding explicitly in `data-model.md` and make every reader of `reasons` filter `criterion_type == "annotation"`. **Low severity, high staleness risk** — recorded because the documentation currently describes a field that does not exist
+
+- [ ] TFIX4 **The screening UI asks the researcher to type their own database id.** `ReviewerPanel.tsx` renders a numeric "Reviewer ID" input, and `canSubmit` is false until it is filled. Its own comment concedes the point: *"simplified — in real use would be populated from auth context"*. FR-005 requires that any member of a study can record a decision; requiring them to know their internal `reviewer.id` is not that. There is **no endpoint that resolves the current user's reviewer row** — `grep` finds no `/reviewers` route anywhere under `backend/src/backend/api/v1/`, so this cannot be fixed in the frontend alone. Add `GET /api/v1/studies/{id}/reviewers` (or return the caller's `reviewer_id` on `StudyDetail`, alongside the existing `viewer_role`), then have `ReviewerPanel` resolve it and drop the input. **Blocks T018 and T019**
+
+  > This is why US1's e2e is not written yet. An e2e could type `1` and pass — the seed fixtures
+  > make reviewer ids deterministic — but it would be asserting that a screen no researcher can
+  > use does work. Feature 012 exists because finished code was unreachable; shipping a green e2e
+  > over an unusable control would be the same failure with a passing test on top.
+  >
+  > Note this also makes the *wrong reviewer* trivially recordable today: nothing stops a user
+  > typing another member's reviewer id, and the endpoint only checks that the reviewer belongs to
+  > the study (`_require_reviewer_in_study`), not that it belongs to the caller. Whoever fixes
+  > TFIX4 should decide whether the endpoint starts rejecting a `reviewer_id` that is not the
+  > caller's own — which would be a second, deliberate tightening in the shape of FR-027.
+
 ---
 
 ## Phase 3: User Story 1 — Record a screening decision (Priority: P1) 🎯 MVP
@@ -117,24 +132,34 @@ database by `backend/tests/integration/test_search_pipeline_screening.py`.
 
 ### Tests for User Story 1 ⚠️ write first, must fail
 
-- [ ] T007 [P] [US1] Integration test in `backend/tests/integration/test_papers_decisions.py`: a submission whose `observed_status` differs from the stored status returns 409 carrying both statuses (FR-025, FR-027)
-- [ ] T008 [P] [US1] Integration test in `backend/tests/integration/test_papers_decisions.py`: a second decision by the same reviewer without `overrides_decision_id` returns 409 carrying their earlier decision (FR-022)
-- [ ] T009 [P] [US1] Integration test in `backend/tests/integration/test_papers_decisions.py`: resubmitting with `overrides_decision_id` succeeds, sets `is_override`, retains the original, and does **not** raise the paper's conflict flag (FR-022)
-- [ ] T010 [US1] Migrate the ~10 existing `POST …/decisions` calls in `backend/tests/integration/test_papers_decisions.py` to supply `observed_status` (C5 — required field, so existing callers stop working; migrating them is part of this task, not follow-up)
-- [ ] T011 [P] [US1] Component test in `frontend/src/components/studies/__tests__/ScreeningView.test.tsx`: selecting a queue row opens the reviewer panel for that candidate
-- [ ] T012 [P] [US1] Component test in `frontend/src/components/studies/__tests__/ScreeningView.test.tsx`: reasons and annotation already entered survive a re-confirmation prompt (FR-025)
+- [X] T007 [P] [US1] Integration test in `backend/tests/integration/test_papers_decisions.py`: a submission whose `observed_status` differs from the stored status returns 409 carrying both statuses (FR-025, FR-027)
+- [X] T008 [P] [US1] Integration test in `backend/tests/integration/test_papers_decisions.py`: a second decision by the same reviewer without `overrides_decision_id` returns 409 carrying their earlier decision (FR-022)
+- [X] T009 [P] [US1] Integration test in `backend/tests/integration/test_papers_decisions.py`: resubmitting with `overrides_decision_id` succeeds, sets `is_override`, retains the original, and does **not** raise the paper's conflict flag (FR-022)
+- [X] T010 [US1] Migrate the ~10 existing `POST …/decisions` calls in `backend/tests/integration/test_papers_decisions.py` to supply `observed_status` (C5 — required field, so existing callers stop working; migrating them is part of this task, not follow-up)
+- [X] T011 [P] [US1] Component test in `frontend/src/components/studies/__tests__/ScreeningView.test.tsx`: selecting a queue row opens the reviewer panel for that candidate
+- [X] T012 [P] [US1] Component test in `frontend/src/components/studies/__tests__/ScreeningView.test.tsx`: reasons and annotation already entered survive a re-confirmation prompt (FR-025)
 
 ### Implementation for User Story 1
 
-- [ ] T013 [US1] Add required `observed_status` and the stale-state 409 to `DecisionRequest` and `submit_decision` in `backend/src/backend/api/v1/papers.py` (FR-025, FR-027)
-- [ ] T014 [US1] Add the unacknowledged-prior-decision 409 to `submit_decision` in `backend/src/backend/api/v1/papers.py`, returning the reviewer's earlier decision in the payload (FR-022)
-- [ ] T015 [US1] Create `frontend/src/components/studies/ScreeningView.tsx` composing `PaperQueue`, selection state, `ReviewerPanel`, `PaperCard`, and `MetricsDashboard` (≤100 JSX lines — decompose if it grows)
-- [ ] T016 [US1] Mount `ScreeningView` at phase 3 for the SMS branch and inside `SLRScreeningView` in `frontend/src/pages/StudyPage.tsx`, so both paths gain decisions from one change (FR-006)
-- [ ] T017 [US1] Send `observed_status` and `overrides_decision_id` from the reviewer panel in `frontend/src/components/phase2/ReviewerPanel.tsx`, preserving entered input across a re-confirmation
-- [ ] T018 [US1] Remove `test.fixme` from the three cases in `frontend/e2e/screen-paper.spec.ts` and make them assert real behaviour (no `isVisible()` guards, no conditional skips — Principle VI)
-- [ ] T019 [US1] Extend `frontend/e2e/screen-paper.spec.ts` to record a decision end-to-end on an SMS study and on an SLR study against a live backend (FR-021)
+- [X] T013 [US1] Add required `observed_status` and the stale-state 409 to `DecisionRequest` and `submit_decision` in `backend/src/backend/api/v1/papers.py` (FR-025, FR-027)
+- [X] T014 [US1] Add the unacknowledged-prior-decision 409 to `submit_decision` in `backend/src/backend/api/v1/papers.py`, returning the reviewer's earlier decision in the payload (FR-022)
+- [X] T015 [US1] Create `frontend/src/components/studies/ScreeningView.tsx` composing `PaperQueue`, selection state, `ReviewerPanel`, `PaperCard`, and `MetricsDashboard` (≤100 JSX lines — decompose if it grows)
+- [X] T016 [US1] Mount `ScreeningView` at phase 3 for the SMS branch and inside `SLRScreeningView` in `frontend/src/pages/StudyPage.tsx`, so both paths gain decisions from one change (FR-006)
+- [X] T017 [US1] Send `observed_status` and `overrides_decision_id` from the reviewer panel in `frontend/src/components/phase2/ReviewerPanel.tsx`, preserving entered input across a re-confirmation
+- [ ] T018 [US1] Remove `test.fixme` from the three cases in `frontend/e2e/screen-paper.spec.ts` and make them assert real behaviour (no `isVisible()` guards, no conditional skips — Principle VI). **Two of the three, not three.** The accept/reject cases are un-fixme-able now that `ReviewerPanel` is mounted. The third — `job progress panel is visible during a screening run` — clicks a `/run screening/` button that US1 does not deliver; it is the re-screen control from **T049**. It stays `test.fixme` and its comment is re-pointed from G18 to US4/T049, which is the form Principle VI permits (`test.fixme` plus a gap citation, per T052). Blocked on **TFIX4**
+- [ ] T019 [US1] Extend `frontend/e2e/screen-paper.spec.ts` to record a decision end-to-end on an SMS study and on an SLR study against a live backend (FR-021). Blocked on **TFIX4**, and needs one fixture that Phase 2 does not create: **there is no seeded SLR study**. `slr-workflow.spec.ts` builds one through the wizard, but a wizard-created study sits at phase 1 with no candidates, so screening is locked and there is nothing to decide on. Add `_seed_slr_study` to `scripts/seed_e2e_user.py` — SLR type, PICO, completed search execution, pending candidates — mirroring `_seed_main_study`
 
 **Checkpoint**: A reviewer can screen papers on SMS and SLR studies. Agreement measurement becomes exercisable. Tertiary is covered in Phase 4, which is where that study type becomes reachable.
+
+> **Status 2026-08-08 — T007–T017 complete, T018–T019 blocked on TFIX4.**
+> The reachability audit moved **23 → 20**: `ReviewerPanel`, `PaperCard` and `MetricsDashboard`
+> are now reached through `ScreeningView` at phase 3 for SMS, SLR and Rapid. Backend 1164 tests
+> pass, frontend 1364 across 127 files, 9/9 pre-commit hooks, eslint and prettier clean.
+>
+> The e2e is deliberately **not** written yet. `ReviewerPanel` requires the reviewer to type their
+> numeric reviewer id by hand, so an e2e for it would have to type a raw database id — a test that
+> passes against a UI no researcher can actually use. That is the exact "green and wrong" outcome
+> this feature exists to remove, so TFIX4 comes first.
 
 ---
 
@@ -331,16 +356,17 @@ in one commit — a required field and its callers must move together.
 | Refactoring (C1–C3) | TREF1–TREF9 | 9      |
 | Setup ✅            | T001–T002   | 2      |
 | Foundational ✅     | T003–T006   | 4      |
-| Defects found       | TFIX1–TFIX2 | 2      |
+| Defects found       | TFIX1–TFIX4 | 4      |
 | US1 (P1) 🎯 MVP     | T007–T019   | 13     |
 | US2 (P2)            | T020–T026   | 7      |
 | US3 (P3)            | T027–T033   | 7      |
 | US4 (P4)            | T034–T050   | 17     |
 | Polish              | T051–T055   | 5      |
 | Documentation       | TDOC1–TDOC7 | 7      |
-| **Total**           |             | **73** |
+| **Total**           |             | **75** |
 
-TREF1–TREF9, T001–T006, TFIX1 and TFIX2 are complete. US1–US4 and Phase 7 remain.
+TREF1–TREF9, T001–T006, T007–T017, TFIX1 and TFIX2 are complete. T018–T019 are blocked on
+**TFIX4**; US2–US4 and Phase 7 remain.
 
 TFIX2 turned up a further staleness while it was being fixed, corrected in place rather than
 given a number of its own: **the rescreen migration is `0020`, not `0019`.**

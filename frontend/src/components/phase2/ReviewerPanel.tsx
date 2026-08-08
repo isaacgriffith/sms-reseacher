@@ -5,7 +5,7 @@
 
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { api } from '../../services/api';
+import { api, ApiError } from '../../services/api';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
@@ -17,9 +17,33 @@ interface Criterion {
   order_index: number;
 }
 
+interface PriorDecision {
+  id: number;
+  decision: string;
+  reasons?: Array<{ criterion_id?: number; criterion_type?: string; text: string }>;
+  decided_at?: string | null;
+}
+
+type ConflictState =
+  | { kind: 'stale_state'; observedStatus: string; currentStatus: string }
+  | { kind: 'unacknowledged_prior_decision'; priorDecision: PriorDecision }
+  | null;
+
+interface DecisionRequestBody {
+  reviewer_id: number;
+  decision: string;
+  reasons: object[];
+  observed_status: string;
+  overrides_decision_id?: number;
+}
+
 interface ReviewerPanelProps {
   studyId: number;
   candidateId: number;
+  /** The candidate's current_status as shown to the reviewer; sent as observed_status. */
+  observedStatus: string;
+  /** Set when this submission supersedes the reviewer's own earlier decision. */
+  overridesDecisionId?: number | null;
   onDecisionSubmitted?: () => void;
 }
 
@@ -34,6 +58,8 @@ const DECISION_STYLES: Record<DecisionType, { bg: string; text: string; border: 
 export default function ReviewerPanel({
   studyId,
   candidateId,
+  observedStatus,
+  overridesDecisionId,
   onDecisionSubmitted,
 }: ReviewerPanelProps) {
   const qc = useQueryClient();
@@ -42,6 +68,7 @@ export default function ReviewerPanel({
   const [selectedReasons, setSelectedReasons] = useState<number[]>([]);
   const [annotationText, setAnnotationText] = useState('');
   const [reviewerId, setReviewerId] = useState<number | null>(null);
+  const [conflict, setConflict] = useState<ConflictState>(null);
 
   const { data: inclusion = [] } = useQuery<Criterion[]>({
     queryKey: ['criteria', studyId, 'inclusion'],
@@ -54,7 +81,7 @@ export default function ReviewerPanel({
   });
 
   const submitDecision = useMutation({
-    mutationFn: (body: { reviewer_id: number; decision: string; reasons: object[] }) =>
+    mutationFn: (body: DecisionRequestBody) =>
       api.post(`/api/v1/studies/${studyId}/papers/${candidateId}/decisions`, body),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['decisions', studyId, candidateId] });
@@ -62,29 +89,74 @@ export default function ReviewerPanel({
       setSelectedDecision(null);
       setSelectedReasons([]);
       setAnnotationText('');
+      setConflict(null);
       onDecisionSubmitted?.();
+    },
+    onError: (err: unknown) => {
+      if (!(err instanceof ApiError) || err.status !== 409) return;
+      const detail = err.detail as unknown as
+        | { error: 'stale_state'; observed_status: string; current_status: string }
+        | { error: 'unacknowledged_prior_decision'; prior_decision: PriorDecision }
+        | undefined;
+      if (detail?.error === 'stale_state') {
+        setConflict({
+          kind: 'stale_state',
+          observedStatus: detail.observed_status,
+          currentStatus: detail.current_status,
+        });
+      } else if (detail?.error === 'unacknowledged_prior_decision') {
+        setConflict({
+          kind: 'unacknowledged_prior_decision',
+          priorDecision: detail.prior_decision,
+        });
+      }
     },
   });
 
-  const handleSubmit = () => {
+  const buildReasons = (): object[] => [
+    ...selectedReasons.map((id) => {
+      const inc = inclusion.find((c) => c.id === id);
+      const exc = exclusion.find((c) => c.id === id);
+      return {
+        criterion_id: id,
+        criterion_type: inc ? 'inclusion' : 'exclusion',
+        text: (inc ?? exc)?.description ?? '',
+      };
+    }),
+    ...(annotationText.trim()
+      ? [{ criterion_type: 'annotation', text: annotationText.trim() }]
+      : []),
+  ];
+
+  const performSubmit = (opts?: {
+    observedStatusOverride?: string;
+    overridesDecisionIdOverride?: number;
+  }) => {
     if (!selectedDecision || reviewerId === null) return;
 
-    const reasons: object[] = [
-      ...selectedReasons.map((id) => {
-        const inc = inclusion.find((c) => c.id === id);
-        const exc = exclusion.find((c) => c.id === id);
-        return {
-          criterion_id: id,
-          criterion_type: inc ? 'inclusion' : 'exclusion',
-          text: (inc ?? exc)?.description ?? '',
-        };
-      }),
-      ...(annotationText.trim()
-        ? [{ criterion_type: 'annotation', text: annotationText.trim() }]
-        : []),
-    ];
+    const effectiveOverrideId = opts?.overridesDecisionIdOverride ?? overridesDecisionId;
 
-    submitDecision.mutate({ reviewer_id: reviewerId, decision: selectedDecision, reasons });
+    const body: DecisionRequestBody = {
+      reviewer_id: reviewerId,
+      decision: selectedDecision,
+      reasons: buildReasons(),
+      observed_status: opts?.observedStatusOverride ?? observedStatus,
+      ...(effectiveOverrideId != null ? { overrides_decision_id: effectiveOverrideId } : {}),
+    };
+
+    submitDecision.mutate(body);
+  };
+
+  const handleSubmit = () => performSubmit();
+
+  const handleConfirmStale = () => {
+    if (conflict?.kind !== 'stale_state') return;
+    performSubmit({ observedStatusOverride: conflict.currentStatus });
+  };
+
+  const handleConfirmOverride = () => {
+    if (conflict?.kind !== 'unacknowledged_prior_decision') return;
+    performSubmit({ overridesDecisionIdOverride: conflict.priorDecision.id });
   };
 
   const toggleReason = (id: number) => {
@@ -97,6 +169,7 @@ export default function ReviewerPanel({
 
   return (
     <Box
+      data-testid="reviewer-panel"
       sx={{
         border: '1px solid #e2e8f0',
         borderRadius: '0.5rem',
@@ -255,6 +328,61 @@ export default function ReviewerPanel({
         </Box>
       )}
 
+      {/* Re-confirmation prompts (FR-025 / FR-022) — entered state above is preserved */}
+      {conflict?.kind === 'stale_state' && (
+        <Box
+          data-testid="stale-state-prompt"
+          sx={{
+            marginBottom: '0.875rem',
+            padding: '0.75rem',
+            background: '#fef3c7',
+            border: '1px solid #fbbf24',
+            borderRadius: '0.375rem',
+          }}
+        >
+          <Typography sx={{ fontSize: '0.8125rem', color: '#92400e', marginBottom: '0.5rem' }}>
+            This paper changed since you loaded it — its status is now &quot;
+            {conflict.currentStatus}
+            &quot; (you saw &quot;{conflict.observedStatus}&quot;). Your entered decision and notes
+            are kept; confirm to resubmit against the current state.
+          </Typography>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={handleConfirmStale}
+            sx={{ fontSize: '0.8125rem' }}
+          >
+            Confirm and resubmit
+          </Button>
+        </Box>
+      )}
+
+      {conflict?.kind === 'unacknowledged_prior_decision' && (
+        <Box
+          data-testid="prior-decision-prompt"
+          sx={{
+            marginBottom: '0.875rem',
+            padding: '0.75rem',
+            background: '#fef3c7',
+            border: '1px solid #fbbf24',
+            borderRadius: '0.375rem',
+          }}
+        >
+          <Typography sx={{ fontSize: '0.8125rem', color: '#92400e', marginBottom: '0.5rem' }}>
+            You already recorded &quot;{conflict.priorDecision.decision}&quot; for this paper. Your
+            entered decision and notes are kept; confirm to override your earlier decision.
+          </Typography>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={handleConfirmOverride}
+            sx={{ fontSize: '0.8125rem' }}
+          >
+            Confirm override
+          </Button>
+        </Box>
+      )}
+
       {/* Override annotation */}
       <Box sx={{ marginBottom: '0.875rem' }}>
         <Typography
@@ -295,7 +423,7 @@ export default function ReviewerPanel({
         {submitDecision.isPending ? 'Submitting…' : 'Submit Decision'}
       </Button>
 
-      {submitDecision.isError && (
+      {submitDecision.isError && !conflict && (
         <Typography sx={{ margin: '0.5rem 0 0', color: '#ef4444', fontSize: '0.8125rem' }}>
           Failed to submit decision. Please try again.
         </Typography>

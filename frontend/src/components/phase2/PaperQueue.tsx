@@ -21,18 +21,23 @@ interface Paper {
   venue: string | null;
 }
 
-interface CandidatePaper {
+export interface CandidatePaper {
   id: number;
   study_id: number;
   paper_id: number;
   phase_tag: string;
   current_status: 'pending' | 'accepted' | 'rejected' | 'duplicate';
   duplicate_of_id: number | null;
+  conflict_flag: boolean;
   paper: Paper;
 }
 
 interface PaperQueueProps {
   studyId: number;
+  /** Called with the full candidate when a queue row is activated (click or Enter/Space). */
+  onSelect?: (candidate: CandidatePaper) => void;
+  /** The currently selected candidate's id, used to render its row as active. */
+  selectedId?: number | null;
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -44,7 +49,7 @@ const STATUS_COLORS: Record<string, string> = {
 
 const PAGE_SIZE = 20;
 
-export default function PaperQueue({ studyId }: PaperQueueProps) {
+export default function PaperQueue({ studyId, onSelect, selectedId }: PaperQueueProps) {
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [phaseFilter, setPhaseFilter] = useState<string>('');
   const [page, setPage] = useState(0);
@@ -165,108 +170,125 @@ export default function PaperQueue({ studyId }: PaperQueueProps) {
       )}
 
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-        {papers.map((cp) => (
-          <Box
-            key={cp.id}
-            sx={{
-              border: '1px solid #e2e8f0',
-              borderRadius: '0.5rem',
-              padding: '0.875rem',
-              background: '#fff',
-            }}
-          >
+        {papers.map((cp) => {
+          const isSelected = selectedId === cp.id;
+          return (
             <Box
+              key={cp.id}
+              data-testid="paper-queue-item"
+              role="button"
+              tabIndex={0}
+              aria-pressed={isSelected}
+              onClick={() => onSelect?.(cp)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onSelect?.(cp);
+                }
+              }}
               sx={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'flex-start',
-                gap: '0.75rem',
-                marginBottom: '0.375rem',
+                border: isSelected ? '2px solid #2563eb' : '1px solid #e2e8f0',
+                borderRadius: '0.5rem',
+                padding: '0.875rem',
+                background: isSelected ? '#eff6ff' : '#fff',
+                cursor: onSelect ? 'pointer' : 'default',
+                outline: 'none',
+                '&:focus-visible': { boxShadow: '0 0 0 2px #93c5fd' },
               }}
             >
-              <Typography
-                component="span"
+              <Box
                 sx={{
-                  fontWeight: 600,
-                  fontSize: '0.875rem',
-                  color: '#111827',
-                  flex: 1,
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-start',
+                  gap: '0.75rem',
+                  marginBottom: '0.375rem',
                 }}
               >
-                {cp.paper.title}
-              </Typography>
-              <Typography
-                component="span"
+                <Typography
+                  component="span"
+                  sx={{
+                    fontWeight: 600,
+                    fontSize: '0.875rem',
+                    color: '#111827',
+                    flex: 1,
+                  }}
+                >
+                  {cp.paper.title}
+                </Typography>
+                <Typography
+                  component="span"
+                  sx={{
+                    flexShrink: 0,
+                    padding: '0.125rem 0.5rem',
+                    borderRadius: '9999px',
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                    background: `${STATUS_COLORS[cp.current_status]}20`,
+                    color: STATUS_COLORS[cp.current_status],
+                    textTransform: 'capitalize',
+                  }}
+                >
+                  {cp.current_status}
+                </Typography>
+              </Box>
+
+              <Box
                 sx={{
-                  flexShrink: 0,
-                  padding: '0.125rem 0.5rem',
-                  borderRadius: '9999px',
+                  display: 'flex',
+                  gap: '1rem',
                   fontSize: '0.75rem',
-                  fontWeight: 600,
-                  background: `${STATUS_COLORS[cp.current_status]}20`,
-                  color: STATUS_COLORS[cp.current_status],
-                  textTransform: 'capitalize',
+                  color: '#6b7280',
+                  flexWrap: 'wrap',
                 }}
               >
-                {cp.current_status}
-              </Typography>
-            </Box>
+                {cp.paper.year && (
+                  <Typography component="span" sx={{ fontSize: '0.75rem', color: '#6b7280' }}>
+                    {cp.paper.year}
+                  </Typography>
+                )}
+                {cp.paper.venue && (
+                  <Typography component="span" sx={{ fontSize: '0.75rem', color: '#6b7280' }}>
+                    {cp.paper.venue}
+                  </Typography>
+                )}
+                {cp.paper.doi && (
+                  <Typography component="span" sx={{ fontSize: '0.75rem', color: '#6b7280' }}>
+                    DOI: {cp.paper.doi}
+                  </Typography>
+                )}
+                <Typography
+                  component="span"
+                  sx={{
+                    padding: '0.0625rem 0.375rem',
+                    background: '#f1f5f9',
+                    borderRadius: '0.25rem',
+                    fontSize: '0.6875rem',
+                  }}
+                >
+                  {cp.phase_tag}
+                </Typography>
+              </Box>
 
-            <Box
-              sx={{
-                display: 'flex',
-                gap: '1rem',
-                fontSize: '0.75rem',
-                color: '#6b7280',
-                flexWrap: 'wrap',
-              }}
-            >
-              {cp.paper.year && (
-                <Typography component="span" sx={{ fontSize: '0.75rem', color: '#6b7280' }}>
-                  {cp.paper.year}
+              {cp.paper.abstract && (
+                <Typography
+                  sx={{
+                    margin: '0.5rem 0 0',
+                    fontSize: '0.8125rem',
+                    color: '#4b5563',
+                    lineHeight: 1.5,
+                    display: '-webkit-box',
+                    WebkitLineClamp: 3,
+                    WebkitBoxOrient: 'vertical',
+                    overflow: 'hidden',
+                  }}
+                >
+                  {cp.paper.abstract}
                 </Typography>
               )}
-              {cp.paper.venue && (
-                <Typography component="span" sx={{ fontSize: '0.75rem', color: '#6b7280' }}>
-                  {cp.paper.venue}
-                </Typography>
-              )}
-              {cp.paper.doi && (
-                <Typography component="span" sx={{ fontSize: '0.75rem', color: '#6b7280' }}>
-                  DOI: {cp.paper.doi}
-                </Typography>
-              )}
-              <Typography
-                component="span"
-                sx={{
-                  padding: '0.0625rem 0.375rem',
-                  background: '#f1f5f9',
-                  borderRadius: '0.25rem',
-                  fontSize: '0.6875rem',
-                }}
-              >
-                {cp.phase_tag}
-              </Typography>
             </Box>
-
-            {cp.paper.abstract && (
-              <Typography
-                sx={{
-                  margin: '0.5rem 0 0',
-                  fontSize: '0.8125rem',
-                  color: '#4b5563',
-                  lineHeight: 1.5,
-                  display: '-webkit-box',
-                  WebkitLineClamp: 3,
-                  WebkitBoxOrient: 'vertical',
-                  overflow: 'hidden',
-                }}
-              >
-                {cp.paper.abstract}
-              </Typography>
-            )}
-          </Box>
-        ))}
+          );
+        })}
       </Box>
 
       {/* Pagination */}

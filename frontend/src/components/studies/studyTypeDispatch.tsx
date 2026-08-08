@@ -32,7 +32,7 @@ import SeedPapers from '../phase1/SeedPapers';
 import CriteriaForm from '../phase2/CriteriaForm';
 import SearchStringEditor from '../phase2/SearchStringEditor';
 import TestRetest from '../phase2/TestRetest';
-import PaperQueue from '../phase2/PaperQueue';
+import ScreeningView from './ScreeningView';
 import FullSearchControl from '../phase2/FullSearchControl';
 import SnowballControls from '../phase2/SnowballControls';
 import JobProgressPanel from '../jobs/JobProgressPanel';
@@ -113,7 +113,7 @@ function SLRScreeningView({ studyId }: SLRScreeningViewProps) {
 
   return (
     <Box>
-      <PaperQueue studyId={studyId} />
+      <ScreeningView studyId={studyId} />
       <Box sx={{ mt: 3 }}>
         <InterRaterPanel studyId={studyId} />
       </Box>
@@ -247,7 +247,7 @@ function renderSearchAndScreen({ study, activeJobId, onJobStarted }: PhaseContex
         </Box>
         <JobProgressPanel jobId={activeJobId} />
       </Box>
-      <PaperQueue studyId={study.id} />
+      <ScreeningView studyId={study.id} />
     </Box>
   );
 }

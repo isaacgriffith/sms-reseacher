@@ -85,6 +85,7 @@ export default function PaperCard({
 
   return (
     <Box
+      data-testid="paper-card"
       sx={{
         border: `1px solid ${conflictFlag ? '#fbbf24' : '#e2e8f0'}`,
         borderRadius: '0.5rem',

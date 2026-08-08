@@ -17,14 +17,18 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
-vi.mock('../../../services/api', () => ({
-  api: {
-    get: vi.fn(),
-    post: vi.fn(),
-  },
-}));
+vi.mock('../../../services/api', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../../services/api')>();
+  return {
+    ...actual,
+    api: {
+      get: vi.fn(),
+      post: vi.fn(),
+    },
+  };
+});
 
-import { api } from '../../../services/api';
+import { api, ApiError } from '../../../services/api';
 import ReviewerPanel from '../ReviewerPanel';
 
 const mockApi = api as unknown as {
@@ -37,7 +41,7 @@ function renderWithQuery(ui: React.ReactElement) {
   return render(<QueryClientProvider client={qc}>{ui}</QueryClientProvider>);
 }
 
-const BASE_PROPS = { studyId: 1, candidateId: 42 };
+const BASE_PROPS = { studyId: 1, candidateId: 42, observedStatus: 'pending' };
 
 describe('ReviewerPanel', () => {
   beforeEach(() => {
@@ -508,6 +512,171 @@ describe('ReviewerPanel', () => {
         const annotationReason = body.reasons.find((r) => r.criterion_type === 'annotation');
         expect(annotationReason).toBeUndefined();
       });
+    });
+  });
+
+  describe('observed_status / overrides_decision_id (contract T017)', () => {
+    it('sends observed_status from the observedStatus prop', async () => {
+      mockApi.post.mockResolvedValue({ id: 1, decision: 'accepted' });
+      renderWithQuery(<ReviewerPanel {...BASE_PROPS} observedStatus="pending" />);
+
+      fireEvent.click(screen.getByRole('button', { name: /^accepted$/i }));
+      fireEvent.change(screen.getByPlaceholderText(/reviewer id/i), { target: { value: '1' } });
+      fireEvent.click(screen.getByRole('button', { name: /submit decision/i }));
+
+      await waitFor(() => {
+        expect(mockApi.post).toHaveBeenCalledWith(
+          expect.stringContaining('/decisions'),
+          expect.objectContaining({ observed_status: 'pending' }),
+        );
+      });
+    });
+
+    it('sends overrides_decision_id when the prop is set', async () => {
+      mockApi.post.mockResolvedValue({ id: 1, decision: 'accepted', is_override: true });
+      renderWithQuery(
+        <ReviewerPanel {...BASE_PROPS} observedStatus="pending" overridesDecisionId={9} />,
+      );
+
+      fireEvent.click(screen.getByRole('button', { name: /^accepted$/i }));
+      fireEvent.change(screen.getByPlaceholderText(/reviewer id/i), { target: { value: '1' } });
+      fireEvent.click(screen.getByRole('button', { name: /submit decision/i }));
+
+      await waitFor(() => {
+        expect(mockApi.post).toHaveBeenCalledWith(
+          expect.stringContaining('/decisions'),
+          expect.objectContaining({ overrides_decision_id: 9 }),
+        );
+      });
+    });
+
+    it('does not send overrides_decision_id when the prop is not set', async () => {
+      mockApi.post.mockResolvedValue({ id: 1, decision: 'accepted' });
+      renderWithQuery(<ReviewerPanel {...BASE_PROPS} observedStatus="pending" />);
+
+      fireEvent.click(screen.getByRole('button', { name: /^accepted$/i }));
+      fireEvent.change(screen.getByPlaceholderText(/reviewer id/i), { target: { value: '1' } });
+      fireEvent.click(screen.getByRole('button', { name: /submit decision/i }));
+
+      await waitFor(() => {
+        const body = mockApi.post.mock.calls[0][1] as Record<string, unknown>;
+        expect(body.overrides_decision_id).toBeUndefined();
+      });
+    });
+  });
+
+  describe('409 conflict handling (FR-022, FR-025)', () => {
+    it('shows a re-confirmation prompt on 409 stale_state, not the generic failure message', async () => {
+      mockApi.post.mockRejectedValueOnce(
+        new ApiError(409, {
+          error: 'stale_state',
+          observed_status: 'pending',
+          current_status: 'accepted',
+        } as unknown as string),
+      );
+      renderWithQuery(<ReviewerPanel {...BASE_PROPS} observedStatus="pending" />);
+
+      fireEvent.click(screen.getByRole('button', { name: /^rejected$/i }));
+      fireEvent.change(screen.getByPlaceholderText(/reviewer id/i), { target: { value: '4' } });
+      fireEvent.click(screen.getByRole('button', { name: /submit decision/i }));
+
+      await waitFor(() => expect(screen.getByText(/status is now/i)).toBeTruthy());
+      expect(screen.queryByText(/^failed to submit decision/i)).toBeNull();
+    });
+
+    it('resubmits with the updated status when the stale-state prompt is confirmed', async () => {
+      mockApi.post.mockRejectedValueOnce(
+        new ApiError(409, {
+          error: 'stale_state',
+          observed_status: 'pending',
+          current_status: 'accepted',
+        } as unknown as string),
+      );
+      renderWithQuery(<ReviewerPanel {...BASE_PROPS} observedStatus="pending" />);
+
+      fireEvent.click(screen.getByRole('button', { name: /^rejected$/i }));
+      fireEvent.change(screen.getByPlaceholderText(/reviewer id/i), { target: { value: '4' } });
+      fireEvent.click(screen.getByRole('button', { name: /submit decision/i }));
+      await waitFor(() => expect(screen.getByText(/status is now/i)).toBeTruthy());
+
+      mockApi.post.mockResolvedValueOnce({ id: 2, decision: 'rejected' });
+      fireEvent.click(screen.getByRole('button', { name: /confirm and resubmit/i }));
+
+      await waitFor(() => {
+        const lastCall = mockApi.post.mock.calls.at(-1);
+        expect(lastCall?.[1]).toMatchObject({ observed_status: 'accepted' });
+      });
+    });
+
+    it('shows an override prompt on 409 unacknowledged_prior_decision', async () => {
+      mockApi.post.mockRejectedValueOnce(
+        new ApiError(409, {
+          error: 'unacknowledged_prior_decision',
+          prior_decision: { id: 9, decision: 'rejected' },
+        } as unknown as string),
+      );
+      renderWithQuery(<ReviewerPanel {...BASE_PROPS} observedStatus="pending" />);
+
+      fireEvent.click(screen.getByRole('button', { name: /^accepted$/i }));
+      fireEvent.change(screen.getByPlaceholderText(/reviewer id/i), { target: { value: '4' } });
+      fireEvent.click(screen.getByRole('button', { name: /submit decision/i }));
+
+      await waitFor(() => expect(screen.getByText(/already recorded/i)).toBeTruthy());
+    });
+
+    it('resubmits with overrides_decision_id when the override prompt is confirmed', async () => {
+      mockApi.post.mockRejectedValueOnce(
+        new ApiError(409, {
+          error: 'unacknowledged_prior_decision',
+          prior_decision: { id: 9, decision: 'rejected' },
+        } as unknown as string),
+      );
+      renderWithQuery(<ReviewerPanel {...BASE_PROPS} observedStatus="pending" />);
+
+      fireEvent.click(screen.getByRole('button', { name: /^accepted$/i }));
+      fireEvent.change(screen.getByPlaceholderText(/reviewer id/i), { target: { value: '4' } });
+      fireEvent.click(screen.getByRole('button', { name: /submit decision/i }));
+      await waitFor(() => expect(screen.getByText(/already recorded/i)).toBeTruthy());
+
+      mockApi.post.mockResolvedValueOnce({ id: 10, decision: 'accepted', is_override: true });
+      fireEvent.click(screen.getByRole('button', { name: /confirm override/i }));
+
+      await waitFor(() => {
+        const lastCall = mockApi.post.mock.calls.at(-1);
+        expect(lastCall?.[1]).toMatchObject({ overrides_decision_id: 9 });
+      });
+    });
+
+    it('keeps entered reasons and annotation visible after a stale_state 409', async () => {
+      mockApi.get.mockImplementation((url: string) => {
+        if (url.includes('inclusion')) {
+          return Promise.resolve([{ id: 1, description: 'Peer-reviewed', order_index: 0 }]);
+        }
+        return Promise.resolve([]);
+      });
+      mockApi.post.mockRejectedValueOnce(
+        new ApiError(409, {
+          error: 'stale_state',
+          observed_status: 'pending',
+          current_status: 'accepted',
+        } as unknown as string),
+      );
+      renderWithQuery(<ReviewerPanel {...BASE_PROPS} observedStatus="pending" />);
+
+      fireEvent.click(screen.getByRole('button', { name: /^accepted$/i }));
+      await waitFor(() => screen.getByText('Peer-reviewed'));
+      fireEvent.click(screen.getByLabelText('Peer-reviewed'));
+      fireEvent.change(screen.getByPlaceholderText(/reviewer id/i), { target: { value: '4' } });
+      fireEvent.change(screen.getByPlaceholderText(/optional annotation/i), {
+        target: { value: 'Keep me around' },
+      });
+      fireEvent.click(screen.getByRole('button', { name: /submit decision/i }));
+
+      await waitFor(() => expect(screen.getByText(/status is now/i)).toBeTruthy());
+      expect((screen.getByLabelText('Peer-reviewed') as HTMLInputElement).checked).toBe(true);
+      expect(
+        (screen.getByPlaceholderText(/optional annotation/i) as HTMLTextAreaElement).value,
+      ).toBe('Keep me around');
     });
   });
 });

@@ -125,7 +125,12 @@ class TestSubmitDecision:
 
         resp = await client.post(
             f"/api/v1/studies/{study_id}/papers/{cp_id}/decisions",
-            json={"reviewer_id": wrong_reviewer_id, "decision": "accepted", "reasons": []},
+            json={
+                "reviewer_id": wrong_reviewer_id,
+                "decision": "accepted",
+                "observed_status": "pending",
+                "reasons": [],
+            },
             headers=_bearer(alice_user.id),
         )
         assert resp.status_code == 422
@@ -140,7 +145,12 @@ class TestSubmitDecision:
 
         resp = await client.post(
             f"/api/v1/studies/{study_id}/papers/{cp_id}/decisions",
-            json={"reviewer_id": reviewer_id, "decision": "accepted", "reasons": []},
+            json={
+                "reviewer_id": reviewer_id,
+                "decision": "accepted",
+                "observed_status": "pending",
+                "reasons": [],
+            },
             headers=_bearer(user.id),
         )
         assert resp.status_code == 201
@@ -162,18 +172,25 @@ class TestSubmitDecision:
         # First decision
         resp1 = await client.post(
             f"/api/v1/studies/{study_id}/papers/{cp_id}/decisions",
-            json={"reviewer_id": reviewer_id, "decision": "rejected", "reasons": []},
+            json={
+                "reviewer_id": reviewer_id,
+                "decision": "rejected",
+                "observed_status": "pending",
+                "reasons": [],
+            },
             headers=_bearer(user.id),
         )
         assert resp1.status_code == 201
         first_decision_id = resp1.json()["id"]
 
-        # Override decision
+        # Override decision — observed_status is the outcome of the first decision,
+        # since that is what current_status became after resp1.
         resp2 = await client.post(
             f"/api/v1/studies/{study_id}/papers/{cp_id}/decisions",
             json={
                 "reviewer_id": reviewer_id,
                 "decision": "accepted",
+                "observed_status": "rejected",
                 "reasons": [],
                 "overrides_decision_id": first_decision_id,
             },
@@ -198,15 +215,26 @@ class TestSubmitDecision:
         # Reviewer 1: accepted
         resp1 = await client.post(
             f"/api/v1/studies/{study_id}/papers/{cp_id}/decisions",
-            json={"reviewer_id": reviewer1_id, "decision": "accepted", "reasons": []},
+            json={
+                "reviewer_id": reviewer1_id,
+                "decision": "accepted",
+                "observed_status": "pending",
+                "reasons": [],
+            },
             headers=_bearer(user.id),
         )
         assert resp1.status_code == 201
 
-        # Reviewer 2: rejected → should trigger conflict
+        # Reviewer 2: rejected → should trigger conflict. Reviewer 2 observes the
+        # candidate after reviewer 1's decision moved current_status to "accepted".
         resp2 = await client.post(
             f"/api/v1/studies/{study_id}/papers/{cp_id}/decisions",
-            json={"reviewer_id": reviewer2_id, "decision": "rejected", "reasons": []},
+            json={
+                "reviewer_id": reviewer2_id,
+                "decision": "rejected",
+                "observed_status": "accepted",
+                "reasons": [],
+            },
             headers=_bearer(user.id),
         )
         assert resp2.status_code == 201
@@ -228,10 +256,17 @@ class TestSubmitDecision:
         reviewer1_id = await _insert_reviewer(db_engine, study_id, ReviewerType.HUMAN)
         reviewer2_id = await _insert_reviewer(db_engine, study_id, ReviewerType.HUMAN)
 
-        for rid in [reviewer1_id, reviewer2_id]:
+        # Reviewer 1 observes "pending"; reviewer 2 observes "accepted" — the status
+        # left behind by reviewer 1's decision, since both decide "accepted".
+        for rid, observed in [(reviewer1_id, "pending"), (reviewer2_id, "accepted")]:
             resp = await client.post(
                 f"/api/v1/studies/{study_id}/papers/{cp_id}/decisions",
-                json={"reviewer_id": rid, "decision": "accepted", "reasons": []},
+                json={
+                    "reviewer_id": rid,
+                    "decision": "accepted",
+                    "observed_status": observed,
+                    "reasons": [],
+                },
                 headers=_bearer(user.id),
             )
             assert resp.status_code == 201
@@ -253,7 +288,12 @@ class TestSubmitDecision:
         reasons = [{"criterion_id": 1, "criterion_type": "inclusion", "text": "Peer-reviewed"}]
         resp = await client.post(
             f"/api/v1/studies/{study_id}/papers/{cp_id}/decisions",
-            json={"reviewer_id": reviewer_id, "decision": "accepted", "reasons": reasons},
+            json={
+                "reviewer_id": reviewer_id,
+                "decision": "accepted",
+                "observed_status": "pending",
+                "reasons": reasons,
+            },
             headers=_bearer(user.id),
         )
         assert resp.status_code == 201
@@ -261,6 +301,159 @@ class TestSubmitDecision:
         assert body["reasons"] is not None
         assert len(body["reasons"]) == 1
         assert body["reasons"][0]["text"] == "Peer-reviewed"
+
+    @pytest.mark.asyncio
+    async def test_stale_observed_status_returns_409_with_both_statuses(
+        self, client, alice, db_engine
+    ) -> None:
+        """observed_status differing from stored current_status → 409 stale_state.
+
+        The body must carry both observed_status and current_status so the client
+        can show what changed (FR-025, FR-027).
+        """
+        user, _ = alice
+        study_id = await _setup_study(client, db_engine, user)
+        cp_id = await _insert_candidate_paper(db_engine, study_id)
+        reviewer1_id = await _insert_reviewer(db_engine, study_id, ReviewerType.HUMAN)
+        reviewer2_id = await _insert_reviewer(db_engine, study_id, ReviewerType.HUMAN)
+
+        # Reviewer 1 decides, moving current_status from "pending" to "accepted".
+        resp1 = await client.post(
+            f"/api/v1/studies/{study_id}/papers/{cp_id}/decisions",
+            json={
+                "reviewer_id": reviewer1_id,
+                "decision": "accepted",
+                "observed_status": "pending",
+                "reasons": [],
+            },
+            headers=_bearer(user.id),
+        )
+        assert resp1.status_code == 201
+
+        # Reviewer 2 still believes the paper is "pending" — stale view.
+        resp2 = await client.post(
+            f"/api/v1/studies/{study_id}/papers/{cp_id}/decisions",
+            json={
+                "reviewer_id": reviewer2_id,
+                "decision": "rejected",
+                "observed_status": "pending",
+                "reasons": [],
+            },
+            headers=_bearer(user.id),
+        )
+        assert resp2.status_code == 409
+        detail = resp2.json()["detail"]
+        assert detail["error"] == "stale_state"
+        assert detail["observed_status"] == "pending"
+        assert detail["current_status"] == "accepted"
+
+    @pytest.mark.asyncio
+    async def test_unacknowledged_prior_decision_returns_409_with_prior_decision(
+        self, client, alice, db_engine
+    ) -> None:
+        """A second decision by the SAME reviewer with no overrides_decision_id → 409.
+
+        The detail must carry the reviewer's earlier decision (FR-022).
+        """
+        user, _ = alice
+        study_id = await _setup_study(client, db_engine, user)
+        cp_id = await _insert_candidate_paper(db_engine, study_id)
+        reviewer_id = await _insert_reviewer(db_engine, study_id)
+
+        resp1 = await client.post(
+            f"/api/v1/studies/{study_id}/papers/{cp_id}/decisions",
+            json={
+                "reviewer_id": reviewer_id,
+                "decision": "rejected",
+                "observed_status": "pending",
+                "reasons": [],
+            },
+            headers=_bearer(user.id),
+        )
+        assert resp1.status_code == 201
+        first_decision_id = resp1.json()["id"]
+
+        # Second submission by the same reviewer, no overrides_decision_id. Its
+        # observed_status matches the current stored status ("rejected"), so it
+        # clears the stale-state check and reaches the unacknowledged-prior check.
+        resp2 = await client.post(
+            f"/api/v1/studies/{study_id}/papers/{cp_id}/decisions",
+            json={
+                "reviewer_id": reviewer_id,
+                "decision": "accepted",
+                "observed_status": "rejected",
+                "reasons": [],
+            },
+            headers=_bearer(user.id),
+        )
+        assert resp2.status_code == 409
+        detail = resp2.json()["detail"]
+        assert detail["error"] == "unacknowledged_prior_decision"
+        prior = detail["prior_decision"]
+        assert prior["id"] == first_decision_id
+        assert prior["decision"] == "rejected"
+
+    @pytest.mark.asyncio
+    async def test_override_resubmission_retains_original_and_clears_no_conflict(
+        self, client, alice, db_engine
+    ) -> None:
+        """Resubmitting with overrides_decision_id succeeds and does not conflict.
+
+        Expect 201, is_override True, original decision row retained, and
+        conflict_flag NOT set (a correction by the same reviewer is not a
+        disagreement between reviewers).
+        """
+        user, _ = alice
+        study_id = await _setup_study(client, db_engine, user)
+        cp_id = await _insert_candidate_paper(db_engine, study_id)
+        reviewer_id = await _insert_reviewer(db_engine, study_id)
+
+        resp1 = await client.post(
+            f"/api/v1/studies/{study_id}/papers/{cp_id}/decisions",
+            json={
+                "reviewer_id": reviewer_id,
+                "decision": "rejected",
+                "observed_status": "pending",
+                "reasons": [],
+            },
+            headers=_bearer(user.id),
+        )
+        assert resp1.status_code == 201
+        first_decision_id = resp1.json()["id"]
+
+        resp2 = await client.post(
+            f"/api/v1/studies/{study_id}/papers/{cp_id}/decisions",
+            json={
+                "reviewer_id": reviewer_id,
+                "decision": "accepted",
+                "observed_status": "rejected",
+                "reasons": [],
+                "overrides_decision_id": first_decision_id,
+            },
+            headers=_bearer(user.id),
+        )
+        assert resp2.status_code == 201
+        body = resp2.json()
+        assert body["is_override"] is True
+
+        # Original decision row is retained, not deleted or overwritten.
+        decisions_resp = await client.get(
+            f"/api/v1/studies/{study_id}/papers/{cp_id}/decisions",
+            headers=_bearer(user.id),
+        )
+        assert decisions_resp.status_code == 200
+        decision_ids = {d["id"] for d in decisions_resp.json()}
+        assert first_decision_id in decision_ids
+        assert body["id"] in decision_ids
+        assert len(decisions_resp.json()) == 2
+
+        # A self-override must not be counted as a reviewer disagreement.
+        get_resp = await client.get(
+            f"/api/v1/studies/{study_id}/papers/{cp_id}",
+            headers=_bearer(user.id),
+        )
+        assert get_resp.status_code == 200
+        assert get_resp.json()["conflict_flag"] is False
 
 
 class TestResolveConflict:
@@ -281,11 +474,20 @@ class TestResolveConflict:
         reviewer1_id = await _insert_reviewer(db_engine, study_id, ReviewerType.HUMAN)
         reviewer2_id = await _insert_reviewer(db_engine, study_id, ReviewerType.HUMAN)
 
-        # Create conflict
-        for rid, dec in [(reviewer1_id, "accepted"), (reviewer2_id, "rejected")]:
+        # Create conflict. Reviewer 1 observes "pending"; reviewer 2 observes
+        # "accepted" — the status left behind by reviewer 1's decision.
+        for rid, dec, observed in [
+            (reviewer1_id, "accepted", "pending"),
+            (reviewer2_id, "rejected", "accepted"),
+        ]:
             await client.post(
                 f"/api/v1/studies/{study_id}/papers/{cp_id}/decisions",
-                json={"reviewer_id": rid, "decision": dec, "reasons": []},
+                json={
+                    "reviewer_id": rid,
+                    "decision": dec,
+                    "observed_status": observed,
+                    "reasons": [],
+                },
                 headers=_bearer(user.id),
             )
 
@@ -314,10 +516,18 @@ class TestResolveConflict:
         reviewer1_id = await _insert_reviewer(db_engine, study_id, ReviewerType.HUMAN)
         reviewer2_id = await _insert_reviewer(db_engine, study_id, ReviewerType.HUMAN)
 
-        for rid, dec in [(reviewer1_id, "accepted"), (reviewer2_id, "rejected")]:
+        for rid, dec, observed in [
+            (reviewer1_id, "accepted", "pending"),
+            (reviewer2_id, "rejected", "accepted"),
+        ]:
             await client.post(
                 f"/api/v1/studies/{study_id}/papers/{cp_id}/decisions",
-                json={"reviewer_id": rid, "decision": dec, "reasons": []},
+                json={
+                    "reviewer_id": rid,
+                    "decision": dec,
+                    "observed_status": observed,
+                    "reasons": [],
+                },
                 headers=_bearer(user.id),
             )
 
@@ -382,7 +592,12 @@ class TestListDecisions:
 
         await client.post(
             f"/api/v1/studies/{study_id}/papers/{cp_id}/decisions",
-            json={"reviewer_id": reviewer_id, "decision": "accepted", "reasons": []},
+            json={
+                "reviewer_id": reviewer_id,
+                "decision": "accepted",
+                "observed_status": "pending",
+                "reasons": [],
+            },
             headers=_bearer(user.id),
         )
 
