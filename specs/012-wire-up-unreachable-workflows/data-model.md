@@ -13,13 +13,18 @@ migration.
 
 | Entity          | Change                                                 | Migration?                   |
 | --------------- | ------------------------------------------------------ | ---------------------------- |
-| `JobType`       | New member `RESCREEN = "rescreen"`                     | **Yes** — `0019`, enum value |
+| `JobType`       | New member `RESCREEN = "rescreen"`                     | **Yes** — `0020`, enum value |
 | `Reviewer`      | Round metadata inside the existing `agent_config` JSON | No — column already nullable |
 | `StudyDetail`   | New response field `research_group_id: int`            | No — response schema only    |
 | Everything else | Unchanged                                              | No                           |
 
 No table is created, dropped, or altered. No column is added. The migration adds a single value
 to the `background_job_type_enum` PostgreSQL type and must provide a working `downgrade()`.
+
+> **The revision is `0020`, not `0019` as first planned.** `0019_candidate_citation_intent` landed
+> on this branch after this document was written and now holds head, and alembic rejects a
+> duplicate revision id. Confirm before writing it: `(cd db && uv run alembic heads)` — and note
+> that alembic runs from `db/`, not the repository root.
 
 ---
 

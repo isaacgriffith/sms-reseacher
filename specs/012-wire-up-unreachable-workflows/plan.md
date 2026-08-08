@@ -30,7 +30,8 @@ Phase 0 research contradicted the PRD in three places, each of which enlarges th
 **Primary Dependencies**: FastAPI, Pydantic v2, SQLAlchemy 2.0 async, Alembic, ARQ, LiteLLM;
 React 18, MUI v5, TanStack Query v5. **No new dependencies.**
 **Storage**: PostgreSQL 16 (production), SQLite + aiosqlite (tests). One Alembic migration —
-`0019`, adding a `JobType` enum value only. No table or column changes.
+`0020`, adding a `JobType` enum value only. No table or column changes. (Planned as `0019`;
+`0019_candidate_citation_intent` has since taken that number and holds head.)
 **Testing**: pytest (unit + integration), Vitest + React Testing Library (component), Playwright
 (e2e against a live backend), cosmic-ray / Stryker (mutation)
 **Target Platform**: Linux server + modern browsers
@@ -134,7 +135,7 @@ backend/
 
 db/
 ├── src/db/models/jobs.py            # MODIFIED — JobType.RESCREEN
-└── alembic/versions/0019_*.py       # NEW — enum value, with downgrade
+└── alembic/versions/0020_*.py       # NEW — enum value, with downgrade
 
 frontend/
 ├── src/

@@ -84,7 +84,7 @@ database by `backend/tests/integration/test_search_pipeline_screening.py`.
 > `fix:` commit carrying no feature change (Principle IV), placed at the point where the work that
 > depends on it begins.
 
-- [ ] TFIX1 **The SMS phase 4/5 unlock query has no `study_id` filter.** `get_unlocked_phases` in `backend/src/backend/services/phase_gate.py` gates phases 4 and 5 on `select(DataExtraction).where(DataExtraction.extraction_status != ExtractionStatus.PENDING)` — a query over the whole table. One non-pending extraction *anywhere in the database* unlocks phases 4 and 5 for *every* SMS study, including studies with no papers, no search, and no extraction of their own. Fix by joining `CandidatePaper` and constraining `CandidatePaper.study_id == study_id`, which is what `tertiary_phase_gate.py` already does for its own phase 5. **Blocks US3**: T028 asserts phases 4 and 5 render extraction and quality reporting, and until this is fixed that test can pass for the wrong reason — T004's seeded extraction unlocks those phases globally, so T028 would be green even if the study under test had nothing of its own to show. Land it **before** T029
+- [X] TFIX1 **The SMS phase 4/5 unlock query has no `study_id` filter.** `get_unlocked_phases` in `backend/src/backend/services/phase_gate.py` gates phases 4 and 5 on `select(DataExtraction).where(DataExtraction.extraction_status != ExtractionStatus.PENDING)` — a query over the whole table. One non-pending extraction *anywhere in the database* unlocks phases 4 and 5 for *every* SMS study, including studies with no papers, no search, and no extraction of their own. Fix by joining `CandidatePaper` and constraining `CandidatePaper.study_id == study_id`, which is what `tertiary_phase_gate.py` already does for its own phase 5. **Blocks US3**: T028 asserts phases 4 and 5 render extraction and quality reporting, and until this is fixed that test can pass for the wrong reason — T004's seeded extraction unlocks those phases globally, so T028 would be green even if the study under test had nothing of its own to show. Land it **before** T029
 
   > **Reproduced 2026-08-08** against the fixtures T003–T006 create. `E2E Source Mapping Study`
   > (study 3) holds two accepted papers and **zero** `DataExtraction` rows of its own. Given a PICO
@@ -96,7 +96,7 @@ database by `backend/tests/integration/test_search_pipeline_screening.py`.
   > the first only, asserting the second does not reach phase 4. Without that assertion the defect
   > stays invisible to the suite, which is how it survived this long.
 
-- [ ] TFIX2 **`alembic upgrade head` does not work from the repository root.** `alembic.ini` lives in `db/`, there is no root `alembic.ini`, and the root `pyproject.toml` has no `[tool.alembic]` section — so `uv run alembic upgrade head` from the repo root fails with `FAILED: No 'script_location' key found in configuration.` It is documented in the root position in **two** places a newcomer follows first: `CLAUDE.md` ("Database Migrations", all three commands, plus the manual stack startup under e2e) and this feature's own `quickstart.md` (Setup). Fix the documented commands to `(cd db && uv run alembic upgrade head)` — the same treatment the coverage commands already got — or add a root `alembic.ini` pointing at `db/alembic`. **Blocks no code, blocks every fresh setup**, including the `quickstart.md` Setup block this feature tells a reader to run before anything else
+- [X] TFIX2 **`alembic upgrade head` does not work from the repository root.** `alembic.ini` lives in `db/`, there is no root `alembic.ini`, and the root `pyproject.toml` has no `[tool.alembic]` section — so `uv run alembic upgrade head` from the repo root fails with `FAILED: No 'script_location' key found in configuration.` It is documented in the root position in **two** places a newcomer follows first: `CLAUDE.md` ("Database Migrations", all three commands, plus the manual stack startup under e2e) and this feature's own `quickstart.md` (Setup). Fix the documented commands to `(cd db && uv run alembic upgrade head)` — the same treatment the coverage commands already got — or add a root `alembic.ini` pointing at `db/alembic`. **Blocks no code, blocks every fresh setup**, including the `quickstart.md` Setup block this feature tells a reader to run before anything else
 
   > Found while setting up a database to verify T003–T006. Related, and worth stating where a
   > reader will hit it: **the migrations do not run on SQLite at all.** `0014` calls `add_column`
@@ -199,12 +199,12 @@ database by `backend/tests/integration/test_search_pipeline_screening.py`.
 - [ ] T038 [P] [US4] Integration test in `backend/tests/integration/test_screening_runs.py`: `422` when the study has no candidate papers
 - [ ] T039 [P] [US4] Integration test in `backend/tests/integration/test_screening_runs.py`: a run failing part-way retains its assessments, reports coverage, is not marked complete, and a restart covers only the remainder (FR-024)
 - [ ] T040 [P] [US4] Integration test in `backend/tests/integration/test_screening_runs.py`: decisions recorded by a human survive a run untouched (FR-019)
-- [ ] T041 [P] [US4] Migration test in `db/tests/integration/test_migrations.py`: `0019` upgrades and downgrades cleanly
+- [ ] T041 [P] [US4] Migration test in `db/tests/integration/test_migrations.py`: `0020` upgrades and downgrades cleanly — **against PostgreSQL**, since `0014` alters a constraint outside batch mode and SQLite refuses it outright (TFIX2)
 
 ### Implementation for User Story 4
 
 - [ ] T042 [US4] Add `RESCREEN = "rescreen"` to `JobType` in `db/src/db/models/jobs.py` (R1)
-- [ ] T043 [US4] Create Alembic migration `db/alembic/versions/0019_rescreen_job_type.py` adding the value to `background_job_type_enum`, with a working `downgrade()` (R1 — the PRD's "no migration" claim is wrong on this point)
+- [ ] T043 [US4] Create Alembic migration `db/alembic/versions/0020_rescreen_job_type.py` adding the value to `background_job_type_enum`, with a working `downgrade()` (R1 — the PRD's "no migration" claim is wrong on this point). **Revision `0020`, revising `0019`, not `0019` as originally planned**: `0019_candidate_citation_intent` landed on this branch after the plan was written and now holds head. Alembic rejects a duplicate revision id, so the number in `plan.md`, `data-model.md`, `research.md` R1, and `CLAUDE.md` is stale — confirmed with `(cd db && uv run alembic heads)` → `0019 (head)`
 - [ ] T044 [US4] Create `backend/src/backend/jobs/rescreen_job.py` composing the extracted screening pipeline, creating one reviewer per round and deriving outstanding candidates from decision rows (R2, R5). **On failure it must commit the assessments it completed and record its coverage — it must NOT call `_fail_search_run`, which rolls back** (R9). The search jobs restart because re-running a query is cheap; a re-screen resumes because each assessment is a paid provider call and R5's cursor-free resume reads the very rows a rollback would destroy
 - [ ] T045 [US4] Register the re-screen job in `backend/src/backend/jobs/worker.py`
 - [ ] T046 [US4] Create `backend/src/backend/api/v1/screening_runs.py` implementing `POST /studies/{id}/screening-runs` with the 202/409/422 responses per `contracts/screening-runs.md`, gated on `require_study_member` (FR-023)
@@ -340,6 +340,11 @@ in one commit — a required field and its callers must move together.
 | Documentation       | TDOC1–TDOC7 | 7      |
 | **Total**           |             | **73** |
 
-TREF1–TREF9, T001–T006 are complete. **TFIX1 must land before T029**, or T028 passes for the
-wrong reason; TFIX2 is documentation and can land at any time, but the sooner the better — it is
-the first command in `quickstart.md`.
+TREF1–TREF9, T001–T006, TFIX1 and TFIX2 are complete. US1–US4 and Phase 7 remain.
+
+TFIX2 turned up a further staleness while it was being fixed, corrected in place rather than
+given a number of its own: **the rescreen migration is `0020`, not `0019`.**
+`0019_candidate_citation_intent` landed on this branch after the plan was written and now holds
+head, and alembic rejects a duplicate revision id — confirmed with
+`(cd db && uv run alembic heads)` → `0019 (head)`. Corrected on T041, T043, `plan.md`,
+`data-model.md`, `quickstart.md`, and `CLAUDE.md`; `research.md` R1 never named a number.

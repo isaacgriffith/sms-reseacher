@@ -207,16 +207,28 @@ uv run mypy db/src
 
 ## Alembic Usage
 
+> **Unlike every other command in this file, these run from `db/`.** `alembic.ini` lives here and
+> resolves `script_location` relative to itself; there is no root `alembic.ini`. Run them from the
+> repository root — as the lint and mutation commands above are meant to be — and they fail with
+> `FAILED: No 'script_location' key found in configuration.` The subshells keep your working
+> directory unchanged, so the block can be pasted as a whole.
+
 ```bash
 # Apply all migrations to head
-uv run alembic upgrade head
+(cd db && uv run alembic upgrade head)
 
 # Generate a new migration after model changes
-uv run alembic revision --autogenerate -m "describe_change"
+(cd db && uv run alembic revision --autogenerate -m "describe_change")
 
 # Downgrade one step
-uv run alembic downgrade -1
+(cd db && uv run alembic downgrade -1)
 ```
+
+> **These need PostgreSQL.** `0014_database_search_and_retrieval` calls `add_column` with a
+> foreign-key constraint outside batch mode, which SQLite refuses:
+> `NotImplementedError: No support for ALTER of constraints`. The test suites never hit this
+> because they build the schema with `Base.metadata.create_all` rather than by migrating — which
+> also means **no test exercises `upgrade()` or `downgrade()` on the dialect production uses**.
 
 Migrations live in `db/alembic/versions/`.
 

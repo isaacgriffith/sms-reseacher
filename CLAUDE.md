@@ -71,7 +71,7 @@ Three constraints worth knowing before they surprise you:
 ## Active Technologies
 
 - Python 3.14 (backend, db, agents); TypeScript 5.4 / Node 20 LTS (frontend) + FastAPI, Pydantic v2, SQLAlchemy 2.0 async, Alembic, ARQ, LiteLLM; React 18, MUI v5, TanStack Query v5. **No new dependencies.** (012-wire-up-unreachable-workflows)
-- PostgreSQL 16 (production), SQLite + aiosqlite (tests). One Alembic migration — `0019`, adding a `JobType` enum value only. No table or column changes. (012-wire-up-unreachable-workflows)
+- PostgreSQL 16 (production), SQLite + aiosqlite (tests). One Alembic migration — **`0020`**, adding a `JobType` enum value only. No table or column changes. (012-wire-up-unreachable-workflows) — planned as `0019` before `0019_candidate_citation_intent` took that number; alembic rejects a duplicate revision id, so verify with `(cd db && uv run alembic heads)` before writing it
 
 Entries above are appended per feature branch by `update-agent-context.sh`. The canonical
 stack follows; the authoritative dependency list is always each subproject's
@@ -412,11 +412,11 @@ npx playwright show-report
 Alternative — manual stack startup:
 
 ```bash
-# Terminal 1: database migrations
-uv run alembic upgrade head
+# Terminal 1: database migrations — from db/, and against PostgreSQL. See below.
+(cd db && uv run alembic upgrade head)
 
 # Terminal 2: backend
-DATABASE_URL=sqlite+aiosqlite:///./dev.db \
+DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/sms \
 SECRET_KEY=dev-secret \
 uv run uvicorn backend.main:app --reload --port 8000
 
@@ -426,11 +426,46 @@ cd frontend && npx playwright test
 
 ### Database Migrations
 
+> **Run these from `db/`, not the repository root.** `alembic.ini` lives in `db/` and resolves
+> `script_location` relative to itself; there is no root `alembic.ini` and no `[tool.alembic]`
+> section in the root `pyproject.toml`. From the root every one of these fails with
+> `FAILED: No 'script_location' key found in configuration.` `.github/workflows/ci.yml` already
+> gets this right via `working-directory: db`. The subshells below keep your shell's working
+> directory unchanged, so the block can be pasted as a whole.
+
 ```bash
-uv run alembic upgrade head                                        # apply all migrations
-uv run alembic revision --autogenerate -m "describe_change"        # new migration
-uv run alembic downgrade -1                                        # roll back one step
+(cd db && uv run alembic upgrade head)                                   # apply all migrations
+(cd db && uv run alembic revision --autogenerate -m "describe_change")   # new migration
+(cd db && uv run alembic downgrade -1)                                   # roll back one step
 ```
+
+> **The migrations do not run on SQLite.** `0014_database_search_and_retrieval` calls
+> `add_column` with a foreign-key constraint outside batch mode, and the SQLite dialect raises
+> `NotImplementedError: No support for ALTER of constraints`. `alembic upgrade head` is a
+> **PostgreSQL-only** path — use Docker Compose, or the `DATABASE_URL` shown above.
+>
+> A local SQLite database has to be built from the ORM metadata instead, which is what the test
+> suites do:
+>
+> ```bash
+> uv run python -c "
+> import asyncio
+> from sqlalchemy.ext.asyncio import create_async_engine
+> import db.models  # registers every mapper
+> from db.base import Base
+>
+> async def main():
+>     engine = create_async_engine('sqlite+aiosqlite:///./dev.db')
+>     async with engine.begin() as conn:
+>         await conn.run_sync(Base.metadata.create_all)
+>     await engine.dispose()
+>
+> asyncio.run(main())"
+> ```
+>
+> That builds the schema the models describe **today**, bypassing migration history — fine for
+> local work, useless for verifying a migration. Anything that exercises `upgrade()` or
+> `downgrade()` needs PostgreSQL.
 
 ### CI Mutation Workflows (GitHub Actions)
 
