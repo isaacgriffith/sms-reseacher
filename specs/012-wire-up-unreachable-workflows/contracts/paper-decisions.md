@@ -44,9 +44,15 @@ and was actually an attribution bug:
 
 `ResolveConflictRequest` loses `reviewer_id` for the same reason and by the same mechanism.
 
-Not fixed here, recorded as **TFIX5**: `studyTypeDispatch.tsx:304` passes
-`<QualityAssessmentPage … reviewerId={0} />`, hardcoded, so SLR quality scores are attributed to
-reviewer `0`. Same root cause, different workflow.
+Not fixed here, recorded as **TFIX5**: `backend/src/backend/api/v1/slr/quality.py:269` passes
+`body.reviewer_id` to `submit_scores` with no check that the reviewer is the caller's — the same
+shape, in SLR quality assessment.
+
+It is **latent, not live**. `QualityScoreForm` is unreachable, and the tab that would host it
+renders a placeholder, so no quality score can be submitted through the UI at all. The trap only
+springs when that form is wired. An earlier version of this note said the scores were "attributed
+to reviewer `0`" — they are not attributed to anything, because none are written. See TFIX5 in
+`tasks.md` for why that error is worth keeping a record of.
 
 ### `observed_status` — **NEW, required**
 

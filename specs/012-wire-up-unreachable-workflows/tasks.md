@@ -163,7 +163,29 @@ database by `backend/tests/integration/test_search_pipeline_screening.py`.
   > what the feature actually models. `test_reviewer_not_in_study_returns_422` was replaced by
   > `test_non_member_returns_403` — the guarantee that now carries the weight.
 
-- [ ] TFIX5 **SLR quality scores are attributed to reviewer `0`.** `frontend/src/components/studies/studyTypeDispatch.tsx:304` renders `<QualityAssessmentPage studyId={study.id} reviewerId={0} />` — hardcoded, with no comment. `QualityScoreForm` sends that straight through as `reviewer_id` to the quality-score endpoint, and reads back `scores?.reviewer_scores.find((r) => r.reviewer_id === reviewerId)`, so every reviewer sees and writes the same phantom reviewer `0`. Same root cause as TFIX4 — reviewer identity treated as a client parameter rather than a property of who is asking — in a different workflow. Fix it the same way: resolve from the session server-side and delete the prop. **Consequence if left**: Cohen's κ over quality scores is computed across reviewers who are all recorded as the same person, so inter-rater agreement on quality assessment is meaningless. Found while doing TFIX4; not fixed there because quality assessment is SLR phase 4, outside US1's screening scope
+- [ ] TFIX5 **SLR quality scoring cannot be reached, and the identity trap is already laid behind it.** Two separate problems that look like one, because a hardcoded `reviewerId={0}` makes the second one visible while the first hides it.
+
+  **1. `QualityScoreForm` is unreachable.** Nothing imports it but its own test; it is one of the 20 modules `scripts/audit_unreachable_frontend.py` reports. `QualityAssessmentPage`'s "Score Papers" tab renders the string `Select an accepted paper to score it.` and no form — the accepted-paper selector that sentence implies does not exist. So **no quality score can be submitted through the UI at all**. Wiring it is feature work (selector + mount), takes the audit 20 → 19, and overlaps US3's territory rather than being a one-line fix.
+
+  **2. The endpoint takes a client-supplied `reviewer_id`.** `backend/src/backend/api/v1/slr/quality.py:269` passes `body.reviewer_id` straight to `quality_assessment_service.submit_scores` with no check that the reviewer belongs to the caller — the identical shape TFIX4 removed from screening. Latent while (1) holds, live the moment the form is wired. Fix it the same way: resolve from the session, delete the field from the request body.
+
+  **3. The `reviewerId` prop is dead.** `studyTypeDispatch.tsx:304` passes `reviewerId={0}`, and `QualityAssessmentPage` immediately discards it — `reviewerId: _reviewerId`, unused. Delete the prop and the argument.
+
+  > **This entry replaces an earlier version that was wrong, and the way it was wrong is the point.**
+  > It claimed "every reviewer sees and writes the same phantom reviewer `0`", and therefore that
+  > "Cohen's κ over quality scores is computed across reviewers who are all recorded as the same
+  > person, so inter-rater agreement on quality assessment is meaningless." **None of that is
+  > happening.** κ cannot be computed over UI-entered scores because there are none: the form is
+  > unreachable and the tab renders a placeholder.
+  >
+  > The error came from reading `reviewerId={0}` at the call site and inferring the capability
+  > behind it ran — without tracing where the value landed. It landed nowhere. That is precisely
+  > the failure mode feature 012 exists to eliminate, committed while cataloguing it, which is
+  > the strongest available argument that a call site is not evidence a capability works.
+  >
+  > Recorded rather than silently corrected because `docs/feature-gaps.md` already tracks
+  > "present and wrong" as a defect class with **no automated instrument**, and this is a worked
+  > example of a human (and an AI) producing one under exactly the conditions that class predicts.
 
 ---
 
