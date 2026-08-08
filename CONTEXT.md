@@ -145,8 +145,8 @@ Prefer these over inference when they disagree with code comments or with each o
 | Question                                | Authority                                            |
 | --------------------------------------- | ---------------------------------------------------- |
 | What are the binding engineering rules? | `.specify/memory/constitution.md`                    |
-| What is built vs. merely specified?     | `docs/feature-gaps.md` (43 catalogued gaps, G1–G43)  |
-| **How should a review actually be conducted?** | **`docs/methodology/`** — process definitions for SLR, SMS, Rapid Review and Tertiary, grounded in 54 research papers. **Where the platform and these documents disagree, the documents are the specification and the platform is the defect** |
+| What is built vs. merely specified?     | `docs/feature-gaps.md` (98 catalogued gaps, G1–G98)  |
+| **How should a review actually be conducted?** | **`docs/methodology/`** — process definitions for SLR, SMS, Rapid Review and Tertiary, grounded in 55 research papers. **Where the platform and these documents disagree, the documents are the specification and the platform is the defect** |
 | What is planned next?                   | `docs/features/` (PRDs) and `specs/` (specs + tasks) |
 | What is the database schema?            | `db/src/db/models/` + `db/alembic/versions/`         |
 | What commands do I run?                 | `CLAUDE.md`                                          |

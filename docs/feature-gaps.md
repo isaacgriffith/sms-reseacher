@@ -1,12 +1,23 @@
 # Feature Gap Analysis
 
 **Assessed**: 2026-08-05
-**Last updated**: 2026-08-07
-**Baseline**: `docs/base-features.md` (27 features, F1-SF01 – F3-SF04), plus `docs/todo.md` and `docs/todo2.md`
-**Evidence**: branch `012-wire-up-unreachable-workflows` at `dd1fe20`, working tree clean but for `docs/`
-**Scope**: 43 gaps catalogued (G1–G43), 2 resolved; 23 frontend modules still unreachable, pending feature 012
+**Last updated**: 2026-08-08
+**Baseline**: `docs/base-features.md` (27 features, F1-SF01 – F3-SF04), plus `docs/todo.md`, `docs/todo2.md` and the 14 chapters of [`docs/methodology/`](./methodology/)
+**Evidence**: branch `012-wire-up-unreachable-workflows` at `489831e`, working tree clean but for `docs/todo2.md`
+**Scope**: 98 gaps catalogued (G1–G98) — **1 resolved** (G22), **6 partially closed** (G13d, G21 backend half, G34 part 2, G47, G53, G55); 23 frontend modules still unreachable, pending feature 012
 
-**Method**: each feature traced to implementing code — ORM models, API routes, services, agents, source adapters, UI components — rather than to `specs/` intent.
+**Method**: two complementary passes, and the difference between them decides how much a claim is worth.
+
+1. **Trace to code** (G1–G34) — each baseline feature followed to implementing ORM models, API routes, services, agents, source adapters and UI components, rather than to `specs/` intent.
+2. **Trace to the research** (G35–G98) — each shipped behaviour checked against the chapter that specifies it, and, in the G65–G89 pass, every normative requirement in all 14 chapters enumerated and classified so that *absence of a finding* becomes evidence rather than silence.
+
+> **⚠ This document is a secondary restatement.** [`docs/methodology/`](./methodology/) is the source of
+> truth for how a review must be conducted, and per
+> [constitution Principle XI](../.specify/memory/constitution.md) this catalogue is one of the
+> documents that principle names as untrustworthy without verification. Where an entry below and a
+> chapter disagree, **the chapter is right and the entry is the defect**. Confidence is not uniform
+> either: G1–G64 were verified individually against the tree, **G65–G89 were verified by sample**
+> — open the cited chapter and the cited `file:line` before building on one.
 
 > **This document is now the single backlog.** `docs/todo.md` and `docs/todo2.md` were separate wish-lists whose items overlapped this catalogue, each other, and work already shipped. Every line of both was checked against the tree on 2026-08-07 and folded in here — see [Unified intake from todo.md and todo2.md](#unified-intake-from-todomd-and-todo2md), which maps each original line to a verdict and a gap. The two source files are left in place unedited as a provenance record; they are no longer the place to look for what is outstanding.
 
@@ -25,13 +36,14 @@
 | 2026-08-07 | **G22–G23 added**, both found while fixing the screening pipeline (`d8f6dcf`, `1e01097`). Snowballing is a registered job with no enqueue site, and admin job retry enqueues function names that are not registered, with arguments matching no job's signature — while reporting `200`. Neither is visible to the reachability oracles, which model imports rather than HTTP routes; see [Neither oracle sees a backend route](#neither-oracle-sees-a-backend-route) |
 | 2026-08-07 | **G22 resolved.** `POST /studies/{id}/snowball` plus a `SnowballControls` mount, with seeds defaulting to the study's accepted papers, a `409` naming any in-flight pass (FR-026), and a `422` rather than an empty run. 16 integration tests, 10 component tests. G23 remains open |
 | 2026-08-07 | **In-flight guard made bidirectional**, and **G24 added**: snowballing is DOI-keyed, so grey literature, reports, theses and older proceedings — the papers most likely to lack a DOI — are silently excluded from the walk. Both directions are recoverable, backward from stored full text and forward by resolving to a non-DOI identifier, but which citation index to prefer needs a research spike |
-| 2026-08-08 | **G90–G98 added — agent code and prompt alignment.** Four reviewers audited the ten agent services and twelve prompt directories against the corpus. The theme: **the agents are grounded in the corpus at the level of vocabulary, not procedure** — right category names, right rubric count, right validity dimensions, then criteria and anchors the corpus does not contain. Highest-value: the **expert agent seeds the quasi-gold-standard recall metric with unverified LLM-recalled papers** (G92), so a hallucinated DOI can certify the search; **structured screening never happens** because the prompt never requests JSON, so every call falls through to a substring match on "accept" and discards all criterion attribution (G91); the **screener is told to apply criteria strictly** where the corpus says interpret liberally first (G90); the **agent generator writes methodology-free prompts** that can silently replace corpus-grounded defaults (G93); and the **quality judge scores absent telemetry as work not done** (G94), making one rubric anchor unreachable by construction. **G46 amended**: four of five Petersen rubrics carry anchors that are not Petersen's, not two. **G5, G8 and G69 amended** — the third screening value means "duplicate" not "uncertain"; there is a second orphaned synthesis implementation; and the librarian actively steers the snowball start set toward one prestige community |
-| 2026-08-08 | **G65–G89 added, and G47/G53/G55 fixed.** A coverage audit enumerated **~700 normative requirements** across all 14 methodology chapters and classified each as CODE / GAP / UNCOVERED / N/A. Chapters **09, 12 and 13 came back with zero uncovered requirements** — the G35–G43 pass had mined them thoroughly. The uncovered material concentrates in **05, 06, 08 and 10**, the chapters furthest from the platform's original SMS scope. Highest-value findings: **ten of thirteen catalogued synthesis methods do not exist** (G65), **no effect measure is ever computed** (G66), **GRADE is absent though SEGRESS calls it essential** (G67), **no multi-extractor workflow for SLR or SMS** (G68, the general case of G63), and **grey literature is never archived** (G70) though a quarter of it is already dead. Three fixes landed with tests: the "Research Method" chart no longer renders venue data (G47), Cohen's κ now reaches the SLR report (G53), and snowball citation intent is persisted rather than discarded (G55, migration 0019) |
-| 2026-08-08 | **G45–G64 added — compliance audit against the methodology corpus.** Six parallel auditors checked each shipped feature against the research it claims to implement. The finding that reframes the catalogue: the severe defects are **not absences but misrepresentations** — a "Research Method" chart that renders venue data (**G47**), a validity section emitting three fixed threats regardless of study design (**G52**), quality rubrics carrying Petersen's names while scoring different constructs (**G46**), a research-type classifier testing novelty where the guideline tests setting (**G46**), a bespoke checklist auto-applied in DARE's slot (**G57**), and a search-string builder implementing the technique Kitchenham withdrew (**G45**). Structurally, **the protocol executor's quality gates gate nothing a user experiences** (**G49**, critical) — the four phase-gate services contain zero references to it — which makes most "enforce this as a gate" remediations elsewhere in this catalogue currently unbuildable. **G38** amended: its separated-scores point is an active contradiction, and its purpose-flag point needs a schema change |
-| 2026-08-08 | **G44 added.** `holst_transparent_2025` (PRISMA-trAIce) folded into the corpus as [14 — AI-assisted review reporting](./methodology/14-ai-assisted-review-reporting.md). AI decisions are already *attributable* here — `Reviewer.reviewer_type` plus `PaperDecision.reviewer_id` satisfy the AI-vs-human split most tools cannot retrofit — but not *reproducible*: the prompt behind a decision is lost once `Agent.system_message_template` is edited twice, sampling parameters are never persisted, and an override log cannot answer "what proportion of AI outputs were verified" because agreement leaves no row |
-| 2026-08-07 | **G35–G43 added from the methodology corpus.** Requirements the 54-paper research pass established that were not in this catalogue: protocol-as-preregistration with a validation snapshot; stopping rules and the *assessed vs never-assessed* distinction; escalatable reading depth and per-classification rationale; the quality-instrument shape (purpose flag, ordinal scales, separated scores); threat derivation from protocol configuration; GQM goal→question→field traceability; review-update as a workflow; terminology-variant search; and replication-package export with archival and licence discipline. Seven further requirements were folded into existing gaps rather than given IDs — see the table at the end of that section |
-| 2026-08-07 | **G10 amended** after the research pass behind [`docs/methodology/`](./methodology/). PRISMA 2020 states it "should not be used to assess the conduct or methodological quality of systematic reviews", so the planned checker measures **reporting completeness**, not rigour. SEGRESS replaces PRISMA as the primary standard, being the only one that marks each item required/optional/not-required **per review type**; quality scoring moves to DARE and the Petersen 2015 rubrics. The gap becomes two features rather than one |
 | 2026-08-07 | **`docs/todo.md` and `docs/todo2.md` folded in — G25–G34 added.** Every line of both was executed against the tree rather than read. Nine of 26 assessable items were already delivered and seven partial; the rest became gaps. The largest is **G25**: the backend addresses researcher-mcp over a REST API that server does not serve — `mcp.http_app()` exposes exactly one route, `/mcp`, so all five `POST /tools/…` and `GET /health` call sites fail, four of them silently. Every database search, PDF fetch and snowball walk in the platform runs through those calls. See [Unified intake](#unified-intake-from-todomd-and-todo2md) |
+| 2026-08-07 | **G10 amended** after the research pass behind [`docs/methodology/`](./methodology/). PRISMA 2020 states it "should not be used to assess the conduct or methodological quality of systematic reviews", so the planned checker measures **reporting completeness**, not rigour. SEGRESS replaces PRISMA as the primary standard, being the only one that marks each item required/optional/not-required **per review type**; quality scoring moves to DARE and the Petersen 2015 rubrics. The gap becomes two features rather than one |
+| 2026-08-07 | **G35–G43 added from the methodology corpus.** Requirements the 54-paper research pass established that were not in this catalogue: protocol-as-preregistration with a validation snapshot; stopping rules and the *assessed vs never-assessed* distinction; escalatable reading depth and per-classification rationale; the quality-instrument shape (purpose flag, ordinal scales, separated scores); threat derivation from protocol configuration; GQM goal→question→field traceability; review-update as a workflow; terminology-variant search; and replication-package export with archival and licence discipline. Seven further requirements were folded into existing gaps rather than given IDs — see the table at the end of that section |
+| 2026-08-08 | **G44 added.** `holst_transparent_2025` (PRISMA-trAIce) folded into the corpus as [14 — AI-assisted review reporting](./methodology/14-ai-assisted-review-reporting.md). AI decisions are already *attributable* here — `Reviewer.reviewer_type` plus `PaperDecision.reviewer_id` satisfy the AI-vs-human split most tools cannot retrofit — but not *reproducible*: the prompt behind a decision is lost once `Agent.system_message_template` is edited twice, sampling parameters are never persisted, and an override log cannot answer "what proportion of AI outputs were verified" because agreement leaves no row |
+| 2026-08-08 | **G45–G64 added — compliance audit against the methodology corpus.** Six parallel auditors checked each shipped feature against the research it claims to implement. The finding that reframes the catalogue: the severe defects are **not absences but misrepresentations** — a "Research Method" chart that renders venue data (**G47**), a validity section emitting three fixed threats regardless of study design (**G52**), quality rubrics carrying Petersen's names while scoring different constructs (**G46**), a research-type classifier testing novelty where the guideline tests setting (**G46**), a bespoke checklist auto-applied in DARE's slot (**G57**), and a search-string builder implementing the technique Kitchenham withdrew (**G45**). Structurally, **the protocol executor's quality gates gate nothing a user experiences** (**G49**, critical) — the four phase-gate services contain zero references to it — which makes most "enforce this as a gate" remediations elsewhere in this catalogue currently unbuildable. **G38** amended: its separated-scores point is an active contradiction, and its purpose-flag point needs a schema change |
+| 2026-08-08 | **G65–G89 added, and G47/G53/G55 fixed.** A coverage audit enumerated **~700 normative requirements** across all 14 methodology chapters and classified each as CODE / GAP / UNCOVERED / N/A. Chapters **09, 12 and 13 came back with zero uncovered requirements** — the G35–G43 pass had mined them thoroughly. The uncovered material concentrates in **05, 06, 08 and 10**, the chapters furthest from the platform's original SMS scope. Highest-value findings: **ten of thirteen catalogued synthesis methods do not exist** (G65), **no effect measure is ever computed** (G66), **GRADE is absent though SEGRESS calls it essential** (G67), **no multi-extractor workflow for SLR or SMS** (G68, the general case of G63), and **grey literature is never archived** (G70) though a quarter of it is already dead. Three fixes landed with tests: the "Research Method" chart no longer renders venue data (G47), Cohen's κ now reaches the SLR report (G53), and snowball citation intent is persisted rather than discarded (G55, migration 0019) |
+| 2026-08-08 | **G90–G98 added — agent code and prompt alignment.** Four reviewers audited the ten agent services and twelve prompt directories against the corpus. The theme: **the agents are grounded in the corpus at the level of vocabulary, not procedure** — right category names, right rubric count, right validity dimensions, then criteria and anchors the corpus does not contain. Highest-value: the **expert agent seeds the quasi-gold-standard recall metric with unverified LLM-recalled papers** (G92), so a hallucinated DOI can certify the search; **structured screening never happens** because the prompt never requests JSON, so every call falls through to a substring match on "accept" and discards all criterion attribution (G91); the **screener is told to apply criteria strictly** where the corpus says interpret liberally first (G90); the **agent generator writes methodology-free prompts** that can silently replace corpus-grounded defaults (G93); and the **quality judge scores absent telemetry as work not done** (G94), making one rubric anchor unreachable by construction. **G46 amended**: four of five Petersen rubrics carry anchors that are not Petersen's, not two. **G5, G8 and G69 amended** — the third screening value means "duplicate" not "uncertain"; there is a second orphaned synthesis implementation; and the librarian actively steers the snowball start set toward one prestige community |
+| 2026-08-08 | **Catalogue-wide consistency pass — no new gaps.** Three passes had each appended to the end without revisiting what came before, leaving the shared sections describing a 43-gap document. Corrected here: the header scope and evidence commit; the revision history, which had 2026-08-08 rows above 2026-08-07 rows and is now in git order; the [Summary](#summary) table, where **F2-SF07 loses its ●** (G47/G48/G83) and 13 of 20 headline-gap cells are restated, with a note on what ● can and cannot be taken to mean; the [Recommended sequence](#recommended-sequence), which is rebuilt around the fact that **G49 now sits beside G25 as a second blocker**; and the [Observed pattern](#observed-pattern), which gains the third and now-dominant defect shape. **G47, G53 and G55 re-marked ◐** — each was fixed in part on 2026-08-08 and read as fully open. The confidence gradient between G1–G64 and G65–G89 is now stated in the header rather than only in the section that carries it |
 
 ---
 
@@ -49,25 +61,34 @@
 
 | ID      | Feature              | Status | Headline gap                                                                |
 | ------- | -------------------- | ------ | --------------------------------------------------------------------------- |
-| F1-SF01 | Simple install/setup | ◐      | Compose path works; manual path is 5 steps across 2 stacks; G34 — the documented coverage command fails from the repo root |
+| F1-SF01 | Simple install/setup | ◐      | Compose path works; manual path is 5 steps across 2 stacks; G34 — the coverage command was fixed 2026-08-07, but no package has a citable mutation score |
 | F1-SF02 | Installation guide   | ◐      | README Quick Start only; no standalone guide                                |
 | F1-SF03 | Tutorial             | ✗      | None                                                                        |
-| F1-SF04 | Self-contained       | ◐      | 8 external API keys + an LLM provider; G15 — only Ollama self-hostable; G17 |
-| F2-SF01 | Protocol development | ◐      | G7 — thin guideline grounding; G35 — the protocol is a preregistration but is not committed as one; G40 — no goal→question→field traceability |
-| F2-SF02 | Protocol validation  | ◐      | AI review is SLR-only                                                       |
-| F2-SF03 | Automated searches   | ✗      | **G25 — the MCP call surface does not exist, so no search returns papers.** Then G1, G2, G3, G13, G24, G26, G28, G36, G41, G42 — largest cluster by far. G22 resolved: snowballing is startable |
-| F2-SF04 | Study selection      | ◐      | G4, G5; G18 — no UI to record a screening decision at all                   |
-| F2-SF05 | Quality assessment   | ◐      | G6 — no Study entity distinct from Paper; G21 — orphaned + shadowed modules; G38 — instrument model is the wrong shape |
-| F2-SF06 | Data extraction      | ◐      | G20 — extraction UI exists but phase 4 shows a placeholder; G25 — full text never retrieved, so extraction runs on abstracts; G37 — no reading depth or rationale capture |
-| F2-SF07 | Automated analysis   | ●      | Re-verified 2026-08-06 — the ● was unearned when written (see below)        |
-| F2-SF08 | Text analysis        | ●      | —                                                                           |
-| F2-SF09 | Meta-analysis        | ◐      | G8 — no metasummary; thematic synthesis is not Cruzes/Dybå; G27 — SMS has no synthesis at all |
-| F2-SF10 | Report write-up      | ◐      | G9 — no Typst backend; G14 — no PRISMA 2020 flow diagram; G27 — SMS produces a data archive, not a report; G43 — no replication package or archival |
-| F2-SF11 | Report validation    | ✗      | G10 — no checker. **Amended**: SEGRESS is the standard, per review type; PRISMA may not score quality; G14; G35 — no protocol snapshot to detect deviation against; G39 — threats not derived from configuration |
+| F1-SF04 | Self-contained       | ◐      | 8 external API keys + an LLM provider; G15 — only Ollama self-hostable; G17, G30, G32, G43; **G93** — the agent generator writes methodology-free prompts that can silently replace corpus-grounded defaults |
+| F2-SF01 | Protocol development | ◐      | G7 — thin guideline grounding; G35 — the protocol is a preregistration but is not committed as one; G40 — no goal→question→field traceability; **G71** — piloting is unsupported at every stage that requires it; G29, G82, G96 |
+| F2-SF02 | Protocol validation  | ◐      | AI review is SLR-only. **G45** — the search-string builder implements the technique Kitchenham withdrew; **G92** — the recall metric that certifies a search is seeded with unverified, LLM-recalled papers, so a hallucinated DOI can pass it; G96 |
+| F2-SF03 | Automated searches   | ✗      | **G25 — the MCP call surface does not exist, so no search returns papers.** Still the largest cluster by far: G1, G2, G3, G13, G24, G26, G28, G36, G41, G42, joined by G54, G56, G62, G69, G70, G72, G73, G77, G78, G85 from the corpus passes. G22 resolved — snowballing is startable; G55 partially — citation intent is persisted, not yet used |
+| F2-SF04 | Study selection      | ◐      | G4, G5; G18 — no UI to record a screening decision at all; **G90** — the screener is told to apply criteria strictly where the corpus says interpret liberally; **G91** — structured screening never happens, so every call falls through to a substring match on "accept"; G61, G88, G89, G97 |
+| F2-SF05 | Quality assessment   | ◐      | G6 — no Study entity distinct from Paper; G21 — the two frontend controls remain orphaned (backend half resolved 2026-08-06); G38 — instrument model is the wrong shape, raised to high; **G54** — grey literature has no appraisal instrument; **G57** — a bespoke checklist is auto-applied in DARE's slot; **G94** — the quality judge scores absent telemetry as work not done; G86, G87 |
+| F2-SF06 | Data extraction      | ◐      | G20 — extraction UI exists but phase 4 shows a placeholder; G25 — full text never retrieved, so extraction runs on abstracts; G37 — no reading depth or rationale capture; **G65** — ten of thirteen catalogued synthesis methods do not exist; **G68** — no multi-extractor workflow for SLR or SMS; G58, G63, G64, G74, G76, G81, G84, G88, G98 |
+| F2-SF07 | Automated analysis   | ◐      | **● withdrawn 2026-08-08.** G47 — the "Research Method" chart rendered venue data and has been removed, so the facet is now absent rather than wrong; G48 — the bubble chart is a one-dimensional scatter, not two scatterplots sharing an axis; G83 — three named chart types missing, facet taxonomies flat |
+| F2-SF08 | Text analysis        | ●      | No gap found in either corpus pass                                          |
+| F2-SF09 | Meta-analysis        | ◐      | G8 — no metasummary; thematic synthesis is not Cruzes/Dybå; G27 — SMS has no synthesis at all; **G66** — no effect measure is ever computed, so an odds ratio and a mean difference pool indistinguishably; G64 — no sensitivity analysis |
+| F2-SF10 | Report write-up      | ◐      | G9 — no Typst backend; G14 — no PRISMA 2020 flow diagram; G27 — SMS produces a data archive, not a report; G43 — no replication package or archival; **G52** — validity sections are boilerplate in SLR and absent in Tertiary; **G67** — GRADE is absent though SEGRESS marks it essential; G53 partially closed — κ now reaches the report, Abstract/Opening/typed Title still missing; G60, G75, G79, G80 |
+| F2-SF11 | Report validation    | ✗      | G10 — no checker. **Amended**: SEGRESS is the standard, per review type; PRISMA may not score quality; G14; G35 — no protocol snapshot to detect deviation against; G39 — threats not derived from configuration; **G59** — Rapid protocol changes are neither justified nor preserved; **G95** — the validity agent produces threats without requiring mitigations; G44, G89 |
 | F3-SF01 | Multiple users       | ◐      | G11 — role model mismatch, no user CRUD; G23 — job retry silently no-ops; G31 — no user avatar |
-| F3-SF02 | Document management  | ◐      | G12 — no manual fallback/store/viewer; G16 — SciHub toggle unreachable; G28 — grey literature is a register, not a source |
+| F3-SF02 | Document management  | ◐      | G12 — no manual fallback/store/viewer; G16 — SciHub toggle unreachable; G28 — grey literature is a register, not a source; **G70** — grey literature is never archived, and a quarter of it is already dead |
 | F3-SF03 | Security             | ●      | Capability matrix is coarse (G11); a live access-control defect was missed  |
-| F3-SF04 | Multiple projects    | ◐      | G19 — the entire Tertiary Studies frontend is unreachable; G27 — the four study types are parallel implementations |
+| F3-SF04 | Multiple projects    | ◐      | G19 — the entire Tertiary Studies frontend is unreachable; G27 — the four study types are parallel implementations; **G49** — the protocol executor's quality gates gate nothing a user experiences; **G50** — editing an assigned protocol silently destroys the study's execution history |
+
+> **What ● means here, and what it does not.** ● records that **no gap was found**, against the
+> baseline in `docs/base-features.md` and the 14 chapters. It is not a statement that the feature is
+> correct. F2-SF07 held a ● for three days while its "Research Method" chart rendered venue data
+> under a research-method label, passing a unit test that asserted the wrong thing (**G47**) — which
+> is why that row now reads ◐ and why the two remaining ● rows are worth re-examining rather than
+> trusted. Note also that the two symbols no longer separate cleanly: after the compliance pass,
+> several ◐ cells describe a capability that is **present and wrong**, which is worse for a user than
+> the ✗ beside it. See [Observed pattern](#observed-pattern).
 
 ---
 
@@ -134,7 +155,7 @@ The two files hold 27 bullets between them; several bundle two or three separabl
 
 > **Correction — 2026-08-06.** "Discovery works" was true of the design and false of the code when this was written: `_process_snowball_batch` deduplicated with `Paper.doi > ep.doi` instead of `==`, and its counters ran `added = -1` / `added += 2`. Both were cosmic-ray mutants, repaired in `e47abd9`; the premise now holds. The gap itself is unchanged — the missing discovery edge is structural and has nothing to do with the mutants.
 
-> **Correction — 2026-08-07.** "Discovery works" was still too generous, twice over, and the paths above are stale. Both functions now live in `backend/src/backend/jobs/snowball_job.py` (`1e01097`). More importantly: **`run_snowball` had no enqueue site**, so none of this code had ever run for a user — see [G22](#g22--snowball-sampling-has-no-enqueue-site-f2-sf03--medium-resolved-2026-08-07), closed the same day. And until `d8f6dcf` the screening pass inside it rejected every paper by crashing, because it was handed a `CandidatePaper` that could not produce a title. The structural gap this entry describes is unaffected — but it was never observable before, and only becomes so now that a user can start a snowball run at all.
+> **Correction — 2026-08-07.** "Discovery works" was still too generous, twice over, and the paths above are stale. Both functions now live in `backend/src/backend/jobs/snowball_job.py` (`1e01097`). More importantly: **`run_snowball` had no enqueue site**, so none of this code had ever run for a user — see [G22](#g22--snowball-sampling-has-no-enqueue-site-f2-sf03--medium-_resolved-2026-08-07_), closed the same day. And until `d8f6dcf` the screening pass inside it rejected every paper by crashing, because it was handed a `CandidatePaper` that could not produce a title. The structural gap this entry describes is unaffected — but it was never observable before, and only becomes so now that a user can start a snowball run at all.
 
 **Remediation sketch.**
 
@@ -685,7 +706,7 @@ Net effect: the work is **smaller than described in every respect but one**. The
 
 ---
 
-### G21 — Orphaned controls and shadowed modules (F2-SF05) — **low**
+### G21 — Orphaned controls and shadowed modules (F2-SF05) — **low** _(◐ backend half resolved 2026-08-06)_
 
 **Claim.** Four modules are complete and unreachable inside features that are themselves reachable. Two are frontend controls nothing imports; two are Python files the interpreter never loads.
 
@@ -1074,7 +1095,7 @@ What is missing is the training signal. DSPy optimisers need labelled examples �
 
 ---
 
-### G34 — Verification debt: unestablished mutation scores and a documented command that fails (F1-SF01) — **medium**
+### G34 — Verification debt: unestablished mutation scores and a documented command that fails (F1-SF01) — **medium** _(◐ part 2 resolved 2026-08-07)_
 
 Two findings from executing `todo.md`'s first item and `todo2.md`'s constitution item. Both concern the checks the project relies on to know its own state.
 
@@ -1569,7 +1590,16 @@ wrong *criteria*. **See [02](./methodology/02-sms.md), [07](./methodology/07-qua
 
 ---
 
-### G47 — The "Research Method" chart renders venue data (F2-SF06) — **high**
+### G47 — The "Research Method" chart renders venue data (F2-SF06) — **high** _(◐ misrepresentation removed 2026-08-08; facet still absent)_
+
+> **Partially closed 2026-08-08.** The safe half landed: `results_job.py:334-338` excludes
+> `ChartType.RESEARCH_METHOD` from generation, and `visualization.py` carries a comment recording why
+> the branch is deliberately absent so it is not "restored" by a later reader. The enum member is
+> **kept** — it is a persisted PostgreSQL enum, so removing it would need a destructive migration and
+> would orphan existing rows. **What remains is the whole substance**: there is still no
+> `research_method` extraction field, no classifier, and no chart. Petersen's third facet is now
+> honestly missing instead of dishonestly present, which is an improvement in reporting integrity and
+> no improvement in capability. Severity stays **high** until the facet exists.
 
 **Required.** Petersen 2015's current recommendation is three topic-independent facets: **venue,
 research type, and research method** ([02](./methodology/02-sms.md)).
@@ -1740,7 +1770,15 @@ mitigation or an explicit "acknowledged, not mitigated" flag per threat. Add the
 
 ---
 
-### G53 — Report schemas omit κ, Abstract, typed Title and Opening (F2-SF10) — **medium**
+### G53 — Report schemas omit κ, Abstract, typed Title and Opening (F2-SF10) — **medium** _(◐ κ wired 2026-08-08)_
+
+> **Partially closed 2026-08-08.** The κ half is done: `slr_report_service.py` gained an
+> `inter_rater_agreement: str` field (line 72), a `_build_inter_rater_agreement` renderer (line 521),
+> and a join over `InterRaterAgreementRecord` at line 210 that renders **both** the pre- and
+> post-discussion phases, satisfying SEGRESS items 8, 16a and 18. Four unit tests cover it. **Still
+> open**: `abstract` and `opening` fields do not exist, and the title remains hardcoded
+> `f"SLR Report: {study_name}"` rather than derived from `StudyType` — so SEGRESS items 1–4 still have
+> nothing for **G10**'s planned checker to check against.
 
 **Required.** SEGRESS **requires methods of assessing agreement (item 8) and reporting agreement
 statistics (items 16a, 18)** — SE reviews use κ, where PRISMA leaves it implicit. Item 1 requires the
@@ -1790,7 +1828,17 @@ form storing the stated rationale.
 
 ---
 
-### G55 — Citation intent is fetched from Semantic Scholar, then discarded (F2-SF03) — **high**
+### G55 — Citation intent is fetched from Semantic Scholar, then discarded (F2-SF03) — **high** _(◐ persisted 2026-08-08; still unused)_
+
+> **Partially closed 2026-08-08.** The signal is no longer dropped: `CandidatePaper.citation_intent`
+> exists (`db/src/db/models/candidate.py:79`, migration `0019`) and
+> `screening_pipeline.py:153` populates it from the snowball payload. **The methodological value is
+> not yet realised** — nothing reads the column. It is absent from the screening UI and from the
+> screener's prompt context, so Wohlin's step 4 still does not happen: a snowballed candidate is
+> screened on title and abstract exactly as a database hit is. Severity stays **high**, because the
+> gap this entry describes is the *use* of the intent, not its storage. Note the interaction with
+> **G91** — feeding intent to the screener is of little use while the screener discards structured
+> output and falls through to a substring match.
 
 **Required.** Step 4 of backward snowballing is to **examine the place of the reference in the text and
 its surrounding context** — "the step that distinguishes the method from mechanical
@@ -2081,7 +2129,9 @@ reporting. Those are the chapters furthest from the platform's original SMS scop
 
 > **⚠ Read this before triaging.** These are **absences**, not the misrepresentations that dominate
 > G45–G64. An absent capability is visible to its user and degrades gracefully; a wrong one does not.
-> **Triage G45–G64 first**, then the high-severity entries here.
+> **Triage G45–G64 first**, then the high-severity entries here — which is what
+> [Recommended sequence](#recommended-sequence) encodes: Tier 1 is the misrepresentations, and the
+> absences below are distributed across Tiers 3–6 by subsystem.
 
 ---
 
@@ -2983,42 +3033,138 @@ Every gap assessed before 2026-08-06 was read against corrupted source, so each 
 
 ## Recommended sequence
 
-> **Reordered — 2026-08-07.** The intake put one item ahead of everything previously listed. **G25** is not a gap in the ordinary sense — it is a broken seam beneath the whole search subsystem, and while it stands, G1, G2, G13, G22, G24, G26 and G28 are all unobservable: their symptoms cannot be reproduced because the code path they describe returns nothing. Anything measured against search before it lands measures the outage.
+> **Rebuilt 2026-08-08.** The previous ordering predates G44–G98 and ranked 34 items in a single flat
+> list. At 98 gaps that stops being readable, and the corpus passes changed the ranking *principle* as
+> well as its inputs. Two changes carry the rebuild:
+>
+> 1. **There are now two blockers, not one.** **G25** means no search in the platform returns a paper.
+>    **G49** means the protocol executor's quality gates gate nothing a user experiences — which makes
+>    every remediation elsewhere in this catalogue that ends "…and enforce it as a quality gate"
+>    currently unbuildable. The two are independent and can be worked in parallel.
+> 2. **A wrong capability outranks a missing one.** The compliance pass found that the severe defects
+>    are misrepresentations, not absences. A researcher can see an absent feature and work around it;
+>    a chart that renders venue data under a research-method label is invisible, and ends up in a
+>    published map. So **Tier 1 is everything that is present and wrong**, ahead of much larger
+>    absences — and most of it is cheap, because the machinery is built and pointed slightly wrong.
+>
+> Tiers are ordered; items inside a tier are ordered where sequencing matters and unordered otherwise.
+> **Every gap G1–G98 is placed in exactly one tier**, with two deliberate exceptions — **G14** and
+> **G34** are each split by part, because their halves have different prerequisites (G14's provenance
+> steps need the search work; its diagram steps need the provenance. G34's CI wiring waits on Tier 2;
+> its mutation run waits on nothing). So this section doubles as the catalogue's index: **if an ID is
+> missing from here, this section is stale.** That property is checkable in a few lines of Python, and
+> was checked rather than assumed — the two splits above are what checking it found.
 
-| Order | Item                                                                                           | Rationale                                                                                                                                                                                                                         |
-| ----- | ---------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| ~~0~~ | ~~**G13d** two defects in `_fetch_test_search_results`~~                                       | ✅ **Done 2026-08-05** — was writing fabricated pilot data on service failure                                                                                                                                                     |
-| **0** | **G25** researcher-mcp call surface, plus the contract test that pins it                       | **Ahead of everything.** No search in the platform returns a paper today. Every other search gap is unobservable until this lands, and four of the five call sites report success while failing                                   |
-| 0b    | **G34** part 2 — fix the coverage command; wire `audit_unreachable_frontend.py` into CI       | Minutes of work on the evidence base every other item is judged against                                                                                                                                                           |
-| 1     | **G10** report validation — **as two features**: a SEGRESS per-study-type completeness checker, and a DARE quality scorer | Greenfield, no schema change, operates on an existing structured object. See the amendment on G10 — PRISMA may not be used to score quality, and SEGRESS is the only standard with per-review-type applicability |
-| 2     | **G1** + **G14** steps 1–2 provenance                                                          | Design together — the PRISMA "other methods" arm and the snowball DAG need the same discriminator                                                                                                                                 |
-| 2b    | **G14** steps 3–6 flow diagram                                                                 | Follows the provenance work; reuses `visualization.py`'s existing SVG pattern                                                                                                                                                     |
-| 3     | **G6** Study/Paper split                                                                       | Every downstream count and pooled estimate depends on the unit of analysis being right                                                                                                                                            |
-| 4     | **G11** roles + user CRUD                                                                      | The system currently cannot onboard a user through its own API                                                                                                                                                                    |
-| 5     | **G4**, **G5** reliability + rules                                                             | Both reuse the existing κ and decision machinery                                                                                                                                                                                  |
-| 6     | **G2** + **G13** search fidelity + piloting                                                    | Land together — a per-database breakdown is misleading until query translation exists                                                                                                                                             |
-| 7     | **G3** remaining search modalities                                                             | EI Compendex adapter and manual search; independent of the above                                                                                                                                                                  |
-| 8     | **G8** qualitative synthesis                                                                   | Large, but unblocked once G6 lands                                                                                                                                                                                                |
-| 9     | **G7**, **G9**, **G12**, F1 docs                                                               | Additive, low coupling                                                                                                                                                                                                            |
-| —     | **G15** vLLM + LM Studio providers                                                             | Unordered — cheapest item on the list and independent of everything else; land whenever local inference is wanted                                                                                                                 |
-| 1b    | **G18**, **G19**, **G20** — see [feature 012](./features/012-wire-up-unreachable-workflows.md) | Designed together, since they are one defect shape and all three land in `StudyPage`. Promote near the top: G19 has the highest ratio of delivered value to work on the list, and until G18 lands F2-SF04 has no exercisable path |
-| 6b    | **G26** search metadata at ingest                                                              | Lands with G2/G13 — three later gaps each propose to recover a field the search already had and dropped                                                                                                                            |
-| 7b    | **G28** grey literature as a real source                                                       | Follows G3; steps 1 and 6 (arXiv search + a UI grouping) are a day and close the arXiv ask on their own                                                                                                                            |
-| 8b    | **G27** workflow unification                                                                   | Take the bottom-up route unless a fifth study type is planned; feature 012 already pays for two of its ✗ cells. The SMS report and SMS synthesis are the substance                                                                |
-| 9b    | **G29** de-hardcode the agent prompts                                                          | Cheap, and it silently biases every screening and extraction decision until done                                                                                                                                                  |
-| 1c    | **G40** GQM traceability · **G38** quality-instrument shape · **G37** reading depth and rationale | Three small schema changes that turn later gates from advisory into checkable. All are additive columns and join tables                                                                                                            |
-| 2c    | **G35** protocol snapshot and deviation diff                                                    | Turns "report deviations from the protocol" from an honour system into a control, and is a prerequisite for report validation meaning anything. Also fixes the ordering problem: some synthesis methods cannot be chosen after extraction |
-| 5b    | **G36** stopping rules; *assessed* vs *never assessed*                                          | Land with **G14** — the PRISMA flow cannot be correct while an unassessed paper is indistinguishable from an excluded one                                                                                                          |
-| 6c    | **G42** terminology-variant search                                                              | Small, and it is the defining search difficulty for tertiary studies. Keep separate from G2 — variant strings and per-engine translation are different problems                                                                    |
-| 8c    | **G39** threat derivation from protocol configuration                                           | Generalises the pattern `RRThreatToValidity` already implements, to all study types and the full 34-threat catalogue                                                                                                              |
-| 9c    | **G43** replication package, archival and licence discipline                                    | Follows **G8**'s code persistence, which supplies the qualitative fallback artefact                                                                                                                                                |
-| —     | **G41** review-update workflow                                                                  | Unordered — self-contained, and the evidenced cheaper search strategy makes it a good standalone feature                                                                                                                          |
-| —     | **G34** part 1 — run the mutation wrapper and record real scores                                | Unordered but overdue: the gate is codified, the rails are built, and no package has a citable number                                                                                                                              |
-| —     | **G16**, **G17**, **G21**, **G30** unreachable or absent UI controls                           | Unordered — each is a single control over machinery that is already written. G17 and G30 sit in the same admin tab                                                                                                                 |
-| —     | **G31** user avatar, **G33** inline-style residue                                              | Unordered and independent. G33 is a live dark-theme defect, not only a tidiness item                                                                                                                                               |
-| —     | **G32** DSPy-driven agent improvement                                                          | Last. Its prerequisite is a gold-standard evaluation set derived from human overrides, which is worth building on its own and also feeds G4                                                                                        |
+### Tier 0 — Blockers
+
+| Item | Why it is ahead of everything |
+| ---- | ------------------------------ |
+| **G25** — the researcher-mcp call surface, plus the contract test that pins it | No search returns a paper today. G1, G2, G3, G13, G24, G26, G28, G55, G56, G62, G69, G77, G78 and G85 are all **unobservable** until this lands: their symptoms cannot be reproduced, because the code path they describe returns nothing. Four of the five call sites report success while failing, so nothing surfaces the outage either |
+| **G49** — make the executor's quality gates reachable from the four phase gates | The four phase-gate services contain zero references to the executor. Until they do, "enforce this as a gate" is not a remediation anyone can implement — and that is the stated shape of the fix in **G38, G51, G60, G71, G77, G87 and G88**. Independent of G25; work the two in parallel |
+| **G34** part 2 — wire `audit_unreachable_frontend.py` into pre-commit and CI | Hours of work on the evidence base every other item is judged against. Gated on Tier 2: it reports 23 modules today, so it can only become a real gate once feature 012 lands and it reports zero. (Part 1 — real mutation scores — is unordered; Tier 7) |
+
+### Tier 1 — Present and wrong
+
+Ordered cheapest-first, because most of this tier is a prompt line, a parser branch or a dispatch
+entry. **This is the highest value-per-hour work in the catalogue**, and none of it is blocked by
+Tier 0.
+
+| Order | Item | Cost | Note |
+| ----- | ---- | ---- | ---- |
+| 1a | **G90** — the screener is told to apply criteria *strictly* | one word | The corpus says interpret liberally on the first pass and tighten later; the shipped prompt says the opposite, biasing every screening decision toward exclusion |
+| 1b | **G91** — structured screening never happens | hours | The prompt never asks for JSON, so every call falls through to a substring match on "accept" and discards all criterion attribution. **Land with 1a** — same prompt directory, and G90's fix is unobservable while decisions are settled by a keyword sniff |
+| 1c | **G92** — the expert agent seeds the quasi-gold standard with unverified, LLM-recalled papers | small | A hallucinated DOI can certify the search's recall. Best value-to-effort ratio in the catalogue: verify each suggested paper resolves before it enters the test set |
+| 1d | **G97** + **G46** — prompts state criteria, scales and thresholds the corpus does not contain | medium | Four of five "Petersen rubrics" carry anchors Petersen never published, and the research-type classifier tests novelty where the guideline tests setting. Do together — one pass over the same twelve prompt directories |
+| 1e | **G94** — the quality judge scores absent telemetry as work not done | small | Makes one rubric anchor unreachable by construction, so a study can never score full marks however it was conducted |
+| 1f | **G95** + **G39** — threats without mitigations; threats not derived from protocol configuration | medium | Two halves of one problem: G95 is the agent that emits them, G39 is the configuration it should derive them from. G39 generalises the pattern `RRThreatToValidity` already implements to all four study types and the full 34-threat catalogue |
+| 1g | **G50** — editing an assigned protocol silently destroys the study's execution history | small | Silent data loss on an ordinary user action |
+| 1h | **G51** — default templates permit extraction before appraisal | medium | Guards the corpus's sharpest warning for a platform of this shape: extraction decoupled from quality appraisal produces results "very quickly [that] will be wrong". Needs **G49** |
+| 1i | **G52** + **G57** — boilerplate validity sections; a bespoke checklist in DARE's slot | medium | Both emit authoritative-looking output that is not the instrument named on the label. G52 emits three fixed threats regardless of study design, and nothing at all for Tertiary |
+| 1j | **G45** — the search-string builder implements the technique Kitchenham withdrew | medium | Not blocked by G25: the defect is in generation, not execution. Removal is correct on its own; the replacement can wait for Tier 4 |
+| 1k | **G93** — the agent generator writes methodology-free prompts | medium | Every fix in 1a–1j can be silently undone by an admin generating a replacement prompt. Sequence it **after** them, so there is something worth protecting |
+| 1l | **G47** remainder · **G48** · **G98** | medium | What is left of G47 is building a real `research_method` facet — the misrepresentation is already removed. G48 makes the bubble chart two scatterplots sharing an axis; G98 widens the extractor from one of the four code types to all four |
+
+### Tier 2 — Reachability: finished code no user can reach
+
+| Item | Note |
+| ---- | ---- |
+| **G18**, **G19**, **G20** — see [feature 012](./features/012-wire-up-unreachable-workflows.md) | Designed together: one defect shape, all three landing in `StudyPage`. G19 has the highest delivered-value-to-work ratio on the list, and until G18 lands F2-SF04 has no exercisable path at all |
+| **G16**, **G17**, **G21** frontend halves | Each is a single control over machinery already written. G21's backend half resolved 2026-08-06; what remains is mounting `QualityScoreForm` and surfacing `EdgeConditionBuilder` |
+
+### Tier 3 — Structural: the shapes everything downstream depends on
+
+Expensive, and more expensive with every study the platform runs. **G6** first — every count and
+pooled estimate below it depends on the unit of analysis being right.
+
+| Item | Note |
+| ---- | ---- |
+| **G6** — Study modelled separately from Paper | Prerequisite for G8 and for any honest count |
+| **G35** — protocol snapshot and deviation diff | Turns "report deviations from the protocol" from an honour system into a control, and is a precondition for report validation meaning anything. Also fixes an ordering defect: some synthesis methods cannot legitimately be chosen after extraction |
+| **G38** — quality-instrument shape · **G40** — GQM goal→question→field traceability · **G37** — reading depth and per-classification rationale | Three additive schema changes that turn later gates from advisory into checkable. G38 was raised to **high**: its separated-scores point is an active contradiction, not an omission |
+| **G4**, **G5** — intra-rater test-retest; selection decision rules | Both reuse the existing κ and decision machinery. G5 amended — the third screening value means *duplicate*, not *uncertain* |
+| **G68** — multi-extractor workflow for SLR and SMS · **G63** — Tertiary's consensus-and-minority-report protocol | G63 is the special case, G68 the general one. Build G68 and G63 becomes configuration |
+| **G84** — extraction reliability check and reconstructed-data provenance | Follows G68; there is nothing to measure agreement between until a second extractor exists |
+| **G27** — workflow unification | Take the bottom-up route unless a fifth study type is planned. Feature 012 already pays for two of its ✗ cells; the SMS report and SMS synthesis are the substance |
+
+### Tier 4 — Search, snowballing and grey literature *(needs G25)*
+
+The largest cluster in the catalogue, and entirely unobservable until Tier 0 lands.
+
+| Item | Note |
+| ---- | ---- |
+| **G1** + **G14** steps 1–2 — provenance | Design together: the PRISMA "other methods" arm and the snowball DAG need the same discriminator |
+| **G2** + **G13** + **G26** — query translation, piloting, metadata at ingest | Land together. A per-database breakdown is misleading until query translation exists, and three later gaps each propose to recover a field the search already had and dropped |
+| **G36** — stopping rules; *assessed* vs *never assessed* | Land with **G14**: the PRISMA flow cannot be correct while an unassessed paper is indistinguishable from an excluded one |
+| **G24** — snowballing skips papers without a DOI · **G69** — start-set composition · **G55** remainder — actually use the citation intent | Three defects in one method. G69 is its single point of failure, and the librarian actively steers the start set toward one prestige community. G55's column exists but nothing reads it — and feeding it to the screener is of little use before **G91** |
+| **G56**, **G78**, **G85** — per-database dates and years covered; search rationale and raw results; pre-publication re-run | The search record. Cheap individually, and each is a field the reporting standards require |
+| **G62** — duplicate-publication handling · **G77** — minimum source set | Both are guards on the corpus a review is built from |
+| **G3** — remaining modalities · **G42** — terminology-variant search | G42 is the defining search difficulty for tertiary studies; keep it separate from G2, since variant strings and per-engine translation are different problems |
+| **G28** + **G54** + **G70** + **G72** + **G73** — grey literature as a real capability | Follows G3. Steps 1 and 6 of G28 (arXiv search plus a UI grouping) are a day and close the arXiv ask alone. **G70** is time-sensitive in a way the rest are not: a quarter of the grey literature is already dead, and archiving is only possible while a URL still resolves |
+| **G41** — review-update workflow | Unordered and self-contained; the evidenced cheaper search strategy makes it a good standalone feature |
+
+### Tier 5 — Synthesis and reporting
+
+| Item | Note |
+| ---- | ---- |
+| **G8** — qualitative synthesis | Large, but unblocked once G6 lands. Amended: there is a second orphaned synthesis implementation |
+| **G66** — compute an effect measure | Sequence ahead of G65: pooling an odds ratio with a mean difference indistinguishably is a correctness defect in the strategy that *does* exist, where G65 is absence |
+| **G65** — the ten missing synthesis methods · **G64** — sensitivity analysis | Largest single block of unimplemented named capability. Sequence by demand; content analysis and cross-case analysis are cheapest |
+| **G10** — report validation, as **two** features | A SEGRESS per-review-type completeness checker and a DARE quality scorer. Greenfield, no schema change. PRISMA may **not** be used to score quality; SEGRESS is the only standard with per-review-type applicability |
+| **G67** — GRADE and GRADE-CERQual | SEGRESS marks item 15 *essential*, not merely required. Feeds G10's checker |
+| **G14** steps 3–6 — the PRISMA flow diagram | Follows the G1 provenance work; reuses `visualization.py`'s existing SVG pattern |
+| **G79**, **G80**, **G53** remainder — SEGRESS scaffolding, the eight PRISMA-trAIce items, Abstract/Opening/typed Title | The schema half of G10: a checker built against today's Pydantic models would have nothing to check items 1–4 against. G53's κ half landed 2026-08-08 |
+| **G59**, **G60**, **G75** — Rapid Review protocol changes, recommendations, briefing structure | G60's completion gate cannot currently detect a synthesis with no recommendation in it |
+| **G9** — Typst backend · **G43** — replication package and archival | G43 follows G8's code persistence, which supplies the qualitative fallback artefact |
+
+### Tier 6 — Extraction forms and quality instruments
+
+Mostly additive fields and seed data. Individually small; collectively they are what gives Tier 5's
+checkers something to read.
+
+**G58** quantitative data on the extraction form · **G74** the two missing data kinds · **G71** piloting
+at every stage that requires it · **G76** Tertiary extraction shape · **G81** method-slurring
+self-report · **G82** SMS goal and sample representativeness · **G83** the three missing chart types and
+the flat facet taxonomies · **G86** seed the named quality instruments · **G87** record why appraisal
+was skipped and warn when scores are incomparable · **G88** allow exclusion during extraction.
+
+### Tier 7 — Platform, admin and unordered
+
+| Item | Note |
+| ---- | ---- |
+| **G11** — roles + user CRUD | The system cannot onboard a user through its own API |
+| **G23** — admin job retry enqueues jobs that cannot run | Reports `200` while doing nothing; invisible to both reachability oracles |
+| **G29** — de-hardcode the agent prompts | Cheap, and it silently biases every screening and extraction decision until done. Adjacent to Tier 1, but this is plumbing rather than a wrong instruction |
+| **G44** — make AI decisions reproducible, not merely attributable | The attribution half is already better than most tools manage; what is missing is the prompt, the sampling parameters, and an agreement row |
+| **G61**, **G89**, **G96** — Rapid's three-substep screening; three unrepresented Rapid procedures; the two protocol components the reviewer cannot see | Small and independent |
+| **G7** guideline grounding · **G12** document management · **G15** vLLM + LM Studio · **G30** syntax-highlighted system message · **G31** user avatar · **G33** inline-style residue | Additive, low coupling. G15 is the cheapest item in the catalogue; G33 is a live dark-theme defect, not only tidiness |
+| **G34** part 1 — run the mutation wrapper and record real scores | Overdue: the gate is codified, the rails are built, and no package has a citable number |
+| **G32** — DSPy-driven agent improvement | Last. Its prerequisite is a gold-standard evaluation set derived from human overrides — worth building on its own, and it also feeds G4 and G92 |
+
+**Resolved:** **G22** (2026-08-07). **Partially closed, remainder listed above:** G13d, G21 backend
+half, G34 part 2, G47, G53, G55.
 
 ---
+
 
 ## Observed pattern
 
@@ -3042,3 +3188,48 @@ A second, cheaper pattern sits alongside it: **capabilities built but not connec
 So the codebase's characteristic defect is not missing capability. **It is a missing edge between two capabilities that are each finished, each tested, and each green.** The first pattern — flattened relational shape — is expensive and rare. This one is cheap and everywhere, and it is invisible to the whole toolchain: a linter sees valid syntax, a type checker sees compatible types, a unit test sees its own mock, and coverage rises when a test is the only caller.
 
 Which sharpens what the two oracles are for. `audit_unreachable_frontend.py` did not find a category of bug; it found *one instance* of the category, in the one language where an import graph happens to model reachability. The same question — **what constructs this, and what calls that** — is unasked of ARQ job registrations (G22, G23), of HTTP seams between services (G25), and of source-adapter registries (`ArxivSource`). Each needs its own oracle, and each is a short script. The four listed under [Neither oracle sees a backend route](#neither-oracle-sees-a-backend-route) are the ones this pass would have wanted.
+
+### Updated 2026-08-08 — a third pattern, and it is the one that ships wrong answers
+
+The three corpus passes found something the first two patterns do not describe. Both of those are
+about a capability being **absent** — flattened into the wrong shape, or built and left unconnected.
+Neither reaches the defects that turned out to be the severe ones.
+
+**The third pattern is a capability that is present, connected, exercised, green — and wrong.** It has
+a consistent signature: **the vocabulary of the research is adopted; the procedure behind it is not.**
+
+| Gap | The corpus's name is used correctly | What runs underneath it |
+| --- | ---------------------------------- | ----------------------- |
+| **G47** | A chart labelled "Papers by Research Method" — Petersen's third facet, correctly named | `key = ext.get("venue_type")`. Journal-versus-conference counts, presented as case study versus experiment |
+| **G46** | Five quality rubrics, the right count, carrying Petersen's names | Four of the five score against anchors Petersen never published |
+| **G57** | A quality checklist auto-applied where DARE belongs | A bespoke instrument, with DARE's authority and none of its provenance |
+| **G52** | A "Threats to Validity" section, emitted for every SLR | Three fixed threats, identical regardless of study design; nothing at all for Tertiary |
+| **G45** | A search-string builder implementing a named Kitchenham technique | The one Kitchenham's own authors withdrew |
+| **G91** | A screening agent that returns a decision and a criterion | The prompt never asks for JSON, so every call falls through to a substring match on "accept" |
+| **G92** | A recall metric against a quasi-gold standard | The standard is seeded with papers an LLM recalled and nobody resolved |
+
+The failure mode is qualitatively worse than the other two, for a reason worth stating plainly: **an
+absent capability is visible to its user and degrades gracefully; a wrong one is invisible and
+degrades silently into a published claim.** A researcher who cannot find a research-method chart works
+around it. A researcher who reads one believes they have coverage data on case study versus
+controlled experiment, and cites it.
+
+And it is invisible to *more* of the toolchain than the second pattern is. Disconnection at least
+leaves a caller-less function that a reachability oracle can see. This leaves nothing to see: the code
+is reachable, the test passes, coverage counts it. G47's chart had a unit test asserting it
+"aggregates research_method via venue_type" — the test encoded the defect and went green for it.
+
+So the three patterns need three different instruments, and only the first two have one:
+
+| Pattern | Detected by | Status |
+| ------- | ----------- | ------ |
+| Flattened relational shape | Schema review against the domain | Human, per-feature |
+| Built but not connected | Reachability oracles — `audit_unreachable_frontend.py`, `check_shadowed_modules.py` | Built; frontend one **still not in CI** (G34) |
+| Present and wrong | Conformance checking against `docs/methodology/` | **Nothing.** Only a human reading the chapter beside the code |
+
+The third row is why [constitution Principle XI](../.specify/memory/constitution.md) treats
+methodological fidelity as a correctness property rather than a documentation concern, and why this
+catalogue's own claims are marked by verification depth in the header. There is no linter for
+"the label says Petersen and the arithmetic does not". The nearest thing the platform could build is
+**G10** — the SEGRESS and DARE checkers — which is why it sits in Tier 5 as infrastructure rather
+than as a report feature.
