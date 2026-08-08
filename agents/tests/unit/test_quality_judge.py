@@ -16,11 +16,11 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from agents.services.quality_judge import (
+    _RUBRIC_MAX,
     QualityJudgeAgent,
     QualityJudgeResult,
     Recommendation,
     RubricDetail,
-    _RUBRIC_MAX,
 )
 
 _RUBRIC_NAMES = list(_RUBRIC_MAX.keys())
@@ -55,7 +55,7 @@ def _json_response(
     recommendations: list | None = None,
 ) -> str:
     """Return a minimal valid QualityJudge JSON string."""
-    default_scores = {r: 1 for r in _RUBRIC_NAMES}
+    default_scores = dict.fromkeys(_RUBRIC_NAMES, 1)
     if scores:
         default_scores.update(scores)
 
@@ -67,14 +67,20 @@ def _json_response(
         default_details.update(rubric_details)
 
     default_recs = [
-        {"priority": 1, "action": "Perform test-retest validation.", "target_rubric": "search_strategy"}
+        {
+            "priority": 1,
+            "action": "Perform test-retest validation.",
+            "target_rubric": "search_strategy",
+        }
     ]
 
-    return json.dumps({
-        "scores": default_scores,
-        "rubric_details": default_details,
-        "recommendations": recommendations if recommendations is not None else default_recs,
-    })
+    return json.dumps(
+        {
+            "scores": default_scores,
+            "rubric_details": default_details,
+            "recommendations": recommendations if recommendations is not None else default_recs,
+        }
+    )
 
 
 class TestQualityJudgeResultShape:
@@ -100,7 +106,7 @@ class TestQualityJudgeResultShape:
         agent = QualityJudgeAgent(llm_client=_make_client(_json_response()))
         result = await agent.run(**_SNAPSHOT_KWARGS)
         assert isinstance(result.rubric_details, dict)
-        for rubric, detail in result.rubric_details.items():
+        for _rubric, detail in result.rubric_details.items():
             assert isinstance(detail, RubricDetail)
 
     @pytest.mark.asyncio
@@ -113,7 +119,7 @@ class TestQualityJudgeResultShape:
     @pytest.mark.asyncio
     async def test_recommendations_non_empty_for_low_scores(self) -> None:
         """Recommendations list is non-empty when low scores are present."""
-        low_scores = {r: 0 for r in _RUBRIC_NAMES}
+        low_scores = dict.fromkeys(_RUBRIC_NAMES, 0)
         recs = [
             {"priority": i + 1, "action": f"Fix {r}.", "target_rubric": r}
             for i, r in enumerate(_RUBRIC_NAMES)
@@ -130,7 +136,7 @@ class TestScoreValidation:
 
     @pytest.mark.asyncio
     async def test_need_for_review_max_is_2(self) -> None:
-        """score for need_for_review is clamped to 0–2."""
+        """Score for need_for_review is clamped to 0–2."""
         over_scores = {"need_for_review": 99}
         agent = QualityJudgeAgent(llm_client=_make_client(_json_response(scores=over_scores)))
         result = await agent.run(**_SNAPSHOT_KWARGS)
@@ -138,7 +144,7 @@ class TestScoreValidation:
 
     @pytest.mark.asyncio
     async def test_search_strategy_max_is_2(self) -> None:
-        """score for search_strategy is clamped to 0–2."""
+        """Score for search_strategy is clamped to 0–2."""
         over_scores = {"search_strategy": 99}
         agent = QualityJudgeAgent(llm_client=_make_client(_json_response(scores=over_scores)))
         result = await agent.run(**_SNAPSHOT_KWARGS)
@@ -146,7 +152,7 @@ class TestScoreValidation:
 
     @pytest.mark.asyncio
     async def test_search_evaluation_max_is_3(self) -> None:
-        """score for search_evaluation is clamped to 0–3."""
+        """Score for search_evaluation is clamped to 0–3."""
         over_scores = {"search_evaluation": 99}
         agent = QualityJudgeAgent(llm_client=_make_client(_json_response(scores=over_scores)))
         result = await agent.run(**_SNAPSHOT_KWARGS)
@@ -154,7 +160,7 @@ class TestScoreValidation:
 
     @pytest.mark.asyncio
     async def test_extraction_classification_max_is_3(self) -> None:
-        """score for extraction_classification is clamped to 0–3."""
+        """Score for extraction_classification is clamped to 0–3."""
         over_scores = {"extraction_classification": 99}
         agent = QualityJudgeAgent(llm_client=_make_client(_json_response(scores=over_scores)))
         result = await agent.run(**_SNAPSHOT_KWARGS)
@@ -162,7 +168,7 @@ class TestScoreValidation:
 
     @pytest.mark.asyncio
     async def test_study_validity_max_is_1(self) -> None:
-        """score for study_validity is clamped to 0–1."""
+        """Score for study_validity is clamped to 0–1."""
         over_scores = {"study_validity": 99}
         agent = QualityJudgeAgent(llm_client=_make_client(_json_response(scores=over_scores)))
         result = await agent.run(**_SNAPSHOT_KWARGS)
@@ -171,7 +177,7 @@ class TestScoreValidation:
     @pytest.mark.asyncio
     async def test_scores_are_non_negative(self) -> None:
         """Negative scores from LLM are clamped to 0."""
-        neg_scores = {r: -5 for r in _RUBRIC_NAMES}
+        neg_scores = dict.fromkeys(_RUBRIC_NAMES, -5)
         agent = QualityJudgeAgent(llm_client=_make_client(_json_response(scores=neg_scores)))
         result = await agent.run(**_SNAPSHOT_KWARGS)
         for score in result.scores.values():
@@ -208,7 +214,7 @@ class TestRubricDetails:
         """Each rubric detail has a numeric score and non-empty justification."""
         agent = QualityJudgeAgent(llm_client=_make_client(_json_response()))
         result = await agent.run(**_SNAPSHOT_KWARGS)
-        for rubric, detail in result.rubric_details.items():
+        for _rubric, detail in result.rubric_details.items():
             assert isinstance(detail.score, int)
             assert isinstance(detail.justification, str)
 

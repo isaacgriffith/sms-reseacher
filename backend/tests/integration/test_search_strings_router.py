@@ -7,11 +7,11 @@ response, and iteration approval PATCH (T172).
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+from db.models.search import SearchString, SearchStringIteration
+from db.models.users import GroupMembership, GroupRole, ResearchGroup
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from backend.core.auth import create_access_token
-from db.models.search import SearchString, SearchStringIteration
-from db.models.users import GroupMembership, GroupRole, ResearchGroup
 
 
 def _bearer(user_id: int) -> dict[str, str]:
@@ -48,6 +48,7 @@ async def _insert_search_string(db_engine, study_id: int) -> tuple[int, int]:
 
     Returns:
         Tuple of (search_string_id, iteration_id).
+
     """
     maker = async_sessionmaker(db_engine, expire_on_commit=False)
     async with maker() as session:
@@ -310,9 +311,7 @@ class TestIterationApprovalPatch:
 
         maker = async_sessionmaker(db_engine, expire_on_commit=False)
         async with maker() as session:
-            result = await session.execute(
-                select(SearchString).where(SearchString.id == ss_id)
-            )
+            result = await session.execute(select(SearchString).where(SearchString.id == ss_id))
             ss = result.scalar_one()
         assert ss.is_active is True
 
@@ -333,9 +332,7 @@ class TestIterationApprovalPatch:
 
         maker = async_sessionmaker(db_engine, expire_on_commit=False)
         async with maker() as session:
-            result = await session.execute(
-                select(SearchString).where(SearchString.id == ss_id)
-            )
+            result = await session.execute(select(SearchString).where(SearchString.id == ss_id))
             ss = result.scalar_one()
         assert ss.is_active is False
 

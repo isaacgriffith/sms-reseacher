@@ -58,18 +58,17 @@ _VALIDITY_DIMS = (
 # Stub helpers
 # ---------------------------------------------------------------------------
 
-_STUB_RESPONSE_LOW = json.dumps({
-    dim: f"Brief stub text for {dim}."
-    for dim in _VALIDITY_DIMS
-})
+_STUB_RESPONSE_LOW = json.dumps({dim: f"Brief stub text for {dim}." for dim in _VALIDITY_DIMS})
 
-_STUB_RESPONSE_HIGH = json.dumps({
-    dim: (
-        f"Detailed stub text for {dim}. The study provides comprehensive coverage "
-        f"of the {dim} validity dimension with extensive evidence and justification."
-    )
-    for dim in _VALIDITY_DIMS
-})
+_STUB_RESPONSE_HIGH = json.dumps(
+    {
+        dim: (
+            f"Detailed stub text for {dim}. The study provides comprehensive coverage "
+            f"of the {dim} validity dimension with extensive evidence and justification."
+        )
+        for dim in _VALIDITY_DIMS
+    }
+)
 
 
 def make_stub_agent(output: str = _STUB_RESPONSE_LOW) -> ValidityAgent:
@@ -80,6 +79,7 @@ def make_stub_agent(output: str = _STUB_RESPONSE_LOW) -> ValidityAgent:
 
     Returns:
         :class:`ValidityAgent` with mocked LLM client.
+
     """
     stub_client = MagicMock(spec=LLMClient)
     stub_client.complete = AsyncMock(return_value=output)
@@ -94,11 +94,9 @@ def _total_char_count(result) -> int:
 
     Returns:
         Total character count across all dimension texts.
+
     """
-    return sum(
-        len(getattr(result, dim, ""))
-        for dim in _VALIDITY_DIMS
-    )
+    return sum(len(getattr(result, dim, "")) for dim in _VALIDITY_DIMS)
 
 
 def _dim_char_counts(result) -> dict[str, int]:
@@ -109,6 +107,7 @@ def _dim_char_counts(result) -> dict[str, int]:
 
     Returns:
         Dict mapping dimension name → character count.
+
     """
     return {dim: len(getattr(result, dim, "")) for dim in _VALIDITY_DIMS}
 
@@ -180,18 +179,14 @@ class TestValidityMRV1CompletenessMonotonicity:
         )
 
     @given(current_phase=st.integers(min_value=1, max_value=5))
-    async def test_all_dimensions_non_empty_for_any_phase(
-        self, current_phase: int
-    ) -> None:
+    async def test_all_dimensions_non_empty_for_any_phase(self, current_phase: int) -> None:
         """Hypothesis: all six dimensions must be non-empty for any phase value."""
         agent = make_stub_agent(_STUB_RESPONSE_LOW)
         result = await agent.run(study_id=1, current_phase=current_phase)
 
         for dim in _VALIDITY_DIMS:
             val = getattr(result, dim, "")
-            assert val.strip(), (
-                f"MR-V1: dimension '{dim}' is empty at phase={current_phase}"
-            )
+            assert val.strip(), f"MR-V1: dimension '{dim}' is empty at phase={current_phase}"
 
 
 # ---------------------------------------------------------------------------
@@ -275,12 +270,8 @@ class TestValidityMRV3ParaphraseStability:
         """'TDD Study' vs 'Test-Driven Development Study' produce identical text under stub."""
         agent = make_stub_agent(_STUB_RESPONSE_LOW)
 
-        result_abbrev = await agent.run(
-            study_id=1, study_name="TDD Study"
-        )
-        result_full = await agent.run(
-            study_id=1, study_name="Test-Driven Development Study"
-        )
+        result_abbrev = await agent.run(study_id=1, study_name="TDD Study")
+        result_full = await agent.run(study_id=1, study_name="Test-Driven Development Study")
 
         for dim in _VALIDITY_DIMS:
             assert getattr(result_abbrev, dim) == getattr(result_full, dim), (
@@ -304,9 +295,7 @@ class TestValidityMRV3ParaphraseStability:
         name_a=st.sampled_from(["TDD Study", "Test-Driven Development Study", "TDD Research"]),
         name_b=st.sampled_from(["TDD Study", "Test-Driven Development Study", "TDD Research"]),
     )
-    async def test_any_paraphrase_pair_identical_text(
-        self, name_a: str, name_b: str
-    ) -> None:
+    async def test_any_paraphrase_pair_identical_text(self, name_a: str, name_b: str) -> None:
         """Hypothesis: any paraphrase pair produces identical stub output."""
         agent = make_stub_agent(_STUB_RESPONSE_LOW)
 

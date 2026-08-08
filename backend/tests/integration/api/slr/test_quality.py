@@ -11,16 +11,15 @@ Covers:
 from __future__ import annotations
 
 import pytest
-from sqlalchemy.ext.asyncio import async_sessionmaker
-
-from backend.core.auth import create_access_token
+from db.models import Paper
 from db.models.candidate import CandidatePaper, CandidatePaperStatus
 from db.models.search import SearchString
 from db.models.search_exec import SearchExecution, SearchExecutionStatus
-from db.models.slr import QualityAssessmentChecklist, QualityChecklistItem
 from db.models.study import Reviewer, ReviewerType
 from db.models.users import GroupMembership, GroupRole, ResearchGroup
-from db.models import Paper, Study, StudyType, StudyStatus
+from sqlalchemy.ext.asyncio import async_sessionmaker
+
+from backend.core.auth import create_access_token
 
 
 def _bearer(user_id: int) -> dict[str, str]:
@@ -108,8 +107,18 @@ _CHECKLIST_BODY = {
     "name": "Standard QA Checklist",
     "description": "Used for integration tests",
     "items": [
-        {"order": 1, "question": "Is the study empirical?", "scoring_method": "binary", "weight": 1.0},
-        {"order": 2, "question": "Is sample size adequate?", "scoring_method": "scale_1_3", "weight": 2.0},
+        {
+            "order": 1,
+            "question": "Is the study empirical?",
+            "scoring_method": "binary",
+            "weight": 1.0,
+        },
+        {
+            "order": 2,
+            "question": "Is sample size adequate?",
+            "scoring_method": "scale_1_3",
+            "weight": 2.0,
+        },
     ],
 }
 
@@ -161,7 +170,12 @@ class TestUpsertQualityChecklist:
         updated_body = {
             "name": "Updated Checklist",
             "items": [
-                {"order": 1, "question": "Only question?", "scoring_method": "scale_1_5", "weight": 1.0},
+                {
+                    "order": 1,
+                    "question": "Only question?",
+                    "scoring_method": "scale_1_5",
+                    "weight": 1.0,
+                },
             ],
         }
         resp = await client.put(

@@ -1,39 +1,37 @@
 """Shared fixtures for backend integration tests."""
 
+# Side-effect imports: register all ORM table definitions on Base.metadata before
+# create_all is called. Ordering ensures FK targets are defined before referencing tables.
+import db.models  # noqa: F401
+import db.models.audit  # noqa: F401
+import db.models.backup_codes  # noqa: F401
+import db.models.candidate  # noqa: F401
+import db.models.criteria  # noqa: F401
+import db.models.extraction  # noqa: F401
+import db.models.jobs  # noqa: F401
+import db.models.pico  # noqa: F401
+import db.models.protocols  # noqa: F401
+import db.models.rapid_review  # noqa: F401
+import db.models.results  # noqa: F401
+import db.models.search  # noqa: F401
+import db.models.search_exec  # noqa: F401
+import db.models.search_integrations  # noqa: F401
+import db.models.security_audit  # noqa: F401
+import db.models.seeds  # noqa: F401
+import db.models.slr  # noqa: F401
+import db.models.study  # noqa: F401
+import db.models.tertiary  # noqa: F401
+import db.models.users  # noqa: F401
 import pytest_asyncio
+from db.base import Base
+from db.models.users import User
 from httpx import ASGITransport, AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlalchemy.pool import StaticPool
 
 from backend.core.auth import hash_password
 from backend.core.database import get_db
 from backend.main import create_app
-from db.base import Base
-
-# Side-effect imports: register all ORM table definitions on Base.metadata before
-# create_all is called. Ordering ensures FK targets are defined before referencing tables.
-import db.models  # noqa: F401
-import db.models.users  # noqa: F401
-import db.models.study  # noqa: F401
-import db.models.pico  # noqa: F401
-import db.models.seeds  # noqa: F401
-import db.models.criteria  # noqa: F401
-import db.models.search  # noqa: F401
-import db.models.search_exec  # noqa: F401
-import db.models.jobs  # noqa: F401
-import db.models.candidate  # noqa: F401
-import db.models.audit  # noqa: F401
-import db.models.extraction  # noqa: F401
-import db.models.results  # noqa: F401
-import db.models.backup_codes  # noqa: F401
-import db.models.security_audit  # noqa: F401
-import db.models.search_integrations  # noqa: F401
-import db.models.slr  # noqa: F401
-import db.models.rapid_review  # noqa: F401
-import db.models.tertiary  # noqa: F401
-import db.models.protocols  # noqa: F401
-
-from db.models.users import GroupMembership, GroupRole, ResearchGroup, User
 
 
 @pytest_asyncio.fixture
@@ -94,6 +92,7 @@ async def _insert_user(
 
     Returns:
         A tuple of the persisted :class:`User` ORM object and the plain password.
+
     """
     maker = async_sessionmaker(db_engine, expire_on_commit=False)
     async with maker() as session:

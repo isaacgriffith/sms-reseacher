@@ -14,10 +14,8 @@ from backend.services.totp_service import (
     disable_2fa,
     initiate_2fa_setup,
     record_failed_attempt,
-    regenerate_backup_codes,
     verify_backup_code,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -25,15 +23,15 @@ from backend.services.totp_service import (
 
 
 def _make_user(**kwargs) -> MagicMock:
-    defaults = dict(
-        id=1,
-        email="user@example.com",
-        hashed_password=hash_password("Pass12!word"),
-        totp_enabled=False,
-        totp_secret_encrypted=None,
-        totp_failed_attempts=0,
-        totp_locked_until=None,
-    )
+    defaults = {
+        "id": 1,
+        "email": "user@example.com",
+        "hashed_password": hash_password("Pass12!word"),
+        "totp_enabled": False,
+        "totp_secret_encrypted": None,
+        "totp_failed_attempts": 0,
+        "totp_locked_until": None,
+    }
     defaults.update(kwargs)
     return MagicMock(**defaults)
 
@@ -156,11 +154,14 @@ async def test_confirm_setup_no_pending_secret_raises_422():
 async def test_confirm_setup_wrong_code_raises_422():
     from backend.core.encryption import encrypt_secret
     from backend.core.totp import generate_secret
+
     secret = generate_secret()
     user = _make_user(totp_secret_encrypted=encrypt_secret(secret))
     db = _make_db()
     with pytest.raises(HTTPException) as exc_info:
-        with patch("backend.services.totp_service.create_security_audit_event", new_callable=AsyncMock):
+        with patch(
+            "backend.services.totp_service.create_security_audit_event", new_callable=AsyncMock
+        ):
             await confirm_2fa_setup(db, user, "000000")
     assert exc_info.value.status_code == 422
 
@@ -168,8 +169,10 @@ async def test_confirm_setup_wrong_code_raises_422():
 @pytest.mark.asyncio
 async def test_confirm_setup_valid_code_enables_2fa():
     import pyotp
+
     from backend.core.encryption import encrypt_secret
     from backend.core.totp import generate_secret
+
     secret = generate_secret()
     user = _make_user(totp_secret_encrypted=encrypt_secret(secret))
     db = _make_db()

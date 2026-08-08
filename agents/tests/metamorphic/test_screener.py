@@ -34,19 +34,19 @@ from agents.services.screener import ScreenerAgent, ScreeningResult
 # Stub helpers
 # ---------------------------------------------------------------------------
 
-_STUB_ACCEPTED = json.dumps({
-    "decision": "accepted",
-    "reasons": [
-        {"criterion_type": "inclusion", "text": "empirical study on TDD"}
-    ],
-})
+_STUB_ACCEPTED = json.dumps(
+    {
+        "decision": "accepted",
+        "reasons": [{"criterion_type": "inclusion", "text": "empirical study on TDD"}],
+    }
+)
 
-_STUB_REJECTED = json.dumps({
-    "decision": "rejected",
-    "reasons": [
-        {"criterion_type": "exclusion", "text": "not peer-reviewed"}
-    ],
-})
+_STUB_REJECTED = json.dumps(
+    {
+        "decision": "rejected",
+        "reasons": [{"criterion_type": "exclusion", "text": "not peer-reviewed"}],
+    }
+)
 
 _INCLUSION = [{"id": 1, "description": "Empirical studies on automated testing"}]
 _EXCLUSION = [{"id": 1, "description": "Opinion pieces or grey literature"}]
@@ -80,11 +80,14 @@ def make_stub_agent(decision: str = "accepted") -> ScreenerAgent:
 
     Returns:
         :class:`ScreenerAgent` with mocked LLM client.
+
     """
-    stub_response = json.dumps({
-        "decision": decision,
-        "reasons": [{"criterion_type": "inclusion", "text": f"Stub: {decision}"}],
-    })
+    stub_response = json.dumps(
+        {
+            "decision": decision,
+            "reasons": [{"criterion_type": "inclusion", "text": f"Stub: {decision}"}],
+        }
+    )
     stub_client = MagicMock(spec=LLMClient)
     stub_client.complete = AsyncMock(return_value=stub_response)
     return ScreenerAgent(llm_client=stub_client)
@@ -98,12 +101,13 @@ def _decision(result: str | ScreeningResult) -> str:
 
     Returns:
         Decision string: ``'accepted'``, ``'rejected'``, or ``'duplicate'``.
+
     """
     if isinstance(result, ScreeningResult):
         return result.decision
     try:
         return json.loads(result).get("decision", "")
-    except (json.JSONDecodeError, AttributeError):
+    except json.JSONDecodeError, AttributeError:
         lower = str(result).lower()
         if "accept" in lower:
             return "accepted"
@@ -257,12 +261,8 @@ class TestScreenerMRS2ConsistentRejectionWhenCriteriaUnmet:
             "MR-S2: identical reject-abstract must produce identical decisions across calls"
         )
 
-    @given(
-        reject_abstract=st.sampled_from([_ABSTRACT_REJECT, _ABSTRACT_REJECT_PARAPHRASE])
-    )
-    async def test_any_reject_abstract_always_rejected(
-        self, reject_abstract: str
-    ) -> None:
+    @given(reject_abstract=st.sampled_from([_ABSTRACT_REJECT, _ABSTRACT_REJECT_PARAPHRASE]))
+    async def test_any_reject_abstract_always_rejected(self, reject_abstract: str) -> None:
         """Hypothesis: any reject-class abstract must produce 'rejected' under stub."""
         agent = make_stub_agent("rejected")
 

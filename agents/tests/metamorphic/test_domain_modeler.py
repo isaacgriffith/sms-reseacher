@@ -31,29 +31,49 @@ from agents.services.domain_modeler import DomainModelAgent
 # Stub helpers
 # ---------------------------------------------------------------------------
 
-_STUB_RESPONSE_SMALL = json.dumps({
-    "concepts": [
-        {"name": "TDD", "definition": "Test-Driven Development methodology.", "attributes": ["iterative"]},
-        {"name": "Defect", "definition": "Software defect or bug.", "attributes": []},
-    ],
-    "relationships": [
-        {"from": "TDD", "to": "Defect", "label": "reduces", "type": "causal"},
-    ],
-})
+_STUB_RESPONSE_SMALL = json.dumps(
+    {
+        "concepts": [
+            {
+                "name": "TDD",
+                "definition": "Test-Driven Development methodology.",
+                "attributes": ["iterative"],
+            },
+            {"name": "Defect", "definition": "Software defect or bug.", "attributes": []},
+        ],
+        "relationships": [
+            {"from": "TDD", "to": "Defect", "label": "reduces", "type": "causal"},
+        ],
+    }
+)
 
-_STUB_RESPONSE_LARGE = json.dumps({
-    "concepts": [
-        {"name": "TDD", "definition": "Test-Driven Development methodology.", "attributes": ["iterative"]},
-        {"name": "Defect", "definition": "Software defect or bug.", "attributes": []},
-        {"name": "Code Quality", "definition": "Measure of software correctness.", "attributes": []},
-        {"name": "CI Pipeline", "definition": "Continuous Integration automation.", "attributes": []},
-    ],
-    "relationships": [
-        {"from": "TDD", "to": "Defect", "label": "reduces", "type": "causal"},
-        {"from": "TDD", "to": "Code Quality", "label": "improves", "type": "causal"},
-        {"from": "CI Pipeline", "to": "TDD", "label": "enables", "type": "supportive"},
-    ],
-})
+_STUB_RESPONSE_LARGE = json.dumps(
+    {
+        "concepts": [
+            {
+                "name": "TDD",
+                "definition": "Test-Driven Development methodology.",
+                "attributes": ["iterative"],
+            },
+            {"name": "Defect", "definition": "Software defect or bug.", "attributes": []},
+            {
+                "name": "Code Quality",
+                "definition": "Measure of software correctness.",
+                "attributes": [],
+            },
+            {
+                "name": "CI Pipeline",
+                "definition": "Continuous Integration automation.",
+                "attributes": [],
+            },
+        ],
+        "relationships": [
+            {"from": "TDD", "to": "Defect", "label": "reduces", "type": "causal"},
+            {"from": "TDD", "to": "Code Quality", "label": "improves", "type": "causal"},
+            {"from": "CI Pipeline", "to": "TDD", "label": "enables", "type": "supportive"},
+        ],
+    }
+)
 
 
 def make_stub_agent(output: str = _STUB_RESPONSE_SMALL) -> DomainModelAgent:
@@ -64,6 +84,7 @@ def make_stub_agent(output: str = _STUB_RESPONSE_SMALL) -> DomainModelAgent:
 
     Returns:
         :class:`DomainModelAgent` with mocked LLM client.
+
     """
     stub_client = MagicMock(spec=LLMClient)
     stub_client.complete = AsyncMock(return_value=output)
@@ -131,9 +152,7 @@ class TestDomainModelerMRDM1ConceptSetStability:
         result = await agent.run(topic="TDD", summaries=_BASE_SUMMARIES)
 
         for concept in result.concepts:
-            assert concept.name.strip(), (
-                "MR-DM1: concept name must not be empty or whitespace"
-            )
+            assert concept.name.strip(), "MR-DM1: concept name must not be empty or whitespace"
 
     async def test_all_relationships_have_valid_endpoints(self) -> None:
         """Every relationship must have non-empty from_ and to values."""
@@ -144,9 +163,7 @@ class TestDomainModelerMRDM1ConceptSetStability:
             assert rel.from_.strip(), "MR-DM1: relationship.from_ must not be empty"
             assert rel.to.strip(), "MR-DM1: relationship.to must not be empty"
 
-    @given(
-        topic=st.sampled_from(["TDD", "test-driven development", "unit testing"])
-    )
+    @given(topic=st.sampled_from(["TDD", "test-driven development", "unit testing"]))
     async def test_concept_count_positive(self, topic: str) -> None:
         """Hypothesis: at least one concept must be identified for any topic."""
         agent = make_stub_agent(_STUB_RESPONSE_SMALL)
@@ -198,12 +215,8 @@ class TestDomainModelerMRDM2SummarySupersetMonotonicity:
             "MR-DM2: more summaries must not reduce relationship count"
         )
 
-    @given(
-        n_summaries=st.integers(min_value=1, max_value=5)
-    )
-    async def test_concept_count_non_zero_for_any_corpus_size(
-        self, n_summaries: int
-    ) -> None:
+    @given(n_summaries=st.integers(min_value=1, max_value=5))
+    async def test_concept_count_non_zero_for_any_corpus_size(self, n_summaries: int) -> None:
         """Hypothesis: concept count must be ≥ 1 for any non-empty summary list."""
         summaries = [f"Paper summary {i} about TDD." for i in range(n_summaries)]
         agent = make_stub_agent(_STUB_RESPONSE_SMALL)

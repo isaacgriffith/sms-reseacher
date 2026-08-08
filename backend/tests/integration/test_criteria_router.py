@@ -4,10 +4,10 @@ Covers GET/POST/DELETE for inclusion and exclusion criteria.
 """
 
 import pytest
+from db.models.users import GroupMembership, GroupRole, ResearchGroup
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from backend.core.auth import create_access_token
-from db.models.users import GroupMembership, GroupRole, ResearchGroup
 
 
 def _bearer(user_id: int) -> dict[str, str]:

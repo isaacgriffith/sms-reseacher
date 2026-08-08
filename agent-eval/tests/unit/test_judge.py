@@ -8,8 +8,6 @@ from __future__ import annotations
 import os
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import pytest
-
 from agent_eval.judge.litellm_judge import LiteLLMJudge
 
 
@@ -85,7 +83,7 @@ class TestLiteLLMJudgeGenerate:
     """Tests for LiteLLMJudge.generate and a_generate with mocked litellm."""
 
     def test_generate_returns_content(self) -> None:
-        """generate returns message content from litellm response."""
+        """Generate returns message content from litellm response."""
         mock_response = MagicMock()
         mock_response.choices = [MagicMock()]
         mock_response.choices[0].message.content = "Judge response text"
@@ -97,12 +95,14 @@ class TestLiteLLMJudgeGenerate:
         assert result == "Judge response text"
 
     def test_generate_ollama_includes_api_base(self) -> None:
-        """generate passes api_base for ollama provider."""
+        """Generate passes api_base for ollama provider."""
         mock_response = MagicMock()
         mock_response.choices = [MagicMock()]
         mock_response.choices[0].message.content = "ok"
 
-        with patch("agent_eval.judge.litellm_judge.litellm.completion", return_value=mock_response) as mock_completion:
+        with patch(
+            "agent_eval.judge.litellm_judge.litellm.completion", return_value=mock_response
+        ) as mock_completion:
             judge = LiteLLMJudge(provider="ollama", model="llama3", ollama_url="http://custom:1111")
             judge.generate("test prompt")
 
@@ -110,7 +110,7 @@ class TestLiteLLMJudgeGenerate:
         assert call_kwargs.get("api_base") == "http://custom:1111"
 
     def test_generate_empty_content_returns_empty_string(self) -> None:
-        """generate returns empty string when content is None."""
+        """Generate returns empty string when content is None."""
         mock_response = MagicMock()
         mock_response.choices = [MagicMock()]
         mock_response.choices[0].message.content = None
@@ -127,7 +127,10 @@ class TestLiteLLMJudgeGenerate:
         mock_response.choices = [MagicMock()]
         mock_response.choices[0].message.content = "async response"
 
-        with patch("agent_eval.judge.litellm_judge.litellm.acompletion", new=AsyncMock(return_value=mock_response)):
+        with patch(
+            "agent_eval.judge.litellm_judge.litellm.acompletion",
+            new=AsyncMock(return_value=mock_response),
+        ):
             judge = LiteLLMJudge(provider="anthropic", model="claude-test")
             result = await judge.a_generate("Is this paper relevant?")
 
@@ -139,7 +142,10 @@ class TestLiteLLMJudgeGenerate:
         mock_response.choices = [MagicMock()]
         mock_response.choices[0].message.content = "ok"
 
-        with patch("agent_eval.judge.litellm_judge.litellm.acompletion", new=AsyncMock(return_value=mock_response)) as mock_comp:
+        with patch(
+            "agent_eval.judge.litellm_judge.litellm.acompletion",
+            new=AsyncMock(return_value=mock_response),
+        ) as mock_comp:
             judge = LiteLLMJudge(provider="ollama", model="llama3", ollama_url="http://ollama:9999")
             await judge.a_generate("test")
 

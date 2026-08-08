@@ -8,7 +8,6 @@ from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -22,6 +21,7 @@ def _make_session_cm(db_mock: AsyncMock) -> MagicMock:
 
     Returns:
         A MagicMock whose call returns an async context manager yielding db_mock.
+
     """
     cm = AsyncMock()
     cm.__aenter__ = AsyncMock(return_value=db_mock)
@@ -37,6 +37,7 @@ def _scalar_result(value: object) -> MagicMock:
 
     Returns:
         MagicMock with scalar_one_or_none and scalars().all() wired.
+
     """
     r = MagicMock()
     r.scalar_one_or_none.return_value = value
@@ -239,7 +240,6 @@ def test_store_export_writes_file_and_returns_url():
 
     The returned URL should begin with /exports/ and the file should exist.
     """
-    import os
     import tempfile
 
     payload = b"hello export"
@@ -448,7 +448,7 @@ async def test_run_domain_model_agent_returns_record_id():
     ):
         from backend.jobs.results_job import _run_domain_model_agent
 
-        record_id = await _run_domain_model_agent(
+        await _run_domain_model_agent(
             db,
             study_id=1,
             topic="Testing",
@@ -722,8 +722,8 @@ async def test_build_domain_model_agent_with_context_uses_configured_agent():
         side_effect=[
             _scalar_result(agent_record),  # Agent lookup
             _scalar_result(provider_mock),  # Provider
-            _scalar_result(model_mock),     # AvailableModel
-            _scalar_result(study_mock),     # Study
+            _scalar_result(model_mock),  # AvailableModel
+            _scalar_result(study_mock),  # Study
         ]
     )
 

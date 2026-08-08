@@ -13,22 +13,21 @@ from __future__ import annotations
 
 from unittest.mock import patch
 
-import pytest
-import pytest_asyncio
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-from sqlalchemy.pool import StaticPool
-
-from db.base import Base
 import db.models  # noqa: F401
-import db.models.users  # noqa: F401
-import db.models.study  # noqa: F401
-import db.models.slr  # noqa: F401
 import db.models.candidate  # noqa: F401
+import db.models.criteria  # noqa: F401
+import db.models.pico  # noqa: F401
 import db.models.search  # noqa: F401
 import db.models.search_exec  # noqa: F401
-import db.models.pico  # noqa: F401
 import db.models.seeds  # noqa: F401
-import db.models.criteria  # noqa: F401
+import db.models.slr  # noqa: F401
+import db.models.study  # noqa: F401
+import db.models.users  # noqa: F401
+import pytest
+import pytest_asyncio
+from db.base import Base
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.pool import StaticPool
 
 
 @pytest_asyncio.fixture
@@ -53,10 +52,11 @@ async def db_session():
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 async def _insert_study(db: AsyncSession) -> int:
     """Insert a minimal Study and ResearchGroup, returning the study id."""
+    from db.models import Study, StudyStatus, StudyType
     from db.models.users import ResearchGroup
-    from db.models import Study, StudyType, StudyStatus
 
     group = ResearchGroup(name="IRR Test Group")
     db.add(group)
@@ -180,6 +180,7 @@ class TestComputeAndStoreKappa:
     async def test_perfect_agreement_returns_kappa_one(self, db_session) -> None:
         """Perfect agreement with mixed decisions gives kappa=1.0."""
         from db.models.slr import AgreementRoundType
+
         from backend.services.inter_rater_service import compute_and_store_kappa
 
         study_id = await _insert_study(db_session)
@@ -197,8 +198,12 @@ class TestComputeAndStoreKappa:
             await _insert_decision(db_session, cp_id, rev_b, decision)
 
         record = await compute_and_store_kappa(
-            study_id, rev_a, rev_b,
-            AgreementRoundType.TITLE_ABSTRACT, "pre_discussion", db_session,
+            study_id,
+            rev_a,
+            rev_b,
+            AgreementRoundType.TITLE_ABSTRACT,
+            "pre_discussion",
+            db_session,
         )
         assert record.kappa_value == 1.0
         assert record.n_papers == 4
@@ -208,6 +213,7 @@ class TestComputeAndStoreKappa:
     async def test_threshold_met_flag_true_above_threshold(self, db_session) -> None:
         """threshold_met is True when kappa >= slr_kappa_threshold (0.6)."""
         from db.models.slr import AgreementRoundType
+
         from backend.services.inter_rater_service import compute_and_store_kappa
 
         study_id = await _insert_study(db_session)
@@ -227,8 +233,12 @@ class TestComputeAndStoreKappa:
         with patch("backend.services.inter_rater_service.get_settings") as mock_settings:
             mock_settings.return_value.slr_kappa_threshold = 0.6
             record = await compute_and_store_kappa(
-                study_id, rev_a, rev_b,
-                AgreementRoundType.TITLE_ABSTRACT, "pre_discussion", db_session,
+                study_id,
+                rev_a,
+                rev_b,
+                AgreementRoundType.TITLE_ABSTRACT,
+                "pre_discussion",
+                db_session,
             )
         assert record.threshold_met is True
 
@@ -236,6 +246,7 @@ class TestComputeAndStoreKappa:
     async def test_threshold_met_flag_false_below_threshold(self, db_session) -> None:
         """threshold_met is False when kappa < slr_kappa_threshold."""
         from db.models.slr import AgreementRoundType
+
         from backend.services.inter_rater_service import compute_and_store_kappa
 
         study_id = await _insert_study(db_session)
@@ -255,8 +266,12 @@ class TestComputeAndStoreKappa:
         with patch("backend.services.inter_rater_service.get_settings") as mock_settings:
             mock_settings.return_value.slr_kappa_threshold = 0.6
             record = await compute_and_store_kappa(
-                study_id, rev_a, rev_b,
-                AgreementRoundType.TITLE_ABSTRACT, "pre_discussion", db_session,
+                study_id,
+                rev_a,
+                rev_b,
+                AgreementRoundType.TITLE_ABSTRACT,
+                "pre_discussion",
+                db_session,
             )
         assert record.threshold_met is False
 
@@ -264,6 +279,7 @@ class TestComputeAndStoreKappa:
     async def test_kappa_undefined_reason_when_zero_variance(self, db_session) -> None:
         """kappa_undefined_reason is populated when kappa is None."""
         from db.models.slr import AgreementRoundType
+
         from backend.services.inter_rater_service import compute_and_store_kappa
 
         study_id = await _insert_study(db_session)
@@ -285,8 +301,12 @@ class TestComputeAndStoreKappa:
             with patch("backend.services.inter_rater_service.get_settings") as mock_settings:
                 mock_settings.return_value.slr_kappa_threshold = 0.6
                 record = await compute_and_store_kappa(
-                    study_id, rev_a, rev_b,
-                    AgreementRoundType.TITLE_ABSTRACT, "pre_discussion", db_session,
+                    study_id,
+                    rev_a,
+                    rev_b,
+                    AgreementRoundType.TITLE_ABSTRACT,
+                    "pre_discussion",
+                    db_session,
                 )
         assert record.kappa_value is None
         assert record.kappa_undefined_reason is not None
@@ -296,6 +316,7 @@ class TestComputeAndStoreKappa:
     async def test_post_discussion_phase_stored(self, db_session) -> None:
         """phase='post_discussion' is stored correctly."""
         from db.models.slr import AgreementRoundType
+
         from backend.services.inter_rater_service import compute_and_store_kappa
 
         study_id = await _insert_study(db_session)
@@ -312,8 +333,12 @@ class TestComputeAndStoreKappa:
             await _insert_decision(db_session, cp_id, rev_b, "accepted")
 
         record = await compute_and_store_kappa(
-            study_id, rev_a, rev_b,
-            AgreementRoundType.TITLE_ABSTRACT, "post_discussion", db_session,
+            study_id,
+            rev_a,
+            rev_b,
+            AgreementRoundType.TITLE_ABSTRACT,
+            "post_discussion",
+            db_session,
         )
         assert record.phase == "post_discussion"
 
@@ -324,8 +349,9 @@ class TestComputeKappaValidation:
     @pytest.mark.asyncio
     async def test_raises_422_when_no_papers_in_round(self, db_session) -> None:
         """422 is raised when no CandidatePapers exist for the round."""
-        from fastapi import HTTPException
         from db.models.slr import AgreementRoundType
+        from fastapi import HTTPException
+
         from backend.services.inter_rater_service import compute_and_store_kappa
 
         study_id = await _insert_study(db_session)
@@ -334,16 +360,21 @@ class TestComputeKappaValidation:
 
         with pytest.raises(HTTPException) as exc_info:
             await compute_and_store_kappa(
-                study_id, rev_a, rev_b,
-                AgreementRoundType.TITLE_ABSTRACT, "pre_discussion", db_session,
+                study_id,
+                rev_a,
+                rev_b,
+                AgreementRoundType.TITLE_ABSTRACT,
+                "pre_discussion",
+                db_session,
             )
         assert exc_info.value.status_code == 422
 
     @pytest.mark.asyncio
     async def test_raises_422_when_reviewer_missing_decisions(self, db_session) -> None:
         """422 is raised when a reviewer hasn't assessed all papers."""
-        from fastapi import HTTPException
         from db.models.slr import AgreementRoundType
+        from fastapi import HTTPException
+
         from backend.services.inter_rater_service import compute_and_store_kappa
 
         study_id = await _insert_study(db_session)
@@ -361,8 +392,12 @@ class TestComputeKappaValidation:
 
         with pytest.raises(HTTPException) as exc_info:
             await compute_and_store_kappa(
-                study_id, rev_a, rev_b,
-                AgreementRoundType.TITLE_ABSTRACT, "pre_discussion", db_session,
+                study_id,
+                rev_a,
+                rev_b,
+                AgreementRoundType.TITLE_ABSTRACT,
+                "pre_discussion",
+                db_session,
             )
         assert exc_info.value.status_code == 422
 
@@ -374,10 +409,11 @@ class TestGetRecords:
     async def test_returns_all_records_for_study(self, db_session) -> None:
         """get_records returns all records for the given study."""
         from db.models.slr import AgreementRoundType, InterRaterAgreementRecord
+
         from backend.services.inter_rater_service import get_records
 
         study_id = await _insert_study(db_session)
-        exec_id = await _insert_search_exec(db_session, study_id)
+        await _insert_search_exec(db_session, study_id)
         rev_a = await _insert_reviewer(db_session, study_id)
         rev_b = await _insert_reviewer(db_session, study_id)
 

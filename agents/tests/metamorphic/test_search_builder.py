@@ -34,28 +34,32 @@ from agents.services.search_builder import SearchStringBuilderAgent
 # Stub helpers
 # ---------------------------------------------------------------------------
 
-_STUB_RESPONSE = json.dumps({
-    "search_string": '(TDD OR "test-driven development") AND (quality OR defect)',
-    "terms_used": [
-        {"component": "intervention", "terms": ["TDD", "test-driven development"]},
-        {"component": "outcome", "terms": ["quality", "defect"]},
-    ],
-    "expansion_notes": "Stub expansion notes.",
-})
+_STUB_RESPONSE = json.dumps(
+    {
+        "search_string": '(TDD OR "test-driven development") AND (quality OR defect)',
+        "terms_used": [
+            {"component": "intervention", "terms": ["TDD", "test-driven development"]},
+            {"component": "outcome", "terms": ["quality", "defect"]},
+        ],
+        "expansion_notes": "Stub expansion notes.",
+    }
+)
 
-_STUB_RESPONSE_RICHER = json.dumps({
-    "search_string": (
-        '(TDD OR "test-driven development") AND (quality OR defect) '
-        'AND (software OR code) AND (engineer OR developer)'
-    ),
-    "terms_used": [
-        {"component": "intervention", "terms": ["TDD", "test-driven development"]},
-        {"component": "outcome", "terms": ["quality", "defect"]},
-        {"component": "population", "terms": ["software", "code"]},
-        {"component": "context", "terms": ["engineer", "developer"]},
-    ],
-    "expansion_notes": "Stub expansion notes with more keywords.",
-})
+_STUB_RESPONSE_RICHER = json.dumps(
+    {
+        "search_string": (
+            '(TDD OR "test-driven development") AND (quality OR defect) '
+            "AND (software OR code) AND (engineer OR developer)"
+        ),
+        "terms_used": [
+            {"component": "intervention", "terms": ["TDD", "test-driven development"]},
+            {"component": "outcome", "terms": ["quality", "defect"]},
+            {"component": "population", "terms": ["software", "code"]},
+            {"component": "context", "terms": ["engineer", "developer"]},
+        ],
+        "expansion_notes": "Stub expansion notes with more keywords.",
+    }
+)
 
 
 def make_stub_agent(output: str = _STUB_RESPONSE) -> SearchStringBuilderAgent:
@@ -66,6 +70,7 @@ def make_stub_agent(output: str = _STUB_RESPONSE) -> SearchStringBuilderAgent:
 
     Returns:
         :class:`SearchStringBuilderAgent` with mocked LLM client.
+
     """
     stub_client = MagicMock(spec=LLMClient)
     stub_client.complete = AsyncMock(return_value=output)
@@ -80,10 +85,11 @@ def _count_boolean_terms(search_string: str) -> int:
 
     Returns:
         Count of distinct term tokens.
+
     """
     # Extract quoted phrases and individual words
     quoted = re.findall(r'"[^"]+"', search_string)
-    unquoted = re.findall(r'\b(?!AND|OR|NOT\b)[A-Za-z][\w-]*\b', search_string)
+    unquoted = re.findall(r"\b(?!AND|OR|NOT\b)[A-Za-z][\w-]*\b", search_string)
     return len(quoted) + len(unquoted)
 
 
@@ -139,9 +145,7 @@ class TestSearchBuilderMRSB1KeywordSubsetMonotonicity:
             "MR-SB1: seed keywords must not reduce number of TermGroups"
         )
 
-    @given(
-        n_keywords=st.integers(min_value=0, max_value=5)
-    )
+    @given(n_keywords=st.integers(min_value=0, max_value=5))
     async def test_term_count_non_negative(self, n_keywords: int) -> None:
         """Hypothesis: term count must always be ≥ 1 for any keyword count."""
         keywords = [f"keyword_{i}" for i in range(n_keywords)]
@@ -174,9 +178,7 @@ class TestSearchBuilderMRSB2ParaphraseConsistency:
         agent = make_stub_agent(_STUB_RESPONSE)
 
         result_abbrev = await agent.run(topic="TDD", variant="PICO")
-        result_full = await agent.run(
-            topic="Test-Driven Development", variant="PICO"
-        )
+        result_full = await agent.run(topic="Test-Driven Development", variant="PICO")
 
         assert len(result_abbrev.terms_used) == len(result_full.terms_used), (
             "MR-SB2: paraphrase must not change number of TermGroups"
@@ -208,9 +210,7 @@ class TestSearchBuilderMRSB2ParaphraseConsistency:
         topic_a=st.sampled_from(["TDD", "Test-Driven Development", "test-first"]),
         topic_b=st.sampled_from(["TDD", "Test-Driven Development", "test-first"]),
     )
-    async def test_any_paraphrase_pair_same_groups(
-        self, topic_a: str, topic_b: str
-    ) -> None:
+    async def test_any_paraphrase_pair_same_groups(self, topic_a: str, topic_b: str) -> None:
         """Hypothesis: any two topic paraphrases produce the same term group count."""
         agent = make_stub_agent(_STUB_RESPONSE)
 

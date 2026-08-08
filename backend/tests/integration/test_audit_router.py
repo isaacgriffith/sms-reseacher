@@ -13,12 +13,11 @@ from __future__ import annotations
 import time
 
 import pytest
+from db.models.audit import AuditAction, AuditRecord
+from db.models.users import GroupMembership, GroupRole, ResearchGroup
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from backend.core.auth import create_access_token
-from db.models.audit import AuditAction, AuditRecord
-from db.models.study import StudyMember, StudyMemberRole
-from db.models.users import GroupMembership, GroupRole, ResearchGroup
 
 
 def _bearer(user_id: int) -> dict[str, str]:
@@ -34,16 +33,24 @@ async def _setup_study_with_roles(db_engine, lead, member=None) -> int:
         await session.flush()
         session.add(GroupMembership(group_id=group.id, user_id=lead.id, role=GroupRole.ADMIN))
         if member:
-            session.add(GroupMembership(group_id=group.id, user_id=member.id, role=GroupRole.MEMBER))
+            session.add(
+                GroupMembership(group_id=group.id, user_id=member.id, role=GroupRole.MEMBER)
+            )
         await session.commit()
         group_id = group.id
 
-    resp_data = {"name": "Audit Study", "topic": "TDD", "study_type": "SMS",
-                 "research_objectives": [], "research_questions": []}
+    resp_data = {
+        "name": "Audit Study",
+        "topic": "TDD",
+        "study_type": "SMS",
+        "research_objectives": [],
+        "research_questions": [],
+    }
 
     from httpx import ASGITransport, AsyncClient
-    from backend.main import create_app
+
     from backend.core.database import get_db
+    from backend.main import create_app
 
     app = create_app()
     maker2 = async_sessionmaker(db_engine, expire_on_commit=False)
@@ -64,7 +71,9 @@ async def _setup_study_with_roles(db_engine, lead, member=None) -> int:
     return r.json()["id"]
 
 
-async def _insert_audit_record(db_engine, study_id: int, entity_type: str, actor_user_id: int) -> None:
+async def _insert_audit_record(
+    db_engine, study_id: int, entity_type: str, actor_user_id: int
+) -> None:
     """Insert a bare AuditRecord row for testing."""
     maker = async_sessionmaker(db_engine, expire_on_commit=False)
     async with maker() as session:
@@ -222,7 +231,7 @@ class TestAuditPerformance:
                     action=AuditAction.UPDATE,
                     field_name="description",
                     before_value={"old": f"v{i}"},
-                    after_value={"new": f"v{i+1}"},
+                    after_value={"new": f"v{i + 1}"},
                 )
                 for i in range(500)
             ]

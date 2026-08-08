@@ -13,13 +13,11 @@ from __future__ import annotations
 import uuid
 from unittest.mock import AsyncMock, patch
 
-import pytest
-import pytest_asyncio
+from db.models.agents import Agent, AgentTaskType, AvailableModel, Provider, ProviderType
+from db.models.users import GroupMembership, GroupRole, ResearchGroup
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from backend.core.auth import create_access_token
-from db.models.agents import Agent, AgentTaskType, AvailableModel, Provider, ProviderType
-from db.models.users import GroupMembership, GroupRole, ResearchGroup
 
 
 def _bearer(user_id: int) -> dict[str, str]:
@@ -77,9 +75,7 @@ _VALID_TEMPLATE = (
 class TestCreateAgent:
     """POST /admin/agents endpoint tests."""
 
-    async def test_create_with_valid_template_returns_agent(
-        self, client, db_engine, alice
-    ) -> None:
+    async def test_create_with_valid_template_returns_agent(self, client, db_engine, alice) -> None:
         """POST /admin/agents creates an agent with a valid Jinja2 template."""
         user, pwd = alice
         await _make_admin(db_engine, user)
@@ -105,9 +101,7 @@ class TestCreateAgent:
         assert body["role_name"] == "Screener"
         assert "id" in body
 
-    async def test_create_with_invalid_template_returns_422(
-        self, client, db_engine, alice
-    ) -> None:
+    async def test_create_with_invalid_template_returns_422(self, client, db_engine, alice) -> None:
         """POST /admin/agents returns 422 for template with unknown variable."""
         user, pwd = alice
         await _make_admin(db_engine, user)
@@ -147,9 +141,7 @@ class TestCreateAgent:
 class TestListAgents:
     """GET /admin/agents endpoint tests."""
 
-    async def test_list_returns_agents(
-        self, client, db_engine, alice
-    ) -> None:
+    async def test_list_returns_agents(self, client, db_engine, alice) -> None:
         """GET /admin/agents returns a list including newly created agents."""
         user, pwd = alice
         await _make_admin(db_engine, user)
@@ -170,25 +162,24 @@ class TestListAgents:
             },
         )
 
-        resp = await client.get(
-            "/api/v1/admin/agents", headers=_bearer(user.id)
-        )
+        resp = await client.get("/api/v1/admin/agents", headers=_bearer(user.id))
         assert resp.status_code == 200
         agents = resp.json()
         assert isinstance(agents, list)
         names = [a["role_name"] for a in agents]
         assert "Listed Screener" in names
 
-    async def test_list_filters_by_task_type(
-        self, client, db_engine, alice
-    ) -> None:
+    async def test_list_filters_by_task_type(self, client, db_engine, alice) -> None:
         """GET /admin/agents?task_type= filters the result."""
         user, pwd = alice
         await _make_admin(db_engine, user)
         provider_id, model_id = await _create_provider_and_model(db_engine)
 
         # Create screener and extractor
-        for task, name in [("screener", "Test Screener Filter"), ("extractor", "Test Extractor Filter")]:
+        for task, name in [
+            ("screener", "Test Screener Filter"),
+            ("extractor", "Test Extractor Filter"),
+        ]:
             await client.post(
                 "/api/v1/admin/agents",
                 headers=_bearer(user.id),
@@ -204,9 +195,7 @@ class TestListAgents:
                 },
             )
 
-        resp = await client.get(
-            "/api/v1/admin/agents?task_type=screener", headers=_bearer(user.id)
-        )
+        resp = await client.get("/api/v1/admin/agents?task_type=screener", headers=_bearer(user.id))
         assert resp.status_code == 200
         task_types = {a["task_type"] for a in resp.json()}
         assert "extractor" not in task_types
@@ -220,9 +209,7 @@ class TestListAgents:
 class TestUpdateAgentVersionConflict:
     """PATCH /admin/agents/{id} version conflict tests."""
 
-    async def test_patch_returns_409_on_stale_version(
-        self, client, db_engine, alice
-    ) -> None:
+    async def test_patch_returns_409_on_stale_version(self, client, db_engine, alice) -> None:
         """PATCH /admin/agents/{id} returns 409 when version_id is stale."""
         user, pwd = alice
         await _make_admin(db_engine, user)
@@ -262,9 +249,7 @@ class TestUpdateAgentVersionConflict:
 class TestGenerateSystemMessage:
     """POST /admin/agents/{id}/generate-system-message endpoint tests."""
 
-    async def test_generate_stores_undo_buffer(
-        self, client, db_engine, alice
-    ) -> None:
+    async def test_generate_stores_undo_buffer(self, client, db_engine, alice) -> None:
         """generate-system-message stores the old template in undo buffer."""
         user, pwd = alice
         await _make_admin(db_engine, user)
@@ -332,9 +317,7 @@ class TestGenerateSystemMessage:
 class TestUndoSystemMessage:
     """POST /admin/agents/{id}/undo-system-message endpoint tests."""
 
-    async def test_undo_restores_previous_message(
-        self, client, db_engine, alice
-    ) -> None:
+    async def test_undo_restores_previous_message(self, client, db_engine, alice) -> None:
         """undo-system-message swaps template with undo buffer."""
         user, pwd = alice
         await _make_admin(db_engine, user)
@@ -371,9 +354,7 @@ class TestUndoSystemMessage:
         body = undo_resp.json()
         assert body["system_message_template"] == old_template
 
-    async def test_undo_returns_409_when_no_buffer(
-        self, client, db_engine, alice
-    ) -> None:
+    async def test_undo_returns_409_when_no_buffer(self, client, db_engine, alice) -> None:
         """undo-system-message returns 409 when undo buffer is NULL."""
         user, pwd = alice
         await _make_admin(db_engine, user)

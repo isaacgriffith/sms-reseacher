@@ -12,10 +12,10 @@ Covers:
 from __future__ import annotations
 
 import pytest
+from db.models.users import GroupMembership, GroupRole, ResearchGroup
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from backend.core.auth import create_access_token
-from db.models.users import GroupMembership, GroupRole, ResearchGroup
 
 
 def _bearer(user_id: int) -> dict[str, str]:
@@ -55,11 +55,16 @@ _irr_paper_counter = 0
 async def _setup_reviewers_and_papers(db_engine, study_id: int, n_papers: int = 3):
     """Insert two reviewers and n candidate papers, return (rev_a_id, rev_b_id)."""
     global _irr_paper_counter
-    from db.models.candidate import CandidatePaper, CandidatePaperStatus, PaperDecision, PaperDecisionType
-    from db.models.study import Reviewer, ReviewerType
+    from db.models import Paper
+    from db.models.candidate import (
+        CandidatePaper,
+        CandidatePaperStatus,
+        PaperDecision,
+        PaperDecisionType,
+    )
     from db.models.search import SearchString
     from db.models.search_exec import SearchExecution, SearchExecutionStatus
-    from db.models import Paper
+    from db.models.study import Reviewer, ReviewerType
 
     maker = async_sessionmaker(db_engine, expire_on_commit=False)
     async with maker() as session:
@@ -87,9 +92,11 @@ async def _setup_reviewers_and_papers(db_engine, study_id: int, n_papers: int = 
         session.add(rev_b)
         await session.flush()
 
-        for i in range(n_papers):
+        for _i in range(n_papers):
             _irr_paper_counter += 1
-            paper = Paper(title=f"IRR Paper {_irr_paper_counter}", doi=f"10.9999/irr.{_irr_paper_counter}")
+            paper = Paper(
+                title=f"IRR Paper {_irr_paper_counter}", doi=f"10.9999/irr.{_irr_paper_counter}"
+            )
             session.add(paper)
             await session.flush()
 
@@ -104,16 +111,20 @@ async def _setup_reviewers_and_papers(db_engine, study_id: int, n_papers: int = 
             await session.flush()
 
             # Both reviewers accept all papers
-            session.add(PaperDecision(
-                candidate_paper_id=cp.id,
-                reviewer_id=rev_a.id,
-                decision=PaperDecisionType.ACCEPTED,
-            ))
-            session.add(PaperDecision(
-                candidate_paper_id=cp.id,
-                reviewer_id=rev_b.id,
-                decision=PaperDecisionType.ACCEPTED,
-            ))
+            session.add(
+                PaperDecision(
+                    candidate_paper_id=cp.id,
+                    reviewer_id=rev_a.id,
+                    decision=PaperDecisionType.ACCEPTED,
+                )
+            )
+            session.add(
+                PaperDecision(
+                    candidate_paper_id=cp.id,
+                    reviewer_id=rev_b.id,
+                    decision=PaperDecisionType.ACCEPTED,
+                )
+            )
 
         await session.commit()
         return rev_a.id, rev_b.id
@@ -199,10 +210,10 @@ class TestComputeKappa:
     @pytest.mark.asyncio
     async def test_returns_422_when_round_incomplete(self, client, db_engine, alice) -> None:
         """Returns 422 when a reviewer hasn't assessed all papers."""
-        from db.models.candidate import CandidatePaper, CandidatePaperStatus
-        from db.models.study import Reviewer, ReviewerType
-        from db.models.search_exec import SearchExecution, SearchExecutionStatus
         from db.models import Paper
+        from db.models.candidate import CandidatePaper, CandidatePaperStatus
+        from db.models.search_exec import SearchExecution, SearchExecutionStatus
+        from db.models.study import Reviewer, ReviewerType
 
         user, _ = alice
         study_id = await _setup_study(client, db_engine, user)
@@ -211,9 +222,12 @@ class TestComputeKappa:
         maker = async_sessionmaker(db_engine, expire_on_commit=False)
         async with maker() as session:
             from db.models.search import SearchString
+
             ss = SearchString(
-                study_id=study_id, version=1,
-                string_text="incomplete AND test", is_active=True,
+                study_id=study_id,
+                version=1,
+                string_text="incomplete AND test",
+                is_active=True,
             )
             session.add(ss)
             await session.flush()
@@ -233,9 +247,13 @@ class TestComputeKappa:
             await session.flush()
 
             from db.models.candidate import PaperDecision, PaperDecisionType
+
             global _irr_paper_counter
             _irr_paper_counter += 1
-            paper = Paper(title=f"Incomplete Paper {_irr_paper_counter}", doi=f"10.9999/incomplete.{_irr_paper_counter}")
+            paper = Paper(
+                title=f"Incomplete Paper {_irr_paper_counter}",
+                doi=f"10.9999/incomplete.{_irr_paper_counter}",
+            )
             session.add(paper)
             await session.flush()
             cp = CandidatePaper(
@@ -248,11 +266,13 @@ class TestComputeKappa:
             session.add(cp)
             await session.flush()
             # Only rev_a decides
-            session.add(PaperDecision(
-                candidate_paper_id=cp.id,
-                reviewer_id=rev_a.id,
-                decision=PaperDecisionType.ACCEPTED,
-            ))
+            session.add(
+                PaperDecision(
+                    candidate_paper_id=cp.id,
+                    reviewer_id=rev_a.id,
+                    decision=PaperDecisionType.ACCEPTED,
+                )
+            )
             await session.commit()
             rev_a_id = rev_a.id
             rev_b_id = rev_b.id

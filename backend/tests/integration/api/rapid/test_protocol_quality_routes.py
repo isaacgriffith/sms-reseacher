@@ -11,10 +11,10 @@ Covers:
 from __future__ import annotations
 
 import pytest
+from db.models.users import GroupMembership, GroupRole, ResearchGroup
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from backend.core.auth import create_access_token
-from db.models.users import GroupMembership, GroupRole, ResearchGroup
 
 
 def _bearer(user_id: int) -> dict[str, str]:
@@ -25,6 +25,7 @@ def _bearer(user_id: int) -> dict[str, str]:
 
     Returns:
         A dict with the ``Authorization`` header value.
+
     """
     return {"Authorization": f"Bearer {create_access_token(user_id=user_id)}"}
 
@@ -40,6 +41,7 @@ async def _setup_rr_study(client, db_engine, user, name_suffix: str = "") -> int
 
     Returns:
         The newly created study ID.
+
     """
     maker = async_sessionmaker(db_engine, expire_on_commit=False)
     async with maker() as session:
@@ -175,10 +177,6 @@ class TestUpdateProtocol:
     @pytest.mark.asyncio
     async def test_put_protocol_is_accessible_to_member(self, client, db_engine, alice) -> None:
         """PUT does not raise 401/403 for a study member (route is reachable)."""
-        import contextlib
-
-        import httpx
-
         user, _ = alice
         study_id = await _setup_rr_study(client, db_engine, user, "up3")
 
@@ -231,9 +229,7 @@ class TestValidateProtocol:
         assert resp.status_code == 401
 
     @pytest.mark.asyncio
-    async def test_returns_422_when_no_research_questions(
-        self, client, db_engine, alice
-    ) -> None:
+    async def test_returns_422_when_no_research_questions(self, client, db_engine, alice) -> None:
         """Returns 422 when protocol has no research_questions (even with stakeholder)."""
         user, _ = alice
         study_id = await _setup_rr_study(client, db_engine, user, "vp3")
@@ -409,9 +405,7 @@ class TestSetQualityConfig:
         assert resp.status_code == 403
 
     @pytest.mark.asyncio
-    async def test_threats_list_returned_after_mode_change(
-        self, client, db_engine, alice
-    ) -> None:
+    async def test_threats_list_returned_after_mode_change(self, client, db_engine, alice) -> None:
         """Returns threats list in response after mode change."""
         user, _ = alice
         study_id = await _setup_rr_study(client, db_engine, user, "qs7")

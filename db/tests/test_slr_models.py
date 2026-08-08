@@ -29,7 +29,6 @@ from db.models.slr import (
     SynthesisStatus,
 )
 
-
 # ---------------------------------------------------------------------------
 # Test database fixture
 # ---------------------------------------------------------------------------
@@ -347,7 +346,10 @@ class TestReprMethods:
 
     def test_synthesis_result_repr(self) -> None:
         sr = SynthesisResult(
-            id=5, study_id=3, approach=SynthesisApproach.META_ANALYSIS, status=SynthesisStatus.PENDING
+            id=5,
+            study_id=3,
+            approach=SynthesisApproach.META_ANALYSIS,
+            status=SynthesisStatus.PENDING,
         )
         assert "SynthesisResult" in repr(sr)
         assert "study_id=3" in repr(sr)

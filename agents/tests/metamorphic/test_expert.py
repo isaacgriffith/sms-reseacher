@@ -53,6 +53,7 @@ def make_stub_agent(output: str = _STUB_OUTPUT_1) -> ExpertAgent:
 
     Returns:
         :class:`ExpertAgent` with mocked LLM client.
+
     """
     stub_client = MagicMock(spec=LLMClient)
     stub_client.complete = AsyncMock(return_value=output)
@@ -75,9 +76,7 @@ class TestExpertMREX1ParaphraseConsistency:
         agent = make_stub_agent(_STUB_OUTPUT_1)
 
         result_abbrev = await agent.run(topic="TDD", variant="PICO")
-        result_full = await agent.run(
-            topic="Test-Driven Development", variant="PICO"
-        )
+        result_full = await agent.run(topic="Test-Driven Development", variant="PICO")
 
         assert len(result_abbrev) == len(result_full), (
             "MR-EX1: paraphrase must not change paper count"
@@ -99,9 +98,7 @@ class TestExpertMREX1ParaphraseConsistency:
         topic_a=st.sampled_from(["TDD", "Test-Driven Development", "test-first programming"]),
         topic_b=st.sampled_from(["TDD", "Test-Driven Development", "test-first programming"]),
     )
-    async def test_any_paraphrase_pair_same_structure(
-        self, topic_a: str, topic_b: str
-    ) -> None:
+    async def test_any_paraphrase_pair_same_structure(self, topic_a: str, topic_b: str) -> None:
         """Hypothesis: any paraphrase pair produces identical stub output."""
         agent = make_stub_agent(_STUB_OUTPUT_1)
 
@@ -157,9 +154,7 @@ class TestExpertMREX2ComponentSubsetMonotonicity:
             "MR-EX2: adding outcome context must not reduce paper count"
         )
 
-    @given(
-        pico_field=st.sampled_from(["population", "intervention", "comparison", "outcome"])
-    )
+    @given(pico_field=st.sampled_from(["population", "intervention", "comparison", "outcome"]))
     async def test_any_pico_addition_non_reducing(self, pico_field: str) -> None:
         """Hypothesis: adding any PICO field must not reduce suggestion count (stub)."""
         agent_base = make_stub_agent(_STUB_OUTPUT_1)
@@ -167,9 +162,7 @@ class TestExpertMREX2ComponentSubsetMonotonicity:
 
         result_base = await agent_base.run(topic="TDD", variant="PICO")
         kwargs = {pico_field: f"stub value for {pico_field}"}
-        result_enriched = await agent_enriched.run(
-            topic="TDD", variant="PICO", **kwargs
-        )
+        result_enriched = await agent_enriched.run(topic="TDD", variant="PICO", **kwargs)
 
         assert len(result_enriched) >= len(result_base), (
             f"MR-EX2: adding '{pico_field}' must not reduce paper count"

@@ -361,12 +361,15 @@ class TestBuildFunctions:
         import io
         import zipfile
 
-        with patch(
-            "backend.services.export._load_study_data",
-            new=AsyncMock(return_value=_EMPTY_STUDY_DATA),
-        ), patch(
-            "backend.services.export._async_load_charts_svg",
-            new=AsyncMock(return_value={"venue": "<svg/>"}),
+        with (
+            patch(
+                "backend.services.export._load_study_data",
+                new=AsyncMock(return_value=_EMPTY_STUDY_DATA),
+            ),
+            patch(
+                "backend.services.export._async_load_charts_svg",
+                new=AsyncMock(return_value={"venue": "<svg/>"}),
+            ),
         ):
             from backend.services.export import _build_full_archive
 

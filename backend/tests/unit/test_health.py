@@ -8,7 +8,7 @@ from __future__ import annotations
 import pytest
 from httpx import ASGITransport, AsyncClient
 
-from backend.core.auth import CurrentUser, create_access_token, get_current_user
+from backend.core.auth import CurrentUser, get_current_user
 from backend.main import create_app
 
 
@@ -19,6 +19,7 @@ def _make_app_with_auth_override():
         A :class:`FastAPI` instance whose ``get_current_user`` dependency is
         stubbed out with a pre-authenticated dummy user so that tests do not
         require a real database or valid JWT.
+
     """
     app = create_app()
 
@@ -35,6 +36,7 @@ async def client() -> AsyncClient:  # type: ignore[misc]
 
     Yields:
         An :class:`httpx.AsyncClient` bound to the test FastAPI app.
+
     """
     app = _make_app_with_auth_override()
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:

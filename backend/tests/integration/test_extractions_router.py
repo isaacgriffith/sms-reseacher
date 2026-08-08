@@ -13,19 +13,18 @@ from __future__ import annotations
 
 from unittest.mock import AsyncMock, patch
 
+# Ensure extraction tables are included in test schema
+import db.models.extraction  # noqa: F401
 import pytest
-from sqlalchemy.ext.asyncio import async_sessionmaker
-
-from backend.core.auth import create_access_token
 from db.models import Paper
 from db.models.candidate import CandidatePaper, CandidatePaperStatus
-from db.models.extraction import DataExtraction, ExtractionFieldAudit, ExtractionStatus
+from db.models.extraction import DataExtraction, ExtractionStatus
 from db.models.search import SearchString
 from db.models.search_exec import SearchExecution, SearchExecutionStatus
 from db.models.users import GroupMembership, GroupRole, ResearchGroup
+from sqlalchemy.ext.asyncio import async_sessionmaker
 
-# Ensure extraction tables are included in test schema
-import db.models.extraction  # noqa: F401
+from backend.core.auth import create_access_token
 
 
 def _bearer(user_id: int) -> dict[str, str]:
@@ -109,7 +108,9 @@ async def _insert_extraction(
             venue_name="ICSE",
             author_details=[{"name": "Alice", "institution": "MIT", "locale": "US"}],
             summary="A test summary.",
-            open_codings=[{"code": "productivity", "definition": "speed", "evidence_quote": "faster"}],
+            open_codings=[
+                {"code": "productivity", "definition": "speed", "evidence_quote": "faster"}
+            ],
             keywords=["TDD", "agile"],
             question_data={"RQ1": "Yes"},
             extraction_status=extraction_status,
@@ -169,9 +170,7 @@ class TestListExtractions:
         """No extractions → empty list."""
         user, _ = alice
         study_id = await _setup_study(client, db_engine, user)
-        resp = await client.get(
-            f"/api/v1/studies/{study_id}/extractions", headers=_bearer(user.id)
-        )
+        resp = await client.get(f"/api/v1/studies/{study_id}/extractions", headers=_bearer(user.id))
         assert resp.status_code == 200
         assert resp.json() == []
 
@@ -183,9 +182,7 @@ class TestListExtractions:
         cp_id = await _insert_candidate_paper(db_engine, study_id)
         await _insert_extraction(db_engine, cp_id)
 
-        resp = await client.get(
-            f"/api/v1/studies/{study_id}/extractions", headers=_bearer(user.id)
-        )
+        resp = await client.get(f"/api/v1/studies/{study_id}/extractions", headers=_bearer(user.id))
         assert resp.status_code == 200
         items = resp.json()
         assert len(items) == 1

@@ -2,15 +2,13 @@
 
 import pyotp
 import pytest
+from db.models.backup_codes import BackupCode
+from db.models.users import User
 from httpx import AsyncClient
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from backend.core.auth import create_access_token
-from backend.core.encryption import encrypt_secret
-from backend.core.totp import generate_secret
-from db.models.backup_codes import BackupCode
-from db.models.users import User
 
 
 async def _get_user(db_engine, user_id: int) -> User:
@@ -23,9 +21,7 @@ async def _get_user(db_engine, user_id: int) -> User:
 async def _count_backup_codes(db_engine, user_id: int) -> int:
     maker = async_sessionmaker(db_engine, expire_on_commit=False)
     async with maker() as session:
-        result = await session.execute(
-            select(BackupCode).where(BackupCode.user_id == user_id)
-        )
+        result = await session.execute(select(BackupCode).where(BackupCode.user_id == user_id))
         return len(result.scalars().all())
 
 
@@ -106,7 +102,9 @@ async def test_confirm_with_wrong_code_raises_422(client: AsyncClient, alice, db
 
 
 @pytest.mark.asyncio
-async def test_backup_code_regeneration_invalidates_old_codes(client: AsyncClient, alice, db_engine):
+async def test_backup_code_regeneration_invalidates_old_codes(
+    client: AsyncClient, alice, db_engine
+):
     user, plain = alice
     token = create_access_token(user_id=user.id, token_version=0)
 

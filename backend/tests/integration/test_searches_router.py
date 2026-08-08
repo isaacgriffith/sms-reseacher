@@ -10,12 +10,12 @@ Covers:
 from __future__ import annotations
 
 import pytest
-from sqlalchemy.ext.asyncio import async_sessionmaker
-
-from backend.core.auth import create_access_token
 from db.models.jobs import BackgroundJob, JobStatus, JobType
 from db.models.search import SearchString
 from db.models.users import GroupMembership, GroupRole, ResearchGroup
+from sqlalchemy.ext.asyncio import async_sessionmaker
+
+from backend.core.auth import create_access_token
 
 
 async def _add_job(db_engine, study_id: int, job_type: JobType, job_status: JobStatus) -> None:
@@ -105,9 +105,7 @@ class TestStartFullSearch:
         assert resp.status_code == 422
 
     @pytest.mark.asyncio
-    async def test_with_active_search_string_returns_202(
-        self, client, alice, db_engine
-    ) -> None:
+    async def test_with_active_search_string_returns_202(self, client, alice, db_engine) -> None:
         """Active search string → 202 with job_id and search_execution_id."""
         user, _ = alice
         study_id = await _setup_study(client, db_engine, user)
@@ -142,9 +140,7 @@ class TestStartFullSearch:
         assert resp.status_code == 202
 
     @pytest.mark.asyncio
-    async def test_response_body_has_correct_fields(
-        self, client, alice, db_engine
-    ) -> None:
+    async def test_response_body_has_correct_fields(self, client, alice, db_engine) -> None:
         """Response payload contains job_id (str) and search_execution_id (int)."""
         user, _ = alice
         study_id = await _setup_study(client, db_engine, user)
@@ -278,9 +274,7 @@ class TestListSearches:
         """No executions yet → empty list."""
         user, _ = alice
         study_id = await _setup_study(client, db_engine, user)
-        resp = await client.get(
-            f"/api/v1/studies/{study_id}/searches", headers=_bearer(user.id)
-        )
+        resp = await client.get(f"/api/v1/studies/{study_id}/searches", headers=_bearer(user.id))
         assert resp.status_code == 200
         assert resp.json() == []
 
@@ -296,9 +290,7 @@ class TestListSearches:
             json={},
             headers=_bearer(user.id),
         )
-        resp = await client.get(
-            f"/api/v1/studies/{study_id}/searches", headers=_bearer(user.id)
-        )
+        resp = await client.get(f"/api/v1/studies/{study_id}/searches", headers=_bearer(user.id))
         assert resp.status_code == 200
         items = resp.json()
         assert len(items) == 1

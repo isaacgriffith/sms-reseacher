@@ -10,8 +10,7 @@ Key assertions:
 from __future__ import annotations
 
 import json
-from unittest.mock import AsyncMock, MagicMock, patch
-
+from unittest.mock import AsyncMock, patch
 
 # ---------------------------------------------------------------------------
 # _REDACTED_FIELDS is populated correctly
@@ -23,9 +22,7 @@ def test_redacted_fields_contains_required_keys():
     from backend.services.export import _REDACTED_FIELDS
 
     required = {"database_url", "secret_key", "anthropic_api_key", "redis_url"}
-    assert required <= _REDACTED_FIELDS, (
-        f"Missing redacted fields: {required - _REDACTED_FIELDS}"
-    )
+    assert required <= _REDACTED_FIELDS, f"Missing redacted fields: {required - _REDACTED_FIELDS}"
 
 
 # ---------------------------------------------------------------------------
@@ -175,14 +172,14 @@ def test_extractions_to_csv_no_sensitive_fields():
 def test_build_export_raises_for_unknown_format():
     """build_export raises ValueError for an unrecognised format string."""
     import asyncio
-    from unittest.mock import AsyncMock, patch
 
     async def _run():
         with patch("backend.services.export._load_study_data", AsyncMock(return_value={})):
             from backend.services.export import build_export
+
             try:
                 await build_export(study_id=1, format="invalid_format")
-                assert False, "Expected ValueError"
+                raise AssertionError("Expected ValueError")
             except ValueError as exc:
                 assert "invalid_format" in str(exc)
 
@@ -197,7 +194,6 @@ def test_build_export_raises_for_unknown_format():
 def test_json_export_contains_no_redacted_field_names():
     """The JSON-only export payload must not contain any _REDACTED_FIELDS key names."""
     import asyncio
-    from unittest.mock import AsyncMock, patch
 
     safe_study_data = {
         "study": {"id": 1, "title": "Safe Study"},
@@ -207,12 +203,16 @@ def test_json_export_contains_no_redacted_field_names():
     }
 
     async def _run():
-        with patch("backend.services.export._load_study_data", AsyncMock(return_value=safe_study_data)):
+        with patch(
+            "backend.services.export._load_study_data", AsyncMock(return_value=safe_study_data)
+        ):
             from backend.services.export import _build_json_only
+
             payload_bytes = await _build_json_only(study_id=1)
             decoded = json.loads(payload_bytes)
 
             from backend.services.export import _REDACTED_FIELDS, _collect_keys
+
             all_keys = _collect_keys(decoded)
             leaked = all_keys & _REDACTED_FIELDS
             assert not leaked, f"Redacted field names found in JSON export: {leaked}"

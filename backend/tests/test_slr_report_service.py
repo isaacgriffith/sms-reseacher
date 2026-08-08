@@ -13,29 +13,33 @@ Tests cover:
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
+import db.models  # noqa: F401
+import db.models.audit  # noqa: F401
+import db.models.backup_codes  # noqa: F401
+import db.models.candidate  # noqa: F401
+import db.models.criteria  # noqa: F401
+import db.models.extraction  # noqa: F401
+import db.models.jobs  # noqa: F401
+import db.models.pico  # noqa: F401
+import db.models.results  # noqa: F401
+import db.models.search  # noqa: F401
+import db.models.search_exec  # noqa: F401
+import db.models.search_integrations  # noqa: F401
+import db.models.security_audit  # noqa: F401
+import db.models.seeds  # noqa: F401
+import db.models.slr  # noqa: F401
+import db.models.study  # noqa: F401
+import db.models.users  # noqa: F401
 import pytest
 import pytest_asyncio
+from db.base import Base
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.pool import StaticPool
 
-from db.base import Base
-import db.models  # noqa: F401
-import db.models.users  # noqa: F401
-import db.models.study  # noqa: F401
-import db.models.slr  # noqa: F401
-import db.models.candidate  # noqa: F401
-import db.models.search  # noqa: F401
-import db.models.search_exec  # noqa: F401
-import db.models.pico  # noqa: F401
-import db.models.seeds  # noqa: F401
-import db.models.criteria  # noqa: F401
-import db.models.extraction  # noqa: F401
-import db.models.results  # noqa: F401
-import db.models.audit  # noqa: F401
-import db.models.jobs  # noqa: F401
-import db.models.backup_codes  # noqa: F401
-import db.models.security_audit  # noqa: F401
-import db.models.search_integrations  # noqa: F401
+if TYPE_CHECKING:  # the runtime import stays function-local, as it was
+    from backend.services.slr_report_service import SLRReport
 
 
 @pytest_asyncio.fixture
@@ -63,8 +67,8 @@ async def db_session():
 
 async def _insert_study(db: AsyncSession) -> int:
     """Insert a minimal Study and ResearchGroup, returning the study id."""
+    from db.models import Study, StudyStatus, StudyType
     from db.models.users import ResearchGroup
-    from db.models import Study, StudyType, StudyStatus
 
     group = ResearchGroup(name="Report Test Group")
     db.add(group)
@@ -84,7 +88,7 @@ async def _insert_study(db: AsyncSession) -> int:
 
 async def _insert_completed_synthesis(db: AsyncSession, study_id: int) -> int:
     """Insert a completed SynthesisResult for the given study, returning its id."""
-    from db.models.slr import SynthesisResult, SynthesisApproach, SynthesisStatus
+    from db.models.slr import SynthesisApproach, SynthesisResult, SynthesisStatus
 
     sr = SynthesisResult(
         study_id=study_id,
@@ -109,7 +113,7 @@ class TestGenerateReport:
     @pytest.mark.asyncio
     async def test_returns_slr_report_all_sections(self, db_session) -> None:
         """generate_report returns SLRReport with all 10 sections populated."""
-        from backend.services.slr_report_service import generate_report, SLRReport
+        from backend.services.slr_report_service import SLRReport, generate_report
 
         study_id = await _insert_study(db_session)
         await _insert_completed_synthesis(db_session, study_id)
@@ -136,6 +140,7 @@ class TestGenerateReport:
     async def test_raises_422_when_no_completed_synthesis(self, db_session) -> None:
         """generate_report raises HTTPException(422) when no completed synthesis."""
         from fastapi import HTTPException
+
         from backend.services.slr_report_service import generate_report
 
         study_id = await _insert_study(db_session)
@@ -149,6 +154,7 @@ class TestGenerateReport:
     async def test_raises_404_when_study_not_found(self, db_session) -> None:
         """generate_report raises HTTPException(404) when study does not exist."""
         from fastapi import HTTPException
+
         from backend.services.slr_report_service import generate_report
 
         with pytest.raises(HTTPException) as exc_info:
@@ -160,6 +166,7 @@ class TestGenerateReport:
     async def test_includes_protocol_data_when_present(self, db_session) -> None:
         """generate_report includes protocol background when protocol exists."""
         from db.models.slr import ReviewProtocol, ReviewProtocolStatus
+
         from backend.services.slr_report_service import generate_report
 
         study_id = await _insert_study(db_session)
@@ -182,6 +189,7 @@ class TestGenerateReport:
     async def test_includes_grey_literature_in_search_process(self, db_session) -> None:
         """generate_report mentions grey literature sources in search_process."""
         from db.models.slr import GreyLiteratureSource, GreyLiteratureType
+
         from backend.services.slr_report_service import generate_report
 
         study_id = await _insert_study(db_session)
@@ -218,7 +226,7 @@ class TestGenerateReport:
 class TestExportReport:
     """export_report serialises the report in the requested format."""
 
-    def _make_report(self) -> "SLRReport":
+    def _make_report(self) -> SLRReport:
         """Return a minimal SLRReport for export tests."""
         from backend.services.slr_report_service import SLRReport
 
@@ -266,6 +274,7 @@ class TestExportReport:
     def test_json_returns_correct_mime_type(self) -> None:
         """export_report with format='json' returns application/json MIME."""
         import json as _json
+
         from backend.services.slr_report_service import export_report
 
         report = self._make_report()
@@ -292,6 +301,7 @@ class TestExportReport:
     def test_unknown_format_raises_400(self) -> None:
         """export_report raises HTTPException(400) for unknown formats."""
         from fastapi import HTTPException
+
         from backend.services.slr_report_service import export_report
 
         report = self._make_report()

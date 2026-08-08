@@ -70,6 +70,7 @@ def make_stub_agent(output: str = _STUB_SHORT) -> SynthesiserAgent:
 
     Returns:
         :class:`SynthesiserAgent` with mocked LLM client.
+
     """
     stub_client = MagicMock(spec=LLMClient)
     stub_client.complete = AsyncMock(return_value=output)
@@ -110,9 +111,7 @@ class TestSynthesiserMRSY1CompletenessMonotonicity:
         """Synthesis must be non-empty even with a single paper summary."""
         agent = make_stub_agent(_STUB_SHORT)
         result = await agent.run(papers_summary=_BASE_PAPERS, research_question=_RQ)
-        assert result and result.strip(), (
-            "MR-SY1: synthesis must be non-empty for a single paper"
-        )
+        assert result and result.strip(), "MR-SY1: synthesis must be non-empty for a single paper"
 
     async def test_synthesis_non_empty_for_extended_corpus(self) -> None:
         """Synthesis must be non-empty for an extended paper corpus."""
@@ -126,14 +125,11 @@ class TestSynthesiserMRSY1CompletenessMonotonicity:
     async def test_synthesis_always_non_empty(self, n_papers: int) -> None:
         """Hypothesis: synthesis must always be non-empty for any corpus size."""
         papers = "\n".join(
-            f"Paper {chr(65 + i)}: TDD study finding {i + 1}."
-            for i in range(n_papers)
+            f"Paper {chr(65 + i)}: TDD study finding {i + 1}." for i in range(n_papers)
         )
         agent = make_stub_agent(_STUB_SHORT)
         result = await agent.run(papers_summary=papers, research_question=_RQ)
-        assert result and result.strip(), (
-            f"MR-SY1: synthesis empty for {n_papers} papers"
-        )
+        assert result and result.strip(), f"MR-SY1: synthesis empty for {n_papers} papers"
 
 
 # ---------------------------------------------------------------------------
@@ -172,8 +168,7 @@ class TestSynthesiserMRSY2ParaphraseStability:
         ]
 
         results = [
-            await agent.run(papers_summary=_BASE_PAPERS, research_question=rq)
-            for rq in paraphrases
+            await agent.run(papers_summary=_BASE_PAPERS, research_question=rq) for rq in paraphrases
         ]
 
         # All stubs return identical output
@@ -182,20 +177,22 @@ class TestSynthesiserMRSY2ParaphraseStability:
         )
 
     @given(
-        rq_a=st.sampled_from([
-            "What is the effect of TDD on software defect density?",
-            "How does test-driven development affect defect density?",
-            "Does TDD reduce software bugs?",
-        ]),
-        rq_b=st.sampled_from([
-            "What is the effect of TDD on software defect density?",
-            "How does test-driven development affect defect density?",
-            "Does TDD reduce software bugs?",
-        ]),
+        rq_a=st.sampled_from(
+            [
+                "What is the effect of TDD on software defect density?",
+                "How does test-driven development affect defect density?",
+                "Does TDD reduce software bugs?",
+            ]
+        ),
+        rq_b=st.sampled_from(
+            [
+                "What is the effect of TDD on software defect density?",
+                "How does test-driven development affect defect density?",
+                "Does TDD reduce software bugs?",
+            ]
+        ),
     )
-    async def test_any_paraphrase_pair_identical_output(
-        self, rq_a: str, rq_b: str
-    ) -> None:
+    async def test_any_paraphrase_pair_identical_output(self, rq_a: str, rq_b: str) -> None:
         """Hypothesis: any paraphrase pair produces identical stub output."""
         agent = make_stub_agent(_STUB_SHORT)
 

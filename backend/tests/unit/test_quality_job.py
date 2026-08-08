@@ -8,7 +8,6 @@ from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -22,6 +21,7 @@ def _make_session_cm(db_mock: AsyncMock) -> MagicMock:
 
     Returns:
         A MagicMock whose call returns an async context manager yielding db_mock.
+
     """
     cm = AsyncMock()
     cm.__aenter__ = AsyncMock(return_value=db_mock)
@@ -37,6 +37,7 @@ def _scalar_result(value: object) -> MagicMock:
 
     Returns:
         MagicMock with scalar_one_or_none and scalars().all() wired.
+
     """
     r = MagicMock()
     r.scalar_one_or_none.return_value = value
@@ -96,8 +97,6 @@ async def test_run_quality_eval_returns_completed_with_zero_score():
     When the agent returns an all-zero score the job should still complete
     with total_score=0 in the result.
     """
-    import pytest
-
     db = AsyncMock()
     db.execute = AsyncMock(return_value=_scalar_result(None))
     db.add = MagicMock()
@@ -178,12 +177,12 @@ async def test_build_study_snapshot_returns_dict_with_required_keys():
     db.execute = AsyncMock(
         side_effect=[
             _scalar_result(study_mock),  # Study
-            empty_result,                 # SearchExecution + SearchString join
-            empty_result,                 # SearchStringIteration
-            empty_result,                 # Reviewer
-            empty_result,                 # InclusionCriterion
-            empty_result,                 # ExclusionCriterion
-            empty_result,                 # DataExtraction
+            empty_result,  # SearchExecution + SearchString join
+            empty_result,  # SearchStringIteration
+            empty_result,  # Reviewer
+            empty_result,  # InclusionCriterion
+            empty_result,  # ExclusionCriterion
+            empty_result,  # DataExtraction
         ]
     )
 
@@ -266,7 +265,7 @@ async def test_run_and_persist_report_calls_db_add_and_commit():
     ):
         from backend.jobs.quality_job import _run_and_persist_report
 
-        result = await _run_and_persist_report(db, study_id=1, snapshot=snapshot)
+        await _run_and_persist_report(db, study_id=1, snapshot=snapshot)
 
     db.add.assert_called_once()
     db.commit.assert_awaited()
@@ -319,8 +318,8 @@ async def test_build_quality_judge_with_context_uses_configured_agent():
         side_effect=[
             _scalar_result(agent_record),  # Agent lookup
             _scalar_result(provider_mock),  # Provider
-            _scalar_result(model_mock),     # AvailableModel
-            _scalar_result(study_mock),     # Study
+            _scalar_result(model_mock),  # AvailableModel
+            _scalar_result(study_mock),  # Study
         ]
     )
 

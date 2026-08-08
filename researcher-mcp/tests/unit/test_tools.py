@@ -5,12 +5,9 @@ All HTTP calls are mocked via AsyncMock so no real network requests are made.
 
 from __future__ import annotations
 
-from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import httpx
-import pytest
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -26,6 +23,7 @@ def _make_response(status: int, body: dict) -> MagicMock:
 
     Returns:
         A :class:`MagicMock` with status_code and json().
+
     """
     resp = MagicMock(spec=httpx.Response)
     resp.status_code = status
@@ -50,6 +48,7 @@ class TestSearchPapersTool:
     async def test_search_papers_primary_source(self) -> None:
         """search_papers returns papers from an enabled source."""
         from unittest.mock import AsyncMock
+
         from researcher_mcp.sources.base import PaperRecord
 
         papers = [PaperRecord(title="Paper 1", doi="10.1/p1", source_database="semantic_scholar")]
@@ -60,6 +59,7 @@ class TestSearchPapersTool:
 
         with patch("researcher_mcp.tools.search.get_registry", return_value=mock_registry):
             from researcher_mcp.tools.search import search_papers
+
             result = await search_papers("TDD")
 
         assert len(result.papers) == 1
@@ -68,6 +68,7 @@ class TestSearchPapersTool:
     async def test_search_papers_fallback_to_openalex(self) -> None:
         """search_papers records failure for sources that raise and continues."""
         from unittest.mock import AsyncMock
+
         from researcher_mcp.sources.base import PaperRecord
 
         mock_failing = MagicMock()
@@ -76,10 +77,13 @@ class TestSearchPapersTool:
         mock_oa = MagicMock()
         mock_oa.search = AsyncMock(return_value=oa_papers)
         mock_registry = MagicMock()
-        mock_registry.get_enabled = MagicMock(return_value=[("semantic_scholar", mock_failing), ("open_alex", mock_oa)])
+        mock_registry.get_enabled = MagicMock(
+            return_value=[("semantic_scholar", mock_failing), ("open_alex", mock_oa)]
+        )
 
         with patch("researcher_mcp.tools.search.get_registry", return_value=mock_registry):
             from researcher_mcp.tools.search import search_papers
+
             result = await search_papers("agile")
 
         assert len(result.papers) >= 1
@@ -96,8 +100,12 @@ class TestSearchPapersTool:
         mock_cr = MagicMock()
         mock_cr.resolve_doi = AsyncMock(return_value=cr_result)
 
-        with patch("researcher_mcp.tools.search._get_legacy_sources", return_value=(mock_ss, mock_oa, mock_cr)):
+        with patch(
+            "researcher_mcp.tools.search._get_legacy_sources",
+            return_value=(mock_ss, mock_oa, mock_cr),
+        ):
             from researcher_mcp.tools.search import get_paper
+
             result = await get_paper("DOI:10.1234/test")
 
         assert result["title"] == "SS Paper"
@@ -112,8 +120,12 @@ class TestSearchPapersTool:
         mock_cr = MagicMock()
         mock_cr.resolve_doi = AsyncMock(return_value=cr_result)
 
-        with patch("researcher_mcp.tools.search._get_legacy_sources", return_value=(mock_ss, mock_oa, mock_cr)):
+        with patch(
+            "researcher_mcp.tools.search._get_legacy_sources",
+            return_value=(mock_ss, mock_oa, mock_cr),
+        ):
             from researcher_mcp.tools.search import get_paper
+
             result = await get_paper("DOI:10.1234/test")
 
         assert result["title"] == "CR Only Paper"
@@ -126,8 +138,12 @@ class TestSearchPapersTool:
         mock_oa = MagicMock()
         mock_cr = MagicMock()
 
-        with patch("researcher_mcp.tools.search._get_legacy_sources", return_value=(mock_ss, mock_oa, mock_cr)):
+        with patch(
+            "researcher_mcp.tools.search._get_legacy_sources",
+            return_value=(mock_ss, mock_oa, mock_cr),
+        ):
             from researcher_mcp.tools.search import get_paper
+
             result = await get_paper("paperId123")
 
         assert result["title"] == "Direct SS Paper"
@@ -141,8 +157,12 @@ class TestSearchPapersTool:
         mock_oa.get_paper = AsyncMock(return_value=oa_result)
         mock_cr = MagicMock()
 
-        with patch("researcher_mcp.tools.search._get_legacy_sources", return_value=(mock_ss, mock_oa, mock_cr)):
+        with patch(
+            "researcher_mcp.tools.search._get_legacy_sources",
+            return_value=(mock_ss, mock_oa, mock_cr),
+        ):
             from researcher_mcp.tools.search import get_paper
+
             result = await get_paper("paperId999")
 
         assert result["source"] == "open_alex"
@@ -164,18 +184,25 @@ class TestAuthorsTool:
 
         with patch("researcher_mcp.tools.authors._get_ss", return_value=mock_ss):
             from researcher_mcp.tools.authors import search_authors
+
             result = await search_authors("Jane Doe")
 
         assert result["source"] == "semantic_scholar"
 
     async def test_get_author_delegates_to_ss(self) -> None:
         """get_author delegates to SemanticScholarSource."""
-        ss_result = {"author_id": "A1", "name": "Jane Doe", "source": "semantic_scholar", "warnings": []}
+        ss_result = {
+            "author_id": "A1",
+            "name": "Jane Doe",
+            "source": "semantic_scholar",
+            "warnings": [],
+        }
         mock_ss = MagicMock()
         mock_ss.get_author = AsyncMock(return_value=ss_result)
 
         with patch("researcher_mcp.tools.authors._get_ss", return_value=mock_ss):
             from researcher_mcp.tools.authors import get_author
+
             result = await get_author("A1")
 
         assert result["author_id"] == "A1"
@@ -206,6 +233,7 @@ class TestScraperTool:
 
         with patch("researcher_mcp.tools.scraper._get_client", return_value=mock_client):
             from researcher_mcp.tools.scraper import scrape_journal
+
             result = await scrape_journal("http://journal.example.com")
 
         assert len(result["papers"]) == 2
@@ -219,6 +247,7 @@ class TestScraperTool:
 
         with patch("researcher_mcp.tools.scraper._get_client", return_value=mock_client):
             from researcher_mcp.tools.scraper import scrape_journal
+
             result = await scrape_journal("http://bad.example.com")
 
         assert len(result["papers"]) == 0
@@ -231,13 +260,17 @@ class TestScraperTool:
 
         with patch("researcher_mcp.tools.scraper._get_client", return_value=mock_client):
             from researcher_mcp.tools.scraper import scrape_journal
+
             result = await scrape_journal("http://offline.example.com")
 
         assert len(result["warnings"]) > 0
 
     async def test_scrape_journal_skips_short_links(self) -> None:
         """scrape_journal skips anchor text shorter than 10 chars."""
-        html = '<html><body><a href="/x">Hi</a><a href="/long">This is a long paper title for testing</a></body></html>'
+        html = (
+            '<html><body><a href="/x">Hi</a>'
+            '<a href="/long">This is a long paper title for testing</a></body></html>'
+        )
         resp = MagicMock(spec=httpx.Response)
         resp.status_code = 200
         resp.raise_for_status.return_value = None
@@ -248,6 +281,7 @@ class TestScraperTool:
 
         with patch("researcher_mcp.tools.scraper._get_client", return_value=mock_client):
             from researcher_mcp.tools.scraper import scrape_journal
+
             result = await scrape_journal("http://journal.example.com")
 
         assert len(result["papers"]) == 1
@@ -269,6 +303,7 @@ class TestScraperTool:
 
         with patch("researcher_mcp.tools.scraper._get_client", return_value=mock_client):
             from researcher_mcp.tools.scraper import scrape_author_page
+
             result = await scrape_author_page("http://author.example.com/profile")
 
         # login link skipped
@@ -282,6 +317,7 @@ class TestScraperTool:
 
         with patch("researcher_mcp.tools.scraper._get_client", return_value=mock_client):
             from researcher_mcp.tools.scraper import scrape_author_page
+
             result = await scrape_author_page("http://missing.example.com")
 
         assert len(result["warnings"]) > 0
@@ -298,11 +334,20 @@ class TestSnowballTool:
     async def test_get_references_returns_list(self) -> None:
         """get_references returns a list of reference dicts."""
         s2_refs = [
-            {"title": "Ref Paper 1", "doi": "10.1/test", "intent": "background", "citation_source": "semantic_scholar"}
+            {
+                "title": "Ref Paper 1",
+                "doi": "10.1/test",
+                "intent": "background",
+                "citation_source": "semantic_scholar",
+            }
         ]
 
-        with patch("researcher_mcp.tools.snowball._get_references_semantic_scholar", new=AsyncMock(return_value=s2_refs)):
+        with patch(
+            "researcher_mcp.tools.snowball._get_references_semantic_scholar",
+            new=AsyncMock(return_value=s2_refs),
+        ):
             from researcher_mcp.tools.snowball import get_references
+
             result = await get_references("10.1234/source", max_results=50)
 
         assert isinstance(result, list)
@@ -312,22 +357,31 @@ class TestSnowballTool:
     async def test_get_references_http_error_returns_empty(self) -> None:
         """get_references returns empty list on all-source failure."""
         with (
-            patch("researcher_mcp.tools.snowball._get_references_semantic_scholar", new=AsyncMock(return_value=[])),
-            patch("researcher_mcp.tools.snowball._get_references_crossref", new=AsyncMock(return_value=[])),
+            patch(
+                "researcher_mcp.tools.snowball._get_references_semantic_scholar",
+                new=AsyncMock(return_value=[]),
+            ),
+            patch(
+                "researcher_mcp.tools.snowball._get_references_crossref",
+                new=AsyncMock(return_value=[]),
+            ),
         ):
             from researcher_mcp.tools.snowball import get_references
+
             result = await get_references("10.1234/bad")
 
         assert result == []
 
     async def test_get_citations_returns_list(self) -> None:
         """get_citations returns a list of citation dicts."""
-        s2_cites = [
-            {"title": "Citing Paper", "doi": None, "citation_source": "semantic_scholar"}
-        ]
+        s2_cites = [{"title": "Citing Paper", "doi": None, "citation_source": "semantic_scholar"}]
 
-        with patch("researcher_mcp.tools.snowball._get_citations_semantic_scholar", new=AsyncMock(return_value=s2_cites)):
+        with patch(
+            "researcher_mcp.tools.snowball._get_citations_semantic_scholar",
+            new=AsyncMock(return_value=s2_cites),
+        ):
             from researcher_mcp.tools.snowball import get_citations
+
             result = await get_citations("10.1234/cited")
 
         assert isinstance(result, list)
@@ -336,10 +390,17 @@ class TestSnowballTool:
     async def test_get_citations_transport_error_returns_empty(self) -> None:
         """get_citations returns empty list on all-source failure."""
         with (
-            patch("researcher_mcp.tools.snowball._get_citations_semantic_scholar", new=AsyncMock(return_value=[])),
-            patch("researcher_mcp.tools.snowball._get_citations_crossref", new=AsyncMock(return_value=[])),
+            patch(
+                "researcher_mcp.tools.snowball._get_citations_semantic_scholar",
+                new=AsyncMock(return_value=[]),
+            ),
+            patch(
+                "researcher_mcp.tools.snowball._get_citations_crossref",
+                new=AsyncMock(return_value=[]),
+            ),
         ):
             from researcher_mcp.tools.snowball import get_citations
+
             result = await get_citations("10.1234/bad")
 
         assert result == []
@@ -366,23 +427,6 @@ class TestSnowballTool:
         result = _intent_from_category(item.get("category"))
         assert result == "unknown"
 
-    async def _placeholder_never_called(self) -> None:
-        """Placeholder to keep old test count parity; never invoked."""
-        # Old _normalize_openalex_paper was removed from snowball.py
-        # The equivalent coverage is in test_get_citations_returns_list above.
-        item = {
-            "id": "W2",
-            "doi": None,
-            "title": "No Institution",
-            "authorships": [
-                {"author": {"display_name": "Bob"}, "institutions": []}
-            ],
-            "publication_year": 2020,
-            "primary_location": None,
-        }
-        # _normalize_openalex_paper was removed in Phase 5 upgrade (S2-primary snowball)
-        assert item["title"] == "No Institution"
-
 
 # ---------------------------------------------------------------------------
 # http_client module
@@ -395,6 +439,7 @@ class TestHttpClient:
     def test_token_bucket_returns_immediately_when_tokens_available(self) -> None:
         """TokenBucket.acquire does not sleep when tokens are available."""
         from researcher_mcp.core.http_client import TokenBucket
+
         # Just instantiate and check it doesn't raise
         bucket = TokenBucket(rpm=600)
         assert bucket._rate > 0
@@ -442,6 +487,7 @@ class TestServerModule:
     def test_mcp_instance_created(self) -> None:
         """Server module creates a FastMCP instance named researcher-mcp."""
         from researcher_mcp.server import mcp
+
         assert mcp is not None
         # FastMCP instance should have a name attribute
         assert hasattr(mcp, "name") or hasattr(mcp, "_name") or True  # flexible

@@ -13,10 +13,10 @@ Covers:
 from __future__ import annotations
 
 import pytest
+from db.models.users import GroupMembership, GroupRole, ResearchGroup
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from backend.core.auth import create_access_token
-from db.models.users import GroupMembership, GroupRole, ResearchGroup
 
 
 def _bearer(user_id: int) -> dict[str, str]:
@@ -34,15 +34,14 @@ async def _setup_study(client, db_engine, user) -> int:
 
     Returns:
         The created study's integer ID.
+
     """
     maker = async_sessionmaker(db_engine, expire_on_commit=False)
     async with maker() as session:
         group = ResearchGroup(name="DB Selection Lab")
         session.add(group)
         await session.flush()
-        session.add(
-            GroupMembership(group_id=group.id, user_id=user.id, role=GroupRole.ADMIN)
-        )
+        session.add(GroupMembership(group_id=group.id, user_id=user.id, role=GroupRole.ADMIN))
         await session.commit()
         group_id = group.id
 
@@ -95,9 +94,7 @@ class TestGetDatabaseSelection:
         assert ss["is_enabled"] is True
 
     @pytest.mark.asyncio
-    async def test_response_includes_all_expected_fields(
-        self, client, alice, db_engine
-    ) -> None:
+    async def test_response_includes_all_expected_fields(self, client, alice, db_engine) -> None:
         """Response body includes study_id, selections, snowball_enabled, scihub_enabled."""
         user, _ = alice
         study_id = await _setup_study(client, db_engine, user)
@@ -138,7 +135,12 @@ class TestPutDatabaseSelection:
         """No auth token returns 401."""
         resp = await client.put(
             "/api/v1/studies/1/database-selection",
-            json={"selections": [], "snowball_enabled": False, "scihub_enabled": False, "scihub_acknowledged": False},
+            json={
+                "selections": [],
+                "snowball_enabled": False,
+                "scihub_enabled": False,
+                "scihub_acknowledged": False,
+            },
         )
         assert resp.status_code == 401
 
@@ -207,8 +209,6 @@ class TestPutDatabaseSelection:
         self, client, alice, db_engine, monkeypatch
     ) -> None:
         """scihub_enabled=True with server SCIHUB_ENABLED=false returns 403."""
-        import researcher_mcp.core.config as cfg_mod
-
         user, _ = alice
         study_id = await _setup_study(client, db_engine, user)
 
@@ -229,16 +229,12 @@ class TestPutDatabaseSelection:
         assert resp.status_code == 403
 
     @pytest.mark.asyncio
-    async def test_invalid_database_index_returns_422(
-        self, client, alice, db_engine
-    ) -> None:
+    async def test_invalid_database_index_returns_422(self, client, alice, db_engine) -> None:
         """An invalid database_index value returns 422."""
         user, _ = alice
         study_id = await _setup_study(client, db_engine, user)
         payload = {
-            "selections": [
-                {"database_index": "not_a_valid_index", "is_enabled": True}
-            ],
+            "selections": [{"database_index": "not_a_valid_index", "is_enabled": True}],
             "snowball_enabled": False,
             "scihub_enabled": False,
             "scihub_acknowledged": False,

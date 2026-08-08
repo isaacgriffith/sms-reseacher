@@ -14,7 +14,6 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from fastapi import HTTPException
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -133,13 +132,18 @@ class TestCopyProtocol:
         """copy_protocol calls get_protocol_detail for auth and commits the copy."""
         from backend.services.protocol_service import copy_protocol
 
-        source = _make_protocol(id=10, is_default_template=True, owner_user_id=None, study_type="SMS")
+        source = _make_protocol(
+            id=10, is_default_template=True, owner_user_id=None, study_type="SMS"
+        )
         new_copy = _make_protocol(id=20, name="My Copy", owner_user_id=42, study_type="SMS")
 
         db = _make_mock_session()
 
         with (
-            patch("backend.services.protocol_service.get_protocol_detail", new=AsyncMock(side_effect=[source, new_copy])),
+            patch(
+                "backend.services.protocol_service.get_protocol_detail",
+                new=AsyncMock(side_effect=[source, new_copy]),
+            ),
             patch("backend.services.protocol_service._check_duplicate_name", new=AsyncMock()),
         ):
             result = await copy_protocol(
@@ -181,7 +185,10 @@ class TestCopyProtocol:
         db = _make_mock_session()
 
         with (
-            patch("backend.services.protocol_service.get_protocol_detail", new=AsyncMock(side_effect=[source, new_copy])),
+            patch(
+                "backend.services.protocol_service.get_protocol_detail",
+                new=AsyncMock(side_effect=[source, new_copy]),
+            ),
             patch("backend.services.protocol_service._check_duplicate_name", new=AsyncMock()),
         ):
             await copy_protocol(source_id=10, user_id=42, new_name="Copy", description=None, db=db)
@@ -207,7 +214,10 @@ class TestUpdateProtocolUnit:
 
         db = _make_mock_session()
 
-        with patch("backend.services.protocol_service.get_protocol_detail", new=AsyncMock(return_value=protocol)):
+        with patch(
+            "backend.services.protocol_service.get_protocol_detail",
+            new=AsyncMock(return_value=protocol),
+        ):
             with pytest.raises(HTTPException) as exc_info:
                 await update_protocol(
                     protocol_id=5,
@@ -232,7 +242,10 @@ class TestUpdateProtocolUnit:
 
         db = _make_mock_session()
 
-        with patch("backend.services.protocol_service.get_protocol_detail", new=AsyncMock(return_value=protocol)):
+        with patch(
+            "backend.services.protocol_service.get_protocol_detail",
+            new=AsyncMock(return_value=protocol),
+        ):
             with pytest.raises(HTTPException) as exc_info:
                 await update_protocol(
                     protocol_id=5,
@@ -256,7 +269,10 @@ class TestUpdateProtocolUnit:
 
         db = _make_mock_session()
 
-        with patch("backend.services.protocol_service.get_protocol_detail", new=AsyncMock(return_value=protocol)):
+        with patch(
+            "backend.services.protocol_service.get_protocol_detail",
+            new=AsyncMock(return_value=protocol),
+        ):
             with pytest.raises(HTTPException) as exc_info:
                 await update_protocol(
                     protocol_id=5,

@@ -9,8 +9,7 @@ Covers:
 from __future__ import annotations
 
 import asyncio
-from unittest.mock import AsyncMock, MagicMock, patch, call
-
+from unittest.mock import AsyncMock, MagicMock, patch
 
 # ---------------------------------------------------------------------------
 # ValueError when both actor fields are None
@@ -35,7 +34,7 @@ def test_record_raises_when_both_actors_none():
                 entity_id=1,
                 action=AuditAction.UPDATE,
             )
-            assert False, "Expected ValueError"
+            raise AssertionError("Expected ValueError")
         except ValueError as exc:
             assert "actor" in str(exc).lower()
 
@@ -63,7 +62,7 @@ def test_record_raises_with_descriptive_message():
         except ValueError as exc:
             assert "actor_user_id" in str(exc) or "actor_agent" in str(exc)
         else:
-            assert False, "ValueError not raised"
+            raise AssertionError("ValueError not raised")
 
     asyncio.run(_run())
 
@@ -125,7 +124,7 @@ def test_record_with_agent_actor():
 
 def test_record_sets_correct_fields():
     """record() populates all AuditRecord fields correctly."""
-    from db.models.audit import AuditAction, AuditRecord
+    from db.models.audit import AuditAction
 
     async def _run():
         session = AsyncMock()

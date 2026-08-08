@@ -8,7 +8,12 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from agents.services.librarian import LibrarianAgent, LibrarianResult, SuggestedAuthor, SuggestedPaper
+from agents.services.librarian import (
+    LibrarianAgent,
+    LibrarianResult,
+    SuggestedAuthor,
+    SuggestedPaper,
+)
 
 
 def _make_mock_client(response_json: str) -> MagicMock:
@@ -18,26 +23,28 @@ def _make_mock_client(response_json: str) -> MagicMock:
     return client
 
 
-_VALID_RESPONSE = json.dumps({
-    "papers": [
-        {
-            "title": "A Survey of TDD Practices",
-            "authors": ["Alice Smith", "Bob Jones"],
-            "year": 2022,
-            "venue": "JSS",
-            "doi": "10.1234/jss.2022.001",
-            "rationale": "Directly relevant to TDD research.",
-        }
-    ],
-    "authors": [
-        {
-            "author_name": "Alice Smith",
-            "institution": "MIT",
-            "profile_url": "https://dblp.org/alice",
-            "rationale": "Prolific TDD researcher.",
-        }
-    ],
-})
+_VALID_RESPONSE = json.dumps(
+    {
+        "papers": [
+            {
+                "title": "A Survey of TDD Practices",
+                "authors": ["Alice Smith", "Bob Jones"],
+                "year": 2022,
+                "venue": "JSS",
+                "doi": "10.1234/jss.2022.001",
+                "rationale": "Directly relevant to TDD research.",
+            }
+        ],
+        "authors": [
+            {
+                "author_name": "Alice Smith",
+                "institution": "MIT",
+                "profile_url": "https://dblp.org/alice",
+                "rationale": "Prolific TDD researcher.",
+            }
+        ],
+    }
+)
 
 
 class TestLibrarianAgentOutputShape:

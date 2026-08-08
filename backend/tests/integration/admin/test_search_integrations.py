@@ -15,11 +15,11 @@ Covers:
 from __future__ import annotations
 
 import pytest
+from db.models.search_integrations import IntegrationType
+from db.models.users import GroupMembership, GroupRole, ResearchGroup, User
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from backend.core.auth import create_access_token
-from db.models.search_integrations import IntegrationType
-from db.models.users import GroupMembership, GroupRole, ResearchGroup, User
 
 
 def _bearer(user_id: int) -> dict[str, str]:
@@ -30,6 +30,7 @@ def _bearer(user_id: int) -> dict[str, str]:
 
     Returns:
         Dict with ``Authorization`` header.
+
     """
     return {"Authorization": f"Bearer {create_access_token(user_id=user_id)}"}
 
@@ -40,15 +41,14 @@ async def _make_admin(db_engine, user: User) -> None:
     Args:
         db_engine: Test async engine.
         user: The user to grant admin membership to.
+
     """
     maker = async_sessionmaker(db_engine, expire_on_commit=False)
     async with maker() as session:
         group = ResearchGroup(name="Admin Group")
         session.add(group)
         await session.flush()
-        session.add(
-            GroupMembership(group_id=group.id, user_id=user.id, role=GroupRole.ADMIN)
-        )
+        session.add(GroupMembership(group_id=group.id, user_id=user.id, role=GroupRole.ADMIN))
         await session.commit()
 
 

@@ -13,17 +13,16 @@ Covers (T153):
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock, patch
-
-import pytest
-from sqlalchemy.ext.asyncio import async_sessionmaker
-
-from backend.core.auth import create_access_token
-from db.models.users import GroupMembership, GroupRole, ResearchGroup
 
 # Ensure results tables are included in the in-memory schema
 import db.models.results  # noqa: F401
+import pytest
+from db.models.users import GroupMembership, GroupRole, ResearchGroup
+from sqlalchemy.ext.asyncio import async_sessionmaker
+
+from backend.core.auth import create_access_token
 
 
 def _bearer(user_id: int) -> dict[str, str]:
@@ -67,9 +66,11 @@ async def _insert_domain_model(db_engine, study_id: int) -> int:
             study_id=study_id,
             version=1,
             concepts=[{"name": "Concept A", "definition": "Def A", "attributes": []}],
-            relationships=[{"from": "Concept A", "to": "Concept A", "label": "self", "type": "other"}],
+            relationships=[
+                {"from": "Concept A", "to": "Concept A", "label": "self", "type": "other"}
+            ],
             svg_content="<svg><circle/></svg>",
-            generated_at=datetime.now(timezone.utc),
+            generated_at=datetime.now(UTC),
         )
         session.add(dm)
         await session.commit()
@@ -88,7 +89,7 @@ async def _insert_chart(db_engine, study_id: int, chart_type: str = "venue") -> 
             version=1,
             chart_data={"ICSE": 3},
             svg_content="<svg><rect/></svg>",
-            generated_at=datetime.now(timezone.utc),
+            generated_at=datetime.now(UTC),
         )
         session.add(cs)
         await session.commit()
@@ -101,7 +102,7 @@ async def _insert_chart(db_engine, study_id: int, chart_type: str = "venue") -> 
 
 
 class TestGetResults:
-    """GET /studies/{study_id}/results"""
+    """GET /studies/{study_id}/results."""
 
     @pytest.mark.asyncio
     async def test_unauthenticated_returns_401(self, client) -> None:
@@ -144,7 +145,7 @@ class TestGetResults:
 
 
 class TestGenerateResults:
-    """POST /studies/{study_id}/results/generate"""
+    """POST /studies/{study_id}/results/generate."""
 
     @pytest.mark.asyncio
     async def test_unauthenticated_returns_401(self, client) -> None:
@@ -181,7 +182,7 @@ class TestGenerateResults:
 
 
 class TestChartSvg:
-    """GET /studies/{study_id}/results/charts/{chart_id}/svg"""
+    """GET /studies/{study_id}/results/charts/{chart_id}/svg."""
 
     @pytest.mark.asyncio
     async def test_unauthenticated_returns_401(self, client) -> None:
@@ -221,7 +222,7 @@ class TestChartSvg:
 
 
 class TestDomainModelSvg:
-    """GET /studies/{study_id}/results/domain-model/svg"""
+    """GET /studies/{study_id}/results/domain-model/svg."""
 
     @pytest.mark.asyncio
     async def test_unauthenticated_returns_401(self, client) -> None:
@@ -261,7 +262,7 @@ class TestDomainModelSvg:
 
 
 class TestEnqueueExport:
-    """POST /studies/{study_id}/export"""
+    """POST /studies/{study_id}/export."""
 
     @pytest.mark.asyncio
     async def test_unauthenticated_returns_401(self, client) -> None:
@@ -311,7 +312,7 @@ class TestEnqueueExport:
 
 
 class TestDownloadExport:
-    """GET /studies/{study_id}/export/{export_id}/download"""
+    """GET /studies/{study_id}/export/{export_id}/download."""
 
     @pytest.mark.asyncio
     async def test_unauthenticated_returns_401(self, client) -> None:

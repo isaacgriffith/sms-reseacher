@@ -9,16 +9,15 @@ Tests cover:
 
 from __future__ import annotations
 
+import db.models  # noqa: F401
+import db.models.slr  # noqa: F401
+import db.models.study  # noqa: F401
+import db.models.users  # noqa: F401
 import pytest
 import pytest_asyncio
+from db.base import Base
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.pool import StaticPool
-
-from db.base import Base
-import db.models  # noqa: F401
-import db.models.users  # noqa: F401
-import db.models.study  # noqa: F401
-import db.models.slr  # noqa: F401
 
 
 @pytest_asyncio.fixture
@@ -41,8 +40,8 @@ async def db_session():
 
 async def _insert_study(db: AsyncSession) -> int:
     """Insert a minimal Study and ResearchGroup, returning the study id."""
+    from db.models import Study, StudyStatus, StudyType
     from db.models.users import ResearchGroup
-    from db.models import Study, StudyType, StudyStatus
 
     group = ResearchGroup(name="Phase Gate Group")
     db.add(group)
@@ -93,9 +92,7 @@ class TestPhase2ProtocolValidation:
         from backend.services.slr_phase_gate import get_slr_unlocked_phases
 
         study_id = await _insert_study(db_session)
-        protocol = ReviewProtocol(
-            study_id=study_id, status=ReviewProtocolStatus.DRAFT
-        )
+        protocol = ReviewProtocol(study_id=study_id, status=ReviewProtocolStatus.DRAFT)
         db_session.add(protocol)
         await db_session.commit()
 
@@ -110,9 +107,7 @@ class TestPhase2ProtocolValidation:
         from backend.services.slr_phase_gate import get_slr_unlocked_phases
 
         study_id = await _insert_study(db_session)
-        protocol = ReviewProtocol(
-            study_id=study_id, status=ReviewProtocolStatus.UNDER_REVIEW
-        )
+        protocol = ReviewProtocol(study_id=study_id, status=ReviewProtocolStatus.UNDER_REVIEW)
         db_session.add(protocol)
         await db_session.commit()
 

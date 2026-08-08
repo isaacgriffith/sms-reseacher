@@ -12,10 +12,10 @@ from __future__ import annotations
 from unittest.mock import AsyncMock, patch
 
 import pytest
+from db.models.users import GroupMembership, GroupRole, ResearchGroup
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from backend.core.auth import create_access_token
-from db.models.users import GroupMembership, GroupRole, ResearchGroup
 
 
 def _bearer(user_id: int) -> dict[str, str]:
@@ -126,9 +126,7 @@ class TestStartSynthesis:
 
         assert resp.status_code == 202
         synthesis_id = resp.json()["id"]
-        mock_pool.enqueue_job.assert_called_once_with(
-            "run_synthesis", synthesis_id=synthesis_id
-        )
+        mock_pool.enqueue_job.assert_called_once_with("run_synthesis", synthesis_id=synthesis_id)
 
 
 class TestGetSynthesisResult:

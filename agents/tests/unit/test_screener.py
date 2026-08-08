@@ -42,7 +42,10 @@ class TestScreeningResultShape:
     @pytest.mark.asyncio
     async def test_returns_screening_result_type(self) -> None:
         """run() returns a ScreeningResult in structured mode."""
-        resp = _json_response("accepted", [{"criterion_id": 1, "criterion_type": "inclusion", "text": "Is peer-reviewed"}])
+        resp = _json_response(
+            "accepted",
+            [{"criterion_id": 1, "criterion_type": "inclusion", "text": "Is peer-reviewed"}],
+        )
         agent = ScreenerAgent(llm_client=_make_client(resp))
         result = await agent.run(
             inclusion_criteria=_INC,
@@ -57,16 +60,23 @@ class TestScreeningResultShape:
         """decision='accepted' is correctly parsed."""
         resp = _json_response("accepted", [])
         agent = ScreenerAgent(llm_client=_make_client(resp))
-        result = await agent.run(inclusion_criteria=_INC, exclusion_criteria=_EXC, abstract=_ABSTRACT)
+        result = await agent.run(
+            inclusion_criteria=_INC, exclusion_criteria=_EXC, abstract=_ABSTRACT
+        )
         assert isinstance(result, ScreeningResult)
         assert result.decision == "accepted"
 
     @pytest.mark.asyncio
     async def test_rejected_decision(self) -> None:
         """decision='rejected' is correctly parsed."""
-        resp = _json_response("rejected", [{"criterion_id": 2, "criterion_type": "exclusion", "text": "Grey literature"}])
+        resp = _json_response(
+            "rejected",
+            [{"criterion_id": 2, "criterion_type": "exclusion", "text": "Grey literature"}],
+        )
         agent = ScreenerAgent(llm_client=_make_client(resp))
-        result = await agent.run(inclusion_criteria=_INC, exclusion_criteria=_EXC, abstract=_ABSTRACT)
+        result = await agent.run(
+            inclusion_criteria=_INC, exclusion_criteria=_EXC, abstract=_ABSTRACT
+        )
         assert isinstance(result, ScreeningResult)
         assert result.decision == "rejected"
 
@@ -75,20 +85,24 @@ class TestScreeningResultShape:
         """decision='duplicate' is correctly parsed."""
         resp = _json_response("duplicate", [])
         agent = ScreenerAgent(llm_client=_make_client(resp))
-        result = await agent.run(inclusion_criteria=_INC, exclusion_criteria=_EXC, abstract=_ABSTRACT)
+        result = await agent.run(
+            inclusion_criteria=_INC, exclusion_criteria=_EXC, abstract=_ABSTRACT
+        )
         assert isinstance(result, ScreeningResult)
         assert result.decision == "duplicate"
 
     @pytest.mark.asyncio
     async def test_reasons_list_populated(self) -> None:
-        """reasons is a list of CriterionRef objects when JSON response includes them."""
+        """Reasons is a list of CriterionRef objects when JSON response includes them."""
         reasons = [
             {"criterion_id": 1, "criterion_type": "inclusion", "text": "Is peer-reviewed"},
             {"criterion_id": 2, "criterion_type": "exclusion", "text": "No grey literature"},
         ]
         resp = _json_response("rejected", reasons)
         agent = ScreenerAgent(llm_client=_make_client(resp))
-        result = await agent.run(inclusion_criteria=_INC, exclusion_criteria=_EXC, abstract=_ABSTRACT)
+        result = await agent.run(
+            inclusion_criteria=_INC, exclusion_criteria=_EXC, abstract=_ABSTRACT
+        )
         assert isinstance(result, ScreeningResult)
         assert len(result.reasons) == 2
         assert all(isinstance(r, CriterionRef) for r in result.reasons)
@@ -97,10 +111,12 @@ class TestScreeningResultShape:
 
     @pytest.mark.asyncio
     async def test_reasons_list_empty_when_not_provided(self) -> None:
-        """reasons defaults to [] when LLM response has empty list."""
+        """Reasons defaults to [] when LLM response has empty list."""
         resp = _json_response("accepted", [])
         agent = ScreenerAgent(llm_client=_make_client(resp))
-        result = await agent.run(inclusion_criteria=_INC, exclusion_criteria=_EXC, abstract=_ABSTRACT)
+        result = await agent.run(
+            inclusion_criteria=_INC, exclusion_criteria=_EXC, abstract=_ABSTRACT
+        )
         assert isinstance(result, ScreeningResult)
         assert result.reasons == []
 
@@ -112,7 +128,9 @@ class TestFallbackParsing:
     async def test_plain_text_accept_fallback(self) -> None:
         """Plain text with 'accept' → decision='accepted', reasons=[]."""
         agent = ScreenerAgent(llm_client=_make_client("This paper should be accepted."))
-        result = await agent.run(inclusion_criteria=_INC, exclusion_criteria=_EXC, abstract=_ABSTRACT)
+        result = await agent.run(
+            inclusion_criteria=_INC, exclusion_criteria=_EXC, abstract=_ABSTRACT
+        )
         assert isinstance(result, ScreeningResult)
         assert result.decision == "accepted"
         assert result.reasons == []
@@ -121,7 +139,9 @@ class TestFallbackParsing:
     async def test_plain_text_reject_fallback(self) -> None:
         """Plain text without 'accept'/'duplicate' → decision='rejected'."""
         agent = ScreenerAgent(llm_client=_make_client("This paper does not meet the criteria."))
-        result = await agent.run(inclusion_criteria=_INC, exclusion_criteria=_EXC, abstract=_ABSTRACT)
+        result = await agent.run(
+            inclusion_criteria=_INC, exclusion_criteria=_EXC, abstract=_ABSTRACT
+        )
         assert isinstance(result, ScreeningResult)
         assert result.decision == "rejected"
 
@@ -129,7 +149,9 @@ class TestFallbackParsing:
     async def test_plain_text_duplicate_fallback(self) -> None:
         """Plain text containing 'duplicate' → decision='duplicate'."""
         agent = ScreenerAgent(llm_client=_make_client("This appears to be a duplicate entry."))
-        result = await agent.run(inclusion_criteria=_INC, exclusion_criteria=_EXC, abstract=_ABSTRACT)
+        result = await agent.run(
+            inclusion_criteria=_INC, exclusion_criteria=_EXC, abstract=_ABSTRACT
+        )
         assert isinstance(result, ScreeningResult)
         assert result.decision == "duplicate"
 
@@ -143,7 +165,9 @@ class TestMarkdownFenceStripping:
         payload = _json_response("accepted", [])
         fenced = f"```json\n{payload}\n```"
         agent = ScreenerAgent(llm_client=_make_client(fenced))
-        result = await agent.run(inclusion_criteria=_INC, exclusion_criteria=_EXC, abstract=_ABSTRACT)
+        result = await agent.run(
+            inclusion_criteria=_INC, exclusion_criteria=_EXC, abstract=_ABSTRACT
+        )
         assert isinstance(result, ScreeningResult)
         assert result.decision == "accepted"
 

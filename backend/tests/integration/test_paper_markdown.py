@@ -15,12 +15,12 @@ from __future__ import annotations
 from datetime import UTC, datetime
 
 import pytest
-from sqlalchemy.ext.asyncio import async_sessionmaker
-
-from backend.core.auth import create_access_token
 from db.models import Paper
 from db.models.search_integrations import FullTextSource
 from db.models.users import GroupMembership, GroupRole, ResearchGroup
+from sqlalchemy.ext.asyncio import async_sessionmaker
+
+from backend.core.auth import create_access_token
 
 
 def _bearer(user_id: int) -> dict[str, str]:
@@ -33,15 +33,14 @@ async def _setup_study_and_paper(client, db_engine, user) -> tuple[int, int]:
 
     Returns:
         Tuple of (study_id, paper_id).
+
     """
     maker = async_sessionmaker(db_engine, expire_on_commit=False)
     async with maker() as session:
         group = ResearchGroup(name="Markdown Test Lab")
         session.add(group)
         await session.flush()
-        session.add(
-            GroupMembership(group_id=group.id, user_id=user.id, role=GroupRole.ADMIN)
-        )
+        session.add(GroupMembership(group_id=group.id, user_id=user.id, role=GroupRole.ADMIN))
         await session.commit()
         group_id = group.id
 
@@ -142,7 +141,6 @@ class TestStorePaperMarkdown:
     @pytest.mark.asyncio
     async def test_get_paper_markdown_returns_none_when_not_stored(self, db_engine) -> None:
         """get_paper_markdown returns None markdown when paper has none."""
-        from sqlalchemy import select
         from backend.services.paper_markdown import get_paper_markdown
 
         maker = async_sessionmaker(db_engine, expire_on_commit=False)
@@ -164,8 +162,7 @@ class TestStorePaperMarkdown:
     @pytest.mark.asyncio
     async def test_store_paper_markdown_persists_markdown(self, db_engine) -> None:
         """store_paper_markdown writes full_text_markdown and source to the Paper row."""
-        from sqlalchemy import select
-        from backend.services.paper_markdown import store_paper_markdown, get_paper_markdown
+        from backend.services.paper_markdown import get_paper_markdown, store_paper_markdown
 
         maker = async_sessionmaker(db_engine, expire_on_commit=False)
 

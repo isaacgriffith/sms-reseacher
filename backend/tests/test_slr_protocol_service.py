@@ -14,18 +14,16 @@ from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock
 
+import db.models  # noqa: F401
+import db.models.slr  # noqa: F401
+import db.models.study  # noqa: F401
+import db.models.users  # noqa: F401
 import pytest
 import pytest_asyncio
+from db.base import Base
+from db.models.slr import ReviewProtocol, ReviewProtocolStatus
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.pool import StaticPool
-
-from db.base import Base
-import db.models  # noqa: F401
-import db.models.users  # noqa: F401
-import db.models.study  # noqa: F401
-import db.models.slr  # noqa: F401
-
-from db.models.slr import ReviewProtocol, ReviewProtocolStatus
 
 
 @pytest_asyncio.fixture
@@ -48,8 +46,8 @@ async def db_session():
 
 async def _insert_study(db: AsyncSession) -> int:
     """Insert a minimal Study and ResearchGroup, returning the study id."""
+    from db.models import Study, StudyStatus, StudyType
     from db.models.users import ResearchGroup
-    from db.models import Study, StudyType, StudyStatus
 
     group = ResearchGroup(name="Test Group")
     db.add(group)

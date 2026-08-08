@@ -11,15 +11,15 @@ Covers:
 from __future__ import annotations
 
 import pytest
-from sqlalchemy.ext.asyncio import async_sessionmaker
-
-from backend.core.auth import create_access_token
 from db.models import Paper
 from db.models.candidate import CandidatePaper, CandidatePaperStatus
 from db.models.search import SearchString
 from db.models.search_exec import SearchExecution, SearchExecutionStatus
 from db.models.study import Reviewer, ReviewerType
 from db.models.users import GroupMembership, GroupRole, ResearchGroup
+from sqlalchemy.ext.asyncio import async_sessionmaker
+
+from backend.core.auth import create_access_token
 
 
 def _bearer(user_id: int) -> dict[str, str]:
@@ -108,9 +108,7 @@ class TestSubmitDecision:
         assert resp.status_code == 401
 
     @pytest.mark.asyncio
-    async def test_reviewer_not_in_study_returns_422(
-        self, client, alice, bob, db_engine
-    ) -> None:
+    async def test_reviewer_not_in_study_returns_422(self, client, alice, bob, db_engine) -> None:
         """Reviewer that belongs to a different study → 422."""
         alice_user, _ = alice
         study_id = await _setup_study(client, db_engine, alice_user)
@@ -133,9 +131,7 @@ class TestSubmitDecision:
         assert resp.status_code == 422
 
     @pytest.mark.asyncio
-    async def test_accepted_decision_recorded(
-        self, client, alice, db_engine
-    ) -> None:
+    async def test_accepted_decision_recorded(self, client, alice, db_engine) -> None:
         """Valid accepted decision → 201 with correct decision field."""
         user, _ = alice
         study_id = await _setup_study(client, db_engine, user)
@@ -224,9 +220,7 @@ class TestSubmitDecision:
         assert get_resp.json()["conflict_flag"] is True
 
     @pytest.mark.asyncio
-    async def test_agreeing_human_reviewers_no_conflict(
-        self, client, alice, db_engine
-    ) -> None:
+    async def test_agreeing_human_reviewers_no_conflict(self, client, alice, db_engine) -> None:
         """Two human reviewers with the same decision → conflict_flag=False."""
         user, _ = alice
         study_id = await _setup_study(client, db_engine, user)
@@ -249,9 +243,7 @@ class TestSubmitDecision:
         assert get_resp.json()["conflict_flag"] is False
 
     @pytest.mark.asyncio
-    async def test_decision_with_reasons_list_stored(
-        self, client, alice, db_engine
-    ) -> None:
+    async def test_decision_with_reasons_list_stored(self, client, alice, db_engine) -> None:
         """Reasons list is persisted and returned in response."""
         user, _ = alice
         study_id = await _setup_study(client, db_engine, user)
@@ -277,15 +269,11 @@ class TestResolveConflict:
     @pytest.mark.asyncio
     async def test_unauthenticated_returns_401(self, client) -> None:
         """No auth token → 401."""
-        resp = await client.post(
-            "/api/v1/studies/1/papers/1/resolve-conflict", json={}
-        )
+        resp = await client.post("/api/v1/studies/1/papers/1/resolve-conflict", json={})
         assert resp.status_code == 401
 
     @pytest.mark.asyncio
-    async def test_resolve_clears_conflict_flag(
-        self, client, alice, db_engine
-    ) -> None:
+    async def test_resolve_clears_conflict_flag(self, client, alice, db_engine) -> None:
         """Resolving a conflict sets conflict_flag=False on the candidate."""
         user, _ = alice
         study_id = await _setup_study(client, db_engine, user)
@@ -318,9 +306,7 @@ class TestResolveConflict:
         assert get_resp.json()["conflict_flag"] is False
 
     @pytest.mark.asyncio
-    async def test_resolve_sets_binding_status(
-        self, client, alice, db_engine
-    ) -> None:
+    async def test_resolve_sets_binding_status(self, client, alice, db_engine) -> None:
         """Resolve-conflict updates CandidatePaper status to the binding decision."""
         user, _ = alice
         study_id = await _setup_study(client, db_engine, user)
@@ -348,9 +334,7 @@ class TestResolveConflict:
         assert get_resp.json()["current_status"] == "rejected"
 
     @pytest.mark.asyncio
-    async def test_resolve_without_conflict_returns_422(
-        self, client, alice, db_engine
-    ) -> None:
+    async def test_resolve_without_conflict_returns_422(self, client, alice, db_engine) -> None:
         """Calling resolve-conflict when no conflict exists → 422."""
         user, _ = alice
         study_id = await _setup_study(client, db_engine, user)
@@ -375,9 +359,7 @@ class TestListDecisions:
         assert resp.status_code == 401
 
     @pytest.mark.asyncio
-    async def test_empty_list_when_no_decisions(
-        self, client, alice, db_engine
-    ) -> None:
+    async def test_empty_list_when_no_decisions(self, client, alice, db_engine) -> None:
         """No decisions yet → empty list."""
         user, _ = alice
         study_id = await _setup_study(client, db_engine, user)
@@ -391,9 +373,7 @@ class TestListDecisions:
         assert resp.json() == []
 
     @pytest.mark.asyncio
-    async def test_returns_decision_after_submission(
-        self, client, alice, db_engine
-    ) -> None:
+    async def test_returns_decision_after_submission(self, client, alice, db_engine) -> None:
         """Decision history shows submitted decision in order."""
         user, _ = alice
         study_id = await _setup_study(client, db_engine, user)

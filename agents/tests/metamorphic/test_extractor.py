@@ -34,40 +34,44 @@ from agents.services.extractor import ExtractionResult, ExtractorAgent
 # Stub helpers
 # ---------------------------------------------------------------------------
 
-_STUB_RESULT_MINIMAL = json.dumps({
-    "research_type": "evaluation",
-    "venue_type": "journal",
-    "venue_name": "Journal of Systems and Software",
-    "author_details": [{"name": "Jane Smith", "institution": "MIT", "locale": "US"}],
-    "summary": "A controlled experiment on TDD and defect density.",
-    "open_codings": [{"code": "defect_reduction", "text": "40% fewer defects"}],
-    "keywords": ["TDD", "defect density", "controlled experiment"],
-    "question_data": {"RQ1": "TDD reduces defects by 40%."},
-})
+_STUB_RESULT_MINIMAL = json.dumps(
+    {
+        "research_type": "evaluation",
+        "venue_type": "journal",
+        "venue_name": "Journal of Systems and Software",
+        "author_details": [{"name": "Jane Smith", "institution": "MIT", "locale": "US"}],
+        "summary": "A controlled experiment on TDD and defect density.",
+        "open_codings": [{"code": "defect_reduction", "text": "40% fewer defects"}],
+        "keywords": ["TDD", "defect density", "controlled experiment"],
+        "question_data": {"RQ1": "TDD reduces defects by 40%."},
+    }
+)
 
-_STUB_RESULT_FULL = json.dumps({
-    "research_type": "evaluation",
-    "venue_type": "journal",
-    "venue_name": "Journal of Systems and Software",
-    "author_details": [
-        {"name": "Jane Smith", "institution": "MIT", "locale": "US"},
-        {"name": "John Doe", "institution": "Stanford", "locale": "US"},
-    ],
-    "summary": (
-        "A controlled experiment on TDD and defect density with full methodology. "
-        "42 developers were split into TDD and waterfall groups."
-    ),
-    "open_codings": [
-        {"code": "defect_reduction", "text": "40% fewer defects"},
-        {"code": "methodology", "text": "controlled experiment with 42 participants"},
-        {"code": "language", "text": "Java projects"},
-    ],
-    "keywords": ["TDD", "defect density", "controlled experiment", "software quality"],
-    "question_data": {
-        "RQ1": "TDD reduces defects by 40%.",
-        "RQ2": "Java developers show largest defect reduction.",
-    },
-})
+_STUB_RESULT_FULL = json.dumps(
+    {
+        "research_type": "evaluation",
+        "venue_type": "journal",
+        "venue_name": "Journal of Systems and Software",
+        "author_details": [
+            {"name": "Jane Smith", "institution": "MIT", "locale": "US"},
+            {"name": "John Doe", "institution": "Stanford", "locale": "US"},
+        ],
+        "summary": (
+            "A controlled experiment on TDD and defect density with full methodology. "
+            "42 developers were split into TDD and waterfall groups."
+        ),
+        "open_codings": [
+            {"code": "defect_reduction", "text": "40% fewer defects"},
+            {"code": "methodology", "text": "controlled experiment with 42 participants"},
+            {"code": "language", "text": "Java projects"},
+        ],
+        "keywords": ["TDD", "defect density", "controlled experiment", "software quality"],
+        "question_data": {
+            "RQ1": "TDD reduces defects by 40%.",
+            "RQ2": "Java developers show largest defect reduction.",
+        },
+    }
+)
 
 _PAPER_ABSTRACT = (
     "We conducted a controlled experiment evaluating TDD with 42 Java developers. "
@@ -101,6 +105,7 @@ def make_stub_agent(output: str = _STUB_RESULT_MINIMAL) -> ExtractorAgent:
 
     Returns:
         :class:`ExtractorAgent` with mocked LLM client.
+
     """
     stub_client = MagicMock(spec=LLMClient)
     stub_client.complete = AsyncMock(return_value=output)
@@ -115,6 +120,7 @@ def _non_null_field_count(result: ExtractionResult) -> int:
 
     Returns:
         Integer count of fields with non-None, non-empty values.
+
     """
     count = 0
     if result.research_type:
@@ -162,8 +168,7 @@ class TestExtractorMRE1FieldConsistencyUnderEquivalentPhrasings:
 
         research_types = {r.research_type for r in results}
         assert len(research_types) == 1, (
-            "MR-E1: equivalent titles must produce the same research_type. "
-            f"Got: {research_types}"
+            f"MR-E1: equivalent titles must produce the same research_type. Got: {research_types}"
         )
 
     async def test_equivalent_titles_same_keyword_count(self) -> None:
@@ -177,8 +182,7 @@ class TestExtractorMRE1FieldConsistencyUnderEquivalentPhrasings:
 
         keyword_counts = [len(r.keywords) for r in results]
         assert len(set(keyword_counts)) == 1, (
-            "MR-E1: equivalent titles must produce the same keyword count. "
-            f"Got: {keyword_counts}"
+            f"MR-E1: equivalent titles must produce the same keyword count. Got: {keyword_counts}"
         )
 
     async def test_research_type_is_valid_enum(self) -> None:
@@ -192,25 +196,15 @@ class TestExtractorMRE1FieldConsistencyUnderEquivalentPhrasings:
             f"MR-E1: research_type '{result.research_type}' not in valid R1–R6 set"
         )
 
-    @given(
-        title=st.sampled_from([_TITLE_1, _TITLE_2, _TITLE_3])
-    )
-    async def test_any_title_paraphrase_yields_non_empty_keywords(
-        self, title: str
-    ) -> None:
+    @given(title=st.sampled_from([_TITLE_1, _TITLE_2, _TITLE_3]))
+    async def test_any_title_paraphrase_yields_non_empty_keywords(self, title: str) -> None:
         """Hypothesis: any equivalent title produces non-empty keyword list."""
         agent = make_stub_agent(_STUB_RESULT_MINIMAL)
         result = await agent.run(paper_text=_PAPER_ABSTRACT, title=title)
-        assert result.keywords, (
-            f"MR-E1: keyword list must be non-empty for title='{title}'"
-        )
+        assert result.keywords, f"MR-E1: keyword list must be non-empty for title='{title}'"
 
-    @given(
-        title=st.sampled_from([_TITLE_1, _TITLE_2, _TITLE_3])
-    )
-    async def test_any_title_paraphrase_yields_valid_research_type(
-        self, title: str
-    ) -> None:
+    @given(title=st.sampled_from([_TITLE_1, _TITLE_2, _TITLE_3]))
+    async def test_any_title_paraphrase_yields_valid_research_type(self, title: str) -> None:
         """Hypothesis: any equivalent title yields a valid research_type."""
         from agents.services.extractor import _VALID_RESEARCH_TYPES
 
@@ -237,12 +231,8 @@ class TestExtractorMRE2CompletenessMonotonicity:
         agent_minimal = make_stub_agent(_STUB_RESULT_MINIMAL)
         agent_full = make_stub_agent(_STUB_RESULT_FULL)
 
-        result_abstract = await agent_minimal.run(
-            paper_text=_PAPER_ABSTRACT, title=_TITLE_1
-        )
-        result_full = await agent_full.run(
-            paper_text=_PAPER_FULL_TEXT, title=_TITLE_1
-        )
+        result_abstract = await agent_minimal.run(paper_text=_PAPER_ABSTRACT, title=_TITLE_1)
+        result_full = await agent_full.run(paper_text=_PAPER_FULL_TEXT, title=_TITLE_1)
 
         count_abstract = _non_null_field_count(result_abstract)
         count_full = _non_null_field_count(result_full)
@@ -276,9 +266,7 @@ class TestExtractorMRE2CompletenessMonotonicity:
             "MR-E2: full text must produce ≥ open codings vs abstract"
         )
 
-    @given(
-        use_full_text=st.booleans()
-    )
+    @given(use_full_text=st.booleans())
     async def test_extraction_always_has_research_type(self, use_full_text: bool) -> None:
         """Hypothesis: research_type must always be populated regardless of text length."""
         text = _PAPER_FULL_TEXT if use_full_text else _PAPER_ABSTRACT

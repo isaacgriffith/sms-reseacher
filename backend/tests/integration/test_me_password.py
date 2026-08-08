@@ -1,12 +1,12 @@
 """Integration tests for PUT /api/v1/me/password."""
 
 import pytest
+from db.models.users import User
 from httpx import AsyncClient
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from backend.core.auth import create_access_token, verify_password
-from db.models.users import User
-from sqlalchemy import select
 
 
 async def _login_token(db_engine, user_id: int, token_version: int = 0) -> str:
@@ -71,6 +71,7 @@ async def test_change_password_same_complex_password(client: AsyncClient, db_eng
     user, _ = alice
     # Re-hash with a complex password to test the same-password rejection path
     from sqlalchemy.ext.asyncio import async_sessionmaker
+
     from backend.core.auth import hash_password
 
     complex_pw = "ComplexPass12!"
@@ -92,11 +93,14 @@ async def test_change_password_same_complex_password(client: AsyncClient, db_eng
 
 
 @pytest.mark.asyncio
-async def test_change_password_success_increments_token_version(client: AsyncClient, alice, db_engine):
+async def test_change_password_success_increments_token_version(
+    client: AsyncClient, alice, db_engine
+):
     user, plain = alice
     # alice default password "password123" lacks complexity; use a complex one
-    from backend.core.auth import hash_password
     from sqlalchemy.ext.asyncio import async_sessionmaker
+
+    from backend.core.auth import hash_password
 
     complex_current = "OldPass12!xyz"
     maker = async_sessionmaker(db_engine, expire_on_commit=False)
@@ -125,8 +129,9 @@ async def test_change_password_success_increments_token_version(client: AsyncCli
 async def test_change_password_old_jwt_rejected_after_change(client: AsyncClient, alice, db_engine):
     """Old token (stale token_version) should be rejected after password change."""
     user, _ = alice
-    from backend.core.auth import hash_password
     from sqlalchemy.ext.asyncio import async_sessionmaker
+
+    from backend.core.auth import hash_password
 
     complex_current = "OldPass12!xyz"
     maker = async_sessionmaker(db_engine, expire_on_commit=False)

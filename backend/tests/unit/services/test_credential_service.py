@@ -182,6 +182,7 @@ class TestGetEffectiveKey:
     def test_returns_db_key_when_stored(self, service) -> None:
         """Returns the decrypted DB key when api_key_encrypted is present."""
         from unittest.mock import MagicMock
+
         cred = MagicMock(spec=SearchIntegrationCredential)
         cred.api_key_encrypted = encrypt_secret("db-key", SECRET)
         result = service.get_effective_key(IntegrationType.IEEE_XPLORE, cred, SECRET)
@@ -202,6 +203,7 @@ class TestGetEffectiveKey:
     def test_falls_back_to_env_var_when_decrypt_fails(self, service, monkeypatch) -> None:
         """Falls back to env var when decrypt raises an exception."""
         from unittest.mock import MagicMock
+
         monkeypatch.setenv("IEEE_XPLORE_API_KEY", "fallback-env-key")
         cred = MagicMock(spec=SearchIntegrationCredential)
         cred.api_key_encrypted = b"corrupted-data"  # invalid Fernet token
@@ -211,6 +213,7 @@ class TestGetEffectiveKey:
     def test_db_key_takes_precedence_over_env(self, service, monkeypatch) -> None:
         """DB key is used even when env var is also set."""
         from unittest.mock import MagicMock
+
         monkeypatch.setenv("IEEE_XPLORE_API_KEY", "env-key")
         cred = MagicMock(spec=SearchIntegrationCredential)
         cred.api_key_encrypted = encrypt_secret("db-key", SECRET)
@@ -229,6 +232,7 @@ class TestConfiguredVia:
     def test_returns_database_when_db_key_present(self, service) -> None:
         """Returns "database" when api_key_encrypted is set."""
         from unittest.mock import MagicMock
+
         cred = MagicMock(spec=SearchIntegrationCredential)
         cred.api_key_encrypted = b"some-bytes"
         assert service.configured_via(IntegrationType.IEEE_XPLORE, cred) == "database"
@@ -308,12 +312,11 @@ class TestRunConnectivityTest:
         with patch("backend.services.credential_service.get_settings") as mock_settings:
             mock_settings.return_value.secret_key = SECRET
             from db.models.search_integrations import TestStatus
+
             with patch.object(
                 service, "_probe_ieee", new=AsyncMock(return_value=(TestStatus.SUCCESS, "OK"))
             ) as mock_probe:
-                await service.run_connectivity_test(
-                    IntegrationType.IEEE_XPLORE, cred, db_session
-                )
+                await service.run_connectivity_test(IntegrationType.IEEE_XPLORE, cred, db_session)
         mock_probe.assert_called_once_with("ieee-key")
 
 
@@ -344,6 +347,7 @@ class TestProbeIeee:
             status, msg = await CredentialService._probe_ieee("test-key")
 
         from db.models.search_integrations import TestStatus
+
         assert status == TestStatus.SUCCESS
         assert "reachable" in msg
 
@@ -366,6 +370,7 @@ class TestProbeIeee:
             status, msg = await CredentialService._probe_ieee("bad-key")
 
         from db.models.search_integrations import TestStatus
+
         assert status == TestStatus.AUTH_FAILED
 
     @pytest.mark.asyncio
@@ -387,6 +392,7 @@ class TestProbeIeee:
             status, msg = await CredentialService._probe_ieee("rate-key")
 
         from db.models.search_integrations import TestStatus
+
         assert status == TestStatus.RATE_LIMITED
 
     @pytest.mark.asyncio
@@ -405,6 +411,7 @@ class TestProbeIeee:
             status, msg = await CredentialService._probe_ieee("test-key")
 
         from db.models.search_integrations import TestStatus
+
         assert status == TestStatus.UNREACHABLE
         assert "Network error" in msg
 
@@ -427,5 +434,6 @@ class TestProbeIeee:
             status, msg = await CredentialService._probe_ieee("test-key")
 
         from db.models.search_integrations import TestStatus
+
         assert status == TestStatus.UNREACHABLE
         assert "500" in msg

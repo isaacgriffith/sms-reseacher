@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from unittest.mock import AsyncMock, call, patch
-
 import httpx
 import pytest
 

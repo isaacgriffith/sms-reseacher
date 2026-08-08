@@ -9,8 +9,6 @@ Covers:
 
 from __future__ import annotations
 
-import pytest
-
 from researcher_mcp.core.dedup import deduplicate_paper_records
 from researcher_mcp.sources.base import AuthorInfo, PaperRecord
 
@@ -31,6 +29,7 @@ def _paper(
 
     Returns:
         A :class:`PaperRecord` instance.
+
     """
     return PaperRecord(
         title=title,

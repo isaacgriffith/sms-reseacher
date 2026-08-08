@@ -16,21 +16,24 @@ Tests cover:
 from __future__ import annotations
 
 import json
+from typing import TYPE_CHECKING
 
-import pytest
-import pytest_asyncio
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-from sqlalchemy.pool import StaticPool
-
-from db.base import Base
 import db.models  # noqa: F401
-import db.models.users  # noqa: F401
-import db.models.study  # noqa: F401
-import db.models.slr  # noqa: F401
 import db.models.candidate  # noqa: F401
 import db.models.search  # noqa: F401
 import db.models.search_exec  # noqa: F401
+import db.models.slr  # noqa: F401
+import db.models.study  # noqa: F401
 import db.models.tertiary  # noqa: F401
+import db.models.users  # noqa: F401
+import pytest
+import pytest_asyncio
+from db.base import Base
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.pool import StaticPool
+
+if TYPE_CHECKING:  # the runtime import stays function-local, as it was
+    from backend.services.tertiary_report_service import TertiaryReport
 
 
 @pytest_asyncio.fixture
@@ -40,6 +43,7 @@ async def db_session():
     Yields:
         An :class:`~sqlalchemy.ext.asyncio.AsyncSession` backed by SQLite
         in-memory storage.
+
     """
     engine = create_async_engine(
         "sqlite+aiosqlite:///:memory:",
@@ -65,9 +69,10 @@ async def _insert_tertiary_study(db: AsyncSession, name: str = "Tertiary Report 
 
     Returns:
         Integer study id.
+
     """
+    from db.models import Study, StudyStatus, StudyType
     from db.models.users import ResearchGroup
-    from db.models import Study, StudyType, StudyStatus
 
     group = ResearchGroup(name=f"Group {name}")
     db.add(group)
@@ -94,8 +99,9 @@ async def _insert_completed_synthesis(db: AsyncSession, study_id: int) -> int:
 
     Returns:
         Integer synthesis result id.
+
     """
-    from db.models.slr import SynthesisResult, SynthesisApproach, SynthesisStatus
+    from db.models.slr import SynthesisApproach, SynthesisResult, SynthesisStatus
 
     sr = SynthesisResult(
         study_id=study_id,
@@ -119,6 +125,7 @@ async def _insert_accepted_candidate_paper(db: AsyncSession, study_id: int, doi:
 
     Returns:
         Integer candidate paper id.
+
     """
     from db.models import Paper
     from db.models.candidate import CandidatePaper, CandidatePaperStatus
@@ -187,6 +194,7 @@ async def _insert_extraction(
 
     Returns:
         Integer extraction id.
+
     """
     from db.models.tertiary import TertiaryDataExtraction
 
@@ -216,7 +224,7 @@ class TestGenerateReport:
     @pytest.mark.asyncio
     async def test_returns_tertiary_report_all_sections(self, db_session) -> None:
         """generate_report returns a TertiaryReport with all required sections."""
-        from backend.services.tertiary_report_service import TertiaryReportService, TertiaryReport
+        from backend.services.tertiary_report_service import TertiaryReport, TertiaryReportService
 
         study_id = await _insert_tertiary_study(db_session)
         await _insert_completed_synthesis(db_session, study_id)
@@ -245,6 +253,7 @@ class TestGenerateReport:
     async def test_raises_404_when_study_not_found(self, db_session) -> None:
         """generate_report raises HTTPException(404) when study does not exist."""
         from fastapi import HTTPException
+
         from backend.services.tertiary_report_service import TertiaryReportService
 
         svc = TertiaryReportService()
@@ -257,6 +266,7 @@ class TestGenerateReport:
     async def test_raises_409_when_no_completed_synthesis(self, db_session) -> None:
         """generate_report raises HTTPException(409) when synthesis not completed."""
         from fastapi import HTTPException
+
         from backend.services.tertiary_report_service import TertiaryReportService
 
         study_id = await _insert_tertiary_study(db_session)
@@ -348,13 +358,14 @@ class TestLandscapeSection:
 class TestSerialisationMethods:
     """to_json, to_csv, and to_markdown produce correct byte outputs."""
 
-    def _make_report(self) -> "TertiaryReport":
+    def _make_report(self) -> TertiaryReport:
         """Return a minimal TertiaryReport for serialisation tests.
 
         Returns:
             A fully populated :class:`TertiaryReport`.
+
         """
-        from backend.services.tertiary_report_service import TertiaryReport, LandscapeSection
+        from backend.services.tertiary_report_service import LandscapeSection, TertiaryReport
 
         return TertiaryReport(
             study_id=1,

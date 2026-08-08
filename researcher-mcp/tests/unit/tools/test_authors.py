@@ -12,7 +12,6 @@ import pytest
 
 from researcher_mcp.sources.base import AuthorDetail, AuthorProfile
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -61,6 +60,7 @@ class TestSearchAuthorSemanticScholar:
 
         with patch("researcher_mcp.tools.authors._get_ss", return_value=mock_ss):
             from researcher_mcp.tools.authors import search_author_semantic_scholar
+
             result = await search_author_semantic_scholar(name="Leslie Lamport")
 
         assert isinstance(result, list)
@@ -79,6 +79,7 @@ class TestSearchAuthorSemanticScholar:
 
         with patch("researcher_mcp.tools.authors._get_ss", return_value=mock_ss):
             from researcher_mcp.tools.authors import search_author_semantic_scholar
+
             result = await search_author_semantic_scholar(name="Nonexistent Author XYZ")
 
         assert result == []
@@ -93,6 +94,7 @@ class TestSearchAuthorSemanticScholar:
 
         with patch("researcher_mcp.tools.authors._get_ss", return_value=mock_ss):
             from researcher_mcp.tools.authors import search_author_semantic_scholar
+
             await search_author_semantic_scholar(name="Alice", institution="MIT")
 
         call_args = mock_ss.search_authors.call_args
@@ -101,12 +103,17 @@ class TestSearchAuthorSemanticScholar:
     @pytest.mark.asyncio
     async def test_profile_url_contains_author_id(self) -> None:
         """Profile URL is constructed from the author_id."""
-        raw_results = {"results": [_make_ss_author(author_id="99999")], "source": "semantic_scholar", "warnings": []}
+        raw_results = {
+            "results": [_make_ss_author(author_id="99999")],
+            "source": "semantic_scholar",
+            "warnings": [],
+        }
         mock_ss = MagicMock()
         mock_ss.search_authors = AsyncMock(return_value=raw_results)
 
         with patch("researcher_mcp.tools.authors._get_ss", return_value=mock_ss):
             from researcher_mcp.tools.authors import search_author_semantic_scholar
+
             result = await search_author_semantic_scholar(name="Test Author")
 
         assert "99999" in result[0].profile_url
@@ -127,6 +134,7 @@ class TestSearchAuthorSemanticScholar:
 
         with patch("researcher_mcp.tools.authors._get_ss", return_value=mock_ss):
             from researcher_mcp.tools.authors import search_author_semantic_scholar
+
             result = await search_author_semantic_scholar(name="Author")
 
         assert len(result) == 2
@@ -154,6 +162,7 @@ class TestGetAuthorSemanticScholar:
 
         with patch("researcher_mcp.tools.authors._get_ss", return_value=mock_ss):
             from researcher_mcp.tools.authors import get_author_semantic_scholar
+
             result = await get_author_semantic_scholar(author_id="12345")
 
         assert isinstance(result, AuthorDetail)
@@ -170,6 +179,7 @@ class TestGetAuthorSemanticScholar:
 
         with patch("researcher_mcp.tools.authors._get_ss", return_value=mock_ss):
             from researcher_mcp.tools.authors import get_author_semantic_scholar
+
             result = await get_author_semantic_scholar(author_id="12345")
 
         assert isinstance(result, AuthorDetail)
@@ -187,6 +197,7 @@ class TestGetAuthorSemanticScholar:
 
         with patch("researcher_mcp.tools.authors._get_ss", return_value=mock_ss):
             from researcher_mcp.tools.authors import get_author_semantic_scholar
+
             result = await get_author_semantic_scholar(author_id="12345")
 
         assert result.papers[0].doi == "10.1145/test"
@@ -209,6 +220,7 @@ class TestGetAuthorSemanticScholar:
 
         with patch("researcher_mcp.tools.authors._get_ss", return_value=mock_ss):
             from researcher_mcp.tools.authors import get_author_semantic_scholar
+
             result = await get_author_semantic_scholar(author_id="55")
 
         assert result.name == "Bob"

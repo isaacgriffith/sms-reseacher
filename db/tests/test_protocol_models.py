@@ -215,14 +215,19 @@ class TestProtocolNode:
         from sqlalchemy.exc import IntegrityError
 
         p = await self._make_protocol(session)
-        session.add(ProtocolNode(
-            protocol_id=p.id, task_id="n1",
-            task_type=ProtocolTaskType.DEFINE_PICO, label="N1"
-        ))
-        session.add(ProtocolNode(
-            protocol_id=p.id, task_id="n1",
-            task_type=ProtocolTaskType.DEFINE_PICO, label="N1dup"
-        ))
+        session.add(
+            ProtocolNode(
+                protocol_id=p.id, task_id="n1", task_type=ProtocolTaskType.DEFINE_PICO, label="N1"
+            )
+        )
+        session.add(
+            ProtocolNode(
+                protocol_id=p.id,
+                task_id="n1",
+                task_type=ProtocolTaskType.DEFINE_PICO,
+                label="N1dup",
+            )
+        )
         with pytest.raises(IntegrityError):
             await session.flush()
 
@@ -232,8 +237,7 @@ class TestProtocolNode:
 
         p = await self._make_protocol(session)
         node = ProtocolNode(
-            protocol_id=p.id, task_id="n1",
-            task_type=ProtocolTaskType.DEFINE_PICO, label="N1"
+            protocol_id=p.id, task_id="n1", task_type=ProtocolTaskType.DEFINE_PICO, label="N1"
         )
         session.add(node)
         await session.flush()
@@ -253,8 +257,7 @@ class TestProtocolNodeInputOutput:
         session.add(p)
         await session.flush()
         n = ProtocolNode(
-            protocol_id=p.id, task_id="n1",
-            task_type=ProtocolTaskType.DEFINE_PICO, label="N1"
+            protocol_id=p.id, task_id="n1", task_type=ProtocolTaskType.DEFINE_PICO, label="N1"
         )
         session.add(n)
         await session.flush()
@@ -264,8 +267,10 @@ class TestProtocolNodeInputOutput:
         """Verify a ProtocolNodeInput row can be inserted and assigned an id."""
         _, node = await self._make_node(session)
         inp = ProtocolNodeInput(
-            node_id=node.id, name="questions",
-            data_type=NodeDataType.TEXT, is_required=True,
+            node_id=node.id,
+            name="questions",
+            data_type=NodeDataType.TEXT,
+            is_required=True,
         )
         session.add(inp)
         await session.flush()
@@ -275,7 +280,8 @@ class TestProtocolNodeInputOutput:
         """Verify a ProtocolNodeOutput row can be inserted and assigned an id."""
         _, node = await self._make_node(session)
         out = ProtocolNodeOutput(
-            node_id=node.id, name="pico",
+            node_id=node.id,
+            name="pico",
             data_type=NodeDataType.PICO_STRUCT,
         )
         session.add(out)
@@ -303,8 +309,7 @@ class TestQualityGate:
         session.add(p)
         await session.flush()
         n = ProtocolNode(
-            protocol_id=p.id, task_id="n1",
-            task_type=ProtocolTaskType.DEFINE_PICO, label="N1"
+            protocol_id=p.id, task_id="n1", task_type=ProtocolTaskType.DEFINE_PICO, label="N1"
         )
         session.add(n)
         await session.flush()
@@ -350,8 +355,7 @@ class TestTaskExecutionState:
         session.add(p)
         await session.flush()
         node = ProtocolNode(
-            protocol_id=p.id, task_id="n1",
-            task_type=ProtocolTaskType.DEFINE_PICO, label="N1"
+            protocol_id=p.id, task_id="n1", task_type=ProtocolTaskType.DEFINE_PICO, label="N1"
         )
         session.add(node)
         await session.flush()
@@ -372,8 +376,7 @@ class TestTaskExecutionState:
         session.add(p)
         await session.flush()
         node = ProtocolNode(
-            protocol_id=p.id, task_id="n1",
-            task_type=ProtocolTaskType.DEFINE_PICO, label="N1"
+            protocol_id=p.id, task_id="n1", task_type=ProtocolTaskType.DEFINE_PICO, label="N1"
         )
         session.add(node)
         await session.flush()
@@ -401,8 +404,7 @@ class TestRelationships:
         session.add(p)
         await session.flush()
         n = ProtocolNode(
-            protocol_id=p.id, task_id="n1",
-            task_type=ProtocolTaskType.DEFINE_PICO, label="N1"
+            protocol_id=p.id, task_id="n1", task_type=ProtocolTaskType.DEFINE_PICO, label="N1"
         )
         session.add(n)
         await session.commit()

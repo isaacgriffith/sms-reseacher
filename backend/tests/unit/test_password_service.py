@@ -8,7 +8,6 @@ from fastapi import HTTPException
 from backend.core.auth import hash_password
 from backend.services.password_service import _meets_complexity, change_password
 
-
 # ---------------------------------------------------------------------------
 # Complexity helper
 # ---------------------------------------------------------------------------
@@ -72,7 +71,9 @@ async def test_wrong_current_password_raises_400():
     user = _make_user("CurrentPass12!")
     db = _make_db(user)
     with pytest.raises(HTTPException) as exc_info:
-        await change_password(db, user_id=1, current_password="WrongPass12!", new_password="NewPass12!")
+        await change_password(
+            db, user_id=1, current_password="WrongPass12!", new_password="NewPass12!"
+        )
     assert exc_info.value.status_code == 400
     assert "incorrect" in exc_info.value.detail.lower()
 
@@ -104,7 +105,9 @@ async def test_success_increments_token_version():
     user = _make_user(current, token_version=2)
     db = _make_db(user)
 
-    with patch("backend.services.password_service.create_security_audit_event", new_callable=AsyncMock):
+    with patch(
+        "backend.services.password_service.create_security_audit_event", new_callable=AsyncMock
+    ):
         await change_password(db, user_id=1, current_password=current, new_password="NewPass12!xyz")
 
     assert user.token_version == 3

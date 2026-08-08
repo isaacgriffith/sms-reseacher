@@ -18,8 +18,8 @@ import pytest
 
 from agents.services.protocol_reviewer import (
     ProtocolIssue,
-    ProtocolReviewResult,
     ProtocolReviewerAgent,
+    ProtocolReviewResult,
 )
 
 
@@ -67,7 +67,7 @@ class TestProtocolReviewResultParsing:
 
     @pytest.mark.asyncio
     async def test_empty_issues_on_clean_protocol(self) -> None:
-        """issues is empty when the LLM finds no problems."""
+        """Issues is empty when the LLM finds no problems."""
         resp = _json_review([], "No issues found.")
         agent = ProtocolReviewerAgent(llm_client=_make_client(resp))
         result = await agent.review(_PROTOCOL)

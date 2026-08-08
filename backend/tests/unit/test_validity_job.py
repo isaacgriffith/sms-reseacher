@@ -8,7 +8,6 @@ from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -22,6 +21,7 @@ def _make_session_cm(db_mock: AsyncMock) -> MagicMock:
 
     Returns:
         A MagicMock whose call returns an async context manager yielding db_mock.
+
     """
     cm = AsyncMock()
     cm.__aenter__ = AsyncMock(return_value=db_mock)
@@ -37,6 +37,7 @@ def _scalar_result(value: object) -> MagicMock:
 
     Returns:
         MagicMock with scalar_one_or_none and scalars().all() wired.
+
     """
     r = MagicMock()
     r.scalar_one_or_none.return_value = value
@@ -167,13 +168,13 @@ async def test_build_validity_snapshot_returns_dict_with_expected_keys():
     db.execute = AsyncMock(
         side_effect=[
             _scalar_result(study_mock),  # Study
-            _scalar_result(None),         # PICOComponent
-            empty_result,                 # SearchString
-            empty_result,                 # SearchExecution
-            empty_result,                 # Reviewer
-            empty_result,                 # InclusionCriterion
-            empty_result,                 # ExclusionCriterion
-            empty_result,                 # DataExtraction
+            _scalar_result(None),  # PICOComponent
+            empty_result,  # SearchString
+            empty_result,  # SearchExecution
+            empty_result,  # Reviewer
+            empty_result,  # InclusionCriterion
+            empty_result,  # ExclusionCriterion
+            empty_result,  # DataExtraction
         ]
     )
 
@@ -367,14 +368,14 @@ async def test_build_validity_snapshot_populates_pico_components():
     db = AsyncMock()
     db.execute = AsyncMock(
         side_effect=[
-            _scalar_result(study_mock),    # Study
-            _scalar_result(pico_mock),     # PICOComponent
-            empty_result,                   # SearchString
-            empty_result,                   # SearchExecution
-            empty_result,                   # Reviewer
-            empty_result,                   # InclusionCriterion
-            empty_result,                   # ExclusionCriterion
-            empty_result,                   # DataExtraction
+            _scalar_result(study_mock),  # Study
+            _scalar_result(pico_mock),  # PICOComponent
+            empty_result,  # SearchString
+            empty_result,  # SearchExecution
+            empty_result,  # Reviewer
+            empty_result,  # InclusionCriterion
+            empty_result,  # ExclusionCriterion
+            empty_result,  # DataExtraction
         ]
     )
 
@@ -419,14 +420,14 @@ async def test_build_validity_snapshot_populates_databases_from_search_execution
     db = AsyncMock()
     db.execute = AsyncMock(
         side_effect=[
-            _scalar_result(study_mock),    # Study
-            _scalar_result(None),           # PICOComponent
-            empty_result,                   # SearchString
-            exec_result,                    # SearchExecution
-            empty_result,                   # Reviewer
-            empty_result,                   # InclusionCriterion
-            empty_result,                   # ExclusionCriterion
-            empty_result,                   # DataExtraction
+            _scalar_result(study_mock),  # Study
+            _scalar_result(None),  # PICOComponent
+            empty_result,  # SearchString
+            exec_result,  # SearchExecution
+            empty_result,  # Reviewer
+            empty_result,  # InclusionCriterion
+            empty_result,  # ExclusionCriterion
+            empty_result,  # DataExtraction
         ]
     )
 
@@ -465,14 +466,14 @@ async def test_build_validity_snapshot_sets_extraction_summary_when_extractions_
     db = AsyncMock()
     db.execute = AsyncMock(
         side_effect=[
-            _scalar_result(study_mock),    # Study
-            _scalar_result(None),           # PICOComponent
-            empty_result,                   # SearchString
-            empty_result,                   # SearchExecution
-            empty_result,                   # Reviewer
-            empty_result,                   # InclusionCriterion
-            empty_result,                   # ExclusionCriterion
-            extraction_result,              # DataExtraction
+            _scalar_result(study_mock),  # Study
+            _scalar_result(None),  # PICOComponent
+            empty_result,  # SearchString
+            empty_result,  # SearchExecution
+            empty_result,  # Reviewer
+            empty_result,  # InclusionCriterion
+            empty_result,  # ExclusionCriterion
+            extraction_result,  # DataExtraction
         ]
     )
 
@@ -550,8 +551,8 @@ async def test_build_validity_agent_with_context_uses_configured_agent():
         side_effect=[
             _scalar_result(agent_record),  # Agent lookup
             _scalar_result(provider_mock),  # Provider
-            _scalar_result(model_mock),     # AvailableModel
-            _scalar_result(study_mock),     # Study
+            _scalar_result(model_mock),  # AvailableModel
+            _scalar_result(study_mock),  # Study
         ]
     )
 

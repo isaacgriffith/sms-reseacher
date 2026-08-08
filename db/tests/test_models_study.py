@@ -9,8 +9,7 @@ from sqlalchemy.pool import StaticPool
 from db.base import Base
 from db.models import Study, StudyType
 from db.models.study import Reviewer, ReviewerType, StudyMember, StudyMemberRole
-from db.models.users import ResearchGroup, User
-
+from db.models.users import User
 
 # ---------------------------------------------------------------------------
 # Test database fixture
@@ -208,9 +207,7 @@ class TestReviewerModel:
         session.add_all([user, study])
         await session.flush()
 
-        reviewer = Reviewer(
-            study_id=study.id, reviewer_type=ReviewerType.HUMAN, user_id=user.id
-        )
+        reviewer = Reviewer(study_id=study.id, reviewer_type=ReviewerType.HUMAN, user_id=user.id)
         session.add(reviewer)
         await session.commit()
         assert reviewer.id is not None

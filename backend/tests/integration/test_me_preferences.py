@@ -1,12 +1,12 @@
 """Integration tests for GET /api/v1/me/preferences and PUT /api/v1/me/preferences/theme."""
 
 import pytest
+from db.models.users import User
 from httpx import AsyncClient
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from backend.core.auth import create_access_token
-from db.models.users import User
 
 
 async def _get_user(db_engine, user_id: int) -> User:

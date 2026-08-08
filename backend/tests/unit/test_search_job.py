@@ -7,7 +7,6 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -77,8 +76,8 @@ async def test_run_full_search_returns_error_when_search_string_missing():
     db.execute = AsyncMock(
         side_effect=[
             _r(exec_mock),  # SearchExecution found
-            bg_result,       # BackgroundJob
-            ss_result,       # SearchString not found
+            bg_result,  # BackgroundJob
+            ss_result,  # SearchString not found
         ]
     )
 
@@ -150,13 +149,13 @@ async def test_run_snowball_stopped_early_when_below_threshold():
     db = AsyncMock()
     db.execute = AsyncMock(
         side_effect=[
-            _r(study_mock),     # Study
-            _r(None),           # SearchExecution — absent, so no status recorded
-            _r(None),           # BackgroundJob — snowball has no enqueue site yet
-            inc_result,         # InclusionCriteria
-            exc_result,         # ExclusionCriteria
+            _r(study_mock),  # Study
+            _r(None),  # SearchExecution — absent, so no status recorded
+            _r(None),  # BackgroundJob — snowball has no enqueue site yet
+            inc_result,  # InclusionCriteria
+            exc_result,  # ExclusionCriteria
             _r(reviewer_mock),  # Reviewer
-            _r(metrics_mock),   # SearchMetrics
+            _r(metrics_mock),  # SearchMetrics
         ]
     )
 
@@ -170,7 +169,10 @@ async def test_run_snowball_stopped_early_when_below_threshold():
         patch("backend.core.database._session_maker", session_maker),
         patch("backend.core.config.get_settings") as mock_settings,
         patch("httpx.AsyncClient") as mock_client,
-        patch("backend.jobs.snowball_job._build_screener_with_context", new=AsyncMock(return_value=stub_screener)),
+        patch(
+            "backend.jobs.snowball_job._build_screener_with_context",
+            new=AsyncMock(return_value=stub_screener),
+        ),
     ):
         settings = MagicMock()
         settings.researcher_mcp_url = "http://localhost:8002/sse"

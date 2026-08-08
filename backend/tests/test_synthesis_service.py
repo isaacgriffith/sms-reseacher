@@ -9,24 +9,23 @@ Tests cover:
 
 from __future__ import annotations
 
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock
 
-import pytest
-import pytest_asyncio
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-from sqlalchemy.pool import StaticPool
-
-from db.base import Base
 import db.models  # noqa: F401
-import db.models.users  # noqa: F401
-import db.models.study  # noqa: F401
-import db.models.slr  # noqa: F401
 import db.models.candidate  # noqa: F401
+import db.models.criteria  # noqa: F401
+import db.models.pico  # noqa: F401
 import db.models.search  # noqa: F401
 import db.models.search_exec  # noqa: F401
-import db.models.pico  # noqa: F401
 import db.models.seeds  # noqa: F401
-import db.models.criteria  # noqa: F401
+import db.models.slr  # noqa: F401
+import db.models.study  # noqa: F401
+import db.models.users  # noqa: F401
+import pytest
+import pytest_asyncio
+from db.base import Base
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.pool import StaticPool
 
 
 @pytest_asyncio.fixture
@@ -60,8 +59,8 @@ async def _insert_study(db: AsyncSession) -> int:
     global _study_counter
     _study_counter += 1
 
+    from db.models import Study, StudyStatus, StudyType
     from db.models.users import ResearchGroup
-    from db.models import Study, StudyType, StudyStatus
 
     group = ResearchGroup(name=f"Synthesis Test Group {_study_counter}")
     db.add(group)
@@ -97,8 +96,9 @@ class TestStartSynthesis:
     @pytest.mark.asyncio
     async def test_creates_pending_record(self, db_session) -> None:
         """start_synthesis returns a SynthesisResult with status=PENDING."""
-        from backend.services.synthesis_service import start_synthesis
         from db.models.slr import SynthesisStatus
+
+        from backend.services.synthesis_service import start_synthesis
 
         study_id = await _insert_study(db_session)
         pool = _make_arq_pool()

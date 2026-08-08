@@ -6,7 +6,7 @@ and verifies that all required job functions are registered.
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 
 def test_worker_settings_has_functions_list():

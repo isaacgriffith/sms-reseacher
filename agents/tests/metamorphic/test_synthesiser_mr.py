@@ -62,9 +62,7 @@ class TestSynthesiserMR:
         result = await agent.run(papers_str, RESEARCH_QUESTION)
         assert result == STUB_SYNTHESIS
 
-    @given(
-        indices=st.permutations(list(range(len(PAPERS))))
-    )
+    @given(indices=st.permutations(list(range(len(PAPERS)))))
     async def test_paper_order_hypothesis(self, indices: list[int]) -> None:
         """Hypothesis: any permutation of paper indices produces stable stub output."""
         agent = make_stub_agent()

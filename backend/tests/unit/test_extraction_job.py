@@ -8,7 +8,6 @@ from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -22,6 +21,7 @@ def _make_session_cm(db_mock: AsyncMock) -> MagicMock:
 
     Returns:
         A MagicMock whose call returns an async context manager yielding db_mock.
+
     """
     cm = AsyncMock()
     cm.__aenter__ = AsyncMock(return_value=db_mock)
@@ -38,6 +38,7 @@ def _scalar_result(value: object) -> MagicMock:
 
     Returns:
         MagicMock mimicking an AsyncSession.execute() return value.
+
     """
     r = MagicMock()
     r.scalar_one_or_none.return_value = value
@@ -229,9 +230,7 @@ async def test_fetch_paper_full_text_returns_full_text_on_success():
         ),
         patch("httpx.AsyncClient") as mock_client,
     ):
-        mock_client.return_value.__aenter__.return_value.post = AsyncMock(
-            return_value=resp_mock
-        )
+        mock_client.return_value.__aenter__.return_value.post = AsyncMock(return_value=resp_mock)
 
         from backend.jobs.extraction_job import _fetch_paper_full_text
 

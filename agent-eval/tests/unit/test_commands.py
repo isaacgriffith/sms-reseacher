@@ -3,17 +3,13 @@
 from __future__ import annotations
 
 import json
-import uuid
 from pathlib import Path
 from typing import Any
-from unittest.mock import MagicMock, patch
 
-import pytest
 from typer.testing import CliRunner
 
 from agent_eval.cli import app
 from agent_eval.models import EvalReport, TestCaseResult
-
 
 runner = CliRunner()
 
@@ -31,6 +27,7 @@ def _make_report(**overrides: Any) -> EvalReport:
 
     Returns:
         A fully valid :class:`EvalReport` instance.
+
     """
     tc = TestCaseResult(
         case_id="tc-001",
@@ -39,12 +36,12 @@ def _make_report(**overrides: Any) -> EvalReport:
         scores={"accuracy": 0.9},
         passed=True,
     )
-    defaults: dict[str, Any] = dict(
-        agent_type="screener",
-        prompt_version="0.1.0",
-        test_cases=[tc],
-        overall_score=0.9,
-    )
+    defaults: dict[str, Any] = {
+        "agent_type": "screener",
+        "prompt_version": "0.1.0",
+        "test_cases": [tc],
+        "overall_score": 0.9,
+    }
     defaults.update(overrides)
     return EvalReport(**defaults)
 
@@ -58,6 +55,7 @@ def _write_report(path: Path, report: EvalReport) -> Path:
 
     Returns:
         The same *path* after writing.
+
     """
     path.write_text(report.model_dump_json())
     return path
@@ -72,6 +70,7 @@ def _write_suite(tmp_path: Path, cases: list[dict[str, Any]]) -> Path:
 
     Returns:
         Path to the written JSONL file.
+
     """
     p = tmp_path / "suite.jsonl"
     p.write_text("\n".join(json.dumps(c) for c in cases))
@@ -88,42 +87,62 @@ class TestEvaluateCommand:
 
     def test_evaluate_missing_suite_exits_nonzero(self, tmp_path: Path) -> None:
         """Evaluate with a missing suite file exits with non-zero code."""
-        result = runner.invoke(app, [
-            "evaluate",
-            "--agent", "screener",
-            "--suite", str(tmp_path / "nonexistent.jsonl"),
-        ])
+        result = runner.invoke(
+            app,
+            [
+                "evaluate",
+                "--agent",
+                "screener",
+                "--suite",
+                str(tmp_path / "nonexistent.jsonl"),
+            ],
+        )
         assert result.exit_code != 0
 
     def test_evaluate_unknown_agent_exits_2(self, tmp_path: Path) -> None:
         """Unknown agent type exits with code 2."""
         suite = _write_suite(tmp_path, [{"case_id": "tc-001", "input": {}}])
-        result = runner.invoke(app, [
-            "evaluate",
-            "--agent", "unknown_agent",
-            "--suite", str(suite),
-        ])
+        result = runner.invoke(
+            app,
+            [
+                "evaluate",
+                "--agent",
+                "unknown_agent",
+                "--suite",
+                str(suite),
+            ],
+        )
         assert result.exit_code == 2
 
     def test_evaluate_empty_suite_exits_2(self, tmp_path: Path) -> None:
         """Empty test suite file exits with code 2."""
         empty_suite = tmp_path / "empty.jsonl"
         empty_suite.write_text("")
-        result = runner.invoke(app, [
-            "evaluate",
-            "--agent", "screener",
-            "--suite", str(empty_suite),
-        ])
+        result = runner.invoke(
+            app,
+            [
+                "evaluate",
+                "--agent",
+                "screener",
+                "--suite",
+                str(empty_suite),
+            ],
+        )
         assert result.exit_code == 2
 
     def test_evaluate_single_case_passes(self, tmp_path: Path) -> None:
         """Single valid case in suite produces a result."""
         suite = _write_suite(tmp_path, [{"case_id": "tc-001", "input": {"abstract": "test"}}])
-        result = runner.invoke(app, [
-            "evaluate",
-            "--agent", "screener",
-            "--suite", str(suite),
-        ])
+        result = runner.invoke(
+            app,
+            [
+                "evaluate",
+                "--agent",
+                "screener",
+                "--suite",
+                str(suite),
+            ],
+        )
         # Default threshold is 0.7, stub score is 0.75 → should pass
         assert result.exit_code == 0
 
@@ -131,34 +150,51 @@ class TestEvaluateCommand:
         """Evaluate writes a JSON report file when --output is provided."""
         suite = _write_suite(tmp_path, [{"case_id": "tc-001", "input": {}}])
         out = tmp_path / "out.json"
-        result = runner.invoke(app, [
-            "evaluate",
-            "--agent", "screener",
-            "--suite", str(suite),
-            "--output", str(out),
-        ])
+        runner.invoke(
+            app,
+            [
+                "evaluate",
+                "--agent",
+                "screener",
+                "--suite",
+                str(suite),
+                "--output",
+                str(out),
+            ],
+        )
         assert out.exists()
 
     def test_evaluate_high_threshold_exits_1(self, tmp_path: Path) -> None:
         """With threshold above stub score (0.75), command exits with code 1."""
         suite = _write_suite(tmp_path, [{"case_id": "tc-001", "input": {}}])
-        result = runner.invoke(app, [
-            "evaluate",
-            "--agent", "screener",
-            "--suite", str(suite),
-            "--threshold", "0.99",
-        ])
+        result = runner.invoke(
+            app,
+            [
+                "evaluate",
+                "--agent",
+                "screener",
+                "--suite",
+                str(suite),
+                "--threshold",
+                "0.99",
+            ],
+        )
         assert result.exit_code == 1
 
     def test_evaluate_invalid_jsonl_exits_2(self, tmp_path: Path) -> None:
         """Malformed JSONL in suite exits with code 2."""
         bad_suite = tmp_path / "bad.jsonl"
         bad_suite.write_text("{this is not valid json\n")
-        result = runner.invoke(app, [
-            "evaluate",
-            "--agent", "screener",
-            "--suite", str(bad_suite),
-        ])
+        result = runner.invoke(
+            app,
+            [
+                "evaluate",
+                "--agent",
+                "screener",
+                "--suite",
+                str(bad_suite),
+            ],
+        )
         assert result.exit_code == 2
 
 
@@ -194,7 +230,7 @@ class TestCompareCommand:
         base = _write_report(tmp_path / "base.json", _make_report(overall_score=0.7))
         cand = _write_report(tmp_path / "cand.json", _make_report(overall_score=0.9))
         out = tmp_path / "comparison.csv"
-        result = runner.invoke(app, ["compare", str(base), str(cand), "--output", str(out)])
+        runner.invoke(app, ["compare", str(base), str(cand), "--output", str(out)])
         assert out.exists()
         assert "Metric" in out.read_text()
 
@@ -224,13 +260,13 @@ class TestReportCommand:
     """Tests for `agent-eval report` command."""
 
     def test_report_table_format(self, tmp_path: Path) -> None:
-        """report command with table format exits 0."""
+        """Report command with table format exits 0."""
         rp = _write_report(tmp_path / "r.json", _make_report())
         result = runner.invoke(app, ["report", str(rp)])
         assert result.exit_code == 0
 
     def test_report_json_format(self, tmp_path: Path) -> None:
-        """report command with --format json outputs valid JSON."""
+        """Report command with --format json outputs valid JSON."""
         rp = _write_report(tmp_path / "r.json", _make_report())
         result = runner.invoke(app, ["report", str(rp), "--format", "json"])
         assert result.exit_code == 0
@@ -238,29 +274,29 @@ class TestReportCommand:
         assert "agent_type" in result.output
 
     def test_report_markdown_format(self, tmp_path: Path) -> None:
-        """report command with --format markdown contains markdown headers."""
+        """Report command with --format markdown contains markdown headers."""
         rp = _write_report(tmp_path / "r.json", _make_report())
         result = runner.invoke(app, ["report", str(rp), "--format", "markdown"])
         assert result.exit_code == 0
         assert "# Evaluation Report" in result.output
 
     def test_report_missing_file_exits_2(self, tmp_path: Path) -> None:
-        """report command with missing file exits with code 2."""
+        """Report command with missing file exits with code 2."""
         result = runner.invoke(app, ["report", str(tmp_path / "no.json")])
         assert result.exit_code == 2
 
     def test_report_invalid_json_exits_2(self, tmp_path: Path) -> None:
-        """report command with invalid JSON exits with code 2."""
+        """Report command with invalid JSON exits with code 2."""
         bad = tmp_path / "bad.json"
         bad.write_text("{invalid}")
         result = runner.invoke(app, ["report", str(bad)])
         assert result.exit_code == 2
 
     def test_report_writes_json_output(self, tmp_path: Path) -> None:
-        """report --format json --output writes file."""
+        """Report --format json --output writes file."""
         rp = _write_report(tmp_path / "r.json", _make_report())
         out = tmp_path / "out.json"
-        result = runner.invoke(app, ["report", str(rp), "--format", "json", "--output", str(out)])
+        runner.invoke(app, ["report", str(rp), "--format", "json", "--output", str(out)])
         assert out.exists()
 
 
@@ -273,18 +309,23 @@ class TestImproveCommand:
     """Tests for `agent-eval improve` command."""
 
     def test_improve_no_weak_cases_prints_message(self, tmp_path: Path) -> None:
-        """improve command prints message when all cases pass."""
+        """Improve command prints message when all cases pass."""
         rp = _write_report(tmp_path / "r.json", _make_report(overall_score=0.9))
-        result = runner.invoke(app, [
-            "improve",
-            "--report", str(rp),
-            "--agent", "screener",
-        ])
+        result = runner.invoke(
+            app,
+            [
+                "improve",
+                "--report",
+                str(rp),
+                "--agent",
+                "screener",
+            ],
+        )
         assert result.exit_code == 0
         assert "No low-scoring" in result.output
 
     def test_improve_generates_candidate_files(self, tmp_path: Path) -> None:
-        """improve command generates candidate prompt files for weak cases."""
+        """Improve command generates candidate prompt files for weak cases."""
         tc_fail = TestCaseResult(
             case_id="tc-fail",
             input={},
@@ -300,12 +341,18 @@ class TestImproveCommand:
         )
         rp = _write_report(tmp_path / "r.json", report)
         out_dir = tmp_path / "candidates"
-        result = runner.invoke(app, [
-            "improve",
-            "--report", str(rp),
-            "--agent", "screener",
-            "--output-dir", str(out_dir),
-        ])
+        result = runner.invoke(
+            app,
+            [
+                "improve",
+                "--report",
+                str(rp),
+                "--agent",
+                "screener",
+                "--output-dir",
+                str(out_dir),
+            ],
+        )
         assert result.exit_code == 0
         # Two candidate files should have been created
         assert out_dir.exists()
@@ -313,12 +360,17 @@ class TestImproveCommand:
         assert len(files) == 2
 
     def test_improve_missing_report_exits_2(self, tmp_path: Path) -> None:
-        """improve command with missing report exits with code 2."""
-        result = runner.invoke(app, [
-            "improve",
-            "--report", str(tmp_path / "no.json"),
-            "--agent", "screener",
-        ])
+        """Improve command with missing report exits with code 2."""
+        result = runner.invoke(
+            app,
+            [
+                "improve",
+                "--report",
+                str(tmp_path / "no.json"),
+                "--agent",
+                "screener",
+            ],
+        )
         assert result.exit_code == 2
 
 
@@ -338,7 +390,7 @@ class TestEvalAllCommand:
     def test_eval_all_writes_output_file(self, tmp_path: Path) -> None:
         """eval-all --output writes a combined JSON report."""
         out = tmp_path / "combined.json"
-        result = runner.invoke(app, ["eval-all", "--output", str(out)])
+        runner.invoke(app, ["eval-all", "--output", str(out)])
         assert out.exists()
         data = json.loads(out.read_text())
         assert "overall" in data

@@ -10,19 +10,18 @@ Tests cover:
 
 from __future__ import annotations
 
-import pytest
-import pytest_asyncio
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-from sqlalchemy.pool import StaticPool
-
-from db.base import Base
 import db.models  # noqa: F401
-import db.models.users  # noqa: F401
-import db.models.study  # noqa: F401
 import db.models.candidate  # noqa: F401
 import db.models.search  # noqa: F401
 import db.models.search_exec  # noqa: F401
+import db.models.study  # noqa: F401
 import db.models.tertiary  # noqa: F401
+import db.models.users  # noqa: F401
+import pytest
+import pytest_asyncio
+from db.base import Base
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.pool import StaticPool
 
 
 @pytest_asyncio.fixture
@@ -32,6 +31,7 @@ async def db_session():
     Yields:
         An :class:`~sqlalchemy.ext.asyncio.AsyncSession` backed by SQLite
         in-memory storage.
+
     """
     engine = create_async_engine(
         "sqlite+aiosqlite:///:memory:",
@@ -57,9 +57,10 @@ async def _insert_study(db: AsyncSession, name: str = "Test Study") -> int:
 
     Returns:
         Integer study id.
+
     """
+    from db.models import Study, StudyStatus, StudyType
     from db.models.users import ResearchGroup
-    from db.models import Study, StudyType, StudyStatus
 
     group = ResearchGroup(name=f"Group for {name}")
     db.add(group)
@@ -86,6 +87,7 @@ async def _insert_paper(db: AsyncSession, doi: str = "10.0000/paper.1") -> int:
 
     Returns:
         Integer paper id.
+
     """
     from db.models import Paper
 
@@ -104,6 +106,7 @@ async def _insert_search_execution(db: AsyncSession, study_id: int) -> int:
 
     Returns:
         Integer search execution id.
+
     """
     from db.models.search import SearchString
     from db.models.search_exec import SearchExecution, SearchExecutionStatus
@@ -136,6 +139,7 @@ async def _add_accepted_papers(
 
     Returns:
         List of created CandidatePaper ids.
+
     """
     from db.models.candidate import CandidatePaper, CandidatePaperStatus
 
@@ -251,9 +255,10 @@ class TestEnsureExtractionRecords:
     @pytest.mark.asyncio
     async def test_creates_stubs_for_accepted_papers(self, db_session) -> None:
         """Creates TertiaryDataExtraction stubs for each accepted CandidatePaper."""
-        from backend.services.tertiary_extraction_service import TertiaryExtractionService
         from db.models.tertiary import TertiaryDataExtraction
         from sqlalchemy import select
+
+        from backend.services.tertiary_extraction_service import TertiaryExtractionService
 
         study_id = await _insert_study(db_session, name="Extraction Stub Study")
         cp_ids = await _add_accepted_papers(db_session, study_id, n=2)

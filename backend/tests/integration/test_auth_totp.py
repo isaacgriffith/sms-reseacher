@@ -2,15 +2,14 @@
 
 import pyotp
 import pytest
+from db.models.backup_codes import BackupCode
+from db.models.users import User
 from httpx import AsyncClient
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from backend.core.auth import create_access_token, hash_password
 from backend.core.encryption import encrypt_secret
 from backend.core.totp import generate_secret
-from db.models.backup_codes import BackupCode
-from db.models.users import User
 
 
 async def _enable_totp(db_engine, user_id: int) -> str:
@@ -28,6 +27,7 @@ async def _enable_totp(db_engine, user_id: int) -> str:
 
 async def _add_backup_code(db_engine, user_id: int, plain: str) -> None:
     import bcrypt
+
     hashed = bcrypt.hashpw(plain.encode(), bcrypt.gensalt()).decode()
     maker = async_sessionmaker(db_engine, expire_on_commit=False)
     async with maker() as session:

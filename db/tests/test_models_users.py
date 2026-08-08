@@ -9,7 +9,6 @@ from sqlalchemy.pool import StaticPool
 from db.base import Base
 from db.models.users import GroupMembership, GroupRole, ResearchGroup, User
 
-
 # ---------------------------------------------------------------------------
 # Test database fixture
 # ---------------------------------------------------------------------------

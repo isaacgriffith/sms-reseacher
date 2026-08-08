@@ -25,7 +25,6 @@ from __future__ import annotations
 import json
 from unittest.mock import AsyncMock, MagicMock
 
-import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 
@@ -45,9 +44,7 @@ _STUB_PAPER = {
     "rationale": "Highly relevant stub paper.",
 }
 
-_STUB_OUTPUT = json.dumps(
-    {"papers": [_STUB_PAPER], "authors": []}
-)
+_STUB_OUTPUT = json.dumps({"papers": [_STUB_PAPER], "authors": []})
 
 _STUB_OUTPUT_EXPANDED = json.dumps(
     {
@@ -65,6 +62,7 @@ def make_stub_agent(output: str = _STUB_OUTPUT) -> LibrarianAgent:
 
     Returns:
         A :class:`LibrarianAgent` with a mocked LLM client.
+
     """
     stub_client = MagicMock(spec=LLMClient)
     stub_client.complete = AsyncMock(return_value=output)
@@ -109,7 +107,11 @@ class TestLibrarianMRL1QueryExpansionMonotonicity:
         )
 
     @given(
-        extra_context=st.text(min_size=10, max_size=80, alphabet=st.characters(whitelist_categories=("Lu", "Ll", "Zs")))
+        extra_context=st.text(
+            min_size=10,
+            max_size=80,
+            alphabet=st.characters(whitelist_categories=("Lu", "Ll", "Zs")),
+        )
     )
     async def test_any_extra_context_does_not_reduce_papers(self, extra_context: str) -> None:
         """Hypothesis: any non-empty extra context must not reduce results (stub).
@@ -145,9 +147,7 @@ class TestLibrarianMRL2ParaphraseConsistency:
         agent = make_stub_agent(_STUB_OUTPUT)
 
         result_abbrev = await agent.run(topic="TDD", variant="PICO")
-        result_full = await agent.run(
-            topic="Test-Driven Development", variant="PICO"
-        )
+        result_full = await agent.run(topic="Test-Driven Development", variant="PICO")
 
         assert len(result_abbrev.papers) == len(result_full.papers), (
             "MR-L2: paraphrase must not change paper count"
@@ -165,17 +165,14 @@ class TestLibrarianMRL2ParaphraseConsistency:
             for paper in result.papers:
                 if paper.doi is not None:
                     assert paper.doi.startswith("10."), (
-                        f"MR-L2: DOI '{paper.doi}' does not start with '10.' "
-                        f"for topic='{topic}'"
+                        f"MR-L2: DOI '{paper.doi}' does not start with '10.' for topic='{topic}'"
                     )
 
     @given(
         topic_a=st.sampled_from(["TDD", "Test-Driven Development", "test-first"]),
         topic_b=st.sampled_from(["TDD", "Test-Driven Development", "test-first"]),
     )
-    async def test_any_paraphrase_pair_same_structure(
-        self, topic_a: str, topic_b: str
-    ) -> None:
+    async def test_any_paraphrase_pair_same_structure(self, topic_a: str, topic_b: str) -> None:
         """Hypothesis: any paraphrase pair produces identical stub output."""
         agent = make_stub_agent(_STUB_OUTPUT)
 

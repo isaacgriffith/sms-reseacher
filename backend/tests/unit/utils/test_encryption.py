@@ -20,7 +20,7 @@ class TestEncryptDecryptRoundTrip:
     """encrypt_secret + decrypt_secret round-trip tests."""
 
     def test_basic_roundtrip(self) -> None:
-        """encrypt then decrypt returns the original plaintext."""
+        """Encrypt then decrypt returns the original plaintext."""
         plaintext = "sk-anthropic-test-key-abc123"
         secret = "my-super-secret-key"
 
@@ -30,7 +30,7 @@ class TestEncryptDecryptRoundTrip:
         assert result == plaintext
 
     def test_empty_string_roundtrip(self) -> None:
-        """encrypt then decrypt works for empty string input."""
+        """Encrypt then decrypt works for empty string input."""
         plaintext = ""
         secret = "any-key"
 
@@ -40,7 +40,7 @@ class TestEncryptDecryptRoundTrip:
         assert result == plaintext
 
     def test_long_string_roundtrip(self) -> None:
-        """encrypt then decrypt works for a long API key string."""
+        """Encrypt then decrypt works for a long API key string."""
         plaintext = "sk-" + "a" * 500
         secret = "long-key-test"
 
@@ -50,7 +50,7 @@ class TestEncryptDecryptRoundTrip:
         assert result == plaintext
 
     def test_special_characters_roundtrip(self) -> None:
-        """encrypt then decrypt preserves special characters."""
+        """Encrypt then decrypt preserves special characters."""
         plaintext = "sk-abc/def+XYZ=123!@#$%^&*()"
         secret = "special-char-test"
 

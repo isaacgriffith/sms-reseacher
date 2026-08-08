@@ -16,7 +16,6 @@ framework that provides automated MR composition; these tests use
 
 from unittest.mock import AsyncMock, MagicMock
 
-import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 
@@ -70,12 +69,18 @@ def parse_decision(response: str) -> str:
 class TestScreenerMR:
     """MR-S1: Synonym substitution preserves inclusion decision."""
 
-    @given(abstract=st.text(min_size=20, max_size=200, alphabet=st.characters(whitelist_categories=("Lu", "Ll", "Nd", "Zs"))))
+    @given(
+        abstract=st.text(
+            min_size=20,
+            max_size=200,
+            alphabet=st.characters(whitelist_categories=("Lu", "Ll", "Nd", "Zs")),
+        )
+    )
     async def test_synonym_substitution_preserves_decision(self, abstract: str) -> None:
         """Decision must be identical before and after synonym substitution."""
         # Use a deterministic stub so the test is reproducible
         agent_include = make_stub_agent("include")
-        agent_exclude = make_stub_agent("exclude")
+        make_stub_agent("exclude")
 
         original_abstract = abstract
         transformed_abstract = apply_synonyms(abstract)

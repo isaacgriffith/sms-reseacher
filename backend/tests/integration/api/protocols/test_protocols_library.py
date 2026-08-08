@@ -154,9 +154,7 @@ class TestGetProtocolDetail:
         assert data["owner_user_id"] == alice_user.id
 
     @pytest.mark.asyncio
-    async def test_403_on_other_users_custom_protocol(
-        self, client, db_engine, alice, bob
-    ) -> None:
+    async def test_403_on_other_users_custom_protocol(self, client, db_engine, alice, bob) -> None:
         """GET /protocols/{id} returns 403 when the protocol belongs to another user."""
         alice_user, _ = alice
         bob_user, _ = bob
@@ -204,9 +202,7 @@ class TestCreateProtocol:
         assert data["study_type"] == "SMS"
 
     @pytest.mark.asyncio
-    async def test_copy_403_on_other_users_protocol(
-        self, client, db_engine, alice, bob
-    ) -> None:
+    async def test_copy_403_on_other_users_protocol(self, client, db_engine, alice, bob) -> None:
         """POST /protocols returns 403 when copying another user's non-default protocol."""
         alice_user, _ = alice
         bob_user, _ = bob
@@ -229,7 +225,10 @@ class TestCreateProtocol:
 
         resp = await client.post(
             "/api/v1/protocols",
-            json={"name": f"Custom Protocol for user {alice_user.id}", "copy_from_protocol_id": source_id},
+            json={
+                "name": f"Custom Protocol for user {alice_user.id}",
+                "copy_from_protocol_id": source_id,
+            },
             headers=_bearer(alice_user.id),
         )
 
@@ -276,12 +275,40 @@ class TestCreateProtocol:
             "name": "Cyclic Protocol",
             "study_type": "SMS",
             "nodes": [
-                {"task_id": "a", "task_type": "DefinePICO", "label": "A", "inputs": [], "outputs": [], "quality_gates": [], "assignees": []},
-                {"task_id": "b", "task_type": "BuildSearchString", "label": "B", "inputs": [], "outputs": [], "quality_gates": [], "assignees": []},
+                {
+                    "task_id": "a",
+                    "task_type": "DefinePICO",
+                    "label": "A",
+                    "inputs": [],
+                    "outputs": [],
+                    "quality_gates": [],
+                    "assignees": [],
+                },
+                {
+                    "task_id": "b",
+                    "task_type": "BuildSearchString",
+                    "label": "B",
+                    "inputs": [],
+                    "outputs": [],
+                    "quality_gates": [],
+                    "assignees": [],
+                },
             ],
             "edges": [
-                {"edge_id": "e1", "source_task_id": "a", "source_output_name": "out", "target_task_id": "b", "target_input_name": "in"},
-                {"edge_id": "e2", "source_task_id": "b", "source_output_name": "out", "target_task_id": "a", "target_input_name": "in"},
+                {
+                    "edge_id": "e1",
+                    "source_task_id": "a",
+                    "source_output_name": "out",
+                    "target_task_id": "b",
+                    "target_input_name": "in",
+                },
+                {
+                    "edge_id": "e2",
+                    "source_task_id": "b",
+                    "source_output_name": "out",
+                    "target_task_id": "a",
+                    "target_input_name": "in",
+                },
             ],
         }
         resp = await client.post(
@@ -311,7 +338,15 @@ class TestUpdateProtocol:
             "name": "Updated Protocol Name",
             "version_id": 1,
             "nodes": [
-                {"task_id": "n1", "task_type": "DefinePICO", "label": "Step 1", "inputs": [], "outputs": [], "quality_gates": [], "assignees": []},
+                {
+                    "task_id": "n1",
+                    "task_type": "DefinePICO",
+                    "label": "Step 1",
+                    "inputs": [],
+                    "outputs": [],
+                    "quality_gates": [],
+                    "assignees": [],
+                },
             ],
             "edges": [],
         }
@@ -336,7 +371,15 @@ class TestUpdateProtocol:
             "name": "Conflict Protocol",
             "version_id": 999,
             "nodes": [
-                {"task_id": "n1", "task_type": "DefinePICO", "label": "Step 1", "inputs": [], "outputs": [], "quality_gates": [], "assignees": []},
+                {
+                    "task_id": "n1",
+                    "task_type": "DefinePICO",
+                    "label": "Step 1",
+                    "inputs": [],
+                    "outputs": [],
+                    "quality_gates": [],
+                    "assignees": [],
+                },
             ],
             "edges": [],
         }
@@ -371,9 +414,7 @@ class TestUpdateProtocol:
         assert resp.status_code == 403
 
     @pytest.mark.asyncio
-    async def test_update_403_on_other_users_protocol(
-        self, client, db_engine, alice, bob
-    ) -> None:
+    async def test_update_403_on_other_users_protocol(self, client, db_engine, alice, bob) -> None:
         """PUT /protocols/{id} returns 403 when not the owner."""
         alice_user, _ = alice
         bob_user, _ = bob
@@ -435,9 +476,7 @@ class TestDeleteProtocol:
         assert resp.status_code == 403
 
     @pytest.mark.asyncio
-    async def test_delete_403_on_other_users_protocol(
-        self, client, db_engine, alice, bob
-    ) -> None:
+    async def test_delete_403_on_other_users_protocol(self, client, db_engine, alice, bob) -> None:
         """DELETE /protocols/{id} returns 403 when not the owner."""
         alice_user, _ = alice
         bob_user, _ = bob
@@ -451,9 +490,7 @@ class TestDeleteProtocol:
         assert resp.status_code == 403
 
     @pytest.mark.asyncio
-    async def test_delete_409_when_assigned_to_study(
-        self, client, db_engine, alice
-    ) -> None:
+    async def test_delete_409_when_assigned_to_study(self, client, db_engine, alice) -> None:
         """DELETE /protocols/{id} returns 409 when the protocol is assigned to a study."""
         from db.models import Study
         from db.models.protocols import StudyProtocolAssignment
@@ -473,6 +510,7 @@ class TestDeleteProtocol:
             await session.flush()
 
             from db.models import StudyType
+
             study = Study(
                 name="Test Study",
                 study_type=StudyType.SMS,

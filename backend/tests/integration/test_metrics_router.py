@@ -10,12 +10,12 @@ Covers:
 from __future__ import annotations
 
 import pytest
-from sqlalchemy.ext.asyncio import async_sessionmaker
-
-from backend.core.auth import create_access_token
 from db.models.search import SearchString
 from db.models.search_exec import SearchExecution, SearchExecutionStatus, SearchMetrics
 from db.models.users import GroupMembership, GroupRole, ResearchGroup
+from sqlalchemy.ext.asyncio import async_sessionmaker
+
+from backend.core.auth import create_access_token
 
 
 def _bearer(user_id: int) -> dict[str, str]:
@@ -103,9 +103,7 @@ class TestGetStudyMetrics:
         user, _ = alice
         study_id = await _setup_study(client, db_engine, user)
 
-        resp = await client.get(
-            f"/api/v1/studies/{study_id}/metrics", headers=_bearer(user.id)
-        )
+        resp = await client.get(f"/api/v1/studies/{study_id}/metrics", headers=_bearer(user.id))
         assert resp.status_code == 200
         body = resp.json()
         assert body["study_id"] == study_id
@@ -122,13 +120,16 @@ class TestGetStudyMetrics:
         user, _ = alice
         study_id = await _setup_study(client, db_engine, user)
         await _insert_execution_with_metrics(
-            db_engine, study_id, "initial-search",
-            total=100, accepted=40, rejected=55, duplicates=5,
+            db_engine,
+            study_id,
+            "initial-search",
+            total=100,
+            accepted=40,
+            rejected=55,
+            duplicates=5,
         )
 
-        resp = await client.get(
-            f"/api/v1/studies/{study_id}/metrics", headers=_bearer(user.id)
-        )
+        resp = await client.get(f"/api/v1/studies/{study_id}/metrics", headers=_bearer(user.id))
         assert resp.status_code == 200
         body = resp.json()
         assert len(body["phases"]) == 1
@@ -144,33 +145,39 @@ class TestGetStudyMetrics:
         assert totals["accepted"] == 40
 
     @pytest.mark.asyncio
-    async def test_multiple_phases_aggregated_in_totals(
-        self, client, alice, db_engine
-    ) -> None:
+    async def test_multiple_phases_aggregated_in_totals(self, client, alice, db_engine) -> None:
         """Multiple phases: per-phase entries returned, totals are summed correctly."""
         user, _ = alice
         study_id = await _setup_study(client, db_engine, user)
         await _insert_execution_with_metrics(
-            db_engine, study_id, "initial-search",
-            total=100, accepted=40, rejected=55, duplicates=5,
+            db_engine,
+            study_id,
+            "initial-search",
+            total=100,
+            accepted=40,
+            rejected=55,
+            duplicates=5,
         )
         await _insert_execution_with_metrics(
-            db_engine, study_id, "backward-search-1",
-            total=50, accepted=15, rejected=30, duplicates=5,
+            db_engine,
+            study_id,
+            "backward-search-1",
+            total=50,
+            accepted=15,
+            rejected=30,
+            duplicates=5,
         )
 
-        resp = await client.get(
-            f"/api/v1/studies/{study_id}/metrics", headers=_bearer(user.id)
-        )
+        resp = await client.get(f"/api/v1/studies/{study_id}/metrics", headers=_bearer(user.id))
         assert resp.status_code == 200
         body = resp.json()
         assert len(body["phases"]) == 2
 
         totals = body["totals"]
         assert totals["total_identified"] == 150  # 100 + 50
-        assert totals["accepted"] == 55           # 40 + 15
-        assert totals["rejected"] == 85           # 55 + 30
-        assert totals["duplicates"] == 10         # 5 + 5
+        assert totals["accepted"] == 55  # 40 + 15
+        assert totals["rejected"] == 85  # 55 + 30
+        assert totals["duplicates"] == 10  # 5 + 5
         assert totals["phase_tag"] == "all"
 
     @pytest.mark.asyncio
@@ -179,13 +186,16 @@ class TestGetStudyMetrics:
         user, _ = alice
         study_id = await _setup_study(client, db_engine, user)
         await _insert_execution_with_metrics(
-            db_engine, study_id, "initial-search",
-            total=10, accepted=5, rejected=4, duplicates=1,
+            db_engine,
+            study_id,
+            "initial-search",
+            total=10,
+            accepted=5,
+            rejected=4,
+            duplicates=1,
         )
 
-        resp = await client.get(
-            f"/api/v1/studies/{study_id}/metrics", headers=_bearer(user.id)
-        )
+        resp = await client.get(f"/api/v1/studies/{study_id}/metrics", headers=_bearer(user.id))
         assert resp.status_code == 200
         totals = resp.json()["totals"]
         assert totals["phase_tag"] == "all"

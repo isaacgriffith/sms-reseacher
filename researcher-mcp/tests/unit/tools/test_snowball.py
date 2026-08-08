@@ -25,12 +25,25 @@ class TestGetReferences:
         from researcher_mcp.tools.snowball import get_references
 
         s2_refs = [
-            {"title": "Ref A", "doi": "10.1/a", "intent": "methodology", "citation_source": "semantic_scholar"},
-            {"title": "Ref B", "doi": "10.1/b", "intent": "background", "citation_source": "semantic_scholar"},
+            {
+                "title": "Ref A",
+                "doi": "10.1/a",
+                "intent": "methodology",
+                "citation_source": "semantic_scholar",
+            },
+            {
+                "title": "Ref B",
+                "doi": "10.1/b",
+                "intent": "background",
+                "citation_source": "semantic_scholar",
+            },
         ]
         crossref_mock = AsyncMock()
         with (
-            patch("researcher_mcp.tools.snowball._get_references_semantic_scholar", new=AsyncMock(return_value=s2_refs)),
+            patch(
+                "researcher_mcp.tools.snowball._get_references_semantic_scholar",
+                new=AsyncMock(return_value=s2_refs),
+            ),
             patch("researcher_mcp.tools.snowball._get_references_crossref", new=crossref_mock),
         ):
             result = await get_references(doi="10.1145/test")
@@ -44,10 +57,23 @@ class TestGetReferences:
         """When S2 returns no references, CrossRef fallback is used."""
         from researcher_mcp.tools.snowball import get_references
 
-        cr_refs = [{"title": "CrossRef Ref", "doi": "10.1/cr", "intent": "unknown", "citation_source": "crossref"}]
+        cr_refs = [
+            {
+                "title": "CrossRef Ref",
+                "doi": "10.1/cr",
+                "intent": "unknown",
+                "citation_source": "crossref",
+            }
+        ]
         with (
-            patch("researcher_mcp.tools.snowball._get_references_semantic_scholar", new=AsyncMock(return_value=[])),
-            patch("researcher_mcp.tools.snowball._get_references_crossref", new=AsyncMock(return_value=cr_refs)),
+            patch(
+                "researcher_mcp.tools.snowball._get_references_semantic_scholar",
+                new=AsyncMock(return_value=[]),
+            ),
+            patch(
+                "researcher_mcp.tools.snowball._get_references_crossref",
+                new=AsyncMock(return_value=cr_refs),
+            ),
         ):
             result = await get_references(doi="10.1145/test")
             assert len(result) == 1
@@ -59,8 +85,14 @@ class TestGetReferences:
         from researcher_mcp.tools.snowball import get_references
 
         with (
-            patch("researcher_mcp.tools.snowball._get_references_semantic_scholar", new=AsyncMock(return_value=[])),
-            patch("researcher_mcp.tools.snowball._get_references_crossref", new=AsyncMock(return_value=[])),
+            patch(
+                "researcher_mcp.tools.snowball._get_references_semantic_scholar",
+                new=AsyncMock(return_value=[]),
+            ),
+            patch(
+                "researcher_mcp.tools.snowball._get_references_crossref",
+                new=AsyncMock(return_value=[]),
+            ),
         ):
             result = await get_references(doi="10.9999/unknown")
             assert result == []
@@ -70,9 +102,19 @@ class TestGetReferences:
         """Each returned reference has an 'intent' field."""
         from researcher_mcp.tools.snowball import get_references
 
-        s2_refs = [{"title": "Ref A", "doi": "10.1/a", "intent": "result", "citation_source": "semantic_scholar"}]
+        s2_refs = [
+            {
+                "title": "Ref A",
+                "doi": "10.1/a",
+                "intent": "result",
+                "citation_source": "semantic_scholar",
+            }
+        ]
         with (
-            patch("researcher_mcp.tools.snowball._get_references_semantic_scholar", new=AsyncMock(return_value=s2_refs)),
+            patch(
+                "researcher_mcp.tools.snowball._get_references_semantic_scholar",
+                new=AsyncMock(return_value=s2_refs),
+            ),
         ):
             result = await get_references(doi="10.1145/test")
             assert "intent" in result[0]
@@ -83,9 +125,20 @@ class TestGetReferences:
         """max_results parameter limits the returned count."""
         from researcher_mcp.tools.snowball import get_references
 
-        s2_refs = [{"title": f"Ref {i}", "doi": f"10.1/{i}", "intent": "unknown", "citation_source": "semantic_scholar"} for i in range(20)]
+        s2_refs = [
+            {
+                "title": f"Ref {i}",
+                "doi": f"10.1/{i}",
+                "intent": "unknown",
+                "citation_source": "semantic_scholar",
+            }
+            for i in range(20)
+        ]
         with (
-            patch("researcher_mcp.tools.snowball._get_references_semantic_scholar", new=AsyncMock(return_value=s2_refs[:5])),
+            patch(
+                "researcher_mcp.tools.snowball._get_references_semantic_scholar",
+                new=AsyncMock(return_value=s2_refs[:5]),
+            ),
         ):
             result = await get_references(doi="10.1145/test", max_results=5)
             assert len(result) <= 5
@@ -104,7 +157,10 @@ class TestGetCitations:
         ]
         crossref_mock = AsyncMock()
         with (
-            patch("researcher_mcp.tools.snowball._get_citations_semantic_scholar", new=AsyncMock(return_value=s2_cites)),
+            patch(
+                "researcher_mcp.tools.snowball._get_citations_semantic_scholar",
+                new=AsyncMock(return_value=s2_cites),
+            ),
             patch("researcher_mcp.tools.snowball._get_citations_crossref", new=crossref_mock),
         ):
             result = await get_citations(doi="10.1145/test")
@@ -119,8 +175,14 @@ class TestGetCitations:
 
         cr_cites = [{"title": "CR Cite", "doi": "10.1/cr", "citation_source": "crossref"}]
         with (
-            patch("researcher_mcp.tools.snowball._get_citations_semantic_scholar", new=AsyncMock(return_value=[])),
-            patch("researcher_mcp.tools.snowball._get_citations_crossref", new=AsyncMock(return_value=cr_cites)),
+            patch(
+                "researcher_mcp.tools.snowball._get_citations_semantic_scholar",
+                new=AsyncMock(return_value=[]),
+            ),
+            patch(
+                "researcher_mcp.tools.snowball._get_citations_crossref",
+                new=AsyncMock(return_value=cr_cites),
+            ),
         ):
             result = await get_citations(doi="10.1145/test")
             assert len(result) == 1
@@ -133,7 +195,10 @@ class TestGetCitations:
 
         s2_cites = [{"title": "Cite A", "doi": "10.1/ca", "citation_source": "semantic_scholar"}]
         with (
-            patch("researcher_mcp.tools.snowball._get_citations_semantic_scholar", new=AsyncMock(return_value=s2_cites)),
+            patch(
+                "researcher_mcp.tools.snowball._get_citations_semantic_scholar",
+                new=AsyncMock(return_value=s2_cites),
+            ),
         ):
             result = await get_citations(doi="10.1145/test")
             assert "citation_source" in result[0]
@@ -144,8 +209,14 @@ class TestGetCitations:
         from researcher_mcp.tools.snowball import get_citations
 
         with (
-            patch("researcher_mcp.tools.snowball._get_citations_semantic_scholar", new=AsyncMock(return_value=[])),
-            patch("researcher_mcp.tools.snowball._get_citations_crossref", new=AsyncMock(return_value=[])),
+            patch(
+                "researcher_mcp.tools.snowball._get_citations_semantic_scholar",
+                new=AsyncMock(return_value=[]),
+            ),
+            patch(
+                "researcher_mcp.tools.snowball._get_citations_crossref",
+                new=AsyncMock(return_value=[]),
+            ),
         ):
             result = await get_citations(doi="10.9999/unknown")
             assert result == []
@@ -160,7 +231,10 @@ class TestGetCitations:
             for i in range(20)
         ]
         with (
-            patch("researcher_mcp.tools.snowball._get_citations_semantic_scholar", new=AsyncMock(return_value=s2_cites[:5])),
+            patch(
+                "researcher_mcp.tools.snowball._get_citations_semantic_scholar",
+                new=AsyncMock(return_value=s2_cites[:5]),
+            ),
         ):
             result = await get_citations(doi="10.1145/test", max_results=5)
             assert len(result) <= 5
@@ -202,6 +276,7 @@ class TestGetReferencesSemantic:
     async def test_s2_references_returns_empty_on_http_error(self) -> None:
         """_get_references_semantic_scholar returns [] on HTTPStatusError."""
         import httpx
+
         from researcher_mcp.tools.snowball import _get_references_semantic_scholar
 
         mock_ss = MagicMock()
@@ -277,6 +352,7 @@ class TestGetCitationsSemantic:
     async def test_s2_citations_returns_empty_on_transport_error(self) -> None:
         """_get_citations_semantic_scholar returns [] on TransportError."""
         import httpx
+
         from researcher_mcp.tools.snowball import _get_citations_semantic_scholar
 
         mock_ss = MagicMock()
@@ -290,8 +366,10 @@ class TestGetCitationsSemantic:
     @pytest.mark.asyncio
     async def test_crossref_references_fallback(self) -> None:
         """_get_references_crossref returns records from CrossRef works API."""
+        from unittest.mock import AsyncMock, MagicMock
+
         import httpx
-        from unittest.mock import MagicMock, AsyncMock
+
         from researcher_mcp.tools.snowball import _get_references_crossref
 
         mock_resp = MagicMock(spec=httpx.Response)
@@ -323,6 +401,7 @@ class TestGetCitationsSemantic:
     async def test_crossref_references_returns_empty_on_error(self) -> None:
         """_get_references_crossref returns [] on HTTP error."""
         import httpx
+
         from researcher_mcp.tools.snowball import _get_references_crossref
 
         mock_client = MagicMock(spec=httpx.AsyncClient)
@@ -339,6 +418,7 @@ class TestGetCitationsSemantic:
     async def test_crossref_citations_fallback_from_openalex(self) -> None:
         """_get_citations_crossref returns records via OpenAlex API."""
         import httpx
+
         from researcher_mcp.tools.snowball import _get_citations_crossref
 
         mock_resp = MagicMock(spec=httpx.Response)
@@ -351,9 +431,7 @@ class TestGetCitationsSemantic:
                     "title": "OA Citing Paper",
                     "doi": "https://doi.org/10.1/oa-citing",
                     "publication_year": 2022,
-                    "authorships": [
-                        {"author": {"display_name": "Alice Smith"}}
-                    ],
+                    "authorships": [{"author": {"display_name": "Alice Smith"}}],
                 }
             ]
         }
@@ -373,12 +451,11 @@ class TestGetCitationsSemantic:
     async def test_crossref_citations_returns_empty_on_error(self) -> None:
         """_get_citations_crossref returns [] on HTTP error."""
         import httpx
+
         from researcher_mcp.tools.snowball import _get_citations_crossref
 
         mock_client = MagicMock(spec=httpx.AsyncClient)
-        mock_client.get = AsyncMock(
-            side_effect=httpx.TransportError("network error")
-        )
+        mock_client.get = AsyncMock(side_effect=httpx.TransportError("network error"))
 
         with patch("researcher_mcp.tools.snowball._get_client", return_value=mock_client):
             result = await _get_citations_crossref("10.9/missing", 10)

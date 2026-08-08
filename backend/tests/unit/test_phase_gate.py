@@ -12,32 +12,30 @@ Covers:
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from unittest.mock import MagicMock
-
-import pytest
-import pytest_asyncio
-from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
-from sqlalchemy.pool import StaticPool
 
 # Register all ORM models
 import db.models  # noqa: F401
-import db.models.users  # noqa: F401
-import db.models.study  # noqa: F401
-import db.models.pico  # noqa: F401
-import db.models.seeds  # noqa: F401
+import db.models.audit  # noqa: F401
+import db.models.candidate  # noqa: F401
 import db.models.criteria  # noqa: F401
+import db.models.extraction  # noqa: F401
+import db.models.jobs  # noqa: F401
+import db.models.pico  # noqa: F401
 import db.models.search  # noqa: F401
 import db.models.search_exec  # noqa: F401
-import db.models.jobs  # noqa: F401
-import db.models.candidate  # noqa: F401
-import db.models.audit  # noqa: F401
-import db.models.extraction  # noqa: F401
-
+import db.models.seeds  # noqa: F401
+import db.models.study  # noqa: F401
+import db.models.users  # noqa: F401
+import pytest
+import pytest_asyncio
 from db.base import Base
 from db.models.pico import PICOComponent
 from db.models.search import SearchString
 from db.models.search_exec import SearchExecution, SearchExecutionStatus
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+from sqlalchemy.pool import StaticPool
 
 from backend.services.phase_gate import (
     compute_current_phase,
@@ -132,7 +130,9 @@ class TestGetUnlockedPhasesPhase2:
 class TestGetUnlockedPhasesPhase3:
     """Phase 3 requires a completed SearchExecution."""
 
-    async def _insert_search_execution(self, db_session, study_id: int, status: SearchExecutionStatus) -> None:
+    async def _insert_search_execution(
+        self, db_session, study_id: int, status: SearchExecutionStatus
+    ) -> None:
         """Insert a SearchString and SearchExecution for testing."""
         ss = SearchString(study_id=study_id, version=1, string_text="(TDD)")
         db_session.add(ss)
@@ -234,7 +234,7 @@ class TestComputeStalenessFlags:
         return s
 
     def _dt(self, offset_seconds: int = 0) -> datetime:
-        return datetime(2025, 1, 1, 12, 0, offset_seconds, tzinfo=timezone.utc)
+        return datetime(2025, 1, 1, 12, 0, offset_seconds, tzinfo=UTC)
 
     def test_all_none_returns_both_false(self) -> None:
         """No timestamps → both flags False."""

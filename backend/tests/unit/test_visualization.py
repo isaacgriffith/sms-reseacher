@@ -10,7 +10,6 @@ from __future__ import annotations
 import sys
 from unittest.mock import MagicMock, patch
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -23,6 +22,7 @@ def _make_pyplot_mock() -> tuple[MagicMock, MagicMock, MagicMock]:
         A ``(plt_mock, fig_mock, ax_mock)`` triple whose ``fig.savefig``
         writes a minimal SVG to its buffer argument so the tested functions
         return a non-empty string.
+
     """
     import io as _real_io
 
@@ -59,6 +59,7 @@ def _matplotlib_patch(plt_mock: MagicMock):
 
     Returns:
         A ``patch.dict`` context manager for ``sys.modules``.
+
     """
     mat_mock = MagicMock()
     mat_mock.use = MagicMock()
@@ -77,6 +78,7 @@ def test_generate_bar_chart_returns_nonempty_svg() -> None:
 
     with _matplotlib_patch(plt_mock):
         from backend.services.visualization import generate_bar_chart
+
         result = generate_bar_chart({"2020": 5, "2021": 8}, "Papers by Year", "Year", "Count")
 
     assert isinstance(result, str)
@@ -88,6 +90,7 @@ def test_generate_bar_chart_with_empty_data() -> None:
 
     with _matplotlib_patch(plt_mock):
         from backend.services.visualization import generate_bar_chart
+
         result = generate_bar_chart({}, "Empty", "X", "Y")
 
     assert isinstance(result, str)
@@ -103,12 +106,27 @@ def test_build_classification_data_research_type() -> None:
     from backend.services.visualization import _build_classification_data
 
     extractions = [
-        {"research_type": "evaluation", "venue_type": "journal", "venue_name": "TSE",
-         "author_details": [], "keywords": []},
-        {"research_type": "evaluation", "venue_type": "conference", "venue_name": "ICSE",
-         "author_details": [], "keywords": []},
-        {"research_type": "validation", "venue_type": "journal", "venue_name": "JSS",
-         "author_details": [], "keywords": []},
+        {
+            "research_type": "evaluation",
+            "venue_type": "journal",
+            "venue_name": "TSE",
+            "author_details": [],
+            "keywords": [],
+        },
+        {
+            "research_type": "evaluation",
+            "venue_type": "conference",
+            "venue_name": "ICSE",
+            "author_details": [],
+            "keywords": [],
+        },
+        {
+            "research_type": "validation",
+            "venue_type": "journal",
+            "venue_name": "JSS",
+            "author_details": [],
+            "keywords": [],
+        },
     ]
     result = _build_classification_data(extractions, "research_type")
     assert result.get("evaluation") == 2
@@ -120,12 +138,27 @@ def test_build_classification_data_venue() -> None:
     from backend.services.visualization import _build_classification_data
 
     extractions = [
-        {"research_type": "evaluation", "venue_type": "journal", "venue_name": "TSE",
-         "author_details": [], "keywords": []},
-        {"research_type": "evaluation", "venue_type": "journal", "venue_name": "TSE",
-         "author_details": [], "keywords": []},
-        {"research_type": "evaluation", "venue_type": "conference", "venue_name": None,
-         "author_details": [], "keywords": []},
+        {
+            "research_type": "evaluation",
+            "venue_type": "journal",
+            "venue_name": "TSE",
+            "author_details": [],
+            "keywords": [],
+        },
+        {
+            "research_type": "evaluation",
+            "venue_type": "journal",
+            "venue_name": "TSE",
+            "author_details": [],
+            "keywords": [],
+        },
+        {
+            "research_type": "evaluation",
+            "venue_type": "conference",
+            "venue_name": None,
+            "author_details": [],
+            "keywords": [],
+        },
     ]
     result = _build_classification_data(extractions, "venue")
     assert result.get("TSE") == 2
@@ -136,10 +169,20 @@ def test_build_classification_data_keywords() -> None:
     from backend.services.visualization import _build_classification_data
 
     extractions = [
-        {"research_type": "evaluation", "venue_type": "journal", "venue_name": "TSE",
-         "author_details": [], "keywords": ["agile", "scrum"]},
-        {"research_type": "evaluation", "venue_type": "journal", "venue_name": "TSE",
-         "author_details": [], "keywords": ["agile", "kanban"]},
+        {
+            "research_type": "evaluation",
+            "venue_type": "journal",
+            "venue_name": "TSE",
+            "author_details": [],
+            "keywords": ["agile", "scrum"],
+        },
+        {
+            "research_type": "evaluation",
+            "venue_type": "journal",
+            "venue_name": "TSE",
+            "author_details": [],
+            "keywords": ["agile", "kanban"],
+        },
     ]
     result = _build_classification_data(extractions, "subtopic")
     assert result.get("agile") == 2
@@ -152,12 +195,20 @@ def test_build_classification_data_locale() -> None:
     from backend.services.visualization import _build_classification_data
 
     extractions = [
-        {"research_type": "evaluation", "venue_type": "journal", "venue_name": "TSE",
-         "author_details": [{"name": "Alice", "locale": "US"}, {"name": "Bob", "locale": "UK"}],
-         "keywords": []},
-        {"research_type": "evaluation", "venue_type": "journal", "venue_name": "TSE",
-         "author_details": [{"name": "Carol", "locale": "US"}],
-         "keywords": []},
+        {
+            "research_type": "evaluation",
+            "venue_type": "journal",
+            "venue_name": "TSE",
+            "author_details": [{"name": "Alice", "locale": "US"}, {"name": "Bob", "locale": "UK"}],
+            "keywords": [],
+        },
+        {
+            "research_type": "evaluation",
+            "venue_type": "journal",
+            "venue_name": "TSE",
+            "author_details": [{"name": "Carol", "locale": "US"}],
+            "keywords": [],
+        },
     ]
     result = _build_classification_data(extractions, "locale")
     assert result.get("US") == 2
@@ -177,12 +228,20 @@ def test_build_classification_data_author() -> None:
     from backend.services.visualization import _build_classification_data
 
     extractions = [
-        {"research_type": "eval", "venue_type": "j", "venue_name": "J",
-         "author_details": [{"name": "Alice", "locale": "US"}],
-         "keywords": []},
-        {"research_type": "eval", "venue_type": "j", "venue_name": "J",
-         "author_details": [{"name": "Alice", "locale": "US"}, {"name": None, "locale": "US"}],
-         "keywords": []},
+        {
+            "research_type": "eval",
+            "venue_type": "j",
+            "venue_name": "J",
+            "author_details": [{"name": "Alice", "locale": "US"}],
+            "keywords": [],
+        },
+        {
+            "research_type": "eval",
+            "venue_type": "j",
+            "venue_name": "J",
+            "author_details": [{"name": "Alice", "locale": "US"}, {"name": None, "locale": "US"}],
+            "keywords": [],
+        },
     ]
     result = _build_classification_data(extractions, "author")
     assert result.get("Alice") == 2
@@ -193,9 +252,13 @@ def test_build_classification_data_institution() -> None:
     from backend.services.visualization import _build_classification_data
 
     extractions = [
-        {"research_type": "eval", "venue_type": "j", "venue_name": "J",
-         "author_details": [{"name": "A", "locale": "US", "institution": "MIT"}],
-         "keywords": []},
+        {
+            "research_type": "eval",
+            "venue_type": "j",
+            "venue_name": "J",
+            "author_details": [{"name": "A", "locale": "US", "institution": "MIT"}],
+            "keywords": [],
+        },
     ]
     result = _build_classification_data(extractions, "institution")
     assert result.get("MIT") == 1
@@ -206,12 +269,30 @@ def test_build_classification_data_year() -> None:
     from backend.services.visualization import _build_classification_data
 
     extractions = [
-        {"research_type": "eval", "venue_type": "j", "venue_name": "J",
-         "author_details": [], "keywords": [], "year": 2021},
-        {"research_type": "eval", "venue_type": "j", "venue_name": "J",
-         "author_details": [], "keywords": [], "year": 2021},
-        {"research_type": "eval", "venue_type": "j", "venue_name": "J",
-         "author_details": [], "keywords": [], "year": None},
+        {
+            "research_type": "eval",
+            "venue_type": "j",
+            "venue_name": "J",
+            "author_details": [],
+            "keywords": [],
+            "year": 2021,
+        },
+        {
+            "research_type": "eval",
+            "venue_type": "j",
+            "venue_name": "J",
+            "author_details": [],
+            "keywords": [],
+            "year": 2021,
+        },
+        {
+            "research_type": "eval",
+            "venue_type": "j",
+            "venue_name": "J",
+            "author_details": [],
+            "keywords": [],
+            "year": None,
+        },
     ]
     result = _build_classification_data(extractions, "year")
     assert result.get("2021") == 2
@@ -234,8 +315,13 @@ def test_build_classification_data_research_method_yields_nothing() -> None:
     from backend.services.visualization import _build_classification_data
 
     extractions = [
-        {"research_type": "eval", "venue_type": "journal", "venue_name": "J",
-         "author_details": [], "keywords": []},
+        {
+            "research_type": "eval",
+            "venue_type": "journal",
+            "venue_name": "J",
+            "author_details": [],
+            "keywords": [],
+        },
     ]
 
     result = _build_classification_data(extractions, "research_method")
@@ -252,10 +338,20 @@ def test_research_method_is_not_a_copy_of_venue() -> None:
     from backend.services.visualization import _build_classification_data
 
     extractions = [
-        {"research_type": "eval", "venue_type": "journal", "venue_name": "TSE",
-         "author_details": [], "keywords": []},
-        {"research_type": "eval", "venue_type": "conference", "venue_name": "ICSE",
-         "author_details": [], "keywords": []},
+        {
+            "research_type": "eval",
+            "venue_type": "journal",
+            "venue_name": "TSE",
+            "author_details": [],
+            "keywords": [],
+        },
+        {
+            "research_type": "eval",
+            "venue_type": "conference",
+            "venue_name": "ICSE",
+            "author_details": [],
+            "keywords": [],
+        },
     ]
 
     venue = _build_classification_data(extractions, "venue")
@@ -282,6 +378,7 @@ def test_generate_frequency_infographic_returns_string() -> None:
 
     with _matplotlib_patch(plt_mock):
         from backend.services.visualization import generate_frequency_infographic
+
         result = generate_frequency_infographic({"2020": 3, "2021": 5})
 
     assert isinstance(result, str)
@@ -291,12 +388,18 @@ def test_generate_classification_charts_venue() -> None:
     """generate_classification_charts delegates correctly for venue chart type."""
     plt_mock, _fig, _ax = _make_pyplot_mock()
     extractions = [
-        {"research_type": "eval", "venue_type": "j", "venue_name": "TSE",
-         "author_details": [], "keywords": []},
+        {
+            "research_type": "eval",
+            "venue_type": "j",
+            "venue_name": "TSE",
+            "author_details": [],
+            "keywords": [],
+        },
     ]
 
     with _matplotlib_patch(plt_mock):
         from backend.services.visualization import generate_classification_charts
+
         result = generate_classification_charts(extractions, "venue")
 
     assert isinstance(result, str)

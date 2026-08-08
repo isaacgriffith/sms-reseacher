@@ -15,10 +15,9 @@ Covers the core business logic functions that have no existing test coverage:
 
 from __future__ import annotations
 
-from unittest.mock import AsyncMock, MagicMock, call, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-
 from db.models.rapid_review import (
     RapidReviewProtocol,
     RRProtocolStatus,
@@ -26,7 +25,6 @@ from db.models.rapid_review import (
     RRThreatToValidity,
     RRThreatType,
 )
-
 
 # ---------------------------------------------------------------------------
 # detect_research_gap_questions
@@ -113,6 +111,7 @@ class TestApplyFields:
         Returns:
             A :class:`~unittest.mock.MagicMock` representing a
             :class:`~db.models.rapid_review.RapidReviewProtocol`.
+
         """
         p = MagicMock(spec=RapidReviewProtocol)
         p.practical_problem = None
@@ -192,6 +191,7 @@ class TestAutoCreateThreats:
 
         Returns:
             A configured :class:`~unittest.mock.MagicMock`.
+
         """
         p = MagicMock()
         p.context_restrictions = context_restrictions
@@ -312,17 +312,21 @@ class TestUpdateProtocol:
     async def test_raises_409_when_validated_without_acknowledgment(self) -> None:
         """Raises HTTP 409 when protocol is VALIDATED and ack flag is False."""
         from fastapi import HTTPException
+
         from backend.services.rr_protocol_service import update_protocol
 
         mock_protocol = MagicMock(spec=RapidReviewProtocol)
         mock_protocol.status = RRProtocolStatus.VALIDATED
 
-        with patch(
-            "backend.services.rr_protocol_service.get_or_create_protocol",
-            new=AsyncMock(return_value=mock_protocol),
-        ), patch(
-            "backend.services.rr_protocol_service._count_study_papers",
-            new=AsyncMock(return_value=5),
+        with (
+            patch(
+                "backend.services.rr_protocol_service.get_or_create_protocol",
+                new=AsyncMock(return_value=mock_protocol),
+            ),
+            patch(
+                "backend.services.rr_protocol_service._count_study_papers",
+                new=AsyncMock(return_value=5),
+            ),
         ):
             session = AsyncMock()
             with pytest.raises(HTTPException) as exc_info:
@@ -344,12 +348,15 @@ class TestUpdateProtocol:
         mock_protocol.status = RRProtocolStatus.VALIDATED
         mock_protocol.practical_problem = None
 
-        with patch(
-            "backend.services.rr_protocol_service.get_or_create_protocol",
-            new=AsyncMock(return_value=mock_protocol),
-        ), patch(
-            "backend.services.rr_protocol_service.invalidate_papers_for_study",
-            new=AsyncMock(return_value=0),
+        with (
+            patch(
+                "backend.services.rr_protocol_service.get_or_create_protocol",
+                new=AsyncMock(return_value=mock_protocol),
+            ),
+            patch(
+                "backend.services.rr_protocol_service.invalidate_papers_for_study",
+                new=AsyncMock(return_value=0),
+            ),
         ):
             session = AsyncMock()
             session.flush = AsyncMock()
@@ -400,6 +407,7 @@ class TestValidateProtocol:
     async def test_raises_422_when_no_stakeholder(self) -> None:
         """Raises HTTP 422 when no PractitionerStakeholder exists."""
         from fastapi import HTTPException
+
         from backend.services.rr_protocol_service import validate_protocol
 
         mock_protocol = MagicMock(spec=RapidReviewProtocol)
@@ -429,6 +437,7 @@ class TestValidateProtocol:
     async def test_raises_422_when_no_research_questions(self) -> None:
         """Raises HTTP 422 when research_questions is empty."""
         from fastapi import HTTPException
+
         from backend.services.rr_protocol_service import validate_protocol
 
         mock_protocol = MagicMock(spec=RapidReviewProtocol)
@@ -458,6 +467,7 @@ class TestValidateProtocol:
     async def test_raises_422_when_no_practical_problem(self) -> None:
         """Raises HTTP 422 when practical_problem is empty."""
         from fastapi import HTTPException
+
         from backend.services.rr_protocol_service import validate_protocol
 
         mock_protocol = MagicMock(spec=RapidReviewProtocol)
@@ -701,6 +711,7 @@ class TestSetQualityAppraisalMode:
 
         Returns:
             A configured :class:`~unittest.mock.AsyncMock` session.
+
         """
         mock_protocol = MagicMock(spec=RapidReviewProtocol)
         mock_protocol.quality_appraisal_mode = RRQualityAppraisalMode.FULL
@@ -788,12 +799,15 @@ class TestSetQualityAppraisalMode:
             qa_skipped_exists=False, qa_simplified_exists=False
         )
 
-        with patch(
-            "backend.services.rr_protocol_service.get_or_create_protocol",
-            new=AsyncMock(return_value=mock_protocol),
-        ), patch(
-            "backend.services.rr_protocol_service._exclude_non_peer_reviewed_papers",
-            new=AsyncMock(return_value=0),
+        with (
+            patch(
+                "backend.services.rr_protocol_service.get_or_create_protocol",
+                new=AsyncMock(return_value=mock_protocol),
+            ),
+            patch(
+                "backend.services.rr_protocol_service._exclude_non_peer_reviewed_papers",
+                new=AsyncMock(return_value=0),
+            ),
         ):
             await set_quality_appraisal_mode(
                 study_id=1,

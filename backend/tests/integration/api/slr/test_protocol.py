@@ -18,11 +18,11 @@ from __future__ import annotations
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+from db.models.slr import ReviewProtocol, ReviewProtocolStatus
+from db.models.users import GroupMembership, GroupRole, ResearchGroup
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from backend.core.auth import create_access_token
-from db.models.slr import ReviewProtocol, ReviewProtocolStatus
-from db.models.users import GroupMembership, GroupRole, ResearchGroup
 
 
 def _bearer(user_id: int) -> dict[str, str]:
@@ -325,9 +325,7 @@ class TestGetPhases:
         assert resp.json()["protocol_status"] == "validated"
 
     @pytest.mark.asyncio
-    async def test_protocol_status_none_when_no_protocol(
-        self, client, alice, db_engine
-    ) -> None:
+    async def test_protocol_status_none_when_no_protocol(self, client, alice, db_engine) -> None:
         """protocol_status is None when no protocol exists."""
         user, _ = alice
         study_id = await _setup_study(client, db_engine, user)

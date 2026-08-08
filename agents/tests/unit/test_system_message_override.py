@@ -77,16 +77,18 @@ class TestExpertAgentSystemMessageOverride:
         """When system_message_override is set, the system message is replaced."""
         from agents.services.expert import ExpertAgent
 
-        valid_response = json.dumps([
-            {
-                "title": "Test Paper",
-                "authors": ["Alice"],
-                "year": 2023,
-                "venue": "ICSE",
-                "doi": "10.1/test",
-                "rationale": "Important work",
-            }
-        ])
+        valid_response = json.dumps(
+            [
+                {
+                    "title": "Test Paper",
+                    "authors": ["Alice"],
+                    "year": 2023,
+                    "venue": "ICSE",
+                    "doi": "10.1/test",
+                    "rationale": "Important work",
+                }
+            ]
+        )
         client = _make_client(valid_response)
         agent = ExpertAgent(
             llm_client=client,
@@ -123,10 +125,12 @@ class TestDomainModelAgentSystemMessageOverride:
         """When system_message_override is set, the system message is replaced."""
         from agents.services.domain_modeler import DomainModelAgent
 
-        valid_response = json.dumps({
-            "concepts": [{"name": "TDD", "definition": "Test-driven development"}],
-            "relationships": [],
-        })
+        valid_response = json.dumps(
+            {
+                "concepts": [{"name": "TDD", "definition": "Test-driven development"}],
+                "relationships": [],
+            }
+        )
         client = _make_client(valid_response)
         agent = DomainModelAgent(
             llm_client=client,
@@ -135,7 +139,9 @@ class TestDomainModelAgentSystemMessageOverride:
         result = await agent.run(
             topic="TDD",
             research_questions=["RQ1"],
-            open_codings=[{"code": "code1", "definition": "Code 1 definition", "evidence_quote": None}],
+            open_codings=[
+                {"code": "code1", "definition": "Code 1 definition", "evidence_quote": None}
+            ],
             keywords=["tdd"],
             summaries=["Paper summary"],
         )
@@ -161,13 +167,15 @@ class TestExtractorAgentSystemMessageOverride:
         """When system_message_override is set, the system message is replaced."""
         from agents.services.extractor import ExtractorAgent
 
-        valid_response = json.dumps({
-            "research_type": "R1",
-            "contributions": ["C1"],
-            "open_coding": "qualitative",
-            "keywords": ["TDD"],
-            "summary": "A summary.",
-        })
+        valid_response = json.dumps(
+            {
+                "research_type": "R1",
+                "contributions": ["C1"],
+                "open_coding": "qualitative",
+                "keywords": ["TDD"],
+                "summary": "A summary.",
+            }
+        )
         client = _make_client(valid_response)
         agent = ExtractorAgent(
             llm_client=client,
@@ -201,11 +209,13 @@ class TestQualityJudgeAgentSystemMessageOverride:
         """When system_message_override is set, the system message is replaced."""
         from agents.services.quality_judge import QualityJudgeAgent
 
-        valid_response = json.dumps({
-            "scores": {"rigor": 3, "relevance": 2, "transparency": 4},
-            "rubric_details": {},
-            "overall_comments": "Good study.",
-        })
+        valid_response = json.dumps(
+            {
+                "scores": {"rigor": 3, "relevance": 2, "transparency": 4},
+                "rubric_details": {},
+                "overall_comments": "Good study.",
+            }
+        )
         client = _make_client(valid_response)
         agent = QualityJudgeAgent(
             llm_client=client,
@@ -248,14 +258,16 @@ class TestValidityAgentSystemMessageOverride:
         """When system_message_override is set, the system message is replaced."""
         from agents.services.validity import ValidityAgent
 
-        valid_response = json.dumps({
-            "descriptive": "Good descriptive validity.",
-            "theoretical": "Sound theoretical basis.",
-            "generalizability_internal": "Limited internal gen.",
-            "generalizability_external": "Limited external gen.",
-            "interpretive": "Reasonable interpretations.",
-            "repeatability": "Reproducible methods.",
-        })
+        valid_response = json.dumps(
+            {
+                "descriptive": "Good descriptive validity.",
+                "theoretical": "Sound theoretical basis.",
+                "generalizability_internal": "Limited internal gen.",
+                "generalizability_external": "Limited external gen.",
+                "interpretive": "Reasonable interpretations.",
+                "repeatability": "Reproducible methods.",
+            }
+        )
         client = _make_client(valid_response)
         agent = ValidityAgent(
             llm_client=client,

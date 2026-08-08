@@ -9,19 +9,18 @@ and generate_system_message error paths.
 from __future__ import annotations
 
 import uuid
-from unittest.mock import AsyncMock, MagicMock, patch
-
-import pytest
-import pytest_asyncio
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-from sqlalchemy.pool import StaticPool
+from unittest.mock import MagicMock, patch
 
 import db.models  # noqa: F401
 import db.models.agents  # noqa: F401
 import db.models.study  # noqa: F401
 import db.models.users  # noqa: F401
+import pytest
+import pytest_asyncio
 from db.base import Base
 from db.models.agents import Agent, AgentTaskType, AvailableModel, Provider, ProviderType
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.pool import StaticPool
 
 
 @pytest_asyncio.fixture
@@ -235,11 +234,10 @@ async def test_deactivate_raises_when_reviewer_references_agent(
     If any Reviewer record references this agent the deactivation should
     be refused with AgentHasDependentsError.
     """
+    import db.models.study  # noqa: F401
     from db.models.study import Reviewer, ReviewerType
 
     from backend.services.agent_service import AgentHasDependentsError, AgentService
-
-    import db.models.study  # noqa: F401
 
     provider, model = provider_and_model
     service = AgentService()
@@ -339,7 +337,9 @@ def test_build_provider_config_handles_api_key_decrypt_error():
     model = MagicMock()
     model.model_identifier = "gpt-4"
 
-    with patch("backend.services.agent_service.decrypt_secret", side_effect=Exception("decrypt error")):
+    with patch(
+        "backend.services.agent_service.decrypt_secret", side_effect=Exception("decrypt error")
+    ):
         result = _build_provider_config(provider, model)
 
     # Should still return a config (with None api_key) rather than raising

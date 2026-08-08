@@ -327,7 +327,12 @@ class TestGateEvaluation:
         """REMEDIATION_MESSAGES has entries for all documented metric names."""
         from backend.services.protocol_executor import REMEDIATION_MESSAGES
 
-        expected = {"kappa_coefficient", "accepted_paper_count", "test_set_recall", "coverage_recall"}
+        expected = {
+            "kappa_coefficient",
+            "accepted_paper_count",
+            "test_set_recall",
+            "coverage_recall",
+        }
         assert expected.issubset(set(REMEDIATION_MESSAGES.keys()))
 
     @pytest.mark.asyncio
@@ -335,8 +340,9 @@ class TestGateEvaluation:
         """metric_threshold gate passes when metric satisfies threshold."""
         from unittest.mock import AsyncMock, patch
 
-        from backend.services.protocol_executor import _eval_metric_threshold
         from db.models.protocols import QualityGate, QualityGateType
+
+        from backend.services.protocol_executor import _eval_metric_threshold
 
         gate = QualityGate(
             gate_type=QualityGateType.METRIC_THRESHOLD,
@@ -357,8 +363,9 @@ class TestGateEvaluation:
         """metric_threshold gate fails when metric is below threshold."""
         from unittest.mock import AsyncMock, patch
 
-        from backend.services.protocol_executor import REMEDIATION_MESSAGES, _eval_metric_threshold
         from db.models.protocols import QualityGate, QualityGateType
+
+        from backend.services.protocol_executor import REMEDIATION_MESSAGES, _eval_metric_threshold
 
         gate = QualityGate(
             gate_type=QualityGateType.METRIC_THRESHOLD,
@@ -380,8 +387,9 @@ class TestGateEvaluation:
     @pytest.mark.asyncio
     async def test_completion_check_gate_always_passes(self, db_session: AsyncSession) -> None:
         """completion_check gate always returns passed=True."""
-        from backend.services.protocol_executor import _eval_completion_check
         from db.models.protocols import QualityGate, QualityGateType
+
+        from backend.services.protocol_executor import _eval_completion_check
 
         gate = QualityGate(
             gate_type=QualityGateType.COMPLETION_CHECK,
@@ -393,8 +401,9 @@ class TestGateEvaluation:
     @pytest.mark.asyncio
     async def test_human_sign_off_gate_always_fails(self, db_session: AsyncSession) -> None:
         """human_sign_off gate always returns passed=False until approved."""
-        from backend.services.protocol_executor import _eval_human_sign_off
         from db.models.protocols import QualityGate, QualityGateType
+
+        from backend.services.protocol_executor import _eval_human_sign_off
 
         gate = QualityGate(
             gate_type=QualityGateType.HUMAN_SIGN_OFF,
@@ -428,9 +437,7 @@ class TestGateEvaluation:
         )
         db_session.add(StudyProtocolAssignment(study_id=study.id, protocol_id=protocol.id))
         db_session.add(
-            TaskExecutionState(
-                study_id=study.id, node_id=node.id, status=TaskNodeStatus.ACTIVE
-            )
+            TaskExecutionState(study_id=study.id, node_id=node.id, status=TaskNodeStatus.ACTIVE)
         )
         await db_session.commit()
 

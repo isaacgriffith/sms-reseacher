@@ -4,10 +4,10 @@ Covers GET /pico, PUT /pico, and 404 error paths.
 """
 
 import pytest
+from db.models.users import GroupMembership, GroupRole, ResearchGroup
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from backend.core.auth import create_access_token
-from db.models.users import GroupMembership, GroupRole, ResearchGroup
 
 
 def _bearer(user_id: int) -> dict[str, str]:
@@ -114,9 +114,8 @@ class TestUpsertPico:
     @pytest.mark.asyncio
     async def test_pico_save_stamps_pico_saved_at(self, client, alice, db_engine):
         """Saving PICO sets pico_saved_at on the study (staleness tracking)."""
-        from sqlalchemy import select
-
         from db.models import Study
+        from sqlalchemy import select
 
         user, _ = alice
         study_id = await _setup_study(client, db_engine, user)

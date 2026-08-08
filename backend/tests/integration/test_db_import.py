@@ -1,7 +1,5 @@
 """Integration test: verify db package imports correctly from backend context."""
 
-import importlib
-
 
 class TestDbImport:
     """Verify db package is importable from the backend workspace member."""
@@ -25,6 +23,7 @@ class TestDbImport:
     def test_all_models_in_single_import(self) -> None:
         """All three models importable in a single statement."""
         from db.models import Paper, Study, StudyPaper  # noqa: F401
+
         assert Study is not None
         assert Paper is not None
         assert StudyPaper is not None

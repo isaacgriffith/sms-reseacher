@@ -31,6 +31,7 @@ def _scalar_result(value: object) -> MagicMock:
 
     Returns:
         MagicMock with scalar_one_or_none and scalars().all() wired.
+
     """
     r = MagicMock()
     r.scalar_one_or_none.return_value = value
@@ -258,7 +259,7 @@ async def test_get_or_create_ai_reviewer_creates_when_missing():
 
     from backend.jobs.search_job import _get_or_create_ai_reviewer
 
-    result = await _get_or_create_ai_reviewer(db, study_id=1)
+    await _get_or_create_ai_reviewer(db, study_id=1)
     db.add.assert_called_once()
 
 
@@ -298,7 +299,7 @@ async def test_get_or_create_metrics_creates_when_missing():
 
     from backend.jobs.search_job import _get_or_create_metrics
 
-    result = await _get_or_create_metrics(db, search_execution_id=1)
+    await _get_or_create_metrics(db, search_execution_id=1)
     db.add.assert_called_once()
 
 
@@ -420,7 +421,7 @@ async def test_upsert_paper_creates_new_paper_when_no_doi():
 
     from backend.jobs.screening_pipeline import _upsert_paper
 
-    result = await _upsert_paper(db, paper_data)
+    await _upsert_paper(db, paper_data)
     db.add.assert_called_once()
 
 
@@ -810,7 +811,6 @@ async def test_finalize_search_metrics_commits_with_metrics():
     The function should update all metric fields and commit the session.
     """
     from db.models.jobs import JobStatus
-    from db.models.search_exec import SearchExecution
 
     metrics_mock = MagicMock()
     metrics_mock.total_identified = 0
@@ -830,8 +830,14 @@ async def test_finalize_search_metrics_commits_with_metrics():
     from backend.jobs.search_job import _finalize_search_metrics
 
     await _finalize_search_metrics(
-        db, metrics_mock, search_exec_mock, bg_job_mock,
-        total=10, accepted=5, rejected=3, duplicates=2
+        db,
+        metrics_mock,
+        search_exec_mock,
+        bg_job_mock,
+        total=10,
+        accepted=5,
+        rejected=3,
+        duplicates=2,
     )
 
     db.commit.assert_awaited()
@@ -909,8 +915,8 @@ async def test_run_test_search_happy_path():
     # Build the side_effect sequence
     db.execute = AsyncMock(
         side_effect=[
-            _scalar_result(ss_mock),   # SearchString lookup
-            seed_result,               # SeedPaper seeds
+            _scalar_result(ss_mock),  # SearchString lookup
+            seed_result,  # SeedPaper seeds
         ]
     )
 

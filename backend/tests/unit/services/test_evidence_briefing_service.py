@@ -47,6 +47,7 @@ def _make_briefing(
     Returns:
         A :class:`~unittest.mock.MagicMock` standing in for an
         :class:`~db.models.rapid_review.EvidenceBriefing` instance.
+
     """
     from db.models.rapid_review import BriefingStatus
 
@@ -69,6 +70,7 @@ def _make_session(execute_side_effects: list) -> AsyncMock:
 
     Returns:
         A configured :class:`~unittest.mock.AsyncMock` session.
+
     """
     session = AsyncMock()
     session.execute.side_effect = execute_side_effects
@@ -401,6 +403,7 @@ class TestPublishVersion:
     async def test_marks_briefing_as_published(self) -> None:
         """Sets status to PUBLISHED on the returned briefing."""
         from db.models.rapid_review import BriefingStatus
+
         from backend.services.evidence_briefing_service import publish_version
 
         mock_briefing = _make_briefing(status_val="draft", study_id=10)
@@ -483,8 +486,6 @@ class TestGenerateHtml:
     @pytest.mark.asyncio
     async def test_stores_html_path_and_commits(self) -> None:
         """Sets html_path on the briefing and calls db.commit."""
-        import tempfile
-        import os
         from backend.services.evidence_briefing_service import generate_html
 
         mock_briefing = _make_briefing(study_id=5)
@@ -510,9 +511,7 @@ class TestGenerateHtml:
                 "backend.services.evidence_briefing_service.rr_protocol_service.get_or_create_protocol",
                 new=AsyncMock(return_value=mock_protocol),
             ),
-            patch(
-                "backend.services.evidence_briefing_service._jinja_env"
-            ) as mock_env,
+            patch("backend.services.evidence_briefing_service._jinja_env") as mock_env,
         ):
             mock_env.get_template.return_value = mock_template
 

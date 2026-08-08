@@ -12,11 +12,11 @@ from __future__ import annotations
 from unittest.mock import patch
 
 import pytest
+from db.models.jobs import BackgroundJob, JobStatus, JobType
+from db.models.users import GroupMembership, GroupRole, ResearchGroup
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from backend.core.auth import create_access_token
-from db.models.jobs import BackgroundJob, JobStatus, JobType
-from db.models.users import GroupMembership, GroupRole, ResearchGroup
 
 
 def _bearer(user_id: int) -> dict[str, str]:
@@ -83,9 +83,7 @@ class TestJobProgressSSE:
         assert resp.status_code == 401
 
     @pytest.mark.asyncio
-    async def test_completed_job_emits_complete_event(
-        self, client, alice, db_engine
-    ) -> None:
+    async def test_completed_job_emits_complete_event(self, client, alice, db_engine) -> None:
         """COMPLETED job → SSE stream yields 'event: complete' immediately."""
         user, _ = alice
         study_id = await _setup_study(client, db_engine, user)
@@ -108,9 +106,7 @@ class TestJobProgressSSE:
         assert "event: complete" in body
 
     @pytest.mark.asyncio
-    async def test_failed_job_emits_error_event(
-        self, client, alice, db_engine
-    ) -> None:
+    async def test_failed_job_emits_error_event(self, client, alice, db_engine) -> None:
         """FAILED job → SSE stream yields 'event: error'."""
         user, _ = alice
         study_id = await _setup_study(client, db_engine, user)
@@ -129,9 +125,7 @@ class TestJobProgressSSE:
         assert "event: error" in resp.text
 
     @pytest.mark.asyncio
-    async def test_unknown_job_emits_error_event(
-        self, client, alice, db_engine
-    ) -> None:
+    async def test_unknown_job_emits_error_event(self, client, alice, db_engine) -> None:
         """Non-existent job_id → SSE stream yields 'event: error'."""
         user, _ = alice
         await _setup_study(client, db_engine, user)
@@ -161,9 +155,7 @@ class TestListStudyJobs:
         """No jobs → empty list."""
         user, _ = alice
         study_id = await _setup_study(client, db_engine, user)
-        resp = await client.get(
-            f"/api/v1/studies/{study_id}/jobs", headers=_bearer(user.id)
-        )
+        resp = await client.get(f"/api/v1/studies/{study_id}/jobs", headers=_bearer(user.id))
         assert resp.status_code == 200
         assert resp.json() == []
 
@@ -175,9 +167,7 @@ class TestListStudyJobs:
         job_id = "list-job-001"
         await _insert_job(db_engine, study_id, job_id, JobStatus.QUEUED)
 
-        resp = await client.get(
-            f"/api/v1/studies/{study_id}/jobs", headers=_bearer(user.id)
-        )
+        resp = await client.get(f"/api/v1/studies/{study_id}/jobs", headers=_bearer(user.id))
         assert resp.status_code == 200
         jobs = resp.json()
         assert len(jobs) == 1
@@ -189,17 +179,13 @@ class TestListStudyJobs:
         assert "progress_pct" in j
 
     @pytest.mark.asyncio
-    async def test_multiple_jobs_returned_newest_first(
-        self, client, alice, db_engine
-    ) -> None:
+    async def test_multiple_jobs_returned_newest_first(self, client, alice, db_engine) -> None:
         """Multiple jobs are returned (up to 20); ordering is newest first."""
         user, _ = alice
         study_id = await _setup_study(client, db_engine, user)
         for i in range(3):
             await _insert_job(db_engine, study_id, f"multi-job-{i:03d}", JobStatus.COMPLETED)
 
-        resp = await client.get(
-            f"/api/v1/studies/{study_id}/jobs", headers=_bearer(user.id)
-        )
+        resp = await client.get(f"/api/v1/studies/{study_id}/jobs", headers=_bearer(user.id))
         assert resp.status_code == 200
         assert len(resp.json()) == 3

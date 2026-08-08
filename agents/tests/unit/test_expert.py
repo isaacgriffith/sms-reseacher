@@ -18,24 +18,26 @@ def _make_mock_client(response_json: str) -> MagicMock:
     return client
 
 
-_VALID_RESPONSE = json.dumps([
-    {
-        "title": "Empirical Study of TDD",
-        "authors": ["Carol White", "Dave Brown"],
-        "year": 2021,
-        "venue": "ICSE",
-        "doi": "10.1145/tdd.2021",
-        "rationale": "Seminal empirical study on TDD outcomes.",
-    },
-    {
-        "title": "Test-Driven Development in Practice",
-        "authors": ["Eve Black"],
-        "year": 2020,
-        "venue": "TSE",
-        "doi": None,
-        "rationale": "Practitioner perspective on TDD.",
-    },
-])
+_VALID_RESPONSE = json.dumps(
+    [
+        {
+            "title": "Empirical Study of TDD",
+            "authors": ["Carol White", "Dave Brown"],
+            "year": 2021,
+            "venue": "ICSE",
+            "doi": "10.1145/tdd.2021",
+            "rationale": "Seminal empirical study on TDD outcomes.",
+        },
+        {
+            "title": "Test-Driven Development in Practice",
+            "authors": ["Eve Black"],
+            "year": 2020,
+            "venue": "TSE",
+            "doi": None,
+            "rationale": "Practitioner perspective on TDD.",
+        },
+    ]
+)
 
 
 class TestExpertAgentOutputShape:
@@ -50,7 +52,7 @@ class TestExpertAgentOutputShape:
 
     @pytest.mark.asyncio
     async def test_non_empty_suggestions(self) -> None:
-        """result is a non-empty list of ExpertPaper objects."""
+        """Result is a non-empty list of ExpertPaper objects."""
         agent = ExpertAgent(llm_client=_make_mock_client(_VALID_RESPONSE))
         result = await agent.run(topic="TDD", variant="PICO")
         assert len(result) > 0

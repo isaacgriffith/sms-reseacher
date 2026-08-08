@@ -138,9 +138,7 @@ class TestExportProtocol:
     async def test_export_default_template_returns_yaml(self, client, db_engine, alice) -> None:
         """Default templates can be exported by any authenticated user."""
         alice_user, _ = alice
-        protocol_id = await _insert_protocol_with_nodes(
-            db_engine, None, is_default_template=True
-        )
+        protocol_id = await _insert_protocol_with_nodes(db_engine, None, is_default_template=True)
 
         resp = await client.get(
             f"/api/v1/protocols/{protocol_id}/export",
@@ -162,9 +160,7 @@ class TestExportProtocol:
         assert resp.status_code == 404
 
     @pytest.mark.asyncio
-    async def test_export_other_users_protocol_returns_403(
-        self, client, db_engine, alice
-    ) -> None:
+    async def test_export_other_users_protocol_returns_403(self, client, db_engine, alice) -> None:
         """Exporting another researcher's custom protocol returns 403."""
         alice_user, _ = alice
         other_owner_id = alice_user.id + 1
@@ -230,9 +226,7 @@ class TestImportProtocol:
         assert resp.status_code == 400
 
     @pytest.mark.asyncio
-    async def test_import_unsupported_schema_version_returns_400(
-        self, client, alice
-    ) -> None:
+    async def test_import_unsupported_schema_version_returns_400(self, client, alice) -> None:
         """YAML with an unsupported protocol_schema_version returns 400."""
         alice_user, _ = alice
         doc = {

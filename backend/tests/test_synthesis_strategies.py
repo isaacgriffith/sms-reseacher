@@ -12,7 +12,7 @@ Tests cover:
 
 from __future__ import annotations
 
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 
@@ -23,21 +23,65 @@ from backend.services.synthesis_strategies import (
     SynthesisOutput,
 )
 
-
 # ---------------------------------------------------------------------------
 # Shared helpers
 # ---------------------------------------------------------------------------
 
 _PAPERS_3 = [
-    {"label": "Smith 2020", "effect_size": 0.4, "se": 0.1, "ci_lower": 0.2, "ci_upper": 0.6, "weight": 1.0},
-    {"label": "Jones 2021", "effect_size": 0.5, "se": 0.12, "ci_lower": 0.26, "ci_upper": 0.74, "weight": 1.0},
-    {"label": "Brown 2022", "effect_size": 0.3, "se": 0.09, "ci_lower": 0.12, "ci_upper": 0.48, "weight": 1.0},
+    {
+        "label": "Smith 2020",
+        "effect_size": 0.4,
+        "se": 0.1,
+        "ci_lower": 0.2,
+        "ci_upper": 0.6,
+        "weight": 1.0,
+    },
+    {
+        "label": "Jones 2021",
+        "effect_size": 0.5,
+        "se": 0.12,
+        "ci_lower": 0.26,
+        "ci_upper": 0.74,
+        "weight": 1.0,
+    },
+    {
+        "label": "Brown 2022",
+        "effect_size": 0.3,
+        "se": 0.09,
+        "ci_lower": 0.12,
+        "ci_upper": 0.48,
+        "weight": 1.0,
+    },
 ]
 
 _DESCRIPTIVE_PAPERS_3 = [
-    {"label": "A", "effect_size": 0.4, "ci_lower": 0.2, "ci_upper": 0.6, "weight": 1.0, "sample_size": 50, "unit": "SMD"},
-    {"label": "B", "effect_size": 0.5, "ci_lower": 0.3, "ci_upper": 0.7, "weight": 1.0, "sample_size": 80, "unit": "SMD"},
-    {"label": "C", "effect_size": 0.3, "ci_lower": 0.1, "ci_upper": 0.5, "weight": 1.0, "sample_size": 60, "unit": "SMD"},
+    {
+        "label": "A",
+        "effect_size": 0.4,
+        "ci_lower": 0.2,
+        "ci_upper": 0.6,
+        "weight": 1.0,
+        "sample_size": 50,
+        "unit": "SMD",
+    },
+    {
+        "label": "B",
+        "effect_size": 0.5,
+        "ci_lower": 0.3,
+        "ci_upper": 0.7,
+        "weight": 1.0,
+        "sample_size": 80,
+        "unit": "SMD",
+    },
+    {
+        "label": "C",
+        "effect_size": 0.3,
+        "ci_lower": 0.1,
+        "ci_upper": 0.5,
+        "weight": 1.0,
+        "sample_size": 60,
+        "unit": "SMD",
+    },
 ]
 
 _FAKE_FUNNEL_SVG = "<svg>funnel</svg>"
@@ -300,15 +344,13 @@ class TestQualitativeSynthesizer:
 
     @pytest.mark.asyncio
     async def test_run_returns_qualitative_themes(self) -> None:
-        """run returns SynthesisOutput with qualitative_themes."""
+        """Run returns SynthesisOutput with qualitative_themes."""
         themes = [
             {"theme_name": "Usability", "paper_ids": [1, 3, 5]},
             {"theme_name": "Performance", "paper_ids": [2, 4]},
         ]
         synthesizer = QualitativeSynthesizer()
-        output = await synthesizer.run(
-            1, {"themes": themes}, _make_db()
-        )
+        output = await synthesizer.run(1, {"themes": themes}, _make_db())
 
         assert isinstance(output, SynthesisOutput)
         assert output.qualitative_themes is not None

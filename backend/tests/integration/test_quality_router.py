@@ -12,10 +12,10 @@ from __future__ import annotations
 from unittest.mock import AsyncMock, patch
 
 import pytest
+from db.models.users import GroupMembership, GroupRole, ResearchGroup
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from backend.core.auth import create_access_token
-from db.models.users import GroupMembership, GroupRole, ResearchGroup
 
 
 def _bearer(user_id: int) -> dict[str, str]:
@@ -54,6 +54,7 @@ async def _insert_quality_report(db_engine, study_id: int) -> int:
     maker = async_sessionmaker(db_engine, expire_on_commit=False)
     async with maker() as session:
         from db.models.results import QualityReport
+
         report = QualityReport(
             study_id=study_id,
             version=1,
@@ -68,7 +69,11 @@ async def _insert_quality_report(db_engine, study_id: int) -> int:
                 "search_strategy": {"score": 1, "justification": "Test-retest missing."},
             },
             recommendations=[
-                {"priority": 1, "action": "Perform test-retest.", "target_rubric": "search_strategy"}
+                {
+                    "priority": 1,
+                    "action": "Perform test-retest.",
+                    "target_rubric": "search_strategy",
+                }
             ],
         )
         session.add(report)

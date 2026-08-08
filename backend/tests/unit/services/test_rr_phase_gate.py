@@ -15,17 +15,13 @@ from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock
 
-import pytest
-import pytest_asyncio
-from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
-from sqlalchemy.pool import StaticPool
-
 # Register all ORM models before creating tables
 import db.models  # noqa: F401
-import db.models.users  # noqa: F401
-import db.models.study  # noqa: F401
 import db.models.rapid_review  # noqa: F401
-
+import db.models.study  # noqa: F401
+import db.models.users  # noqa: F401
+import pytest
+import pytest_asyncio
 from db.base import Base
 from db.models.rapid_review import (
     RapidReviewProtocol,
@@ -33,6 +29,8 @@ from db.models.rapid_review import (
     RRProtocolStatus,
     RRQualityAppraisalMode,
 )
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+from sqlalchemy.pool import StaticPool
 
 STUDY_ID = 77
 
@@ -44,6 +42,7 @@ async def db_session():
     Yields:
         An :class:`~sqlalchemy.ext.asyncio.AsyncSession` backed by SQLite
         in-memory storage.
+
     """
     engine = create_async_engine(
         "sqlite+aiosqlite:///:memory:",
@@ -169,6 +168,7 @@ class TestGetRrUnlockedPhasesPhase3:
     async def test_phase_3_locked_when_import_error(self, db_session) -> None:
         """ImportError for search_exec model → phase 3 NOT unlocked, returns [1,2]."""
         from unittest.mock import patch as mock_patch
+
         from backend.services.rr_phase_gate import get_rr_unlocked_phases
 
         protocol = RapidReviewProtocol(
@@ -180,6 +180,7 @@ class TestGetRrUnlockedPhasesPhase3:
         await db_session.commit()
 
         import builtins
+
         original_import = builtins.__import__
 
         def mock_import(name: str, *args, **kwargs):  # type: ignore[no-untyped-def]
@@ -208,6 +209,7 @@ class TestGetRrUnlockedPhasesPhase4:
 
         Returns:
             A configured :class:`~unittest.mock.AsyncMock` session.
+
         """
         mock_protocol = MagicMock()
         mock_protocol.status = RRProtocolStatus.VALIDATED
@@ -311,8 +313,6 @@ class TestGetRrUnlockedPhasesPhase5:
         ):
             # We test indirectly: patch the import of SearchExecution to succeed
             # with a mocked result
-            import importlib
-            import sys
 
             # Build a mock search_exec module
             mock_se_module = MagicMock()

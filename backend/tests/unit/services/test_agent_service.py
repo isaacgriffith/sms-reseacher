@@ -359,9 +359,7 @@ class TestDeactivateAgent:
         result = await service.deactivate_agent(agent.id, db_session)
         assert result.is_active is False
 
-    async def test_deactivate_raises_agent_not_found(
-        self, db_session: AsyncSession
-    ) -> None:
+    async def test_deactivate_raises_agent_not_found(self, db_session: AsyncSession) -> None:
         """deactivate_agent raises AgentNotFoundError for non-existent ID."""
         service = AgentService()
         with pytest.raises(AgentNotFoundError):
@@ -378,7 +376,15 @@ class TestRenderSystemMessage:
 
     def _make_agent(self) -> MagicMock:
         """Create a stub Agent object for testing (uses MagicMock to avoid ORM init)."""
-        agent = MagicMock(spec_set=["role_name", "role_description", "persona_name", "persona_description", "system_message_template"])
+        agent = MagicMock(
+            spec_set=[
+                "role_name",
+                "role_description",
+                "persona_name",
+                "persona_description",
+                "system_message_template",
+            ]
+        )
         agent.role_name = "Screener"
         agent.role_description = "Screens papers"
         agent.persona_name = "Dr. Aria"

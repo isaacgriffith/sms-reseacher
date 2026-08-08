@@ -13,20 +13,19 @@ Tests cover:
 
 from __future__ import annotations
 
-import pytest
-import pytest_asyncio
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-from sqlalchemy.pool import StaticPool
-
-from db.base import Base
 import db.models  # noqa: F401  — registers all ORM tables including tertiary
-import db.models.users  # noqa: F401
-import db.models.study  # noqa: F401
-import db.models.slr  # noqa: F401
 import db.models.candidate  # noqa: F401
 import db.models.search  # noqa: F401
 import db.models.search_exec  # noqa: F401
+import db.models.slr  # noqa: F401
+import db.models.study  # noqa: F401
 import db.models.tertiary  # noqa: F401
+import db.models.users  # noqa: F401
+import pytest
+import pytest_asyncio
+from db.base import Base
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.pool import StaticPool
 
 
 @pytest_asyncio.fixture
@@ -36,6 +35,7 @@ async def db_session():
     Yields:
         An :class:`~sqlalchemy.ext.asyncio.AsyncSession` backed by SQLite
         in-memory storage.
+
     """
     engine = create_async_engine(
         "sqlite+aiosqlite:///:memory:",
@@ -60,9 +60,10 @@ async def _insert_study(db: AsyncSession) -> int:
 
     Returns:
         The integer study id.
+
     """
+    from db.models import Study, StudyStatus, StudyType
     from db.models.users import ResearchGroup
-    from db.models import Study, StudyType, StudyStatus
 
     group = ResearchGroup(name="Tertiary Phase Gate Group")
     db.add(group)
@@ -89,6 +90,7 @@ async def _insert_candidate_paper(db: AsyncSession, study_id: int) -> int:
 
     Returns:
         The integer candidate paper id.
+
     """
     from db.models.candidate import CandidatePaper, CandidatePaperStatus
     from db.models.search import SearchString
@@ -172,13 +174,12 @@ class TestPhase2ProtocolValidation:
     @pytest.mark.asyncio
     async def test_phase_2_locked_when_protocol_is_draft(self, db_session) -> None:
         """Phase 2 is locked when protocol exists but is in draft status."""
-        from db.models.tertiary import TertiaryStudyProtocol, TertiaryProtocolStatus
+        from db.models.tertiary import TertiaryProtocolStatus, TertiaryStudyProtocol
+
         from backend.services.tertiary_phase_gate import get_tertiary_unlocked_phases
 
         study_id = await _insert_study(db_session)
-        protocol = TertiaryStudyProtocol(
-            study_id=study_id, status=TertiaryProtocolStatus.DRAFT
-        )
+        protocol = TertiaryStudyProtocol(study_id=study_id, status=TertiaryProtocolStatus.DRAFT)
         db_session.add(protocol)
         await db_session.commit()
 
@@ -188,13 +189,12 @@ class TestPhase2ProtocolValidation:
     @pytest.mark.asyncio
     async def test_phase_2_unlocked_when_protocol_validated(self, db_session) -> None:
         """Phase 2 is unlocked when TertiaryStudyProtocol status == validated."""
-        from db.models.tertiary import TertiaryStudyProtocol, TertiaryProtocolStatus
+        from db.models.tertiary import TertiaryProtocolStatus, TertiaryStudyProtocol
+
         from backend.services.tertiary_phase_gate import get_tertiary_unlocked_phases
 
         study_id = await _insert_study(db_session)
-        protocol = TertiaryStudyProtocol(
-            study_id=study_id, status=TertiaryProtocolStatus.VALIDATED
-        )
+        protocol = TertiaryStudyProtocol(study_id=study_id, status=TertiaryProtocolStatus.VALIDATED)
         db_session.add(protocol)
         await db_session.commit()
 
@@ -204,7 +204,8 @@ class TestPhase2ProtocolValidation:
     @pytest.mark.asyncio
     async def test_phase_1_still_present_when_phase_2_unlocked(self, db_session) -> None:
         """Phase 1 is always included even when phase 2 is unlocked."""
-        from db.models.tertiary import TertiaryStudyProtocol, TertiaryProtocolStatus
+        from db.models.tertiary import TertiaryProtocolStatus, TertiaryStudyProtocol
+
         from backend.services.tertiary_phase_gate import get_tertiary_unlocked_phases
 
         study_id = await _insert_study(db_session)
@@ -229,7 +230,8 @@ class TestPhase3CandidatePapers:
     @pytest.mark.asyncio
     async def test_phase_3_locked_without_candidate_papers(self, db_session) -> None:
         """Phase 3 is locked when no CandidatePaper records exist."""
-        from db.models.tertiary import TertiaryStudyProtocol, TertiaryProtocolStatus
+        from db.models.tertiary import TertiaryProtocolStatus, TertiaryStudyProtocol
+
         from backend.services.tertiary_phase_gate import get_tertiary_unlocked_phases
 
         study_id = await _insert_study(db_session)
@@ -244,7 +246,8 @@ class TestPhase3CandidatePapers:
     @pytest.mark.asyncio
     async def test_phase_3_unlocked_with_one_candidate_paper(self, db_session) -> None:
         """Phase 3 is unlocked when at least one CandidatePaper exists."""
-        from db.models.tertiary import TertiaryStudyProtocol, TertiaryProtocolStatus
+        from db.models.tertiary import TertiaryProtocolStatus, TertiaryStudyProtocol
+
         from backend.services.tertiary_phase_gate import get_tertiary_unlocked_phases
 
         study_id = await _insert_study(db_session)
@@ -270,7 +273,8 @@ class TestPhase4QualityAssessment:
     @pytest.mark.asyncio
     async def test_phase_4_locked_without_qa_scores(self, db_session) -> None:
         """Phase 4 is locked when no QualityAssessmentScore exists."""
-        from db.models.tertiary import TertiaryStudyProtocol, TertiaryProtocolStatus
+        from db.models.tertiary import TertiaryProtocolStatus, TertiaryStudyProtocol
+
         from backend.services.tertiary_phase_gate import get_tertiary_unlocked_phases
 
         study_id = await _insert_study(db_session)

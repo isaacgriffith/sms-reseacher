@@ -18,9 +18,6 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 import pytest_asyncio
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import async_sessionmaker
-
 from agents.services.screener import CriterionRef, ScreeningResult
 from db.models import Paper, Study, StudyType
 from db.models.candidate import CandidatePaper, CandidatePaperStatus, PaperDecision
@@ -28,6 +25,8 @@ from db.models.criteria import InclusionCriterion
 from db.models.jobs import BackgroundJob, JobStatus, JobType
 from db.models.search import SearchString
 from db.models.search_exec import SearchExecution, SearchExecutionStatus
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import async_sessionmaker
 
 _PAPERS = [
     {

@@ -11,15 +11,14 @@ Covers:
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, UTC
+from unittest.mock import AsyncMock, patch
 
 import pytest
-from sqlalchemy.ext.asyncio import async_sessionmaker
-from unittest.mock import patch, AsyncMock
-
-from backend.core.auth import create_access_token
 from db.models.jobs import BackgroundJob, JobStatus, JobType
 from db.models.users import GroupMembership, GroupRole, ResearchGroup
+from sqlalchemy.ext.asyncio import async_sessionmaker
+
+from backend.core.auth import create_access_token
 
 
 def _bearer(user_id: int) -> dict[str, str]:
@@ -67,8 +66,13 @@ async def _setup_study(client, db_engine, user) -> int:
 
     resp = await client.post(
         f"/api/v1/groups/{group_id}/studies",
-        json={"name": "Job Study", "topic": "Test", "study_type": "SMS",
-              "research_objectives": [], "research_questions": []},
+        json={
+            "name": "Job Study",
+            "topic": "Test",
+            "study_type": "SMS",
+            "research_objectives": [],
+            "research_questions": [],
+        },
         headers=_bearer(user.id),
     )
     assert resp.status_code == 201, resp.text
@@ -101,18 +105,34 @@ class TestAdminHealth:
         await _make_group_admin(db_engine, user)
 
         with (
-            patch("backend.api.v1.admin._probe_database", AsyncMock(
-                return_value=ServiceHealth(name="database", status="healthy", latency_ms=1.0)
-            )),
-            patch("backend.api.v1.admin._probe_redis", AsyncMock(
-                return_value=ServiceHealth(name="redis", status="healthy", latency_ms=0.5)
-            )),
-            patch("backend.api.v1.admin._probe_arq_worker", AsyncMock(
-                return_value=ServiceHealth(name="arq_worker", status="healthy", detail="active_jobs=0")
-            )),
-            patch("backend.api.v1.admin._probe_researcher_mcp", AsyncMock(
-                return_value=ServiceHealth(name="researcher_mcp", status="healthy", latency_ms=5.0)
-            )),
+            patch(
+                "backend.api.v1.admin._probe_database",
+                AsyncMock(
+                    return_value=ServiceHealth(name="database", status="healthy", latency_ms=1.0)
+                ),
+            ),
+            patch(
+                "backend.api.v1.admin._probe_redis",
+                AsyncMock(
+                    return_value=ServiceHealth(name="redis", status="healthy", latency_ms=0.5)
+                ),
+            ),
+            patch(
+                "backend.api.v1.admin._probe_arq_worker",
+                AsyncMock(
+                    return_value=ServiceHealth(
+                        name="arq_worker", status="healthy", detail="active_jobs=0"
+                    )
+                ),
+            ),
+            patch(
+                "backend.api.v1.admin._probe_researcher_mcp",
+                AsyncMock(
+                    return_value=ServiceHealth(
+                        name="researcher_mcp", status="healthy", latency_ms=5.0
+                    )
+                ),
+            ),
         ):
             resp = await client.get("/api/v1/admin/health", headers=_bearer(user.id))
 
@@ -135,14 +155,22 @@ class TestAdminHealth:
         secret_fields = {"database_url", "secret_key", "anthropic_api_key", "redis_url"}
 
         with (
-            patch("backend.api.v1.admin._probe_database", AsyncMock(
-                return_value=ServiceHealth(name="database", status="healthy"))),
-            patch("backend.api.v1.admin._probe_redis", AsyncMock(
-                return_value=ServiceHealth(name="redis", status="healthy"))),
-            patch("backend.api.v1.admin._probe_arq_worker", AsyncMock(
-                return_value=ServiceHealth(name="arq_worker", status="healthy"))),
-            patch("backend.api.v1.admin._probe_researcher_mcp", AsyncMock(
-                return_value=ServiceHealth(name="researcher_mcp", status="healthy"))),
+            patch(
+                "backend.api.v1.admin._probe_database",
+                AsyncMock(return_value=ServiceHealth(name="database", status="healthy")),
+            ),
+            patch(
+                "backend.api.v1.admin._probe_redis",
+                AsyncMock(return_value=ServiceHealth(name="redis", status="healthy")),
+            ),
+            patch(
+                "backend.api.v1.admin._probe_arq_worker",
+                AsyncMock(return_value=ServiceHealth(name="arq_worker", status="healthy")),
+            ),
+            patch(
+                "backend.api.v1.admin._probe_researcher_mcp",
+                AsyncMock(return_value=ServiceHealth(name="researcher_mcp", status="healthy")),
+            ),
         ):
             resp = await client.get("/api/v1/admin/health", headers=_bearer(user.id))
 

@@ -193,7 +193,7 @@ class TestUpgradeTableColumns:
     """Verify critical columns in the new tables."""
 
     def test_provider_columns(self, migrated_engine) -> None:
-        """provider table has id, provider_type, display_name, is_enabled."""
+        """Provider table has id, provider_type, display_name, is_enabled."""
         with migrated_engine.connect() as conn:
             cols = _column_names(conn, "provider")
         assert {"id", "provider_type", "display_name", "is_enabled"}.issubset(cols)
@@ -205,7 +205,7 @@ class TestUpgradeTableColumns:
         assert {"id", "provider_id", "model_identifier", "display_name"}.issubset(cols)
 
     def test_agent_columns(self, migrated_engine) -> None:
-        """agent table has required identity and template columns."""
+        """Agent table has required identity and template columns."""
         with migrated_engine.connect() as conn:
             cols = _column_names(conn, "agent")
         assert {
@@ -223,7 +223,7 @@ class TestUpgradeTableColumns:
         }.issubset(cols)
 
     def test_agent_has_undo_buffer_column(self, migrated_engine) -> None:
-        """agent table has system_message_undo_buffer for undo functionality."""
+        """Agent table has system_message_undo_buffer for undo functionality."""
         with migrated_engine.connect() as conn:
             cols = _column_names(conn, "agent")
         assert "system_message_undo_buffer" in cols

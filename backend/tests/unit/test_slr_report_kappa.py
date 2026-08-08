@@ -95,7 +95,7 @@ def test_undefined_kappa_reports_its_reason_rather_than_a_number() -> None:
 
 
 def test_reports_the_number_of_papers_the_statistic_rests_on() -> None:
-    """n must accompany kappa — the same coefficient over 8 papers means less."""
+    """N must accompany kappa — the same coefficient over 8 papers means less."""
     # Arrange
     records = [_record(kappa=0.74, phase="post_discussion", n_papers=126)]
 

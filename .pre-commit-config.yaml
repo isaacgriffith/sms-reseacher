@@ -24,6 +24,10 @@ repos:
         name: ruff check (Python lint)
         language: system
         entry: uv run ruff check
+        # Test trees were added 2026-08-08. They had never been linted, which is
+        # the same hole that let two unlinted scripts reach the tree before
+        # `scripts` was added here. D1xx is exempted under tests/** via each
+        # package's pyproject.toml.
         args:
           [
             "backend/src",
@@ -32,6 +36,11 @@ repos:
             "agent-eval/src",
             "researcher-mcp/src",
             "scripts",
+            "backend/tests",
+            "agents/tests",
+            "db/tests",
+            "agent-eval/tests",
+            "researcher-mcp/tests",
           ]
         pass_filenames: false
         types: [python]
@@ -48,6 +57,11 @@ repos:
             "agent-eval/src",
             "researcher-mcp/src",
             "scripts",
+            "backend/tests",
+            "agents/tests",
+            "db/tests",
+            "agent-eval/tests",
+            "researcher-mcp/tests",
           ]
         pass_filenames: false
         types: [python]

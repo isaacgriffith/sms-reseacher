@@ -16,22 +16,18 @@ from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import pytest
-import pytest_asyncio
-from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
-from sqlalchemy.pool import StaticPool
-
 # Register all ORM models before creating tables
 import db.models  # noqa: F401
 import db.models.rapid_review  # noqa: F401
-
+import pytest
+import pytest_asyncio
 from db.base import Base
 from db.models.rapid_review import (
-    RapidReviewProtocol,
-    RRNarrativeSynthesisSection,
     RRProtocolStatus,
     RRQualityAppraisalMode,
 )
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+from sqlalchemy.pool import StaticPool
 
 STUDY_ID = 55
 
@@ -42,6 +38,7 @@ async def db_session():
 
     Yields:
         An :class:`~sqlalchemy.ext.asyncio.AsyncSession` backed by SQLite.
+
     """
     engine = create_async_engine(
         "sqlite+aiosqlite:///:memory:",
@@ -71,6 +68,7 @@ def _make_protocol(status: RRProtocolStatus, rqs: list[str] | None = None) -> Ma
     Returns:
         A :class:`~unittest.mock.MagicMock` standing in for a
         :class:`~db.models.rapid_review.RapidReviewProtocol`.
+
     """
     p = MagicMock()
     p.status = status
@@ -90,6 +88,7 @@ def _make_section(rq_index: int = 0, is_complete: bool = False) -> MagicMock:
     Returns:
         A :class:`~unittest.mock.MagicMock` standing in for a
         :class:`~db.models.rapid_review.RRNarrativeSynthesisSection`.
+
     """
     s = MagicMock()
     s.id = rq_index + 1

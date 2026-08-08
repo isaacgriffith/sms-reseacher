@@ -7,10 +7,10 @@ and SeedPaper insertion.
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+from db.models.users import GroupMembership, GroupRole, ResearchGroup
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from backend.core.auth import create_access_token
-from db.models.users import GroupMembership, GroupRole, ResearchGroup
 
 
 def _bearer(user_id: int) -> dict[str, str]:
@@ -170,9 +170,8 @@ class TestExpertSeedEndpoint:
     @pytest.mark.asyncio
     async def test_creates_background_job_record(self, client, alice, db_engine):
         """POST /seeds/expert creates a BackgroundJob in the DB."""
-        from sqlalchemy import select
-
         from db.models.jobs import BackgroundJob
+        from sqlalchemy import select
 
         user, _ = alice
         study_id = await _setup_study(client, db_engine, user)
@@ -184,9 +183,7 @@ class TestExpertSeedEndpoint:
 
         maker = async_sessionmaker(db_engine, expire_on_commit=False)
         async with maker() as session:
-            result = await session.execute(
-                select(BackgroundJob).where(BackgroundJob.id == job_id)
-            )
+            result = await session.execute(select(BackgroundJob).where(BackgroundJob.id == job_id))
             job = result.scalar_one_or_none()
         assert job is not None
         assert job.study_id == study_id
@@ -215,9 +212,8 @@ class TestAddSeedPaperByPaperId:
     @pytest.mark.asyncio
     async def test_add_by_existing_paper_id(self, client, alice, db_engine):
         """Adding a seed paper by paper_id succeeds when the paper exists."""
-        from sqlalchemy.ext.asyncio import async_sessionmaker
-
         from db.models import Paper
+        from sqlalchemy.ext.asyncio import async_sessionmaker
 
         user, _ = alice
         study_id = await _setup_study(client, db_engine, user)
@@ -254,9 +250,8 @@ class TestAddSeedPaperByPaperId:
     @pytest.mark.asyncio
     async def test_add_by_doi_finds_existing_paper(self, client, alice, db_engine):
         """Adding by doi returns existing paper when doi already in DB."""
-        from sqlalchemy.ext.asyncio import async_sessionmaker
-
         from db.models import Paper
+        from sqlalchemy.ext.asyncio import async_sessionmaker
 
         user, _ = alice
         study_id = await _setup_study(client, db_engine, user)
@@ -283,8 +278,6 @@ class TestTriggerLibrarian:
     @pytest.mark.asyncio
     async def test_librarian_agent_error_returns_503(self, client, alice, db_engine):
         """When the librarian agent raises, the endpoint returns 503."""
-        from unittest.mock import patch
-
         user, _ = alice
         study_id = await _setup_study(client, db_engine, user)
 
@@ -301,8 +294,6 @@ class TestTriggerLibrarian:
     @pytest.mark.asyncio
     async def test_librarian_returns_suggestions(self, client, alice, db_engine):
         """When the librarian agent succeeds, suggestions are returned."""
-        from unittest.mock import AsyncMock, MagicMock, patch
-
         user, _ = alice
         study_id = await _setup_study(client, db_engine, user)
 

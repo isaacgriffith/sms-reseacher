@@ -18,10 +18,10 @@ from datetime import UTC, datetime
 from unittest.mock import AsyncMock, patch
 
 import pytest
+from db.models.users import GroupMembership, GroupRole, ResearchGroup
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from backend.core.auth import create_access_token
-from db.models.users import GroupMembership, GroupRole, ResearchGroup
 
 
 def _bearer(user_id: int) -> dict[str, str]:
@@ -32,6 +32,7 @@ def _bearer(user_id: int) -> dict[str, str]:
 
     Returns:
         A dict with the ``Authorization`` header value.
+
     """
     return {"Authorization": f"Bearer {create_access_token(user_id=user_id)}"}
 
@@ -46,6 +47,7 @@ async def _setup_rr_study(client, db_engine, user) -> int:
 
     Returns:
         The newly created study ID.
+
     """
     maker = async_sessionmaker(db_engine, expire_on_commit=False)
     async with maker() as session:
@@ -92,6 +94,7 @@ async def _insert_briefing(
 
     Returns:
         The new briefing's primary key.
+
     """
     from db.models.rapid_review import BriefingStatus, EvidenceBriefing
 
@@ -136,6 +139,7 @@ async def _insert_share_token(
 
     Returns:
         The token string.
+
     """
     from db.models.rapid_review import EvidenceBriefingShareToken
 
@@ -209,9 +213,7 @@ class TestCreateBriefing:
     """POST /rapid/studies/{id}/briefings enqueues generation."""
 
     @pytest.mark.asyncio
-    async def test_returns_422_when_synthesis_incomplete(
-        self, client, db_engine, alice
-    ) -> None:
+    async def test_returns_422_when_synthesis_incomplete(self, client, db_engine, alice) -> None:
         """Returns 422 when no synthesis sections are complete."""
         user, _ = alice
         study_id = await _setup_rr_study(client, db_engine, user)
@@ -224,12 +226,8 @@ class TestCreateBriefing:
         assert resp.status_code == 422
 
     @pytest.mark.asyncio
-    async def test_returns_202_when_synthesis_complete(
-        self, client, db_engine, alice
-    ) -> None:
+    async def test_returns_202_when_synthesis_complete(self, client, db_engine, alice) -> None:
         """Returns 202 with job_id when synthesis is complete."""
-        from backend.services.narrative_synthesis_service import is_synthesis_complete
-
         user, _ = alice
         study_id = await _setup_rr_study(client, db_engine, user)
 
@@ -328,9 +326,7 @@ class TestPublishBriefing:
     """POST /rapid/studies/{id}/briefings/{bid}/publish promotes to PUBLISHED."""
 
     @pytest.mark.asyncio
-    async def test_returns_200_with_published_status(
-        self, client, db_engine, alice
-    ) -> None:
+    async def test_returns_200_with_published_status(self, client, db_engine, alice) -> None:
         """Returns 200 with status='published' after promoting the briefing."""
         user, _ = alice
         study_id = await _setup_rr_study(client, db_engine, user)
@@ -345,9 +341,7 @@ class TestPublishBriefing:
         assert data["status"] == "published"
 
     @pytest.mark.asyncio
-    async def test_returns_404_for_missing_briefing(
-        self, client, db_engine, alice
-    ) -> None:
+    async def test_returns_404_for_missing_briefing(self, client, db_engine, alice) -> None:
         """Returns 404 when trying to publish a non-existent briefing."""
         user, _ = alice
         study_id = await _setup_rr_study(client, db_engine, user)
@@ -368,9 +362,7 @@ class TestExportBriefing:
     """GET /rapid/studies/{id}/briefings/{bid}/export downloads the file."""
 
     @pytest.mark.asyncio
-    async def test_returns_404_when_pdf_not_generated(
-        self, client, db_engine, alice
-    ) -> None:
+    async def test_returns_404_when_pdf_not_generated(self, client, db_engine, alice) -> None:
         """Returns 404 when requesting PDF export but pdf_path is not set."""
         user, _ = alice
         study_id = await _setup_rr_study(client, db_engine, user)
@@ -383,9 +375,7 @@ class TestExportBriefing:
         assert resp.status_code == 404
 
     @pytest.mark.asyncio
-    async def test_returns_404_when_html_not_generated(
-        self, client, db_engine, alice
-    ) -> None:
+    async def test_returns_404_when_html_not_generated(self, client, db_engine, alice) -> None:
         """Returns 404 when requesting HTML export but html_path is not set."""
         user, _ = alice
         study_id = await _setup_rr_study(client, db_engine, user)
@@ -407,9 +397,7 @@ class TestCreateShareToken:
     """POST /rapid/studies/{id}/briefings/{bid}/share-token creates a token."""
 
     @pytest.mark.asyncio
-    async def test_returns_422_when_no_published_briefing(
-        self, client, db_engine, alice
-    ) -> None:
+    async def test_returns_422_when_no_published_briefing(self, client, db_engine, alice) -> None:
         """Returns 422 when the briefing exists but no published version exists."""
         user, _ = alice
         study_id = await _setup_rr_study(client, db_engine, user)
@@ -439,9 +427,7 @@ class TestCreateShareToken:
         assert "share_url" in data
 
     @pytest.mark.asyncio
-    async def test_returns_404_for_nonexistent_briefing(
-        self, client, db_engine, alice
-    ) -> None:
+    async def test_returns_404_for_nonexistent_briefing(self, client, db_engine, alice) -> None:
         """Returns 404 when the briefing_id does not exist."""
         user, _ = alice
         study_id = await _setup_rr_study(client, db_engine, user)
@@ -468,7 +454,10 @@ class TestRevokeShareToken:
         study_id = await _setup_rr_study(client, db_engine, user)
         bid = await _insert_briefing(db_engine, study_id=study_id, status="published")
         token = await _insert_share_token(
-            db_engine, briefing_id=bid, study_id=study_id, user_id=user.id,
+            db_engine,
+            briefing_id=bid,
+            study_id=study_id,
+            user_id=user.id,
             token="rev-token-xyz-001",
         )
 
@@ -506,7 +495,10 @@ class TestGetPublicBriefing:
         study_id = await _setup_rr_study(client, db_engine, user)
         bid = await _insert_briefing(db_engine, study_id=study_id, status="published")
         token = await _insert_share_token(
-            db_engine, briefing_id=bid, study_id=study_id, user_id=user.id,
+            db_engine,
+            briefing_id=bid,
+            study_id=study_id,
+            user_id=user.id,
             token="pub-token-valid-001",
         )
 
@@ -524,8 +516,12 @@ class TestGetPublicBriefing:
         study_id = await _setup_rr_study(client, db_engine, user)
         bid = await _insert_briefing(db_engine, study_id=study_id, status="published")
         token = await _insert_share_token(
-            db_engine, briefing_id=bid, study_id=study_id, user_id=user.id,
-            token="pub-token-revoked-001", revoked=True,
+            db_engine,
+            briefing_id=bid,
+            study_id=study_id,
+            user_id=user.id,
+            token="pub-token-revoked-001",
+            revoked=True,
         )
 
         resp = await client.get(f"/api/v1/public/briefings/{token}")
@@ -544,7 +540,10 @@ class TestGetPublicBriefing:
         study_id = await _setup_rr_study(client, db_engine, user)
         bid = await _insert_briefing(db_engine, study_id=study_id, status="published")
         token = await _insert_share_token(
-            db_engine, briefing_id=bid, study_id=study_id, user_id=user.id,
+            db_engine,
+            briefing_id=bid,
+            study_id=study_id,
+            user_id=user.id,
             token="pub-noauth-token-001",
         )
 
@@ -562,9 +561,7 @@ class TestExportPublicBriefing:
     """GET /public/briefings/{token}/export downloads file without auth."""
 
     @pytest.mark.asyncio
-    async def test_returns_404_when_pdf_not_generated(
-        self, client, db_engine, alice
-    ) -> None:
+    async def test_returns_404_when_pdf_not_generated(self, client, db_engine, alice) -> None:
         """Returns 404 when the published briefing has no PDF path."""
         user, _ = alice
         study_id = await _setup_rr_study(client, db_engine, user)
@@ -572,19 +569,18 @@ class TestExportPublicBriefing:
             db_engine, study_id=study_id, status="published", pdf_path=None
         )
         token = await _insert_share_token(
-            db_engine, briefing_id=bid, study_id=study_id, user_id=user.id,
+            db_engine,
+            briefing_id=bid,
+            study_id=study_id,
+            user_id=user.id,
             token="export-pdf-token-001",
         )
 
-        resp = await client.get(
-            f"/api/v1/public/briefings/{token}/export?format=pdf"
-        )
+        resp = await client.get(f"/api/v1/public/briefings/{token}/export?format=pdf")
         assert resp.status_code == 404
 
     @pytest.mark.asyncio
-    async def test_returns_404_when_html_not_generated(
-        self, client, db_engine, alice
-    ) -> None:
+    async def test_returns_404_when_html_not_generated(self, client, db_engine, alice) -> None:
         """Returns 404 when the published briefing has no HTML path."""
         user, _ = alice
         study_id = await _setup_rr_study(client, db_engine, user)
@@ -592,19 +588,18 @@ class TestExportPublicBriefing:
             db_engine, study_id=study_id, status="published", html_path=None
         )
         token = await _insert_share_token(
-            db_engine, briefing_id=bid, study_id=study_id, user_id=user.id,
+            db_engine,
+            briefing_id=bid,
+            study_id=study_id,
+            user_id=user.id,
             token="export-html-token-001",
         )
 
-        resp = await client.get(
-            f"/api/v1/public/briefings/{token}/export?format=html"
-        )
+        resp = await client.get(f"/api/v1/public/briefings/{token}/export?format=html")
         assert resp.status_code == 404
 
     @pytest.mark.asyncio
     async def test_returns_404_for_invalid_token(self, client) -> None:
         """Returns 404 for an export request with an unknown token."""
-        resp = await client.get(
-            "/api/v1/public/briefings/nonexistent-token/export?format=pdf"
-        )
+        resp = await client.get("/api/v1/public/briefings/nonexistent-token/export?format=pdf")
         assert resp.status_code == 404

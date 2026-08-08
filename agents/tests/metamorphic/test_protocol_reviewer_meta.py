@@ -82,8 +82,14 @@ class TestParaphraseSectionPreservation:
     @pytest.mark.asyncio
     async def test_same_issue_sections_after_paraphrase(self) -> None:
         """Paraphrasing background text does not change the set of flagged sections."""
-        issues = [{"section": "search_strategy", "severity": "major",
-                   "description": "Missing Boolean operators.", "suggestion": "Add AND/OR."}]
+        issues = [
+            {
+                "section": "search_strategy",
+                "severity": "major",
+                "description": "Missing Boolean operators.",
+                "suggestion": "Add AND/OR.",
+            }
+        ]
         agent = _make_stub_agent(issues, "One issue found.")
         original = _BASE_PROTOCOL
         paraphrased = _paraphrase_protocol(_BASE_PROTOCOL)
@@ -109,8 +115,11 @@ class TestParaphraseSectionPreservation:
         assert result_para.issues == []
 
     @given(
-        background=st.text(min_size=5, max_size=100,
-                           alphabet=st.characters(whitelist_categories=("Lu", "Ll", "Zs")))
+        background=st.text(
+            min_size=5,
+            max_size=100,
+            alphabet=st.characters(whitelist_categories=("Lu", "Ll", "Zs")),
+        )
     )
     @pytest.mark.asyncio
     async def test_hypothesis_paraphrase_section_set_preserved(self, background: str) -> None:
@@ -120,8 +129,14 @@ class TestParaphraseSectionPreservation:
         always returns the same deterministic response, so the section sets
         are trivially equal — this validates the MR structure.
         """
-        issues = [{"section": "timetable", "severity": "minor",
-                   "description": "Timetable is vague.", "suggestion": "Add dates."}]
+        issues = [
+            {
+                "section": "timetable",
+                "severity": "minor",
+                "description": "Timetable is vague.",
+                "suggestion": "Add dates.",
+            }
+        ]
         agent = _make_stub_agent(issues, "One minor issue.")
 
         protocol = dict(_BASE_PROTOCOL)
@@ -144,8 +159,11 @@ class TestLongInputStability:
     """MR-PR2: agent does not raise on arbitrarily long inputs."""
 
     @given(
-        long_text=st.text(min_size=500, max_size=5000,
-                          alphabet=st.characters(whitelist_categories=("Lu", "Ll", "Zs", "Nd")))
+        long_text=st.text(
+            min_size=500,
+            max_size=5000,
+            alphabet=st.characters(whitelist_categories=("Lu", "Ll", "Zs", "Nd")),
+        )
     )
     @pytest.mark.asyncio
     async def test_no_exception_on_long_background(self, long_text: str) -> None:
@@ -158,8 +176,11 @@ class TestLongInputStability:
 
     @given(
         long_list=st.lists(
-            st.text(min_size=10, max_size=100,
-                    alphabet=st.characters(whitelist_categories=("Lu", "Ll", "Zs"))),
+            st.text(
+                min_size=10,
+                max_size=100,
+                alphabet=st.characters(whitelist_categories=("Lu", "Ll", "Zs")),
+            ),
             min_size=20,
             max_size=100,
         )

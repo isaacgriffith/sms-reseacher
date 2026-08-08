@@ -10,10 +10,10 @@ Covers:
 from __future__ import annotations
 
 import pytest
+from db.models.users import GroupMembership, GroupRole, ResearchGroup
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from backend.core.auth import create_access_token
-from db.models.users import GroupMembership, GroupRole, ResearchGroup
 
 
 def _bearer(user_id: int) -> dict[str, str]:
@@ -49,7 +49,7 @@ async def _setup_study(client, db_engine, user) -> int:
 
 async def _insert_completed_synthesis(db_engine, study_id: int) -> None:
     """Insert a completed SynthesisResult directly into the DB."""
-    from db.models.slr import SynthesisResult, SynthesisApproach, SynthesisStatus
+    from db.models.slr import SynthesisApproach, SynthesisResult, SynthesisStatus
 
     maker = async_sessionmaker(db_engine, expire_on_commit=False)
     async with maker() as session:
@@ -67,9 +67,7 @@ class TestExportSLRReportNoSynthesis:
     """GET /slr/studies/{id}/export/slr-report without completed synthesis."""
 
     @pytest.mark.asyncio
-    async def test_returns_422_when_no_completed_synthesis(
-        self, client, db_engine, alice
-    ) -> None:
+    async def test_returns_422_when_no_completed_synthesis(self, client, db_engine, alice) -> None:
         """Returns 422 when no completed synthesis result exists for the study."""
         user, _ = alice
         study_id = await _setup_study(client, db_engine, user)
@@ -85,9 +83,7 @@ class TestExportSLRReportMarkdown:
     """GET /slr/studies/{id}/export/slr-report?format=markdown."""
 
     @pytest.mark.asyncio
-    async def test_returns_200_with_attachment_header(
-        self, client, db_engine, alice
-    ) -> None:
+    async def test_returns_200_with_attachment_header(self, client, db_engine, alice) -> None:
         """Returns 200 with Content-Disposition attachment header for markdown."""
         user, _ = alice
         study_id = await _setup_study(client, db_engine, user)
@@ -106,9 +102,7 @@ class TestExportSLRReportJSON:
     """GET /slr/studies/{id}/export/slr-report?format=json."""
 
     @pytest.mark.asyncio
-    async def test_returns_200_with_json_mime(
-        self, client, db_engine, alice
-    ) -> None:
+    async def test_returns_200_with_json_mime(self, client, db_engine, alice) -> None:
         """Returns 200 with application/json content type for JSON export."""
         user, _ = alice
         study_id = await _setup_study(client, db_engine, user)
@@ -128,9 +122,7 @@ class TestExportSLRReportCSV:
     """GET /slr/studies/{id}/export/slr-report?format=csv."""
 
     @pytest.mark.asyncio
-    async def test_returns_200_with_csv_mime(
-        self, client, db_engine, alice
-    ) -> None:
+    async def test_returns_200_with_csv_mime(self, client, db_engine, alice) -> None:
         """Returns 200 with text/csv content type for CSV export."""
         user, _ = alice
         study_id = await _setup_study(client, db_engine, user)

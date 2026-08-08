@@ -217,9 +217,7 @@ class TestAssignProtocol:
         assert resp.status_code == 400, resp.text
 
     @pytest.mark.asyncio
-    async def test_assign_after_task_completed_returns_409(
-        self, client, db_engine, alice
-    ) -> None:
+    async def test_assign_after_task_completed_returns_409(self, client, db_engine, alice) -> None:
         """PUT returns 409 once a task has been COMPLETEd.
 
         Re-assigning discards every execution-state row, and unlike reset there
@@ -241,9 +239,7 @@ class TestAssignProtocol:
         assert resp.status_code == 409, resp.text
 
     @pytest.mark.asyncio
-    async def test_assign_with_only_active_tasks_succeeds(
-        self, client, db_engine, alice
-    ) -> None:
+    async def test_assign_with_only_active_tasks_succeeds(self, client, db_engine, alice) -> None:
         """PUT succeeds when tasks are merely ACTIVE — no work has been done.
 
         Studies are auto-assigned their type's default protocol at creation,
@@ -419,7 +415,9 @@ async def _add_metric_gate_node_and_assign(
         )
         if existing.first() is None:
             session.add(StudyProtocolAssignment(study_id=study_id, protocol_id=protocol_id))
-        session.add(TaskExecutionState(study_id=study_id, node_id=node.id, status=TaskNodeStatus.ACTIVE))
+        session.add(
+            TaskExecutionState(study_id=study_id, node_id=node.id, status=TaskNodeStatus.ACTIVE)
+        )
         await session.commit()
         return node.id
 
@@ -469,9 +467,7 @@ class TestGateFailureAndApprove:
     """Integration tests for gate failure + approve endpoints (T079)."""
 
     @pytest.mark.asyncio
-    async def test_complete_task_with_failing_kappa_gate(
-        self, client, db_engine, alice
-    ) -> None:
+    async def test_complete_task_with_failing_kappa_gate(self, client, db_engine, alice) -> None:
         """complete_task with failing kappa gate returns 200 with gate_result=failed."""
         from unittest.mock import AsyncMock, patch
 
@@ -495,11 +491,10 @@ class TestGateFailureAndApprove:
         assert data["gate_failure_detail"]["measured_value"] == 0.42
 
     @pytest.mark.asyncio
-    async def test_complete_task_gate_failed_status_in_db(
-        self, client, db_engine, alice
-    ) -> None:
+    async def test_complete_task_gate_failed_status_in_db(self, client, db_engine, alice) -> None:
         """Task status is GATE_FAILED in DB after failing gate."""
         from unittest.mock import AsyncMock, patch
+
         from sqlalchemy import select as sa_select
 
         alice_user, _ = alice
@@ -532,7 +527,7 @@ class TestGateFailureAndApprove:
 
     @pytest.mark.asyncio
     async def test_approve_by_admin_succeeds(self, client, db_engine, alice) -> None:
-        """approve by study LEAD succeeds → 200 with gate_result=passed."""
+        """Approve by study LEAD succeeds → 200 with gate_result=passed."""
         alice_user, _ = alice
         study_id, protocol_id = await _setup_study_and_protocol(client, db_engine, alice_user)
         await _add_human_gate_node_and_assign(db_engine, study_id, protocol_id, "human_approve")
@@ -547,10 +542,8 @@ class TestGateFailureAndApprove:
         assert data["gate_result"] == "passed"
 
     @pytest.mark.asyncio
-    async def test_approve_by_non_admin_returns_403(
-        self, client, db_engine, alice, bob
-    ) -> None:
-        """approve by non-LEAD returns 403."""
+    async def test_approve_by_non_admin_returns_403(self, client, db_engine, alice, bob) -> None:
+        """Approve by non-LEAD returns 403."""
         alice_user, _ = alice
         bob_user, _ = bob
         study_id, protocol_id = await _setup_study_and_protocol(client, db_engine, alice_user)
@@ -564,10 +557,8 @@ class TestGateFailureAndApprove:
         assert resp.status_code == 403, resp.text
 
     @pytest.mark.asyncio
-    async def test_approve_non_gate_failed_task_returns_409(
-        self, client, db_engine, alice
-    ) -> None:
-        """approve on a task that is not GATE_FAILED returns 409."""
+    async def test_approve_non_gate_failed_task_returns_409(self, client, db_engine, alice) -> None:
+        """Approve on a task that is not GATE_FAILED returns 409."""
         alice_user, _ = alice
         study_id, protocol_id = await _setup_study_and_protocol(client, db_engine, alice_user)
         await _add_node_and_assign(db_engine, study_id, protocol_id, task_id="active_task_approve")
@@ -593,7 +584,9 @@ class TestResetProtocolAssignment:
         # _setup_study_and_protocol creates a default template and assigns it
         study_id, _ = await _setup_study_and_protocol(client, db_engine, alice_user)
 
-        resp = await client.request("DELETE",             f"/api/v1/studies/{study_id}/protocol-assignment",
+        resp = await client.request(
+            "DELETE",
+            f"/api/v1/studies/{study_id}/protocol-assignment",
             json={"confirm_reset": True},
             headers=_bearer(alice_user.id),
         )
@@ -604,14 +597,14 @@ class TestResetProtocolAssignment:
         assert data["is_default_template"] is True
 
     @pytest.mark.asyncio
-    async def test_reset_without_confirm_returns_400(
-        self, client, db_engine, alice
-    ) -> None:
+    async def test_reset_without_confirm_returns_400(self, client, db_engine, alice) -> None:
         """Sending confirm_reset=False (or omitting it) returns 400."""
         alice_user, _ = alice
         study_id, _ = await _setup_study_and_protocol(client, db_engine, alice_user)
 
-        resp = await client.request("DELETE",             f"/api/v1/studies/{study_id}/protocol-assignment",
+        resp = await client.request(
+            "DELETE",
+            f"/api/v1/studies/{study_id}/protocol-assignment",
             json={"confirm_reset": False},
             headers=_bearer(alice_user.id),
         )
@@ -619,15 +612,15 @@ class TestResetProtocolAssignment:
         assert resp.status_code == 400, resp.text
 
     @pytest.mark.asyncio
-    async def test_reset_by_non_lead_returns_403(
-        self, client, db_engine, alice, bob
-    ) -> None:
+    async def test_reset_by_non_lead_returns_403(self, client, db_engine, alice, bob) -> None:
         """Non-LEAD member calling DELETE returns 403."""
         alice_user, _ = alice
         bob_user, _ = bob
         study_id, _ = await _setup_study_and_protocol(client, db_engine, alice_user)
 
-        resp = await client.request("DELETE",             f"/api/v1/studies/{study_id}/protocol-assignment",
+        resp = await client.request(
+            "DELETE",
+            f"/api/v1/studies/{study_id}/protocol-assignment",
             json={"confirm_reset": True},
             headers=_bearer(bob_user.id),
         )
@@ -635,9 +628,7 @@ class TestResetProtocolAssignment:
         assert resp.status_code == 403, resp.text
 
     @pytest.mark.asyncio
-    async def test_reset_with_only_active_tasks_succeeds(
-        self, client, db_engine, alice
-    ) -> None:
+    async def test_reset_with_only_active_tasks_succeeds(self, client, db_engine, alice) -> None:
         """DELETE succeeds when tasks are merely ACTIVE — no work has been done.
 
         Every study is auto-assigned its type's default protocol at creation,
@@ -648,18 +639,17 @@ class TestResetProtocolAssignment:
         # _add_node_and_assign creates a node in ACTIVE status
         await _add_node_and_assign(db_engine, study_id, protocol_id, task_id="active_for_reset")
 
-        resp = await client.request("DELETE",             f"/api/v1/studies/{study_id}/protocol-assignment",
+        resp = await client.request(
+            "DELETE",
+            f"/api/v1/studies/{study_id}/protocol-assignment",
             json={"confirm_reset": True},
             headers=_bearer(alice_user.id),
         )
 
         assert resp.status_code == 200, resp.text
 
-
     @pytest.mark.asyncio
-    async def test_reset_clears_old_execution_states(
-        self, client, db_engine, alice
-    ) -> None:
+    async def test_reset_clears_old_execution_states(self, client, db_engine, alice) -> None:
         """After reset, old completed tasks from a custom protocol are gone."""
         alice_user, _ = alice
         # _setup creates a default template with no nodes.
@@ -690,25 +680,19 @@ class TestResetProtocolAssignment:
 
             # Replace the assignment to point to the custom protocol
             result = await session.execute(
-                select(StudyProtocolAssignment).where(
-                    StudyProtocolAssignment.study_id == study_id
-                )
+                select(StudyProtocolAssignment).where(StudyProtocolAssignment.study_id == study_id)
             )
             existing = result.scalar_one_or_none()
             if existing:
                 existing.protocol_id = custom_protocol.id
             else:
                 session.add(
-                    StudyProtocolAssignment(
-                        study_id=study_id, protocol_id=custom_protocol.id
-                    )
+                    StudyProtocolAssignment(study_id=study_id, protocol_id=custom_protocol.id)
                 )
 
             # Clear existing task states from the default assignment
             await session.execute(
-                delete(TaskExecutionState).where(
-                    TaskExecutionState.study_id == study_id
-                )
+                delete(TaskExecutionState).where(TaskExecutionState.study_id == study_id)
             )
             state = TaskExecutionState(
                 study_id=study_id,

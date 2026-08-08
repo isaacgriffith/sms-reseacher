@@ -16,22 +16,21 @@ from __future__ import annotations
 
 from unittest.mock import AsyncMock, patch
 
-import pytest
-import pytest_asyncio
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-from sqlalchemy.pool import StaticPool
-
-from db.base import Base
 import db.models  # noqa: F401
-import db.models.users  # noqa: F401
-import db.models.study  # noqa: F401
-import db.models.slr  # noqa: F401
 import db.models.candidate  # noqa: F401
+import db.models.criteria  # noqa: F401
+import db.models.pico  # noqa: F401
 import db.models.search  # noqa: F401
 import db.models.search_exec  # noqa: F401
-import db.models.pico  # noqa: F401
 import db.models.seeds  # noqa: F401
-import db.models.criteria  # noqa: F401
+import db.models.slr  # noqa: F401
+import db.models.study  # noqa: F401
+import db.models.users  # noqa: F401
+import pytest
+import pytest_asyncio
+from db.base import Base
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.pool import StaticPool
 
 
 @pytest_asyncio.fixture
@@ -59,8 +58,8 @@ async def db_session():
 
 async def _insert_study(db: AsyncSession) -> int:
     """Insert a minimal Study and ResearchGroup, returning the study id."""
+    from db.models import Study, StudyStatus, StudyType
     from db.models.users import ResearchGroup
-    from db.models import Study, StudyType, StudyStatus
 
     group = ResearchGroup(name="QA Test Group")
     db.add(group)
@@ -341,6 +340,7 @@ class TestComputeAggregateScore:
     def test_compute_aggregate_score_weighted(self) -> None:
         """Computes weighted average: sum(score*weight)/sum(weight)."""
         from unittest.mock import MagicMock
+
         from backend.services.quality_assessment_service import compute_aggregate_score
 
         item1 = MagicMock()
@@ -380,9 +380,7 @@ class TestKappaTrigger:
     """Kappa is triggered when both reviewers complete all accepted papers."""
 
     @pytest.mark.asyncio
-    async def test_kappa_triggered_when_both_reviewers_complete(
-        self, db_session
-    ) -> None:
+    async def test_kappa_triggered_when_both_reviewers_complete(self, db_session) -> None:
         """inter_rater_service.compute_and_store_kappa is called when both reviewers done."""
         from backend.services.quality_assessment_service import (
             submit_scores,

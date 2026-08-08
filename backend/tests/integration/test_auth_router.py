@@ -17,9 +17,7 @@ class TestLogin:
     async def test_success_returns_token_and_user_info(self, client, alice):
         """Valid credentials return 200 with JWT, token_type, user_id, display_name."""
         user, plain = alice
-        resp = await client.post(
-            f"{BASE}/login", json={"email": user.email, "password": plain}
-        )
+        resp = await client.post(f"{BASE}/login", json={"email": user.email, "password": plain})
         assert resp.status_code == 200
         body = resp.json()
         assert body["token_type"] == "bearer"
@@ -35,9 +33,8 @@ class TestLogin:
         The client applies it immediately, so a preference set in an earlier
         session survives logging back in without a /auth/me round-trip.
         """
-        from sqlalchemy.ext.asyncio import async_sessionmaker
-
         from db.models.users import ThemePreference, User
+        from sqlalchemy.ext.asyncio import async_sessionmaker
 
         user, plain = alice
         maker = async_sessionmaker(db_engine, expire_on_commit=False)
@@ -47,9 +44,7 @@ class TestLogin:
             stored.theme_preference = ThemePreference.DARK
             await session.commit()
 
-        resp = await client.post(
-            f"{BASE}/login", json={"email": user.email, "password": plain}
-        )
+        resp = await client.post(f"{BASE}/login", json={"email": user.email, "password": plain})
 
         assert resp.status_code == 200
         assert resp.json()["theme_preference"] == "dark"
@@ -74,9 +69,7 @@ class TestLogin:
     @pytest.mark.asyncio
     async def test_invalid_email_format_returns_422(self, client):
         """Malformed email address in request body → 422 Unprocessable Entity."""
-        resp = await client.post(
-            f"{BASE}/login", json={"email": "not-an-email", "password": "x"}
-        )
+        resp = await client.post(f"{BASE}/login", json={"email": "not-an-email", "password": "x"})
         assert resp.status_code == 422
 
 
@@ -88,9 +81,7 @@ class TestMe:
         """Valid JWT → 200 with id, email, display_name, and empty groups list."""
         user, _ = alice
         token = create_access_token(user_id=user.id)
-        resp = await client.get(
-            f"{BASE}/me", headers={"Authorization": f"Bearer {token}"}
-        )
+        resp = await client.get(f"{BASE}/me", headers={"Authorization": f"Bearer {token}"})
         assert resp.status_code == 200
         body = resp.json()
         assert body["id"] == user.id
@@ -121,7 +112,5 @@ class TestMe:
         revealing the absence of the account (404).
         """
         token = create_access_token(user_id=999_999)
-        resp = await client.get(
-            f"{BASE}/me", headers={"Authorization": f"Bearer {token}"}
-        )
+        resp = await client.get(f"{BASE}/me", headers={"Authorization": f"Bearer {token}"})
         assert resp.status_code == 401

@@ -10,27 +10,25 @@ Covers:
 
 from __future__ import annotations
 
-import pytest
-import pytest_asyncio
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-from sqlalchemy.pool import StaticPool
-
 # Register all ORM table definitions
 import db.models  # noqa: F401
-import db.models.users  # noqa: F401
-import db.models.study  # noqa: F401
-import db.models.pico  # noqa: F401
-import db.models.seeds  # noqa: F401
+import db.models.audit  # noqa: F401
+import db.models.candidate  # noqa: F401
 import db.models.criteria  # noqa: F401
+import db.models.jobs  # noqa: F401
+import db.models.pico  # noqa: F401
 import db.models.search  # noqa: F401
 import db.models.search_exec  # noqa: F401
-import db.models.jobs  # noqa: F401
-import db.models.candidate  # noqa: F401
-import db.models.audit  # noqa: F401
-
+import db.models.seeds  # noqa: F401
+import db.models.study  # noqa: F401
+import db.models.users  # noqa: F401
+import pytest
+import pytest_asyncio
 from db.base import Base
 from db.models import Paper
 from db.models.candidate import CandidatePaper, CandidatePaperStatus
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.pool import StaticPool
 
 from backend.services.dedup import DedupResult, check_duplicate
 
@@ -99,7 +97,9 @@ class TestDOIExactMatch:
     """Stage 1: exact DOI match → definite duplicate."""
 
     @pytest.mark.asyncio
-    async def test_exact_doi_match_returns_definite_duplicate(self, db_session: AsyncSession) -> None:
+    async def test_exact_doi_match_returns_definite_duplicate(
+        self, db_session: AsyncSession
+    ) -> None:
         """Same DOI → is_duplicate=True, is_definite=True."""
         cp = await _insert_candidate(db_session, title="TDD Practices", doi="10.1234/jss.2022")
         await db_session.commit()

@@ -57,9 +57,13 @@ def _make_client(response: str) -> MagicMock:
 def _json_response(**overrides: str | None) -> str:
     """Return a minimal valid ValidityAgent JSON string with all six dimensions."""
     data = {
-        "descriptive": "Data was extracted by two independent reviewers reducing misinterpretation risk.",
+        "descriptive": (
+            "Data was extracted by two independent reviewers reducing misinterpretation risk."
+        ),
         "theoretical": "Classifications were grounded in the Wieringa et al. framework.",
-        "generalizability_internal": "All 45 included papers were subjected to the same extraction protocol.",
+        "generalizability_internal": (
+            "All 45 included papers were subjected to the same extraction protocol."
+        ),
         "generalizability_external": "Four major databases searched; temporal scope 2015–2024.",
         "interpretive": "Patterns were validated through inter-rater agreement (κ = 0.82).",
         "repeatability": "Search strings, inclusion criteria, and protocol are fully documented.",

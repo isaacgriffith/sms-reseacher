@@ -43,7 +43,7 @@ class TestConvertPaperToMarkdown:
 
     @pytest.mark.asyncio
     async def test_doi_path_fetches_pdf_then_converts(self) -> None:
-        """doi input triggers fetch_paper_pdf, then converts the returned PDF."""
+        """Doi input triggers fetch_paper_pdf, then converts the returned PDF."""
         from researcher_mcp.tools.convert import convert_paper_to_markdown
 
         fake_bytes = b"%PDF-1.4 test"
@@ -61,7 +61,10 @@ class TestConvertPaperToMarkdown:
         mock_markitdown.convert_stream.return_value = mock_result
 
         with (
-            patch("researcher_mcp.tools.convert.fetch_paper_pdf", new=AsyncMock(return_value=fetch_result)),
+            patch(
+                "researcher_mcp.tools.convert.fetch_paper_pdf",
+                new=AsyncMock(return_value=fetch_result),
+            ),
             patch("researcher_mcp.tools.convert._get_markitdown", return_value=mock_markitdown),
         ):
             result = await convert_paper_to_markdown(doi="10.1234/test")
@@ -80,7 +83,9 @@ class TestConvertPaperToMarkdown:
             "source": "unavailable",
             "open_access_url": None,
         }
-        with patch("researcher_mcp.tools.convert.fetch_paper_pdf", new=AsyncMock(return_value=fetch_result)):
+        with patch(
+            "researcher_mcp.tools.convert.fetch_paper_pdf", new=AsyncMock(return_value=fetch_result)
+        ):
             result = await convert_paper_to_markdown(doi="10.9999/unknown")
 
         assert result["markdown"] == ""
@@ -146,7 +151,10 @@ class TestGetPaperMarkdownTool:
             "converted_at": "2025-01-01T00:00:00Z",
             "full_text_source": "unpaywall",
         }
-        with patch("researcher_mcp.tools.convert._fetch_stored_markdown", new=AsyncMock(return_value=stored)):
+        with patch(
+            "researcher_mcp.tools.convert._fetch_stored_markdown",
+            new=AsyncMock(return_value=stored),
+        ):
             result = await get_paper_markdown(doi="10.1234/test")
 
         assert result["available"] is True
@@ -163,7 +171,9 @@ class TestGetPaperMarkdownTool:
             "markdown": None,
             "converted_at": None,
         }
-        with patch("researcher_mcp.tools.convert._fetch_stored_markdown", new=AsyncMock(return_value=miss)):
+        with patch(
+            "researcher_mcp.tools.convert._fetch_stored_markdown", new=AsyncMock(return_value=miss)
+        ):
             result = await get_paper_markdown(doi="10.9999/missing")
 
         assert result["available"] is False
@@ -176,9 +186,9 @@ class TestConvertUrlPath:
     @pytest.mark.asyncio
     async def test_url_path_downloads_and_converts(self) -> None:
         """URL input downloads PDF and then converts."""
-        import base64
+        from unittest.mock import AsyncMock, MagicMock, patch
+
         import httpx
-        from unittest.mock import patch, MagicMock, AsyncMock
 
         from researcher_mcp.tools.convert import convert_paper_to_markdown
 
@@ -211,8 +221,9 @@ class TestConvertUrlPath:
     @pytest.mark.asyncio
     async def test_url_path_returns_warning_on_http_error(self) -> None:
         """URL download failure returns empty markdown with warning."""
+        from unittest.mock import AsyncMock, MagicMock, patch
+
         import httpx
-        from unittest.mock import patch, MagicMock, AsyncMock
 
         from researcher_mcp.tools.convert import convert_paper_to_markdown
 
@@ -234,8 +245,9 @@ class TestConvertUrlPath:
     @pytest.mark.asyncio
     async def test_url_path_returns_warning_on_transport_error(self) -> None:
         """Transport error during URL download returns empty markdown with warning."""
+        from unittest.mock import AsyncMock, patch
+
         import httpx
-        from unittest.mock import patch, MagicMock, AsyncMock
 
         from researcher_mcp.tools.convert import convert_paper_to_markdown
 
@@ -258,7 +270,8 @@ class TestConvertBytesHelper:
     @pytest.mark.asyncio
     async def test_convert_bytes_returns_word_count(self) -> None:
         """_convert_bytes returns correct word count in result."""
-        from unittest.mock import patch, MagicMock
+        from unittest.mock import MagicMock, patch
+
         from researcher_mcp.tools.convert import _convert_bytes
 
         mock_result = MagicMock()
@@ -275,7 +288,8 @@ class TestConvertBytesHelper:
     @pytest.mark.asyncio
     async def test_convert_bytes_ocr_method_label(self) -> None:
         """_convert_bytes sets method to 'markitdown-ocr' when enable_ocr=True."""
-        from unittest.mock import patch, MagicMock
+        from unittest.mock import MagicMock, patch
+
         from researcher_mcp.tools.convert import _convert_bytes
 
         mock_result = MagicMock()
@@ -295,8 +309,10 @@ class TestFetchStoredMarkdown:
     @pytest.mark.asyncio
     async def test_fetch_stored_markdown_with_paper_id(self) -> None:
         """_fetch_stored_markdown queries backend with paper_id."""
+        from unittest.mock import AsyncMock, MagicMock, patch
+
         import httpx
-        from unittest.mock import patch, MagicMock, AsyncMock
+
         from researcher_mcp.tools.convert import _fetch_stored_markdown
 
         mock_resp = MagicMock(spec=httpx.Response)
@@ -329,8 +345,8 @@ class TestFetchStoredMarkdown:
     @pytest.mark.asyncio
     async def test_fetch_stored_markdown_returns_unavailable_on_exception(self) -> None:
         """_fetch_stored_markdown returns unavailable when backend call fails."""
-        import httpx
-        from unittest.mock import patch, MagicMock, AsyncMock
+        from unittest.mock import AsyncMock, MagicMock, patch
+
         from researcher_mcp.tools.convert import _fetch_stored_markdown
 
         mock_client = AsyncMock()
@@ -353,7 +369,8 @@ class TestFetchStoredMarkdown:
     @pytest.mark.asyncio
     async def test_fetch_stored_markdown_no_paper_id_returns_unavailable(self) -> None:
         """_fetch_stored_markdown returns unavailable when no paper_id provided."""
-        from unittest.mock import patch, MagicMock
+        from unittest.mock import MagicMock, patch
+
         from researcher_mcp.tools.convert import _fetch_stored_markdown
 
         mock_settings = MagicMock()

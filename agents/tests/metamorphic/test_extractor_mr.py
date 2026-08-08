@@ -61,6 +61,7 @@ def make_stub_agent() -> ExtractorAgent:
 
     Returns:
         An :class:`ExtractorAgent` whose LLM always returns :data:`STUB_RESPONSE`.
+
     """
     stub_client = MagicMock(spec=LLMClient)
     stub_client.complete = AsyncMock(return_value=STUB_RESPONSE)

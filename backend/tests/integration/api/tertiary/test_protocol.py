@@ -14,10 +14,10 @@ from __future__ import annotations
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+from db.models.users import GroupMembership, GroupRole, ResearchGroup
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from backend.core.auth import create_access_token
-from db.models.users import GroupMembership, GroupRole, ResearchGroup
 
 
 def _bearer(user_id: int) -> dict[str, str]:
@@ -28,6 +28,7 @@ def _bearer(user_id: int) -> dict[str, str]:
 
     Returns:
         Dict suitable for use as ``headers`` in httpx requests.
+
     """
     return {"Authorization": f"Bearer {create_access_token(user_id=user_id)}"}
 
@@ -42,6 +43,7 @@ async def _setup_tertiary_study(client, db_engine, user) -> int:
 
     Returns:
         Integer study id.
+
     """
     maker = async_sessionmaker(db_engine, expire_on_commit=False)
     async with maker() as session:

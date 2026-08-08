@@ -11,14 +11,13 @@ Covers:
 
 from __future__ import annotations
 
-import pytest
-import pytest_asyncio
+from unittest.mock import AsyncMock, patch
+
+from db.models.agents import Agent, AgentTaskType, AvailableModel
+from db.models.users import GroupMembership, GroupRole, ResearchGroup
 from sqlalchemy.ext.asyncio import async_sessionmaker
-from unittest.mock import AsyncMock, MagicMock, patch
 
 from backend.core.auth import create_access_token
-from db.models.agents import Agent, AgentTaskType, AvailableModel, Provider, ProviderType
-from db.models.users import GroupMembership, GroupRole, ResearchGroup
 
 
 def _bearer(user_id: int) -> dict[str, str]:
@@ -156,9 +155,7 @@ class TestUpdateProvider:
 class TestDeleteProvider:
     """DELETE /admin/providers/{id} endpoint tests."""
 
-    async def test_delete_provider_with_agents_returns_409(
-        self, client, db_engine, alice
-    ) -> None:
+    async def test_delete_provider_with_agents_returns_409(self, client, db_engine, alice) -> None:
         """DELETE returns 409 when agents depend on the provider."""
         user, pwd = alice
         await _make_admin(db_engine, user)
@@ -182,6 +179,7 @@ class TestDeleteProvider:
 
         # Insert a model and agent that reference this provider
         import uuid
+
         maker = async_sessionmaker(db_engine, expire_on_commit=False)
         async with maker() as session:
             model = AvailableModel(
@@ -250,9 +248,7 @@ class TestDeleteProvider:
 class TestRefreshModels:
     """POST /admin/providers/{id}/refresh-models endpoint tests."""
 
-    async def test_refresh_returns_502_on_fetch_error(
-        self, client, db_engine, alice
-    ) -> None:
+    async def test_refresh_returns_502_on_fetch_error(self, client, db_engine, alice) -> None:
         """refresh-models returns 502 when the provider API is unreachable."""
         from backend.services.provider_service import ProviderFetchError
 
@@ -295,9 +291,7 @@ class TestRefreshModels:
 class TestListProviders:
     """GET /admin/providers endpoint tests."""
 
-    async def test_list_returns_created_providers(
-        self, client, db_engine, alice
-    ) -> None:
+    async def test_list_returns_created_providers(self, client, db_engine, alice) -> None:
         """GET /admin/providers returns the list including newly created providers."""
         user, pwd = alice
         await _make_admin(db_engine, user)
@@ -317,9 +311,7 @@ class TestListProviders:
                 },
             )
 
-        list_resp = await client.get(
-            "/api/v1/admin/providers", headers=_bearer(user.id)
-        )
+        list_resp = await client.get("/api/v1/admin/providers", headers=_bearer(user.id))
         assert list_resp.status_code == 200
         providers = list_resp.json()
         assert isinstance(providers, list)

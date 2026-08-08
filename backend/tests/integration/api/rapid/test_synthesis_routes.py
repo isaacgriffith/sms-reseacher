@@ -12,13 +12,11 @@ Covers:
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
-
 import pytest
+from db.models.users import GroupMembership, GroupRole, ResearchGroup
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from backend.core.auth import create_access_token
-from db.models.users import GroupMembership, GroupRole, ResearchGroup
 
 
 def _bearer(user_id: int) -> dict[str, str]:
@@ -29,6 +27,7 @@ def _bearer(user_id: int) -> dict[str, str]:
 
     Returns:
         A dict with the ``Authorization`` header value.
+
     """
     return {"Authorization": f"Bearer {create_access_token(user_id=user_id)}"}
 
@@ -44,6 +43,7 @@ async def _setup_rr_study(client, db_engine, user, name_suffix: str = "") -> int
 
     Returns:
         The newly created study ID.
+
     """
     maker = async_sessionmaker(db_engine, expire_on_commit=False)
     async with maker() as session:
@@ -88,6 +88,7 @@ async def _insert_synthesis_section(
 
     Returns:
         The section's primary key.
+
     """
     from db.models.rapid_review import RRNarrativeSynthesisSection
 
@@ -200,15 +201,11 @@ class TestCompleteSynthesis:
     """POST /rapid/studies/{id}/synthesis/complete marks synthesis complete."""
 
     @pytest.mark.asyncio
-    async def test_returns_422_when_sections_incomplete(
-        self, client, db_engine, alice
-    ) -> None:
+    async def test_returns_422_when_sections_incomplete(self, client, db_engine, alice) -> None:
         """Returns 422 when any section is not complete."""
         user, _ = alice
         study_id = await _setup_rr_study(client, db_engine, user, "cs1")
-        await _insert_synthesis_section(
-            db_engine, study_id=study_id, rq_index=0, is_complete=False
-        )
+        await _insert_synthesis_section(db_engine, study_id=study_id, rq_index=0, is_complete=False)
 
         resp = await client.post(
             f"/api/v1/rapid/studies/{study_id}/synthesis/complete",
@@ -217,15 +214,11 @@ class TestCompleteSynthesis:
         assert resp.status_code == 422
 
     @pytest.mark.asyncio
-    async def test_returns_200_when_all_sections_complete(
-        self, client, db_engine, alice
-    ) -> None:
+    async def test_returns_200_when_all_sections_complete(self, client, db_engine, alice) -> None:
         """Returns 200 with synthesis_complete=True when all sections done."""
         user, _ = alice
         study_id = await _setup_rr_study(client, db_engine, user, "cs2")
-        await _insert_synthesis_section(
-            db_engine, study_id=study_id, rq_index=0, is_complete=True
-        )
+        await _insert_synthesis_section(db_engine, study_id=study_id, rq_index=0, is_complete=True)
 
         resp = await client.post(
             f"/api/v1/rapid/studies/{study_id}/synthesis/complete",
@@ -235,9 +228,7 @@ class TestCompleteSynthesis:
         assert resp.json()["synthesis_complete"] is True
 
     @pytest.mark.asyncio
-    async def test_returns_200_when_no_sections_exist(
-        self, client, db_engine, alice
-    ) -> None:
+    async def test_returns_200_when_no_sections_exist(self, client, db_engine, alice) -> None:
         """Returns 200 with synthesis_complete=True when no sections exist (trivially complete)."""
         user, _ = alice
         study_id = await _setup_rr_study(client, db_engine, user, "cs3")
@@ -260,9 +251,7 @@ class TestStakeholderRoutes:
     """CRUD tests for /rapid/studies/{id}/stakeholders."""
 
     @pytest.mark.asyncio
-    async def test_get_returns_empty_list_initially(
-        self, client, db_engine, alice
-    ) -> None:
+    async def test_get_returns_empty_list_initially(self, client, db_engine, alice) -> None:
         """Returns 200 with empty list when no stakeholders exist."""
         user, _ = alice
         study_id = await _setup_rr_study(client, db_engine, user, "sh1")
@@ -316,9 +305,7 @@ class TestStakeholderRoutes:
         assert resp.status_code == 422
 
     @pytest.mark.asyncio
-    async def test_get_returns_created_stakeholders(
-        self, client, db_engine, alice
-    ) -> None:
+    async def test_get_returns_created_stakeholders(self, client, db_engine, alice) -> None:
         """Returns the list with stakeholders after creation."""
         user, _ = alice
         study_id = await _setup_rr_study(client, db_engine, user, "sh4")
@@ -375,9 +362,7 @@ class TestStakeholderRoutes:
         assert resp.status_code in (403, 404)
 
     @pytest.mark.asyncio
-    async def test_put_returns_404_for_missing_stakeholder(
-        self, client, db_engine, alice
-    ) -> None:
+    async def test_put_returns_404_for_missing_stakeholder(self, client, db_engine, alice) -> None:
         """Returns 404 when the stakeholder ID does not exist."""
         user, _ = alice
         study_id = await _setup_rr_study(client, db_engine, user, "sh6")

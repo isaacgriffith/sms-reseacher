@@ -7,7 +7,6 @@ from __future__ import annotations
 
 from unittest.mock import patch
 
-
 # ---------------------------------------------------------------------------
 # Settings / get_settings
 # ---------------------------------------------------------------------------
@@ -130,8 +129,6 @@ def test_get_logger_returns_bound_logger():
 
     The returned object should be a structlog BoundLogger instance.
     """
-    import structlog
-
     from backend.core.config import get_logger
 
     logger = get_logger("test.module")
@@ -169,7 +166,7 @@ def test_create_app_returns_fastapi_instance():
 
 
 async def test_lifespan_logs_startup_and_shutdown():
-    """lifespan context manager logs startup and shutdown without errors.
+    """Lifespan context manager logs startup and shutdown without errors.
 
     The lifespan function should be callable as an async context manager
     and complete without raising.
@@ -184,12 +181,13 @@ async def test_lifespan_logs_startup_and_shutdown():
 
 
 async def test_lifespan_startup_logs_app_name():
-    """lifespan logs application_startup with the app name from settings.
+    """Lifespan logs application_startup with the app name from settings.
 
     The startup log call should include the app name from application settings.
     """
+    from unittest.mock import MagicMock
+
     from fastapi import FastAPI
-    from unittest.mock import MagicMock, patch
 
     from backend.main import lifespan
 

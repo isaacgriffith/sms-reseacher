@@ -12,9 +12,7 @@ from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import pytest
-
-from researcher_mcp.sources.base import AuthorInfo, PaperRecord
+from researcher_mcp.sources.base import PaperRecord
 
 
 def _paper(title: str, doi: str | None = None, source: str = "test") -> PaperRecord:
@@ -27,6 +25,7 @@ def _paper(title: str, doi: str | None = None, source: str = "test") -> PaperRec
 
     Returns:
         A :class:`PaperRecord` instance.
+
     """
     return PaperRecord(title=title, doi=doi, source_database=source)
 
@@ -43,9 +42,7 @@ class TestSearchPapersFanOut:
         mock_registry = MagicMock()
         mock_registry.get_enabled.return_value = [("semantic_scholar", mock_src)]
 
-        with patch(
-            "researcher_mcp.tools.search.get_registry", return_value=mock_registry
-        ):
+        with patch("researcher_mcp.tools.search.get_registry", return_value=mock_registry):
             from researcher_mcp.tools.search import search_papers
 
             result = await search_papers(query="TDD", indices=["semantic_scholar"])
@@ -70,9 +67,7 @@ class TestSearchPapersFanOut:
             ("semantic_scholar", mock_ss),
         ]
 
-        with patch(
-            "researcher_mcp.tools.search.get_registry", return_value=mock_registry
-        ):
+        with patch("researcher_mcp.tools.search.get_registry", return_value=mock_registry):
             from researcher_mcp.tools.search import search_papers
 
             result = await search_papers(query="agile")
@@ -95,9 +90,7 @@ class TestSearchPapersFanOut:
             ("ieee_xplore", mock_bad),
         ]
 
-        with patch(
-            "researcher_mcp.tools.search.get_registry", return_value=mock_registry
-        ):
+        with patch("researcher_mcp.tools.search.get_registry", return_value=mock_registry):
             from researcher_mcp.tools.search import search_papers
 
             result = await search_papers(query="ML")
@@ -123,9 +116,7 @@ class TestSearchPapersFanOut:
             ("semantic_scholar", mock_src_b),
         ]
 
-        with patch(
-            "researcher_mcp.tools.search.get_registry", return_value=mock_registry
-        ):
+        with patch("researcher_mcp.tools.search.get_registry", return_value=mock_registry):
             from researcher_mcp.tools.search import search_papers
 
             result = await search_papers(query="dup test")
@@ -145,9 +136,7 @@ class TestSearchPapersFanOut:
             ("scopus", mock_b),
         ]
 
-        with patch(
-            "researcher_mcp.tools.search.get_registry", return_value=mock_registry
-        ):
+        with patch("researcher_mcp.tools.search.get_registry", return_value=mock_registry):
             from researcher_mcp.tools.search import search_papers
 
             result = await search_papers(query="fail test")
@@ -164,9 +153,7 @@ class TestSearchPapersFanOut:
         mock_registry = MagicMock()
         mock_registry.get_enabled.return_value = [("scopus", mock_src)]
 
-        with patch(
-            "researcher_mcp.tools.search.get_registry", return_value=mock_registry
-        ):
+        with patch("researcher_mcp.tools.search.get_registry", return_value=mock_registry):
             from researcher_mcp.tools.search import search_papers
 
             result = await search_papers(query="test", indices=None)
@@ -175,20 +162,16 @@ class TestSearchPapersFanOut:
         assert len(result.papers) == 1
 
     async def test_truncated_flag_when_results_exceed_max(self) -> None:
-        """truncated is True when total results across sources exceed max_results."""
+        """Truncated is True when total results across sources exceed max_results."""
         # Create more papers than max_results
-        many_papers = [
-            _paper(f"Paper {i}", doi=f"10.1/{i}", source="ss") for i in range(50)
-        ]
+        many_papers = [_paper(f"Paper {i}", doi=f"10.1/{i}", source="ss") for i in range(50)]
         mock_src = MagicMock()
         mock_src.search = AsyncMock(return_value=many_papers)
 
         mock_registry = MagicMock()
         mock_registry.get_enabled.return_value = [("semantic_scholar", mock_src)]
 
-        with patch(
-            "researcher_mcp.tools.search.get_registry", return_value=mock_registry
-        ):
+        with patch("researcher_mcp.tools.search.get_registry", return_value=mock_registry):
             from researcher_mcp.tools.search import search_papers
 
             result = await search_papers(query="big", max_results=10)
@@ -199,18 +182,14 @@ class TestSearchPapersFanOut:
 
     async def test_total_found_reflects_pre_truncation_count(self) -> None:
         """total_found reflects how many unique papers were found before truncation."""
-        papers = [
-            _paper(f"Paper {i}", doi=f"10.1/{i}", source="ss") for i in range(5)
-        ]
+        papers = [_paper(f"Paper {i}", doi=f"10.1/{i}", source="ss") for i in range(5)]
         mock_src = MagicMock()
         mock_src.search = AsyncMock(return_value=papers)
 
         mock_registry = MagicMock()
         mock_registry.get_enabled.return_value = [("semantic_scholar", mock_src)]
 
-        with patch(
-            "researcher_mcp.tools.search.get_registry", return_value=mock_registry
-        ):
+        with patch("researcher_mcp.tools.search.get_registry", return_value=mock_registry):
             from researcher_mcp.tools.search import search_papers
 
             result = await search_papers(query="test", max_results=100)
@@ -258,14 +237,14 @@ class TestClassifyError:
         assert _classify_error(exc) == "rate_limited"
 
     def test_classify_timeout_error(self) -> None:
-        """timeout in message maps to unreachable."""
+        """Timeout in message maps to unreachable."""
         from researcher_mcp.tools.search import _classify_error
 
         exc = Exception("connection timeout")
         assert _classify_error(exc) == "unreachable"
 
     def test_classify_transport_error(self) -> None:
-        """transport in message maps to unreachable."""
+        """Transport in message maps to unreachable."""
         from researcher_mcp.tools.search import _classify_error
 
         exc = Exception("transport error")
@@ -518,7 +497,7 @@ class TestPerSourceTools:
         with patch("researcher_mcp.tools.search.get_registry", return_value=mock_registry):
             from researcher_mcp.tools.search import get_scopus_paper
 
-            result = await get_scopus_paper(eid="2-s2.0-12345")
+            await get_scopus_paper(eid="2-s2.0-12345")
 
         mock_src.get_paper.assert_called_once_with("2-s2.0-12345")
 
@@ -643,15 +622,16 @@ class TestPerSourceTools:
     async def test_get_paper_semantic_scholar_returns_error_with_no_input(self) -> None:
         """get_paper_semantic_scholar() returns error dict when no id provided."""
         from researcher_mcp.sources.semantic_scholar import SemanticScholarSource
-        from researcher_mcp.core.config import get_settings
-        from researcher_mcp.core.http_client import make_retry_client
 
         mock_ss = MagicMock(spec=SemanticScholarSource)
         mock_ss.get_paper = AsyncMock(return_value={"error": "not found"})
         mock_oa = MagicMock()
         mock_cr = MagicMock()
 
-        with patch("researcher_mcp.tools.search._get_legacy_sources", return_value=(mock_ss, mock_oa, mock_cr)):
+        with patch(
+            "researcher_mcp.tools.search._get_legacy_sources",
+            return_value=(mock_ss, mock_oa, mock_cr),
+        ):
             from researcher_mcp.tools.search import get_paper_semantic_scholar
 
             result = await get_paper_semantic_scholar()

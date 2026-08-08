@@ -11,7 +11,6 @@ import json
 import zipfile
 from unittest.mock import AsyncMock, MagicMock, patch
 
-
 # ---------------------------------------------------------------------------
 # _warn_and_assert_redaction
 # ---------------------------------------------------------------------------
@@ -117,7 +116,12 @@ async def test_build_json_only_returns_valid_utf8_json():
 
     The returned bytes should parse as JSON and contain the study key.
     """
-    safe_data = {"study": {"id": 1, "title": "Test"}, "extractions": [], "domain_model": {}, "charts": []}
+    safe_data = {
+        "study": {"id": 1, "title": "Test"},
+        "extractions": [],
+        "domain_model": {},
+        "charts": [],
+    }
 
     with patch("backend.services.export._load_study_data", new=AsyncMock(return_value=safe_data)):
         from backend.services.export import _build_json_only

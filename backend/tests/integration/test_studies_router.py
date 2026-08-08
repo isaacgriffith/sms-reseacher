@@ -4,10 +4,10 @@ Covers wizard POST, GET detail, PATCH, archive, and delete including 401/403 pat
 """
 
 import pytest
+from db.models.users import GroupMembership, GroupRole, ResearchGroup
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from backend.core.auth import create_access_token
-from db.models.users import GroupMembership, GroupRole, ResearchGroup
 
 
 def _bearer(user_id: int) -> dict[str, str]:
@@ -22,9 +22,7 @@ async def _create_group(db_engine, user_id: int) -> int:
         group = ResearchGroup(name="Test Lab")
         session.add(group)
         await session.flush()
-        session.add(
-            GroupMembership(group_id=group.id, user_id=user_id, role=GroupRole.ADMIN)
-        )
+        session.add(GroupMembership(group_id=group.id, user_id=user_id, role=GroupRole.ADMIN))
         await session.commit()
         return group.id
 
@@ -165,9 +163,7 @@ class TestArchiveDeleteStudy:
             headers=_bearer(user.id),
         )
         study_id = create_resp.json()["id"]
-        resp = await client.post(
-            f"/api/v1/studies/{study_id}/archive", headers=_bearer(user.id)
-        )
+        resp = await client.post(f"/api/v1/studies/{study_id}/archive", headers=_bearer(user.id))
         assert resp.status_code == 200
         assert resp.json()["status"] == "archived"
 
@@ -181,9 +177,7 @@ class TestArchiveDeleteStudy:
             headers=_bearer(user.id),
         )
         study_id = create_resp.json()["id"]
-        resp = await client.delete(
-            f"/api/v1/studies/{study_id}", headers=_bearer(user.id)
-        )
+        resp = await client.delete(f"/api/v1/studies/{study_id}", headers=_bearer(user.id))
         assert resp.status_code == 204
 
 
@@ -243,9 +237,7 @@ class TestCreateStudyWithReviewers:
         group_id = await _create_group(db_engine, alice_user.id)
         payload = {
             **_WIZARD_PAYLOAD,
-            "reviewers": [
-                {"type": "human", "user_id": bob_user.id}
-            ],
+            "reviewers": [{"type": "human", "user_id": bob_user.id}],
         }
         resp = await client.post(
             f"/api/v1/groups/{group_id}/studies",
@@ -261,9 +253,7 @@ class TestCreateStudyWithReviewers:
         group_id = await _create_group(db_engine, user.id)
         payload = {
             **_WIZARD_PAYLOAD,
-            "reviewers": [
-                {"type": "ai_agent", "agent_name": "TestAgent"}
-            ],
+            "reviewers": [{"type": "ai_agent", "agent_name": "TestAgent"}],
         }
         resp = await client.post(
             f"/api/v1/groups/{group_id}/studies",
@@ -335,7 +325,5 @@ class TestDeleteStudyEdgeCases:
         study_id = create_resp.json()["id"]
 
         # Bob tries to delete — should get 403
-        resp = await client.delete(
-            f"/api/v1/studies/{study_id}", headers=_bearer(bob_user.id)
-        )
+        resp = await client.delete(f"/api/v1/studies/{study_id}", headers=_bearer(bob_user.id))
         assert resp.status_code == 403

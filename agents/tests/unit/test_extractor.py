@@ -53,7 +53,9 @@ def _json_response(**kwargs) -> str:
         "venue_name": "ICSE 2023",
         "author_details": [{"name": "Alice", "institution": "MIT", "locale": "US"}],
         "summary": "An empirical field study of TDD.",
-        "open_codings": [{"code": "productivity", "definition": "dev speed", "evidence_quote": "faster"}],
+        "open_codings": [
+            {"code": "productivity", "definition": "dev speed", "evidence_quote": "faster"}
+        ],
         "keywords": ["TDD", "empirical"],
         "question_data": {"RQ1": "Teams adopted TDD in 60% of cases"},
     }
@@ -109,7 +111,7 @@ class TestExtractionResultShape:
 
     @pytest.mark.asyncio
     async def test_keywords_list(self) -> None:
-        """keywords is a list of strings."""
+        """Keywords is a list of strings."""
         agent = ExtractorAgent(llm_client=_make_client(_json_response(keywords=["TDD", "agile"])))
         result = await agent.run(**_PAPER_KWARGS)
         assert isinstance(result.keywords, list)
@@ -118,7 +120,13 @@ class TestExtractionResultShape:
     @pytest.mark.asyncio
     async def test_open_codings_structure(self) -> None:
         """open_codings is a list of dicts with code/definition/evidence_quote keys."""
-        codings = [{"code": "productivity", "definition": "speed increase", "evidence_quote": "faster output"}]
+        codings = [
+            {
+                "code": "productivity",
+                "definition": "speed increase",
+                "evidence_quote": "faster output",
+            }
+        ]
         agent = ExtractorAgent(llm_client=_make_client(_json_response(open_codings=codings)))
         result = await agent.run(**_PAPER_KWARGS)
         assert isinstance(result.open_codings, list)
@@ -146,7 +154,7 @@ class TestExtractionResultShape:
 
     @pytest.mark.asyncio
     async def test_summary_nullable(self) -> None:
-        """summary can be None when LLM returns null."""
+        """Summary can be None when LLM returns null."""
         agent = ExtractorAgent(llm_client=_make_client(_json_response(summary=None)))
         result = await agent.run(**_PAPER_KWARGS)
         assert result.summary is None

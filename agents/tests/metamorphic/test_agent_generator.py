@@ -20,7 +20,6 @@ deterministic response that contains all six required placeholders.
 
 from __future__ import annotations
 
-import re
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -94,8 +93,12 @@ class TestPersonaRenameNeutrality:
     """MR-AG1: persona_name change does not affect required placeholder presence."""
 
     @given(
-        persona_name_1=st.text(min_size=2, max_size=30, alphabet=st.characters(whitelist_categories=("Lu", "Ll", "Zs"))).filter(str.strip),
-        persona_name_2=st.text(min_size=2, max_size=30, alphabet=st.characters(whitelist_categories=("Lu", "Ll", "Zs"))).filter(str.strip),
+        persona_name_1=st.text(
+            min_size=2, max_size=30, alphabet=st.characters(whitelist_categories=("Lu", "Ll", "Zs"))
+        ).filter(str.strip),
+        persona_name_2=st.text(
+            min_size=2, max_size=30, alphabet=st.characters(whitelist_categories=("Lu", "Ll", "Zs"))
+        ).filter(str.strip),
     )
     @settings(max_examples=20)
     async def test_persona_rename_preserves_variable_placeholders(
@@ -141,11 +144,13 @@ class TestRoleDescriptionElaboration:
 
     @given(
         base_description=st.text(
-            min_size=5, max_size=80,
+            min_size=5,
+            max_size=80,
             alphabet=st.characters(whitelist_categories=("Lu", "Ll", "Nd", "Zs", "Po")),
         ),
         extra_detail=st.text(
-            min_size=5, max_size=80,
+            min_size=5,
+            max_size=80,
             alphabet=st.characters(whitelist_categories=("Lu", "Ll", "Nd", "Zs", "Po")),
         ),
     )
@@ -168,16 +173,16 @@ class TestRoleDescriptionElaboration:
         elaborated_result = await agent.generate_system_message(
             task_type="extractor",
             role_name="Extractor",
-            role_description=(base_description or "Extracts data from papers.") + " " + (extra_detail or "With high accuracy."),
+            role_description=(base_description or "Extracts data from papers.")
+            + " "
+            + (extra_detail or "With high accuracy."),
             persona_name="Dr. Extract",
             persona_description="A precise data extractor.",
             model_display_name="Claude Haiku",
         )
 
         # MR-AG2: Both must contain all required variables
-        assert _has_all_variables(base_result), (
-            f"Base result missing variables:\n{base_result}"
-        )
+        assert _has_all_variables(base_result), f"Base result missing variables:\n{base_result}"
         assert _has_all_variables(elaborated_result), (
             f"Elaborated result missing variables:\n{elaborated_result}"
         )
@@ -192,9 +197,7 @@ class TestTaskTypeInvariance:
     """MR-AG3: Required variables appear regardless of task_type."""
 
     @pytest.mark.parametrize("task_type", VALID_TASK_TYPES)
-    async def test_all_task_types_include_required_variables(
-        self, task_type: str
-    ) -> None:
+    async def test_all_task_types_include_required_variables(self, task_type: str) -> None:
         """Every task_type produces a template with all six required placeholders."""
         agent = _make_stub_agent()
 
@@ -233,8 +236,12 @@ class TestTaskTypeInvariance:
             model_display_name="Claude Haiku",
         )
 
-        assert _has_all_variables(screener_result), f"Screener template missing vars:\n{screener_result}"
-        assert _has_all_variables(extractor_result), f"Extractor template missing vars:\n{extractor_result}"
+        assert _has_all_variables(screener_result), (
+            f"Screener template missing vars:\n{screener_result}"
+        )
+        assert _has_all_variables(extractor_result), (
+            f"Extractor template missing vars:\n{extractor_result}"
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -247,7 +254,10 @@ class TestStubBehavior:
 
     async def test_stub_returns_configured_template(self) -> None:
         """The stub LLMClient returns the configured response verbatim."""
-        custom_template = "Hello {{ role_name }} — {{ persona_name }} — {{ domain }} — {{ study_type }} — {{ role_description }} — {{ persona_description }}"
+        custom_template = (
+            "Hello {{ role_name }} — {{ persona_name }} — {{ domain }} — "
+            "{{ study_type }} — {{ role_description }} — {{ persona_description }}"
+        )
         agent = _make_stub_agent(response=custom_template)
 
         result = await agent.generate_system_message(

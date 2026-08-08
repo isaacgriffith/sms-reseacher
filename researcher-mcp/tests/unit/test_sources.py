@@ -1,11 +1,11 @@
-"""Unit tests for researcher_mcp sources: SemanticScholar, CrossRef, OpenAlex, arXiv, Unpaywall, SciHub.
+"""Unit tests for the researcher_mcp source adapters.
 
-All HTTP calls are mocked via AsyncMock so no real network requests are made.
+Covers SemanticScholar, CrossRef, OpenAlex, arXiv, Unpaywall and SciHub. All HTTP
+calls are mocked via AsyncMock so no real network requests are made.
 """
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -13,7 +13,6 @@ import httpx
 import pytest
 
 from researcher_mcp.sources.base import AuthorInfo, normalise_doi, normalise_title
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -29,6 +28,7 @@ def _make_response(status: int, body: dict) -> MagicMock:
 
     Returns:
         A :class:`MagicMock` with status_code, json(), and raise_for_status().
+
     """
     resp = MagicMock(spec=httpx.Response)
     resp.status_code = status
@@ -50,6 +50,7 @@ def _make_client(response: MagicMock) -> MagicMock:
 
     Returns:
         A :class:`MagicMock` spec'd to :class:`httpx.AsyncClient`.
+
     """
     client = MagicMock(spec=httpx.AsyncClient)
     client.get = AsyncMock(return_value=response)
@@ -121,9 +122,7 @@ class TestSemanticScholarSource:
             "authors": [{"name": "Bob", "authorId": "B1"}],
             "venue": "JSS",
             "citationCount": 5,
-            "references": [
-                {"title": "Ref Paper", "externalIds": {"DOI": "10.1111/ref"}}
-            ],
+            "references": [{"title": "Ref Paper", "externalIds": {"DOI": "10.1111/ref"}}],
         }
         client = _make_client(_make_response(200, body))
         ss = SemanticScholarSource(client, rpm=600)
@@ -254,12 +253,8 @@ class TestOpenAlexSource:
                     "title": "Software Testing Study",
                     "doi": "https://doi.org/10.1234/test",
                     "publication_year": 2022,
-                    "authorships": [
-                        {"author": {"display_name": "Alice", "id": "A1"}}
-                    ],
-                    "primary_location": {
-                        "source": {"display_name": "ICSE"}
-                    },
+                    "authorships": [{"author": {"display_name": "Alice", "id": "A1"}}],
+                    "primary_location": {"source": {"display_name": "ICSE"}},
                     "cited_by_count": 7,
                 }
             ],
@@ -282,9 +277,15 @@ class TestOpenAlexSource:
         client = MagicMock(spec=httpx.AsyncClient)
         oa = OpenAlexSource(client, rpm=600)
 
-        work = {"doi": "https://doi.org/10.1234/work", "title": "Work Title",
-                "publication_year": 2020, "authorships": [], "primary_location": None,
-                "cited_by_count": 0, "id": "W42"}
+        work = {
+            "doi": "https://doi.org/10.1234/work",
+            "title": "Work Title",
+            "publication_year": 2020,
+            "authorships": [],
+            "primary_location": None,
+            "cited_by_count": 0,
+            "id": "W42",
+        }
         result = oa._map_work(work)
         assert result["doi"] == "10.1234/work"
 
@@ -294,8 +295,15 @@ class TestOpenAlexSource:
 
         client = MagicMock(spec=httpx.AsyncClient)
         oa = OpenAlexSource(client, rpm=600)
-        work = {"doi": None, "title": "No DOI", "publication_year": 2020,
-                "authorships": [], "primary_location": None, "cited_by_count": 0, "id": "W0"}
+        work = {
+            "doi": None,
+            "title": "No DOI",
+            "publication_year": 2020,
+            "authorships": [],
+            "primary_location": None,
+            "cited_by_count": 0,
+            "id": "W0",
+        }
         result = oa._map_work(work)
         assert result["doi"] is None
 
@@ -304,8 +312,12 @@ class TestOpenAlexSource:
         from researcher_mcp.sources.open_alex import OpenAlexSource
 
         work_body = {
-            "id": "W9", "title": "DOI Paper", "doi": "https://doi.org/10.9/dp",
-            "publication_year": 2022, "authorships": [], "primary_location": None,
+            "id": "W9",
+            "title": "DOI Paper",
+            "doi": "https://doi.org/10.9/dp",
+            "publication_year": 2022,
+            "authorships": [],
+            "primary_location": None,
             "cited_by_count": 0,
         }
         client = _make_client(_make_response(200, work_body))
@@ -328,9 +340,10 @@ class TestArxivSource:
         """fetch_pdf returns a warning when no arXiv ID is found."""
         from researcher_mcp.sources.arxiv import ArxivSource
 
-        crossref_resp = _make_response(200, {
-            "message": {"title": ["Some Paper"], "author": [], "published": {}, "references": []}
-        })
+        crossref_resp = _make_response(
+            200,
+            {"message": {"title": ["Some Paper"], "author": [], "published": {}, "references": []}},
+        )
         client = _make_client(crossref_resp)
         arxiv = ArxivSource(client)
 
@@ -395,7 +408,8 @@ class TestUnpaywallSource:
 
     async def test_fetch_pdf_no_oa_returns_available_false(self) -> None:
         """fetch_pdf returns available=False when no OA PDF URL found."""
-        from unittest.mock import patch, AsyncMock
+        from unittest.mock import AsyncMock, patch
+
         from researcher_mcp.sources.unpaywall import UnpaywallSource
 
         client = MagicMock(spec=httpx.AsyncClient)
@@ -409,7 +423,8 @@ class TestUnpaywallSource:
 
     async def test_fetch_pdf_download_success(self, tmp_path: Path) -> None:
         """fetch_pdf returns available=True and base64 bytes when download succeeds."""
-        from unittest.mock import patch, AsyncMock
+        from unittest.mock import AsyncMock, patch
+
         from researcher_mcp.sources.unpaywall import UnpaywallSource
 
         pdf_content = b"%PDF-1.4 test content"
@@ -417,7 +432,9 @@ class TestUnpaywallSource:
         up = UnpaywallSource(client, email="test@example.com")
 
         with (
-            patch.object(up, "get_pdf_link", new=AsyncMock(return_value="https://example.com/paper.pdf")),
+            patch.object(
+                up, "get_pdf_link", new=AsyncMock(return_value="https://example.com/paper.pdf")
+            ),
             patch.object(up, "fetch_pdf_bytes", new=AsyncMock(return_value=pdf_content)),
         ):
             result = await up.fetch_pdf("10.1234/oa")
@@ -425,11 +442,13 @@ class TestUnpaywallSource:
         assert result["available"] is True
         assert result["source"] == "unpaywall"
         import base64
+
         assert base64.b64decode(result["pdf_bytes_b64"]) == pdf_content
 
     async def test_fetch_pdf_lookup_failure_returns_unavailable(self) -> None:
         """fetch_pdf returns available=False when get_pdf_link returns None."""
-        from unittest.mock import patch, AsyncMock
+        from unittest.mock import AsyncMock, patch
+
         from researcher_mcp.sources.unpaywall import UnpaywallSource
 
         client = MagicMock(spec=httpx.AsyncClient)
@@ -479,8 +498,8 @@ class TestSciHubSource:
 
     async def test_fetch_pdf_scidownl_failure_returns_unavailable(self) -> None:
         """fetch_pdf when scidownl raises an exception returns available=False."""
-        import asyncio
         from unittest.mock import patch
+
         from researcher_mcp.sources.scihub import SciHubSource
 
         sh = SciHubSource(scihub_enabled=True)
@@ -496,8 +515,8 @@ class TestSciHubSource:
 
     async def test_fetch_pdf_scidownl_no_file_returns_unavailable(self) -> None:
         """fetch_pdf when scidownl reports failure (no file) returns available=False."""
-        import asyncio
         from unittest.mock import patch
+
         from researcher_mcp.sources.scihub import SciHubSource
 
         sh = SciHubSource(scihub_enabled=True)
@@ -512,21 +531,16 @@ class TestSciHubSource:
 
     async def test_fetch_pdf_scidownl_success(self, tmp_path: Path) -> None:
         """fetch_pdf succeeds when scidownl creates the output file."""
-        import asyncio
-        import base64
         from unittest.mock import patch
+
         from researcher_mcp.sources.scihub import SciHubSource
 
         sh = SciHubSource(scihub_enabled=True)
 
         # Create a fake PDF in a temp file to simulate scidownl writing it
-        fake_pdf = b"%PDF-1.4 scihub"
 
         async def _fake_to_thread(fn, *args, **kwargs):  # type: ignore[no-untyped-def]
             # Simulate scidownl writing to the output path
-            import inspect
-            import tempfile
-            import pathlib
             # Write file into what would be the tmpdir
             return True  # report success
 
@@ -1067,9 +1081,7 @@ class TestWoSSource:
         return {
             "uid": uid,
             "title": title,
-            "names": {
-                "authors": [{"displayName": "Alice Smith"}]
-            },
+            "names": {"authors": [{"displayName": "Alice Smith"}]},
             "identifiers": {"doi": [doi]},
             "source": {"publishYear": str(year), "sourceTitle": "Journal of Science"},
             "doctype": {"code": doc_type},
@@ -1652,6 +1664,7 @@ class TestScopusSource:
             patch("researcher_mcp.sources.scopus._configure_pybliometrics"),
             patch("researcher_mcp.sources.scopus.asyncio.to_thread") as mock_thread,
         ):
+
             async def fake_to_thread(fn, *args, **kwargs):
                 return fn()
 
@@ -1681,6 +1694,7 @@ class TestScopusSource:
             patch("researcher_mcp.sources.scopus._configure_pybliometrics"),
             patch("researcher_mcp.sources.scopus.asyncio.to_thread") as mock_thread,
         ):
+
             async def fake_to_thread(fn, *args, **kwargs):
                 return fn()
 
@@ -1705,7 +1719,7 @@ class TestScopusSource:
 
         with patch("researcher_mcp.sources.scopus.Path") as mock_path:
             config_dir = tmp_path / ".pybliometrics"
-            config_path = config_dir / "config.ini"
+            config_dir / "config.ini"
             mock_home = MagicMock()
             mock_path.home.return_value = mock_home
             mock_home.__truediv__ = MagicMock(return_value=config_dir)
@@ -1843,6 +1857,7 @@ class TestSpringerSource:
         spring_record = self._make_springer_record()
 
         with patch("researcher_mcp.sources.springer.asyncio.to_thread") as mock_thread:
+
             async def fake_to_thread(fn, *args, **kwargs):
                 return fn()
 
@@ -1870,6 +1885,7 @@ class TestSpringerSource:
         src = SpringerSource(api_key="test-key")
 
         with patch("researcher_mcp.sources.springer.asyncio.to_thread") as mock_thread:
+
             async def fake_to_thread(fn, *args, **kwargs):
                 raise RuntimeError("API error")
 
@@ -1886,6 +1902,7 @@ class TestSpringerSource:
         captured_params = {}
 
         with patch("researcher_mcp.sources.springer.asyncio.to_thread") as mock_thread:
+
             async def fake_to_thread(fn, *args, **kwargs):
                 return fn()
 
@@ -1920,6 +1937,7 @@ class TestSpringerSource:
         spring_record = self._make_springer_record()
 
         with patch("researcher_mcp.sources.springer.asyncio.to_thread") as mock_thread:
+
             async def fake_to_thread(fn, *args, **kwargs):
                 return fn()
 
@@ -1944,6 +1962,7 @@ class TestSpringerSource:
         src = SpringerSource(api_key="test-key")
 
         with patch("researcher_mcp.sources.springer.asyncio.to_thread") as mock_thread:
+
             async def fake_to_thread(fn, *args, **kwargs):
                 return fn()
 
@@ -2047,6 +2066,7 @@ class TestScienceDirectSource:
         item = self._make_sd_item()
 
         with patch("researcher_mcp.sources.science_direct.asyncio.to_thread") as mock_thread:
+
             async def fake_to_thread(fn, *args, **kwargs):
                 return fn()
 
@@ -2077,6 +2097,7 @@ class TestScienceDirectSource:
         captured_queries = []
 
         with patch("researcher_mcp.sources.science_direct.asyncio.to_thread") as mock_thread:
+
             async def fake_to_thread(fn, *args, **kwargs):
                 return fn()
 
@@ -2094,13 +2115,9 @@ class TestScienceDirectSource:
                     m.results = []
                     return m
 
-                sys.modules[
-                    "pybliometrics.sciencedirect"
-                ].ScienceDirectSearch = capture_search
+                sys.modules["pybliometrics.sciencedirect"].ScienceDirectSearch = capture_search
                 with patch("researcher_mcp.sources.science_direct._configure_pybliometrics"):
-                    await src.search(
-                        "test", open_access_only=True, year_from=2020, year_to=2023
-                    )
+                    await src.search("test", open_access_only=True, year_from=2020, year_to=2023)
 
         assert len(captured_queries) == 1
         q = captured_queries[0]
@@ -2122,6 +2139,7 @@ class TestScienceDirectSource:
         mock_article.authors = []
 
         with patch("researcher_mcp.sources.science_direct.asyncio.to_thread") as mock_thread:
+
             async def fake_to_thread(fn, *args, **kwargs):
                 return fn()
 
@@ -2149,6 +2167,7 @@ class TestScienceDirectSource:
         src = ScienceDirectSource(api_key="test-key")
 
         with patch("researcher_mcp.sources.science_direct.asyncio.to_thread") as mock_thread:
+
             async def fake_to_thread(fn, *args, **kwargs):
                 return fn()
 
@@ -2268,6 +2287,7 @@ class TestGoogleScholarSource:
         pub = self._make_scholarly_pub()
 
         with patch("researcher_mcp.sources.google_scholar.asyncio.to_thread") as mock_thread:
+
             async def fake_to_thread(fn, *args, **kwargs):
                 return [pub]
 
@@ -2285,6 +2305,7 @@ class TestGoogleScholarSource:
         pub_no_title = {"bib": {}, "pub_url": None, "scholar_id": None}
 
         with patch("researcher_mcp.sources.google_scholar.asyncio.to_thread") as mock_thread:
+
             async def fake_to_thread(fn, *args, **kwargs):
                 return [pub_no_title]
 
@@ -2300,6 +2321,7 @@ class TestGoogleScholarSource:
         src = GoogleScholarSource()
 
         with patch("researcher_mcp.sources.google_scholar.asyncio.to_thread") as mock_thread:
+
             async def fake_to_thread(fn, *args, **kwargs):
                 raise RuntimeError("captcha")
 
@@ -2313,7 +2335,6 @@ class TestGoogleScholarSource:
         from researcher_mcp.sources.google_scholar import GoogleScholarSource
 
         src = GoogleScholarSource()
-        captured_args = {}
 
         def fake_scholarly_mod():
             mod = MagicMock()
@@ -2321,6 +2342,7 @@ class TestGoogleScholarSource:
             return mod
 
         with patch("researcher_mcp.sources.google_scholar.asyncio.to_thread") as mock_thread:
+
             async def fake_to_thread(fn, *args, **kwargs):
                 return fn()
 
@@ -2331,7 +2353,7 @@ class TestGoogleScholarSource:
                 mock_scholarly.scholarly.search_pubs = MagicMock(return_value=iter([]))
                 mock_gs.return_value = mock_scholarly
 
-                result = await src.search("test", year_from=2020, year_to=2023)
+                await src.search("test", year_from=2020, year_to=2023)
 
             called_query = mock_scholarly.scholarly.search_pubs.call_args[0][0]
             assert "after:2019" in called_query
@@ -2345,6 +2367,7 @@ class TestGoogleScholarSource:
         pub = self._make_scholarly_pub()
 
         with patch("researcher_mcp.sources.google_scholar.asyncio.to_thread") as mock_thread:
+
             async def fake_to_thread(fn, *args, **kwargs):
                 return pub
 
@@ -2361,6 +2384,7 @@ class TestGoogleScholarSource:
         src = GoogleScholarSource()
 
         with patch("researcher_mcp.sources.google_scholar.asyncio.to_thread") as mock_thread:
+
             async def fake_to_thread(fn, *args, **kwargs):
                 return None
 
@@ -2376,6 +2400,7 @@ class TestGoogleScholarSource:
         src = GoogleScholarSource()
 
         with patch("researcher_mcp.sources.google_scholar.asyncio.to_thread") as mock_thread:
+
             async def fake_to_thread(fn, *args, **kwargs):
                 raise Exception("captcha block")
 
@@ -2407,6 +2432,7 @@ class TestUnpaywallSourceAdditional:
             patch.dict("sys.modules", {"unpywall": mock_unpywall}),
             patch("researcher_mcp.sources.unpaywall.asyncio.to_thread") as mock_thread,
         ):
+
             async def fake_to_thread(fn, *args, **kwargs):
                 return fn()
 
@@ -2443,6 +2469,7 @@ class TestUnpaywallSourceAdditional:
         src = UnpaywallSource(client)
 
         with patch("researcher_mcp.sources.unpaywall.with_retry") as mock_retry:
+
             async def fake_retry(fn):
                 return await fn()
 
@@ -2459,10 +2486,9 @@ class TestUnpaywallSourceAdditional:
         src = UnpaywallSource(client)
 
         with patch("researcher_mcp.sources.unpaywall.with_retry") as mock_retry:
+
             async def fake_retry(fn):
-                raise httpx.HTTPStatusError(
-                    "403", request=MagicMock(), response=MagicMock()
-                )
+                raise httpx.HTTPStatusError("403", request=MagicMock(), response=MagicMock())
 
             mock_retry.side_effect = fake_retry
             result = await src.fetch_pdf_bytes("https://example.com/forbidden.pdf")
@@ -2477,7 +2503,9 @@ class TestUnpaywallSourceAdditional:
         src = UnpaywallSource(client, email="test@example.com")
 
         with (
-            patch.object(src, "get_pdf_link", new=AsyncMock(return_value="https://example.com/paper.pdf")),
+            patch.object(
+                src, "get_pdf_link", new=AsyncMock(return_value="https://example.com/paper.pdf")
+            ),
             patch.object(src, "fetch_pdf_bytes", new=AsyncMock(return_value=None)),
         ):
             result = await src.fetch_pdf("10.1234/test")

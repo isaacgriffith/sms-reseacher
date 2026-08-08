@@ -42,7 +42,10 @@ class TestFetchPaperPdfTool:
         }
         with (
             patch("researcher_mcp.tools.pdf.get_settings", return_value=mock_settings),
-            patch("researcher_mcp.tools.pdf._try_unpaywall", new=AsyncMock(return_value=unpaywall_result)),
+            patch(
+                "researcher_mcp.tools.pdf._try_unpaywall",
+                new=AsyncMock(return_value=unpaywall_result),
+            ),
         ):
             result = await fetch_paper_pdf(doi="10.1234/test")
             assert result["available"] is True
@@ -54,7 +57,12 @@ class TestFetchPaperPdfTool:
         """When Unpaywall finds no OA copy, direct URL is tried."""
         from researcher_mcp.tools.pdf import fetch_paper_pdf
 
-        unpaywall_miss = {"available": False, "source": "unavailable", "pdf_bytes_b64": None, "open_access_url": None}
+        unpaywall_miss = {
+            "available": False,
+            "source": "unavailable",
+            "pdf_bytes_b64": None,
+            "open_access_url": None,
+        }
         direct_hit = {
             "available": True,
             "source": "direct",
@@ -63,7 +71,10 @@ class TestFetchPaperPdfTool:
         }
         with (
             patch("researcher_mcp.tools.pdf.get_settings", return_value=mock_settings),
-            patch("researcher_mcp.tools.pdf._try_unpaywall", new=AsyncMock(return_value=unpaywall_miss)),
+            patch(
+                "researcher_mcp.tools.pdf._try_unpaywall",
+                new=AsyncMock(return_value=unpaywall_miss),
+            ),
             patch("researcher_mcp.tools.pdf._try_direct", new=AsyncMock(return_value=direct_hit)),
         ):
             result = await fetch_paper_pdf(doi="10.1234/test", url="https://example.com/paper.pdf")
@@ -75,7 +86,12 @@ class TestFetchPaperPdfTool:
         """When SCIHUB_ENABLED=False, allow_scihub=True request returns available=False."""
         from researcher_mcp.tools.pdf import fetch_paper_pdf
 
-        miss = {"available": False, "source": "unavailable", "pdf_bytes_b64": None, "open_access_url": None}
+        miss = {
+            "available": False,
+            "source": "unavailable",
+            "pdf_bytes_b64": None,
+            "open_access_url": None,
+        }
         with (
             patch("researcher_mcp.tools.pdf.get_settings", return_value=mock_settings),
             patch("researcher_mcp.tools.pdf._try_unpaywall", new=AsyncMock(return_value=miss)),
@@ -91,7 +107,12 @@ class TestFetchPaperPdfTool:
         mock_settings.scihub_enabled = True
         from researcher_mcp.tools.pdf import fetch_paper_pdf
 
-        miss = {"available": False, "source": "unavailable", "pdf_bytes_b64": None, "open_access_url": None}
+        miss = {
+            "available": False,
+            "source": "unavailable",
+            "pdf_bytes_b64": None,
+            "open_access_url": None,
+        }
         scihub_hit = {
             "available": True,
             "source": "scihub",
@@ -113,7 +134,12 @@ class TestFetchPaperPdfTool:
         """When all sources fail, result is available=False, source='unavailable'."""
         from researcher_mcp.tools.pdf import fetch_paper_pdf
 
-        miss = {"available": False, "source": "unavailable", "pdf_bytes_b64": None, "open_access_url": None}
+        miss = {
+            "available": False,
+            "source": "unavailable",
+            "pdf_bytes_b64": None,
+            "open_access_url": None,
+        }
         with (
             patch("researcher_mcp.tools.pdf.get_settings", return_value=mock_settings),
             patch("researcher_mcp.tools.pdf._try_unpaywall", new=AsyncMock(return_value=miss)),
@@ -125,13 +151,27 @@ class TestFetchPaperPdfTool:
             assert result["pdf_bytes_b64"] is None
 
     @pytest.mark.asyncio
-    async def test_allow_scihub_false_prevents_scihub_even_when_enabled(self, mock_settings) -> None:
+    async def test_allow_scihub_false_prevents_scihub_even_when_enabled(
+        self, mock_settings
+    ) -> None:
         """allow_scihub=False (default) never calls SciHub even if server has it enabled."""
         mock_settings.scihub_enabled = True
         from researcher_mcp.tools.pdf import fetch_paper_pdf
 
-        miss = {"available": False, "source": "unavailable", "pdf_bytes_b64": None, "open_access_url": None}
-        scihub_mock = AsyncMock(return_value={"available": True, "source": "scihub", "pdf_bytes_b64": "x", "open_access_url": None})
+        miss = {
+            "available": False,
+            "source": "unavailable",
+            "pdf_bytes_b64": None,
+            "open_access_url": None,
+        }
+        scihub_mock = AsyncMock(
+            return_value={
+                "available": True,
+                "source": "scihub",
+                "pdf_bytes_b64": "x",
+                "open_access_url": None,
+            }
+        )
         with (
             patch("researcher_mcp.tools.pdf.get_settings", return_value=mock_settings),
             patch("researcher_mcp.tools.pdf._try_unpaywall", new=AsyncMock(return_value=miss)),
@@ -146,15 +186,23 @@ class TestFetchPaperPdfTool:
     async def test_scihub_mcp_error_caught_returns_unavailable(self, mock_settings) -> None:
         """MCPError from SciHub is caught and returns unavailable result."""
         mock_settings.scihub_enabled = True
-        from researcher_mcp.tools.pdf import fetch_paper_pdf
         from researcher_mcp.sources.scihub import MCPError
+        from researcher_mcp.tools.pdf import fetch_paper_pdf
 
-        miss = {"available": False, "source": "unavailable", "pdf_bytes_b64": None, "open_access_url": None}
+        miss = {
+            "available": False,
+            "source": "unavailable",
+            "pdf_bytes_b64": None,
+            "open_access_url": None,
+        }
         with (
             patch("researcher_mcp.tools.pdf.get_settings", return_value=mock_settings),
             patch("researcher_mcp.tools.pdf._try_unpaywall", new=AsyncMock(return_value=miss)),
             patch("researcher_mcp.tools.pdf._try_direct", new=AsyncMock(return_value=miss)),
-            patch("researcher_mcp.tools.pdf._try_scihub", new=AsyncMock(side_effect=MCPError("SCIHUB_DISABLED"))),
+            patch(
+                "researcher_mcp.tools.pdf._try_scihub",
+                new=AsyncMock(side_effect=MCPError("SCIHUB_DISABLED")),
+            ),
         ):
             result = await fetch_paper_pdf(doi="10.1234/test", allow_scihub=True)
             assert result["available"] is False
@@ -167,7 +215,8 @@ class TestTryDirectHelper:
     async def test_try_direct_success(self) -> None:
         """_try_direct returns available=True on successful download."""
         import base64
-        from unittest.mock import patch, MagicMock, AsyncMock
+        from unittest.mock import AsyncMock, MagicMock, patch
+
         import httpx
 
         pdf_content = b"%PDF-1.4 direct"
@@ -191,7 +240,8 @@ class TestTryDirectHelper:
     @pytest.mark.asyncio
     async def test_try_direct_http_error_returns_unavailable(self) -> None:
         """_try_direct returns unavailable on HTTP error."""
-        from unittest.mock import patch, MagicMock, AsyncMock
+        from unittest.mock import AsyncMock, MagicMock, patch
+
         import httpx
 
         mock_client = MagicMock(spec=httpx.AsyncClient)
@@ -209,7 +259,8 @@ class TestTryDirectHelper:
     @pytest.mark.asyncio
     async def test_try_direct_transport_error_returns_unavailable(self) -> None:
         """_try_direct returns unavailable on TransportError."""
-        from unittest.mock import patch, MagicMock, AsyncMock
+        from unittest.mock import AsyncMock, MagicMock, patch
+
         import httpx
 
         mock_client = MagicMock(spec=httpx.AsyncClient)
@@ -225,7 +276,7 @@ class TestTryDirectHelper:
     @pytest.mark.asyncio
     async def test_try_unpaywall_delegates_to_source(self) -> None:
         """_try_unpaywall creates UnpaywallSource and calls fetch_pdf."""
-        from unittest.mock import patch, MagicMock, AsyncMock
+        from unittest.mock import AsyncMock, MagicMock, patch
 
         fetch_result = {
             "available": True,
@@ -250,7 +301,7 @@ class TestTryDirectHelper:
     @pytest.mark.asyncio
     async def test_try_scihub_delegates_to_source(self) -> None:
         """_try_scihub creates SciHubSource and calls fetch_pdf."""
-        from unittest.mock import patch, AsyncMock
+        from unittest.mock import AsyncMock, patch
 
         scihub_result = {
             "available": True,

@@ -2,8 +2,6 @@
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import pytest
-
 from agents.core.config import AgentSettings
 from agents.core.llm_client import LLMClient
 
@@ -54,7 +52,9 @@ class TestComplete:
         mock_response.choices = [MagicMock()]
         mock_response.choices[0].message.content = "Decision: include\nReason: Relevant."
 
-        with patch("agents.core.llm_client.litellm.acompletion", new=AsyncMock(return_value=mock_response)) as mock_call:
+        with patch(
+            "agents.core.llm_client.litellm.acompletion", new=AsyncMock(return_value=mock_response)
+        ) as mock_call:
             client = LLMClient(settings=make_settings("anthropic", "claude-sonnet-4-6"))
             result = await client.complete([{"role": "user", "content": "Hello"}])
 
@@ -71,7 +71,9 @@ class TestComplete:
 
         tools = [{"type": "function", "function": {"name": "search_papers"}}]
 
-        with patch("agents.core.llm_client.litellm.acompletion", new=AsyncMock(return_value=mock_response)) as mock_call:
+        with patch(
+            "agents.core.llm_client.litellm.acompletion", new=AsyncMock(return_value=mock_response)
+        ) as mock_call:
             client = LLMClient(settings=make_settings())
             await client.complete([{"role": "user", "content": "search"}], tools=tools)
 
@@ -84,7 +86,9 @@ class TestComplete:
         mock_response.choices = [MagicMock()]
         mock_response.choices[0].message.content = "ok"
 
-        with patch("agents.core.llm_client.litellm.acompletion", new=AsyncMock(return_value=mock_response)) as mock_call:
+        with patch(
+            "agents.core.llm_client.litellm.acompletion", new=AsyncMock(return_value=mock_response)
+        ) as mock_call:
             client = LLMClient(settings=make_settings("ollama", "llama3.2:3b"))
             await client.complete([{"role": "user", "content": "ping"}])
 
@@ -98,6 +102,7 @@ class TestComplete:
 
 
 from dataclasses import dataclass  # noqa: E402
+
 from agents.core.provider_config import ProviderConfig  # noqa: E402
 
 
@@ -145,7 +150,9 @@ class TestLLMClientWithProviderConfig:
 
         cfg = _StubConfig(model_string="anthropic/claude-opus-4-5", api_key="sk-test")
 
-        with patch("agents.core.llm_client.litellm.acompletion", new=AsyncMock(return_value=mock_response)) as mock_call:
+        with patch(
+            "agents.core.llm_client.litellm.acompletion", new=AsyncMock(return_value=mock_response)
+        ) as mock_call:
             client = LLMClient(settings=make_settings("anthropic", "claude-haiku"))
             await client.complete([{"role": "user", "content": "hi"}], provider_config=cfg)
 
@@ -160,7 +167,9 @@ class TestLLMClientWithProviderConfig:
 
         cfg = _StubConfig(model_string="openai/gpt-4", api_key="sk-from-db")
 
-        with patch("agents.core.llm_client.litellm.acompletion", new=AsyncMock(return_value=mock_response)) as mock_call:
+        with patch(
+            "agents.core.llm_client.litellm.acompletion", new=AsyncMock(return_value=mock_response)
+        ) as mock_call:
             client = LLMClient(settings=make_settings())
             await client.complete([{"role": "user", "content": "x"}], provider_config=cfg)
 
@@ -179,7 +188,9 @@ class TestLLMClientWithProviderConfig:
             api_key=None,
         )
 
-        with patch("agents.core.llm_client.litellm.acompletion", new=AsyncMock(return_value=mock_response)) as mock_call:
+        with patch(
+            "agents.core.llm_client.litellm.acompletion", new=AsyncMock(return_value=mock_response)
+        ) as mock_call:
             client = LLMClient(settings=make_settings())
             await client.complete([{"role": "user", "content": "x"}], provider_config=cfg)
 
@@ -192,7 +203,9 @@ class TestLLMClientWithProviderConfig:
         mock_response.choices = [MagicMock()]
         mock_response.choices[0].message.content = "ok"
 
-        with patch("agents.core.llm_client.litellm.acompletion", new=AsyncMock(return_value=mock_response)) as mock_call:
+        with patch(
+            "agents.core.llm_client.litellm.acompletion", new=AsyncMock(return_value=mock_response)
+        ) as mock_call:
             client = LLMClient(settings=make_settings("anthropic", "claude-haiku-test"))
             await client.complete([{"role": "user", "content": "x"}], provider_config=None)
 
@@ -207,7 +220,9 @@ class TestLLMClientWithProviderConfig:
 
         cfg = _StubConfig(model_string="ollama/llama3", api_key=None, api_base=None)
 
-        with patch("agents.core.llm_client.litellm.acompletion", new=AsyncMock(return_value=mock_response)) as mock_call:
+        with patch(
+            "agents.core.llm_client.litellm.acompletion", new=AsyncMock(return_value=mock_response)
+        ) as mock_call:
             client = LLMClient(settings=make_settings())
             await client.complete([{"role": "user", "content": "x"}], provider_config=cfg)
 

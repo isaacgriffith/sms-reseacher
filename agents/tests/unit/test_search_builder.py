@@ -23,14 +23,16 @@ def _make_mock_client(response_json: str) -> MagicMock:
     return client
 
 
-_VALID_RESPONSE = json.dumps({
-    "search_string": '(TDD OR "test-driven") AND ("code quality" OR defect)',
-    "terms_used": [
-        {"component": "intervention", "terms": ["TDD", "test-driven development"]},
-        {"component": "outcome", "terms": ["code quality", "defect rate"]},
-    ],
-    "expansion_notes": "Synonyms expanded via MeSH and IEEE Thesaurus.",
-})
+_VALID_RESPONSE = json.dumps(
+    {
+        "search_string": '(TDD OR "test-driven") AND ("code quality" OR defect)',
+        "terms_used": [
+            {"component": "intervention", "terms": ["TDD", "test-driven development"]},
+            {"component": "outcome", "terms": ["code quality", "defect rate"]},
+        ],
+        "expansion_notes": "Synonyms expanded via MeSH and IEEE Thesaurus.",
+    }
+)
 
 
 class TestSearchStringBuilderAgentOutputShape:

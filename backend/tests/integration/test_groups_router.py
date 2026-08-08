@@ -18,6 +18,7 @@ def _bearer(user_id: int) -> dict[str, str]:
 
     Returns:
         A dict suitable for use as ``headers=`` in an httpx request.
+
     """
     return {"Authorization": f"Bearer {create_access_token(user_id=user_id)}"}
 
@@ -63,14 +64,10 @@ class TestCreateGroup:
     async def test_creator_appears_in_member_list(self, client, alice):
         """After creation, creator is listed as admin member."""
         user, _ = alice
-        create_resp = await client.post(
-            BASE, json={"name": "Beta Lab"}, headers=_bearer(user.id)
-        )
+        create_resp = await client.post(BASE, json={"name": "Beta Lab"}, headers=_bearer(user.id))
         group_id = create_resp.json()["id"]
 
-        members_resp = await client.get(
-            f"{BASE}/{group_id}/members", headers=_bearer(user.id)
-        )
+        members_resp = await client.get(f"{BASE}/{group_id}/members", headers=_bearer(user.id))
         assert members_resp.status_code == 200
         members = members_resp.json()
         assert len(members) == 1
@@ -178,9 +175,7 @@ class TestAddMember:
     async def test_invite_nonexistent_user_returns_404(self, client, alice):
         """Inviting an email with no matching User row → 404 Not Found."""
         user, _ = alice
-        create_resp = await client.post(
-            BASE, json={"name": "Ghost Lab"}, headers=_bearer(user.id)
-        )
+        create_resp = await client.post(BASE, json={"name": "Ghost Lab"}, headers=_bearer(user.id))
         group_id = create_resp.json()["id"]
 
         resp = await client.post(
@@ -243,9 +238,7 @@ class TestRemoveMember:
     async def test_remove_last_admin_returns_409(self, client, alice):
         """Removing the only admin → 409 Conflict."""
         user, _ = alice
-        create_resp = await client.post(
-            BASE, json={"name": "Solo Lab"}, headers=_bearer(user.id)
-        )
+        create_resp = await client.post(BASE, json={"name": "Solo Lab"}, headers=_bearer(user.id))
         group_id = create_resp.json()["id"]
 
         resp = await client.delete(

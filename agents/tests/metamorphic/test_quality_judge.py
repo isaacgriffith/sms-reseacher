@@ -42,26 +42,33 @@ _RUBRIC_NAMES = [
     "study_validity",
 ]
 
-_STUB_RESPONSE_LOW = json.dumps({
-    "scores": {r: 0 for r in _RUBRIC_NAMES},
-    "rubric_details": {
-        r: {"score": 0, "justification": "Stub low justification."}
-        for r in _RUBRIC_NAMES
-    },
-    "recommendations": [
-        {"target_rubric": "need_for_review", "action": "Add review rationale.", "priority": 1}
-    ],
-})
+_STUB_RESPONSE_LOW = json.dumps(
+    {
+        "scores": dict.fromkeys(_RUBRIC_NAMES, 0),
+        "rubric_details": {
+            r: {"score": 0, "justification": "Stub low justification."} for r in _RUBRIC_NAMES
+        },
+        "recommendations": [
+            {"target_rubric": "need_for_review", "action": "Add review rationale.", "priority": 1}
+        ],
+    }
+)
 
-_STUB_RESPONSE_HIGH = json.dumps({
-    "scores": {"need_for_review": 2, "search_strategy": 2, "search_evaluation": 3,
-               "extraction_classification": 3, "study_validity": 1},
-    "rubric_details": {
-        r: {"score": 1, "justification": "Stub high justification."}
-        for r in _RUBRIC_NAMES
-    },
-    "recommendations": [],
-})
+_STUB_RESPONSE_HIGH = json.dumps(
+    {
+        "scores": {
+            "need_for_review": 2,
+            "search_strategy": 2,
+            "search_evaluation": 3,
+            "extraction_classification": 3,
+            "study_validity": 1,
+        },
+        "rubric_details": {
+            r: {"score": 1, "justification": "Stub high justification."} for r in _RUBRIC_NAMES
+        },
+        "recommendations": [],
+    }
+)
 
 
 def make_stub_agent(output: str = _STUB_RESPONSE_LOW) -> QualityJudgeAgent:
@@ -72,6 +79,7 @@ def make_stub_agent(output: str = _STUB_RESPONSE_LOW) -> QualityJudgeAgent:
 
     Returns:
         :class:`QualityJudgeAgent` with mocked LLM client.
+
     """
     stub_client = MagicMock(spec=LLMClient)
     stub_client.complete = AsyncMock(return_value=output)
@@ -86,6 +94,7 @@ def _total_score(result) -> int:
 
     Returns:
         Integer sum of all rubric scores.
+
     """
     return sum(result.scores.values())
 
@@ -106,12 +115,8 @@ class TestQualityJudgeMRQJ1ScoreMonotonicity:
         agent_low = make_stub_agent(_STUB_RESPONSE_LOW)
         agent_high = make_stub_agent(_STUB_RESPONSE_HIGH)
 
-        result_low = await agent_low.run(
-            study_id=1, extractions_done=False
-        )
-        result_high = await agent_high.run(
-            study_id=1, extractions_done=True
-        )
+        result_low = await agent_low.run(study_id=1, extractions_done=False)
+        result_high = await agent_high.run(study_id=1, extractions_done=True)
 
         assert _total_score(result_high) >= _total_score(result_low), (
             "MR-QJ1: completing extractions must not reduce total quality score. "
@@ -169,9 +174,7 @@ class TestQualityJudgeMRQJ2RubricIndependence:
         result = await agent.run(study_id=1)
 
         for rubric in _RUBRIC_NAMES:
-            assert rubric in result.scores, (
-                f"MR-QJ2: rubric '{rubric}' missing from scores"
-            )
+            assert rubric in result.scores, f"MR-QJ2: rubric '{rubric}' missing from scores"
             assert rubric in result.rubric_details, (
                 f"MR-QJ2: rubric '{rubric}' missing from rubric_details"
             )

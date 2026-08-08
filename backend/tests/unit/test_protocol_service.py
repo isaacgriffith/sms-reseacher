@@ -321,10 +321,13 @@ class TestValidateRequiredInputCoverage:
     def test_multiple_uncovered_inputs_listed(self) -> None:
         """All uncovered required inputs are listed together in the ProtocolGraphError."""
         nodes = [
-            {"task_id": "n1", "inputs": [
-                {"name": "x", "is_required": True},
-                {"name": "y", "is_required": True},
-            ]}
+            {
+                "task_id": "n1",
+                "inputs": [
+                    {"name": "x", "is_required": True},
+                    {"name": "y", "is_required": True},
+                ],
+            }
         ]
         with pytest.raises(ProtocolGraphError) as exc:
             validate_required_input_coverage(nodes, [])

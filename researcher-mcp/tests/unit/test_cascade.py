@@ -5,10 +5,9 @@ from __future__ import annotations
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import httpx
-import pytest
 
-from researcher_mcp.tools.search import search_papers
 from researcher_mcp.sources.base import PaperRecord
+from researcher_mcp.tools.search import search_papers
 
 
 class TestSearchCascade:

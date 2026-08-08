@@ -9,14 +9,14 @@ Covers:
 from __future__ import annotations
 
 import pytest
+from db.models import Paper
+from db.models.candidate import CandidatePaper, CandidatePaperStatus
+from db.models.search import SearchString
+from db.models.search_exec import SearchExecution, SearchExecutionStatus
+from db.models.users import GroupMembership, GroupRole, ResearchGroup
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from backend.core.auth import create_access_token
-from db.models import Paper
-from db.models.candidate import CandidatePaper, CandidatePaperStatus
-from db.models.search_exec import SearchExecution, SearchExecutionStatus
-from db.models.search import SearchString
-from db.models.users import GroupMembership, GroupRole, ResearchGroup
 
 
 def _bearer(user_id: int) -> dict[str, str]:
@@ -107,9 +107,7 @@ class TestListCandidatePapers:
         """No candidates → empty list."""
         user, _ = alice
         study_id = await _setup_study(client, db_engine, user)
-        resp = await client.get(
-            f"/api/v1/studies/{study_id}/papers", headers=_bearer(user.id)
-        )
+        resp = await client.get(f"/api/v1/studies/{study_id}/papers", headers=_bearer(user.id))
         assert resp.status_code == 200
         assert resp.json() == []
 
@@ -122,9 +120,7 @@ class TestListCandidatePapers:
         study_id = await _setup_study(client, db_engine, user)
         await _insert_candidate_paper(db_engine, study_id, title="My Test Paper", doi="10.1/test")
 
-        resp = await client.get(
-            f"/api/v1/studies/{study_id}/papers", headers=_bearer(user.id)
-        )
+        resp = await client.get(f"/api/v1/studies/{study_id}/papers", headers=_bearer(user.id))
         assert resp.status_code == 200
         items = resp.json()
         assert len(items) == 1
@@ -144,8 +140,11 @@ class TestListCandidatePapers:
             db_engine, study_id, title="Accepted", status=CandidatePaperStatus.ACCEPTED
         )
         await _insert_candidate_paper(
-            db_engine, study_id, title="Rejected", doi="10.1/rej",
-            status=CandidatePaperStatus.REJECTED
+            db_engine,
+            study_id,
+            title="Rejected",
+            doi="10.1/rej",
+            status=CandidatePaperStatus.REJECTED,
         )
 
         resp = await client.get(
@@ -165,7 +164,10 @@ class TestListCandidatePapers:
             db_engine, study_id, title="Paper A", status=CandidatePaperStatus.ACCEPTED
         )
         await _insert_candidate_paper(
-            db_engine, study_id, title="Paper B", doi="10.1/b",
+            db_engine,
+            study_id,
+            title="Paper B",
+            doi="10.1/b",
             status=CandidatePaperStatus.REJECTED,
         )
 
@@ -185,8 +187,11 @@ class TestListCandidatePapers:
             db_engine, study_id, title="Phase1 Paper", phase_tag="initial-search"
         )
         await _insert_candidate_paper(
-            db_engine, study_id, title="Snowball Paper", doi="10.1/snow",
-            phase_tag="backward-search-1"
+            db_engine,
+            study_id,
+            title="Snowball Paper",
+            doi="10.1/snow",
+            phase_tag="backward-search-1",
         )
 
         resp = await client.get(
@@ -200,13 +205,11 @@ class TestListCandidatePapers:
 
     @pytest.mark.asyncio
     async def test_pagination_with_offset_and_limit(self, client, alice, db_engine) -> None:
-        """offset and limit parameters control which records are returned."""
+        """Offset and limit parameters control which records are returned."""
         user, _ = alice
         study_id = await _setup_study(client, db_engine, user)
         for i in range(5):
-            await _insert_candidate_paper(
-                db_engine, study_id, title=f"Paper {i}", doi=f"10.1/p{i}"
-            )
+            await _insert_candidate_paper(db_engine, study_id, title=f"Paper {i}", doi=f"10.1/p{i}")
 
         resp = await client.get(
             f"/api/v1/studies/{study_id}/papers?offset=2&limit=2",

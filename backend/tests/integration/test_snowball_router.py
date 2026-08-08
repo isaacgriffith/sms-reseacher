@@ -67,7 +67,9 @@ async def _add_search_string(db_engine, study_id: int) -> int:
         return ss.id
 
 
-async def _add_accepted_candidate(db_engine, study_id: int, search_string_id: int, doi: str) -> None:
+async def _add_accepted_candidate(
+    db_engine, study_id: int, search_string_id: int, doi: str
+) -> None:
     """Insert an accepted CandidatePaper whose Paper carries *doi*."""
     maker = async_sessionmaker(db_engine, expire_on_commit=False)
     async with maker() as session:
