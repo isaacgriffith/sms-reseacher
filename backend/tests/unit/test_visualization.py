@@ -218,16 +218,52 @@ def test_build_classification_data_year() -> None:
     assert result.get("Unknown") == 1
 
 
-def test_build_classification_data_research_method() -> None:
-    """_build_classification_data aggregates research_method via venue_type."""
+def test_build_classification_data_research_method_yields_nothing() -> None:
+    """research_method produces no data, because no research-method field is extracted.
+
+    Regression test for G47. This function previously keyed ``research_method``
+    off ``venue_type``, so a chart titled "Papers by Research Method" rendered
+    journal/conference counts. Petersen's research-method facet is a different
+    thing entirely (industrial case study, controlled experiment, simulation),
+    and nothing in the platform extracts it. Returning venue data under that
+    name misrepresents the map, so the branch was removed.
+
+    Reinstating this chart requires a real ``research_method`` extraction field
+    first — see G47 in docs/feature-gaps.md.
+    """
     from backend.services.visualization import _build_classification_data
 
     extractions = [
         {"research_type": "eval", "venue_type": "journal", "venue_name": "J",
          "author_details": [], "keywords": []},
     ]
+
     result = _build_classification_data(extractions, "research_method")
-    assert result.get("journal") == 1
+
+    assert result == {}
+
+
+def test_research_method_is_not_a_copy_of_venue() -> None:
+    """The two chart types must not return identical data (G47).
+
+    The defect this guards against was invisible precisely because both charts
+    were well-formed; only comparing them reveals one was a copy of the other.
+    """
+    from backend.services.visualization import _build_classification_data
+
+    extractions = [
+        {"research_type": "eval", "venue_type": "journal", "venue_name": "TSE",
+         "author_details": [], "keywords": []},
+        {"research_type": "eval", "venue_type": "conference", "venue_name": "ICSE",
+         "author_details": [], "keywords": []},
+    ]
+
+    venue = _build_classification_data(extractions, "venue")
+    research_method = _build_classification_data(extractions, "research_method")
+
+    assert venue != research_method
+    assert venue  # venue genuinely has data
+    assert not research_method  # research_method honestly has none
 
 
 # ---------------------------------------------------------------------------

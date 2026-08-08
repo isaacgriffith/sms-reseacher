@@ -234,6 +234,7 @@ class TestExportReport:
             quality_assessment_results="QA results.",
             extracted_data="Extracted data.",
             synthesis_results="Synthesis results.",
+            inter_rater_agreement="Inter-rater agreement.",
             validity_discussion="Validity discussion.",
             recommendations="Recommendations.",
         )

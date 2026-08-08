@@ -92,7 +92,8 @@ def _build_classification_data(
             DataExtraction columns: ``research_type``, ``venue_type``,
             ``venue_name``, ``author_details``, ``keywords``).
         chart_type: One of ``venue``, ``author``, ``locale``, ``institution``,
-            ``year``, ``subtopic``, ``research_type``, ``research_method``.
+            ``year``, ``subtopic``, ``research_type``. Any other value — including
+            ``research_method``, see G47 — yields an empty mapping.
 
     Returns:
         A dict mapping category label → count, sorted descending by count.
@@ -109,9 +110,13 @@ def _build_classification_data(
             key = ext.get("research_type") or "unknown"
             counts[key] = counts.get(key, 0) + 1
 
-        elif chart_type == "research_method":
-            key = ext.get("venue_type") or "other"
-            counts[key] = counts.get(key, 0) + 1
+        # NOTE: there is deliberately no ``research_method`` branch. It once keyed
+        # off ``venue_type``, so a chart titled "Papers by Research Method"
+        # rendered journal/conference counts — a duplicate of the venue chart
+        # presented as a different facet (G47). Petersen's research-method facet
+        # means industrial case study / controlled experiment / simulation, and
+        # nothing in the platform extracts it. Reinstate this only once a real
+        # ``research_method`` extraction field exists.
 
         elif chart_type == "author":
             for author in ext.get("author_details") or []:
@@ -162,7 +167,6 @@ def generate_classification_charts(extractions: list[dict[str, Any]], chart_type
         "year": "Papers by Year",
         "subtopic": "Papers by Subtopic / Keyword",
         "research_type": "Papers by Research Type",
-        "research_method": "Papers by Research Method",
     }
     title = title_map.get(chart_type, chart_type.replace("_", " ").title())
     return generate_bar_chart(

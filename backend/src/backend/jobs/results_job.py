@@ -331,7 +331,11 @@ async def _generate_all_charts(
         generate_classification_charts,
     )
 
-    chart_types = list(ChartType)
+    # RESEARCH_METHOD is excluded: it has no extraction field behind it, and the
+    # generator previously filled it with venue data (G47). The enum member is
+    # retained so historical ClassificationScheme rows stay readable, but no new
+    # rows are produced until a real research-method field exists.
+    chart_types = [ct for ct in ChartType if ct is not ChartType.RESEARCH_METHOD]
     count = 0
 
     for chart_type in chart_types:

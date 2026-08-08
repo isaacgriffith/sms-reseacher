@@ -212,6 +212,85 @@ async def test_process_single_candidate_creates_pending_candidate_for_novel_pape
     assert added.phase_tag == "initial"
 
 
+async def test_process_single_candidate_persists_the_citation_intent():
+    """A snowballed reference's citation intent survives into the candidate row.
+
+    Regression test for G55. Semantic Scholar returns why a paper cites another
+    (methodology / background / result), the MCP snowball tool already requests
+    and maps that field, and the pipeline then dropped it on the floor. Wohlin's
+    backward-snowballing step 4 is to examine the reference's place in the citing
+    text — "the step that distinguishes the method from mechanical
+    reference-following" — so this is the one signal that makes snowball
+    screening more than title matching. See docs/methodology/06-search-and-selection.md.
+    """
+    from db.models import Paper
+
+    db = AsyncMock()
+    db.execute = AsyncMock(return_value=_scalar_result(None))
+    db.add = MagicMock()
+    db.flush = AsyncMock()
+
+    paper = Paper(title="Cited work", abstract="An abstract", doi="10.1/cited")
+
+    with (
+        patch(
+            "backend.jobs.screening_pipeline._upsert_paper",
+            new=AsyncMock(return_value=paper),
+        ),
+        patch(
+            "backend.services.dedup.check_duplicate",
+            new=AsyncMock(return_value=_dedup(is_duplicate=False)),
+        ),
+    ):
+        from backend.jobs.screening_pipeline import _process_single_candidate
+
+        await _process_single_candidate(
+            db,
+            {"doi": "10.1/cited", "title": "Cited work", "intent": "methodology"},
+            3,
+            9,
+            "snowball",
+        )
+
+    added = db.add.call_args[0][0]
+    assert added.citation_intent == "methodology"
+
+
+async def test_process_single_candidate_tolerates_absent_citation_intent():
+    """Database-search results carry no intent, and must not be rejected for it.
+
+    Only snowballed references have a citing context; a paper found by query has
+    no citation to examine, so the column stays null rather than being faked.
+    """
+    from db.models import Paper
+
+    db = AsyncMock()
+    db.execute = AsyncMock(return_value=_scalar_result(None))
+    db.add = MagicMock()
+    db.flush = AsyncMock()
+
+    paper = Paper(title="From search", abstract="An abstract", doi="10.1/search")
+
+    with (
+        patch(
+            "backend.jobs.screening_pipeline._upsert_paper",
+            new=AsyncMock(return_value=paper),
+        ),
+        patch(
+            "backend.services.dedup.check_duplicate",
+            new=AsyncMock(return_value=_dedup(is_duplicate=False)),
+        ),
+    ):
+        from backend.jobs.screening_pipeline import _process_single_candidate
+
+        await _process_single_candidate(
+            db, {"doi": "10.1/search", "title": "From search"}, 3, 9, "initial"
+        )
+
+    added = db.add.call_args[0][0]
+    assert added.citation_intent is None
+
+
 async def test_process_single_candidate_composes_the_paper_it_refers_to():
     """The new candidate carries the Paper itself, not just its id.
 

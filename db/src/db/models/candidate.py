@@ -70,6 +70,13 @@ class CandidatePaper(Base):
         nullable=True,
         index=True,
     )
+    # Why this reference was cited by the paper that led us to it —
+    # ``methodology`` / ``background`` / ``result`` / ``unknown``, as reported by
+    # Semantic Scholar. NULL for papers found by database search, which have no
+    # citing context to examine. Wohlin's backward-snowballing step 4 is to
+    # examine the reference's place in the citing text; without this column that
+    # step cannot happen (G55).
+    citation_intent: Mapped[str | None] = mapped_column(String(32), nullable=True)
     version_id: Mapped[int] = mapped_column(Integer, nullable=False, default=1, server_default="1")
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False

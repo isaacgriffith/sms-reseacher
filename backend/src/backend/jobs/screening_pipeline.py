@@ -146,6 +146,11 @@ async def _process_single_candidate(
         return None, True
     status = CandidatePaperStatus.DUPLICATE if dedup.is_duplicate else CandidatePaperStatus.PENDING
     kwargs = {"duplicate_of_id": dedup.candidate_id} if dedup.is_duplicate else {}
+    # Snowballed references carry why they were cited; database hits do not.
+    # Dropping this was G55 — the signal was fetched by the MCP tool and then
+    # discarded one layer later, so Wohlin's context-examination step could
+    # never run.
+    kwargs["citation_intent"] = paper_data.get("intent")
     # Assign the relationship, not the FK: the screening pass reads
     # `candidate.title` / `.abstract`, which delegate to the composed paper.
     # Setting `paper_id` alone would leave that unloaded, and a lazy load on a

@@ -10,12 +10,20 @@ from __future__ import annotations
 import csv
 import io
 import json
+from collections.abc import Sequence
 from datetime import UTC, datetime
+from typing import Any
 
 import structlog
 from db.models.candidate import CandidatePaper, CandidatePaperStatus
 from db.models.extraction import DataExtraction
-from db.models.slr import GreyLiteratureSource, ReviewProtocol, SynthesisResult, SynthesisStatus
+from db.models.slr import (
+    GreyLiteratureSource,
+    InterRaterAgreementRecord,
+    ReviewProtocol,
+    SynthesisResult,
+    SynthesisStatus,
+)
 from fastapi import HTTPException, status
 from pydantic import BaseModel
 from sqlalchemy import select
@@ -44,6 +52,7 @@ class SLRReport(BaseModel):
         quality_assessment_results: Summary of quality assessment.
         extracted_data: Summary of extracted data fields.
         synthesis_results: Summary of synthesis outputs.
+        inter_rater_agreement: Cohen's kappa per agreement round (SEGRESS 8/16a/18).
         validity_discussion: Threats to validity discussion.
         recommendations: Future research directions and recommendations.
 
@@ -60,6 +69,7 @@ class SLRReport(BaseModel):
     quality_assessment_results: str
     extracted_data: str
     synthesis_results: str
+    inter_rater_agreement: str
     validity_discussion: str
     recommendations: str
 
@@ -183,6 +193,22 @@ async def generate_report(study_id: int, db: AsyncSession) -> SLRReport:
     qa_results = _build_qa_results(synthesis)
     extracted_data_section = _build_extracted_data(extractions)
     synthesis_section = _build_synthesis_section(synthesis)
+    # SEGRESS items 8 / 16a / 18: the agreement statistic is required, and it was
+    # already being computed and stored — the report generator simply never read
+    # it (G53).
+    agreement_rows = (
+        (
+            await db.execute(
+                select(InterRaterAgreementRecord).where(
+                    InterRaterAgreementRecord.study_id == study_id
+                )
+            )
+        )
+        .scalars()
+        .all()
+    )
+    inter_rater_section = _build_inter_rater_agreement(agreement_rows)
+
     validity = _build_validity(protocol)
     recommendations = _build_recommendations(synthesis, rqs)
 
@@ -198,6 +224,7 @@ async def generate_report(study_id: int, db: AsyncSession) -> SLRReport:
         quality_assessment_results=qa_results,
         extracted_data=extracted_data_section,
         synthesis_results=synthesis_section,
+        inter_rater_agreement=inter_rater_section,
         validity_discussion=validity,
         recommendations=recommendations,
     )
@@ -483,6 +510,58 @@ def _build_synthesis_section(synthesis: SynthesisResult) -> str:
         n = len(synthesis.qualitative_themes)
         parts.append(f"{n} qualitative theme(s) identified.")
     return " ".join(parts)
+
+
+_PHASE_LABELS = {
+    "pre_discussion": "pre-discussion",
+    "post_discussion": "post-discussion",
+}
+
+
+def _build_inter_rater_agreement(records: Sequence[Any]) -> str:
+    """Summarise Cohen's kappa for every agreement round in the study.
+
+    SEGRESS requires both the method of assessing agreement (item 8) and the
+    resulting statistics (items 16a, 18); PRISMA leaves agreement implicit, which
+    is one of the SE-specific additions SEGRESS makes. See
+    docs/methodology/10-reporting-and-evaluation.md.
+
+    Both phases are reported deliberately. Quoting only the post-discussion
+    figure would overstate agreement, since discussion is expected to raise it —
+    the corpus requires the *initial* value for exactly that reason.
+
+    Args:
+        records: InterRaterAgreementRecord rows for the study, any order.
+
+    Returns:
+        A human-readable paragraph. Never empty: when no agreement was assessed
+        it says so, because an omitted section is indistinguishable from an
+        assessment that was run and then forgotten.
+
+    """
+    if not records:
+        return (
+            "No inter-rater agreement was assessed for this review. Where screening "
+            "was performed by a single reviewer, a test-retest of that reviewer's own "
+            "decisions is the applicable reliability check."
+        )
+
+    lines: list[str] = []
+    for record in records:
+        phase = _PHASE_LABELS.get(record.phase, str(record.phase).replace("_", "-"))
+        if record.kappa_value is None:
+            reason = record.kappa_undefined_reason or "no reason recorded"
+            lines.append(
+                f"Agreement ({phase}) over {record.n_papers} papers: kappa undefined — {reason}"
+            )
+        else:
+            met = "met" if record.threshold_met else "below"
+            lines.append(
+                f"Agreement ({phase}) over {record.n_papers} papers: "
+                f"Cohen's kappa = {record.kappa_value:.2f} ({met} threshold)"
+            )
+
+    return "Inter-rater agreement. " + " ".join(lines) + "."
 
 
 def _build_validity(protocol: ReviewProtocol | None) -> str:

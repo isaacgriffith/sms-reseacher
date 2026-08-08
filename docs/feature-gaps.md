@@ -25,6 +25,7 @@
 | 2026-08-07 | **G22–G23 added**, both found while fixing the screening pipeline (`d8f6dcf`, `1e01097`). Snowballing is a registered job with no enqueue site, and admin job retry enqueues function names that are not registered, with arguments matching no job's signature — while reporting `200`. Neither is visible to the reachability oracles, which model imports rather than HTTP routes; see [Neither oracle sees a backend route](#neither-oracle-sees-a-backend-route) |
 | 2026-08-07 | **G22 resolved.** `POST /studies/{id}/snowball` plus a `SnowballControls` mount, with seeds defaulting to the study's accepted papers, a `409` naming any in-flight pass (FR-026), and a `422` rather than an empty run. 16 integration tests, 10 component tests. G23 remains open |
 | 2026-08-07 | **In-flight guard made bidirectional**, and **G24 added**: snowballing is DOI-keyed, so grey literature, reports, theses and older proceedings — the papers most likely to lack a DOI — are silently excluded from the walk. Both directions are recoverable, backward from stored full text and forward by resolving to a non-DOI identifier, but which citation index to prefer needs a research spike |
+| 2026-08-08 | **G65–G89 added, and G47/G53/G55 fixed.** A coverage audit enumerated **~700 normative requirements** across all 14 methodology chapters and classified each as CODE / GAP / UNCOVERED / N/A. Chapters **09, 12 and 13 came back with zero uncovered requirements** — the G35–G43 pass had mined them thoroughly. The uncovered material concentrates in **05, 06, 08 and 10**, the chapters furthest from the platform's original SMS scope. Highest-value findings: **ten of thirteen catalogued synthesis methods do not exist** (G65), **no effect measure is ever computed** (G66), **GRADE is absent though SEGRESS calls it essential** (G67), **no multi-extractor workflow for SLR or SMS** (G68, the general case of G63), and **grey literature is never archived** (G70) though a quarter of it is already dead. Three fixes landed with tests: the "Research Method" chart no longer renders venue data (G47), Cohen's κ now reaches the SLR report (G53), and snowball citation intent is persisted rather than discarded (G55, migration 0019) |
 | 2026-08-08 | **G45–G64 added — compliance audit against the methodology corpus.** Six parallel auditors checked each shipped feature against the research it claims to implement. The finding that reframes the catalogue: the severe defects are **not absences but misrepresentations** — a "Research Method" chart that renders venue data (**G47**), a validity section emitting three fixed threats regardless of study design (**G52**), quality rubrics carrying Petersen's names while scoring different constructs (**G46**), a research-type classifier testing novelty where the guideline tests setting (**G46**), a bespoke checklist auto-applied in DARE's slot (**G57**), and a search-string builder implementing the technique Kitchenham withdrew (**G45**). Structurally, **the protocol executor's quality gates gate nothing a user experiences** (**G49**, critical) — the four phase-gate services contain zero references to it — which makes most "enforce this as a gate" remediations elsewhere in this catalogue currently unbuildable. **G38** amended: its separated-scores point is an active contradiction, and its purpose-flag point needs a schema change |
 | 2026-08-08 | **G44 added.** `holst_transparent_2025` (PRISMA-trAIce) folded into the corpus as [14 — AI-assisted review reporting](./methodology/14-ai-assisted-review-reporting.md). AI decisions are already *attributable* here — `Reviewer.reviewer_type` plus `PaperDecision.reviewer_id` satisfy the AI-vs-human split most tools cannot retrofit — but not *reproducible*: the prompt behind a decision is lost once `Agent.system_message_template` is edited twice, sampling parameters are never persisted, and an override log cannot answer "what proportion of AI outputs were verified" because agreement leaves no row |
 | 2026-08-07 | **G35–G43 added from the methodology corpus.** Requirements the 54-paper research pass established that were not in this catalogue: protocol-as-preregistration with a validation snapshot; stopping rules and the *assessed vs never-assessed* distinction; escalatable reading depth and per-classification rationale; the quality-instrument shape (purpose flag, ordinal scales, separated scores); threat derivation from protocol configuration; GQM goal→question→field traceability; review-update as a workflow; terminology-variant search; and replication-package export with archival and licence discipline. Seven further requirements were folded into existing gaps rather than given IDs — see the table at the end of that section |
@@ -1986,6 +1987,561 @@ despite sitting furthest from the primary evidence.
 mirroring `QualitativeSynthesizer`.
 
 **Cost.** Low. **See [08](./methodology/08-extraction-and-synthesis.md).**
+
+---
+
+## G65–G89 — coverage audit: every normative requirement in the 14 chapters
+
+Added 2026-08-08. The G45–G64 pass asked whether the shipped features comply with the research. It
+did **not** establish coverage: absence of a finding in an area was weak evidence, because nobody had
+enumerated the requirements to check against. This pass closes that.
+
+**Method.** All 14 methodology chapters were read end to end and every normative requirement
+extracted and numbered — process steps, `⚠ CAVEAT` / `⚠ CORRECTION` / `◐ DISPUTED` blocks,
+`⚙ IMPLEMENTATION` notes, table rows stating a rule or threshold, and required orderings. Each was
+then classified **CODE** (implemented, with a `file:line` citation), **GAP** (already in this
+catalogue, with the ID), **UNCOVERED**, or **N/A** (a requirement about human conduct that no
+software can enforce — "involve senior researchers in interpretation" and similar).
+
+### Coverage
+
+| Chapter | Requirements | CODE | GAP | UNCOVERED | N/A |
+| ------- | -----------: | ---: | --: | --------: | --: |
+| 01 SLR | 73 | 25 | 24 | 12 | 12 |
+| 02 SMS | 51 | 12 | 20 | 10 | 9 |
+| 03 Rapid Review | 37 | 16 | 8 | 10 | 3 |
+| 04 Tertiary | 34 | 1 | 16 | 13 | 4 |
+| 05 Grey literature | 66 | 1 | 34 | 25 | 6 |
+| 06 Search & selection | 78 | 16 | 28 | 25 | 9 |
+| 07 Quality assessment | 33 | 12 | 14 | 7 | 12 |
+| 08 Extraction & synthesis | 75 | 11 | 30 | 22 | 15 |
+| 09 Threats to validity | 47 | 3 | 32 | **0** | 12 |
+| 10 Reporting | 50 | 3 | 25 | 17 | 5 |
+| 11 Caveats register | 112 | 9 | 55 | 9 | 39 |
+| 12 Platform implications | 22 | 0 | 20 | **0** | 2 |
+| 13 Open science | 7 | 0 | 7 | **0** | 0 |
+| 14 AI-assisted reporting | 17 | 2 | 6 | 8 | 1 |
+| **Total** | **~700** | **~111** | **~319** | **~158** | **~129** |
+
+Three chapters — **09, 12 and 13** — come back with **zero uncovered requirements**. That is the
+G35–G43 pass showing its work: it mined those chapters thoroughly, and this audit confirms it.
+
+The uncovered material concentrates in **05, 06, 08 and 10** — grey literature, search, synthesis and
+reporting. Those are the chapters furthest from the platform's original SMS scope.
+
+> **⚠ Provenance and confidence.** The enumeration was produced by six parallel auditors, one slice
+> each. Every finding carries the auditor's own confidence rating, and low-confidence items are marked
+> below. **A sample of the load-bearing claims was verified directly against the tree; the rest were
+> not.** Treat a `Current.` statement here as a strong lead, not a settled fact — check before
+> building. The G45–G64 entries above were verified individually and are firmer.
+
+> **⚠ Read this before triaging.** These are **absences**, not the misrepresentations that dominate
+> G45–G64. An absent capability is visible to its user and degrades gracefully; a wrong one does not.
+> **Triage G45–G64 first**, then the high-severity entries here.
+
+---
+
+### G65 — Ten of the thirteen catalogued synthesis methods do not exist (F2-SF06) — **high**
+
+**Required.** [08](./methodology/08-extraction-and-synthesis.md) catalogues thirteen synthesis
+methods, each with stated applicability conditions, chosen by research question and primary-study
+design rather than by study type.
+
+**Current.** Five strategy classes exist in `backend/src/backend/services/synthesis_strategies.py`:
+meta-analysis, descriptive, qualitative, narrative and (nominally) thematic. **Meta-ethnography,
+grounded theory, cross-case analysis, content analysis, case survey, qualitative comparative
+analysis, aggregated synthesis, realist synthesis, qualitative metasynthesis and meta-study have no
+implementation at all.**
+
+**Why it matters.** G8 scopes itself to metasummary and thematic synthesis; the other ten have
+mechanics it does not address — QCA's Boolean truth table, case survey's structured closed-ended
+extraction, realist synthesis's context-mechanism-outcome configurations. This is the largest single
+block of unimplemented named capability in the audit, and it underlies the corpus's central finding
+that claimed methods are rarely performed.
+
+**Cost.** High. Sequence by demand; content analysis and cross-case analysis are the cheapest.
+
+---
+
+### G66 — No effect measure is ever computed (F2-SF06) — **high**
+
+**Required.** Binary outcomes need odds, risk, odds ratio, relative risk and absolute risk reduction;
+continuous outcomes need mean difference, weighted mean difference and standardised mean difference,
+with the stated trade-offs between them ([08](./methodology/08-extraction-and-synthesis.md)).
+
+**Current.** Grep for `odds_ratio`, `risk_ratio`, `standardized_mean_difference`,
+`weighted_mean_difference`, `absolute_risk_reduction` across all five packages returns **nothing**.
+The synthesis strategies pool caller-supplied `effect_size`/`se` pairs generically, with no
+measure-type distinction.
+
+**Why it matters.** Distinct from **G58**, which is about the *provenance* of already-computed
+numbers. This is that the platform cannot compute any standard effect measure from raw study data —
+a user must pre-compute one by hand and enter a bare, untyped "effect size". Two studies reporting
+an odds ratio and a mean difference would pool indistinguishably. Caveat **G6** (SMD validity) cannot
+even be checked.
+
+**Cost.** Medium — the formulas are standard and `scipy`/`numpy` are already dependencies.
+
+---
+
+### G67 — GRADE and GRADE-CERQual are absent, and SEGRESS calls them essential (F2-SF10) — **high**
+
+**Required.** SEGRESS items 15 and 22 name **GRADE** for certainty in the body of evidence — four
+levels across five domains — and **GRADE-CERQual** for qualitative reviews, cross-referencing
+Cochrane's risk-of-bias domains ([10](./methodology/10-reporting-and-evaluation.md),
+[07](./methodology/07-quality-assessment.md)). The applicability table marks item 15 **essential**,
+not merely required, for quantitative, qualitative and mixed-methods reviews.
+
+**Current.** Grep for `GRADE`, `CERQual`, `certainty` across all five packages returns no
+implementation. **No entry in this catalogue mentioned it before now** — unlike DARE, PRISMA and the
+Petersen rubrics, it would have been missed entirely by anyone triaging from this file.
+
+**Why it matters.** It is the only instrument in the corpus scoring the *body of evidence* rather
+than individual studies or the review. Every other quality gap here (G10, G38, G54, G57) concerns
+per-study or per-review instruments.
+
+**Cost.** Medium.
+
+---
+
+### G68 — No multi-extractor workflow for SLR or SMS (F2-SF06) — **high**
+
+**Required.** Two or more researchers extract independently where feasible; compare; resolve by
+consensus or an independent arbitrator; **use a separate form to record and correct disagreements**.
+Where double extraction is unaffordable, a random sample is extracted by everyone
+([01](./methodology/01-slr.md), [02](./methodology/02-sms.md)).
+
+**Current.** `DataExtraction` carries a `UniqueConstraint` on `candidate_paper_id` — **one row per
+paper**. No second-extractor field, no disagreement table, no consensus record.
+
+**Why it matters.** **G63** documents exactly this defect for Tertiary studies. The identical
+structural absence in the base `DataExtraction` model, affecting the platform's two primary study
+types, was not in the catalogue. G6 is adjacent but concerns the unit of analysis, a different axis.
+
+**Cost.** High, structural — and it should be designed together with **G63** rather than twice.
+
+---
+
+### G69 — Snowball start-set composition is unmodelled, and it is the method's single point of failure (F2-SF03) — **high**
+
+**Required.** The start set should draw on different clusters and communities unlikely to cite each
+other, be large enough, span authors, years and publishers, derive keywords from the research
+questions, and use Google Scholar specifically to avoid publisher bias. Wohlin adds a **partitioning
+check**: partition the topic area from prior knowledge, plot which partitions the search reached, and
+have an independent researcher fill the empty ones ([06](./methodology/06-search-and-selection.md),
+[02](./methodology/02-sms.md)).
+
+**Current.** Snowballing walks from the study's already-accepted papers with a numeric stopping
+threshold. Grep for `partition` across `backend/src` and `db/src` returns nothing. No diversity check,
+no size guidance, no warning.
+
+**Why it matters.** Caveat **C3** names this **the single point of failure** of the method, and
+Badampudi's own study missed an entire category *because* the start set contained none of it. **G22**
+(resolved) wired the enqueue path and **G1** covers provenance rollback; neither touches what goes
+*into* the start set.
+
+**Cost.** Medium.
+
+---
+
+### G70 — Grey literature is never archived, and a quarter of it is already dead (F2-SF03) — **high**
+
+**Required.** A grey record needs, at minimum, **an archived copy or archive URL**, captured at
+retrieval time ([05](./methodology/05-grey-literature-mlr.md)). Kitchenham found 56% of dead links
+recoverable via the Wayback Machine — but only if you know to look, and only for a while.
+
+**Current.** Grep for `wayback`, `archive.org`, `archived_url`, `archive_url` across all packages
+returns **nothing**. **G28**'s remediation adds `accessed_at`, `site_name` and `post_author` but no
+archive column and no capture-time archiving.
+
+**Why it matters.** Kamei measured **23.7% of grey items already dead and 24.8% with no URL recorded
+at all**. Caveat **H9** requires stamping the access date; archiving is the mitigation that actually
+preserves the evidence. Every day this is missing, sources rot irrecoverably.
+
+**Cost.** Low — the Wayback Save API is a single POST at ingest.
+
+---
+
+### G71 — Piloting is unsupported at every stage that requires it (F2-SF01, F2-SF06) — **high**
+
+**Required.** Four distinct piloting obligations, all stated as essential:
+- **The protocol** — "piloting is essential; it finds mistakes in collection and aggregation"
+  (caveat **B5**)
+- **The extraction form** — "defined and piloted **when the protocol is defined**"
+  ([01](./methodology/01-slr.md), [08](./methodology/08-extraction-and-synthesis.md))
+- **The quality instrument** — assessed for reliability and usability during protocol piloting before
+  full application ([07](./methodology/07-quality-assessment.md))
+- **The selection criteria** — Ali & Petersen steps 3 and 4: a think-aloud application to one study to
+  align understanding, then a pilot on a subset, each able to revise the criteria *before* screening
+  begins ([06](./methodology/06-search-and-selection.md), [02](./methodology/02-sms.md))
+
+**Current.** None exists. Grep for `pilot`, `calibrat` near the extraction, quality and screening code
+returns nothing. The platform's only "think-aloud" feature (`DiscussionFlowPanel.tsx`) resolves
+disagreements *after* decisions are made — process step 5, not the pre-screening calibration step 3.
+**G13** pilots search strings, a different artefact.
+
+**Why it matters.** Piloting is the corpus's standard answer to instrument error, and it is absent
+across four instruments. The think-aloud confusion is worth noting on its own: the platform has a
+feature by that name doing something else, which would make a reader believe the requirement is met.
+
+**Cost.** Medium. One "pilot run" concept could serve all four.
+
+---
+
+### G72 — The practitioner-content credibility apparatus is entirely absent (F2-SF03) — **medium**
+
+**Required.** [05](./methodology/05-grey-literature-mlr.md) describes an apparatus specific to
+blog-like sources that it calls more developed than Garousi's generic instrument: a **10-feature
+definition** of a blog-like document; Williams & Rainer's 11 criteria narrowed to 4 operational ones
+and 9 empirically ranked (n = 43); Wohlin's five criteria; Fenton/Pfleeger/Glass's five claim
+questions; the **86 reasoning markers** usable directly as search keywords; the split between
+keyword-implementable and post-retrieval-assessable criteria; Rainer's six-component **evidential
+test**; and the six objects of credibility assessment.
+
+**Current.** Grep for `reasoning.marker`, `evidential`, `witness competence`, `rainer` across all five
+packages returns **nothing**. **G54** covers only Garousi's 20-item checklist.
+
+**Why it matters.** The reasoning-marker technique is unusual in being implementable as *search*, not
+just appraisal — it changes what you retrieve, not only what you keep.
+
+**Cost.** Medium. Lower value than **G54**, which should land first.
+
+---
+
+### G73 — Grey literature is a flat enum where the research specifies two axes (F2-SF03) — **medium**
+
+**Required.** Position grey sources on **two independent axes — outlet control and source expertise**
+— as a per-project judgement, explicitly not a fixed taxonomy; extend the scheme inductively when a
+source type does not fit, as Wyrich did for podcasts
+([05](./methodology/05-grey-literature-mlr.md), Adams 2017).
+
+**Current.** `GreyLiteratureType` is a flat enum. Grep for `outlet control`, `source expertise`,
+`shades of grey` returns nothing.
+
+**Why it matters.** Distinct from **G54** (content-quality checklist) and **G28** (discovery). The
+tier a source occupies determines how much appraisal it needs — a flat enum cannot express that, and
+caveat **A3**-style rigidity is what the source warns against.
+
+**Cost.** Low-medium; a migration plus two scored columns.
+
+---
+
+### G74 — The extraction form omits two of the three required data kinds (F2-SF06) — **medium**
+
+**Required.** Extraction captures three kinds: publication details, **context descriptions** (subjects,
+technologies, industry, settings, instruments, study type) and **findings**, each carrying its origin
+and strength of evidence. Findings also live in **tables and figures** — "a relationship expressed
+only visually can be extracted and translated into text". Seven heuristic questions govern what counts
+as a finding ([08](./methodology/08-extraction-and-synthesis.md)).
+
+**Current.** `DataExtraction` has `venue_type`/`venue_name` but no subjects, technologies, industry,
+settings or instruments fields. No mechanism marks a finding as figure- or table-sourced. The
+extractor prompt carries none of the seven heuristics.
+
+**Why it matters.** Caveat **E4** names context as the hardest of the three to extract — and it has
+nowhere to go. **G58** covers quantitative fields only; **G6** covers the structural `Publication →
+Context → Finding` shape but not the missing content fields.
+
+**Cost.** Medium.
+
+---
+
+### G75 — The Evidence Briefing's prescribed structure is unenforced (F2-SF10) — **medium**
+
+**Required.** Cartaxo specifies the briefing's parts concretely: a **concise one-or-two-line title**; a
+summary following "reports scientific evidence on \<GOAL\>"; **one finding per paragraph** with no
+research-method detail; a right-side box stating the target audience and **what is and is not
+included**; and complementary material linking **at least the protocol and the primary-study
+reference list** ([03](./methodology/03-rapid-review.md)).
+
+**Current.** `EvidenceBriefing.title` is an unconstrained `String(500)`; `summary` is free text with
+no template; `target_audience` is a single field with no included/not-included structure;
+`reference_complementary` is optional free text rendered only when present, never auto-populated with
+the protocol link or reference list.
+
+**Why it matters.** The briefing is the Rapid Review's *only* deliverable, and its structure is the
+part practitioners actually read. Method-detail exclusion is enforced only in the AI drafting prompt,
+so a human editing the text can reintroduce it silently.
+
+**Cost.** Low.
+
+---
+
+### G76 — Tertiary extraction and analysis are missing their specified shape (F2-SF06) — **medium**
+
+**Required.** Kitchenham's tertiary studies extract **eight fields per included secondary study**:
+type, review focus, primary-study count, RQ/SERT/RT classification, quality score, year/source/type,
+EBSE self-positioning, and a practitioner-guideline flag with topic. Analysis is **descriptive
+aggregation** (per-year counts, medians of primary-study counts, means of quality score by source and
+guideline-citation status) plus **regression** of quality score against year, review type, guideline
+citation, EBSE citation and publication type ([04](./methodology/04-tertiary.md)).
+
+**Current.** `TertiaryDataExtraction` has `secondary_study_type`, `primary_study_count` and
+`research_questions_addressed`; it lacks review focus, the RQ/SERT/RT classification, the EBSE flag
+and the practitioner-guideline flag. Grep for `regression`, `statsmodels`, `sklearn.linear_model`
+across the services returns **nothing**.
+
+**Why it matters.** **G63** covers the extraction *protocol* (multi-rater consensus); this is the
+*field set* and the *analysis*, neither of which any gap named. Caveat **A7**-adjacent: without the
+guideline-citation flag, the "does citing guidelines predict quality" question cannot be asked — and
+caveat notes it must not be presented as settled either way.
+
+**Cost.** Medium.
+
+---
+
+### G77 — Nothing enforces a minimum source set (F2-SF03) — **medium**
+
+**Required.** Kitchenham 2013 and Petersen 2015 converge on **IEEE and ACM plus at least two general
+indexing systems** (Scopus, EI Compendex or Web of Science)
+([06](./methodology/06-search-and-selection.md), [01](./methodology/01-slr.md)). Caveat **C2**: no
+single source is sufficient, and Google Scholar contributed **zero unique papers** in Bailey's study.
+
+**Current.** Adapters exist for all the named databases, but grep finds no validation of a minimum
+combination anywhere in the search or admin code. A study configured against one database proceeds
+silently.
+
+**Why it matters.** **G3** covers *which adapters exist*; this is whether the *selection a user makes*
+is adequate. It is the cheapest available guard against the corpus's second headline finding.
+
+**Cost.** Low — a validation rule plus a warning at search configuration.
+
+---
+
+### G78 — The search record omits rationale, raw results and non-database efforts (F2-SF03) — **medium**
+
+**Required.** Beyond per-database dates (**G56**), the search record must carry: a **rationale** for
+the libraries, venues and electronic-versus-manual choices; **unpublished-work efforts** — groups and
+researchers contacted with details, sites searched with date and URL; an **"other" catch-all** with
+date, URL and specific conditions; and the search **documented as it occurs** with the **unfiltered
+result set retained for reanalysis** ([06](./methodology/06-search-and-selection.md),
+[01](./methodology/01-slr.md)).
+
+**Current.** `SearchExecution`/`SearchMetrics` store aggregate counts. `GreyLiteratureSource` has a
+`url` but no `date_searched` or conditions field. No rationale field exists anywhere. Whether the raw
+unfiltered result set is retained per database is **UNVERIFIED**.
+
+**Why it matters.** SEGRESS item 5 requires restrictions to be **specified and justified** — the
+justification half has no home for any study type. `SearchRestrictionItem` exists only for Rapid
+Review and carries no justification field.
+
+**Cost.** Medium.
+
+---
+
+### G79 — The generated report lacks SEGRESS's structural scaffolding (F2-SF10) — **medium**
+
+**Required.** Beyond the Abstract, typed Title and Opening in **G53**: a **one-line purpose statement
+per section**; the **Full Report** opening row (reference the protocol, use supplementary material,
+publish large model-building separately); the **13e↔13f and 20c↔20d reorderings** (sensitivity before
+heterogeneity); item 14 renamed "risk of bias due to publication bias"; **conditional registration
+items** 24a–c; **iteration of items 17–22 per subgroup or research question**; the mapping-study
+terminology renames ("Data Charting" → "Data Collection Process", "Synthesis of Results" → "Analysis
+of Study Characteristics"); a **conflict-of-interest declaration**; and **two output formats** — a full
+technical report and a length-limited paper that references it
+([10](./methodology/10-reporting-and-evaluation.md), [01](./methodology/01-slr.md)).
+
+**Current.** None present. `export_report` emits one shape per format (markdown/latex/json/csv), with
+no summary variant or cross-reference. Grep confirms neither mapping-study term pair appears anywhere.
+
+**Why it matters.** Caveats **H4** (do not duplicate the limitations discussion) and **H5** (full
+compliance inflates length) both have prescribed mitigations that nothing implements. Several of
+these are trivial string changes that a SEGRESS checker (**G10**) would otherwise flag forever.
+
+**Cost.** Low individually; medium in aggregate.
+
+---
+
+### G80 — Eight PRISMA-trAIce items have nowhere to go (F2-SF10) — **medium**
+
+**Required.** **G44** covers M5, M6, M8e, M8f, M9 and R2. The remaining items still bind: **T1**
+(title indicates substantial AI role), **A1** (abstract states tools, stages, role), **I1**
+(introduction states the rationale for using AI), **M1** (**whether AI use was pre-specified in the
+protocol**, and deviations from it), **M4** (what review data was fed to each tool), **M10** (data
+governance, privacy, and **copyright / terms-of-service compliance for third-party cloud tools**),
+**D1** (limitations of AI use and their effect on findings) and **D2** (implications)
+([14](./methodology/14-ai-assisted-review-reporting.md)).
+
+**Current.** No report model has an abstract, limitations or implications field; no protocol model has
+an AI-use section; nothing records the input passed to a tool at invocation time; and grep finds no
+occurrence of governance, terms-of-service or copyright handling anywhere in the catalogue or code.
+
+**Why it matters.** **M1 is the sharpest of these**: without it a review cannot show AI use was
+*planned* rather than improvised, which is precisely the pathology preregistration exists to prevent
+([13](./methodology/13-open-science.md)). **M4** breaks the reproducibility bundle even after G44's
+M6 fix lands.
+
+**Cost.** Medium.
+
+---
+
+### G81 — Method-slurring self-report and its checkable defects are absent (F2-SF06) — **medium**
+
+**Required.** A ~10-item reporting checklist — variant adopted, deviations, epistemological position,
+who collected and analysed, coding and memoing description, constant comparison, saturation,
+reliability check, bias reflection — plus **six mechanically checkable defects**: variant mixing,
+conflicting seminal-work citations, epistemology/citation mismatch, wrong phase-count summaries,
+theoretical sampling mislabelled as purposive, and classification-from-literature starts. Deviations
+from a method are **reportable, not shameful** ([08 Part 4b](./methodology/08-extraction-and-synthesis.md)).
+
+**Current.** None captured. **G8** addresses deriving a method *claim* from recorded steps; it does not
+capture these self-report answers, and the six defects are textual/citation-consistency checks over
+free-text prose that no gap addresses.
+
+**Cost.** Medium.
+
+---
+
+### G82 — SMS goal, sample representativeness and criteria caveats are unmodelled (F2-SF01) — **medium**
+
+**Required.** A mapping study should record **which of the four legitimate goals** it pursues; answer
+**three representativeness questions** (are the a priori sub-areas covered, are the expected forums
+represented, can year-count spikes be explained); and avoid **requirements on evaluation** in its
+selection criteria, so that recent unmatured work stays visible — caveat **D10**
+([02](./methodology/02-sms.md)).
+
+**Current.** `Study` carries free-text `topic`/`motivation` and a JSON blob; no enumerated goal field.
+No representativeness logic exists. The protocol reviewer prompt says nothing about the
+evaluation-requirement trap.
+
+**Why it matters.** The representativeness questions are the mapping study's substitute for
+exhaustiveness — the corpus is explicit that exhaustive search is *not* the SMS goal, so this is the
+check that replaces it. Nothing performs it.
+
+**Cost.** Low.
+
+---
+
+### G83 — Three named chart types are missing and the facet taxonomies are flat (F2-SF06) — **low**
+
+**Required.** Six visualisation types are named: line diagram, pie, bar, bubble, **Venn diagram** and
+**heatmap**. Three facet taxonomies are specified: the venue hierarchy, Study Focus
+(academic/industrial/government/project/organisation) and Contribution Type
+(process/method/model/tool/metric) ([02](./methodology/02-sms.md)).
+
+**Current.** Bar, pie-family and bubble generators exist. Line, Venn and heatmap do not. Venue is a
+flat string rather than a hierarchy; Study Focus and Contribution Type have no representation.
+*(Confidence: medium — inferred from the chart-generator inventory rather than an exhaustive grep.)*
+
+**Why it matters.** The heatmap matters most: **G48** needs a two-facet rendering, and the heatmap is
+the corpus's named alternative to the bubble plot for exactly that. Contribution Type was
+*deliberately* downgraded in 2015 (caveat **A5**), so its absence is defensible; the other two are not.
+
+**Cost.** Low.
+
+---
+
+### G84 — Extraction has no reliability check and no reconstructed-data provenance (F2-SF06) — **medium**
+
+**Required.** A lone researcher must use a **supervisor cross-check on a sample, or test–retest, on
+extraction**. Where data must be reconstructed, **report it as published first**, then run sensitivity
+analysis on the reconstruction — caveat **E11**. Descriptive synthesis should **flag replications that
+add no independent evidence** and **code studies chronologically** to expose trends
+([01](./methodology/01-slr.md)).
+
+**Current.** **G4** is scoped to *screening* (F2-SF04) — its remediation and citations are all
+screening-specific — so extraction has no intra-rater check. Grep for `manipulat`/`reconstruct` across
+all five packages returns **nothing**. `DescriptiveSynthesizer` tabulates per paper with no
+replication flag and no chronological ordering.
+
+**Why it matters.** The reconstructed-data rule is a research-integrity requirement, not a convenience:
+a pooled estimate resting on reconstructed numbers that are not marked as such is unauditable.
+
+**Cost.** Medium.
+
+---
+
+### G85 — No pre-publication search re-run, and indexing lag is a measured problem (F2-SF03) — **medium**
+
+**Required.** Indexing lag defeats automated search — re-running a search a year later recovered
+**three previously missed papers**, and Kitchenham found manual search of recent proceedings
+necessary to cover it. Re-running the indexing-system search immediately before publication should be
+a **prompted workflow step** — caveat **C6** ([04](./methodology/04-tertiary.md),
+[06](./methodology/06-search-and-selection.md)).
+
+**Current.** No re-run reminder or workflow state exists. **G41** covers updating a *prior published
+review* via forward snowballing — a different mechanism from a pre-publication re-check of the same
+review's own search.
+
+**Cost.** Low — a prompt at the reporting phase gate plus a stored last-run timestamp.
+
+---
+
+### G86 — Named quality instruments are described but not seeded (F2-SF05) — **low**
+
+**Required.** Four instruments are specified with enough detail to implement: Kitchenham's quantitative
+item pool and **18-item qualitative checklist**; **Dybå & Dingsøyr's 11-item** instrument (κ = 0.80,
+scored yes/no, **with no overall grade computed**); **Ivarsson & Gorschek's** rigour/relevance axis;
+and **CRD's 9 questions** alongside DARE ([07](./methodology/07-quality-assessment.md),
+[01](./methodology/01-slr.md)).
+
+**Current.** The `QualityChecklist` template mechanism exists and is correctly content-agnostic
+(caveat: do **not** ship a single default checklist), but none of the four is seeded as selectable
+content.
+
+**Why it matters.** Dybå & Dingsøyr's "no overall grade" rule would be violated by
+`compute_aggregate_score` as it stands — see the **G38** amendment. Seeding is content work; making it
+*faithful* is not.
+
+**Cost.** Low, and largely content rather than code.
+
+---
+
+### G87 — Quality assessment cannot record why it was skipped, or warn when scores are incomparable (F2-SF05) — **medium**
+
+**Required.** If quality assessment is omitted, **a rationale must be stated, not left silent**.
+Scores are comparable **only between studies of the same type and size** — caveat **F4** — and mapping
+studies score structurally lower on DARE — caveat **F8** ([07](./methodology/07-quality-assessment.md),
+[04](./methodology/04-tertiary.md)).
+
+**Current.** No omission-rationale field on any protocol or checklist model. No comparability warning
+is surfaced in any report or view. Tertiary authors who skip primary-study quality evaluation likewise
+have nowhere to record why.
+
+**Why it matters.** DARE Q3 scores a review **worse** for collecting quality data and not using it than
+for not collecting it. Silence about an omission is indistinguishable from an oversight.
+
+**Cost.** Low.
+
+---
+
+### G88 — A paper cannot be excluded during extraction (F2-SF06) — **medium**
+
+**Required.** A study can pass full-text screening and only during extraction prove to have no
+aggregation, or to be preliminary — it must then be **excluded with a reason, reflected in the flow
+diagram** — caveat **D6** ([04](./methodology/04-tertiary.md)).
+
+**Current.** `ExtractionStatus` is `{PENDING, AI_COMPLETE, VALIDATED, HUMAN_REVIEWED}` — **no excluded
+state**. The folded note under **G14** treats this as a flow-diagram counting concern; the underlying
+decision path does not exist to be counted. *(Confidence: medium — it is possible the existing
+`PaperDecision` endpoints can be called at this stage; whether the extraction UI exposes it is
+unverified.)*
+
+**Cost.** Low-medium.
+
+---
+
+### G89 — Three Rapid Review procedures have no representation (F2-SF04, F2-SF11) — **medium**
+
+**Required.** Three RR-specific rules beyond **G59**–**G61**:
+- **Missing-data exclusion.** RR diverges from SLR deliberately: exclude studies with missing data
+  rather than contacting authors, and **report the exclusion**
+- **A reduced-staffing QA mode** — a single reviewer, or pairs appraising a sample — as a third option
+  distinct from skip and venue-proxy
+- **Abandonment.** An RR may prove infeasible at problem definition if no studies address the problem;
+  the process must allow abandoning — caveat **B11**
+
+([03](./methodology/03-rapid-review.md))
+
+**Current.** Grep for `missing_data` returns nothing. `RRQualityAppraisalMode` has exactly three
+values — `FULL`, `PEER_REVIEWED_ONLY`, `SKIPPED` — none modelling sampled or paired staffing. No
+abandoned terminal state exists on the RR protocol lifecycle; the generic `StudyStatus.ARCHIVED` is
+the only approximation and carries no reason.
+
+**Why it matters.** Each is a concession that **G39**'s threat derivation should raise — and cannot,
+because the concession has no representation to derive from.
+
+**Cost.** Low-medium.
 
 ---
 
