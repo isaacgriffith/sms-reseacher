@@ -55,7 +55,7 @@ stack follows; the authoritative dependency list is always each subproject's
 
 ### Runtime & Language
 
-- Python 3.14 (backend, agents, db, agent-eval, researcher-mcp); TypeScript 5.4 / Node 20 LTS (frontend)
+- Python 3.14 (backend, agents, db, agent-eval, researcher-mcp); TypeScript 5.4 / Node 24 LTS (frontend)
 - PostgreSQL 16 (production/Docker Compose); SQLite + `aiosqlite` (unit/integration tests)
 
 ### Python Libraries (002-sms-workflow)
@@ -191,9 +191,9 @@ uv python install 3.14   # if using uv's managed Python
 # 2. Install all Python workspace dependencies
 uv sync --all-packages
 
-# 3. Node 20 LTS + frontend dependencies
-# Install Node 20 LTS via nvm or https://nodejs.org:
-nvm install 20 && nvm use 20
+# 3. Node 24 LTS + frontend dependencies
+# Install Node 24 LTS via nvm or https://nodejs.org:
+nvm install 24 && nvm use 24
 cd frontend && npm install && cd ..
 
 # 4. Playwright browsers (for e2e tests)

@@ -4,7 +4,7 @@
  * the current SVG node to a downloadable file.
  */
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import type { SimulationNodeDatum, SimulationLinkDatum } from 'd3';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
@@ -37,8 +37,13 @@ interface DomainModelViewerProps {
 
 export default function DomainModelViewer({ domainModel }: DomainModelViewerProps) {
   const svgRef = useRef<SVGSVGElement>(null);
-  const concepts = domainModel.concepts ?? [];
-  const relationships = domainModel.relationships ?? [];
+  // Memoised because these feed the useEffect dependency array below. Without
+  // it, the `?? []` fallback allocates a fresh array on every render whenever the
+  // model has no concepts, so the effect re-runs each time (it early-returns, so
+  // the cost is small — but the dependency is genuinely unstable, which is what
+  // the exhaustive-deps rule was reporting).
+  const concepts = useMemo(() => domainModel.concepts ?? [], [domainModel.concepts]);
+  const relationships = useMemo(() => domainModel.relationships ?? [], [domainModel.relationships]);
 
   useEffect(() => {
     if (!svgRef.current || concepts.length === 0) return;

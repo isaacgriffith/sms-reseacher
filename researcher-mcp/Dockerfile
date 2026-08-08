@@ -20,9 +20,16 @@ FROM python:3.14-slim AS runtime
 
 WORKDIR /app
 
-# Non-root user — UID/GID pinned so the identity is resolvable without /etc/passwd
+# Non-root user — UID/GID pinned so the identity is resolvable without /etc/passwd.
+#
+# pip is removed in the same layer, for the reason given in backend/Dockerfile:
+# nothing at runtime uses it, and its vendored msgpack and setuptools are the
+# HIGH findings Trivy reports on a python:3.14-slim runtime image.
 RUN addgroup --system --gid 10001 appgroup \
-    && adduser --system --uid 10001 --ingroup appgroup appuser
+    && adduser --system --uid 10001 --ingroup appgroup appuser \
+    && rm -rf /usr/local/lib/python3.14/site-packages/pip \
+        /usr/local/lib/python3.14/site-packages/pip-*.dist-info \
+    && rm -f /usr/local/bin/pip /usr/local/bin/pip3 /usr/local/bin/pip3.14
 
 COPY --from=builder /workspace/.venv /app/.venv
 COPY --from=builder /workspace/researcher-mcp/src /app/src

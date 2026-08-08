@@ -80,7 +80,9 @@ export default function PICOForm({ studyId }: Props) {
         /* 404 means not yet created — that's fine */
       })
       .finally(() => setLoading(false));
-  }, [studyId]);
+    // `reset` is referentially stable across renders (react-hook-form guarantees
+    // this), so listing it satisfies exhaustive-deps without causing a refetch.
+  }, [studyId, reset]);
 
   const onSubmit = handleSubmit(async (data) => {
     setSaveError(null);

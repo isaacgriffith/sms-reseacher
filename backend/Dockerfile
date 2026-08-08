@@ -22,9 +22,21 @@ FROM python:3.14-slim AS runtime
 
 WORKDIR /app
 
-# Non-root user — UID/GID pinned so the identity is resolvable without /etc/passwd
+# Non-root user — UID/GID pinned so the identity is resolvable without /etc/passwd.
+#
+# pip is removed in the same layer. Nothing at runtime uses it: the application
+# runs entirely from /app/.venv, which uv populated in the builder stage. Its
+# vendored dependencies were the only two HIGH findings Trivy reported on this
+# image — msgpack 1.1.2 (GHSA-6v7p-g79w-8964) and setuptools 70.3.0 via
+# pkg_resources (CVE-2025-47273), both listed in pip/_vendor/vendor.txt.
+#
+# Deleting beats an ignore entry here: these are not unpatchable CVEs waiting on
+# upstream, they are a dependency the runtime image never needed.
 RUN addgroup --system --gid 10001 appgroup \
-    && adduser --system --uid 10001 --ingroup appgroup appuser
+    && adduser --system --uid 10001 --ingroup appgroup appuser \
+    && rm -rf /usr/local/lib/python3.14/site-packages/pip \
+        /usr/local/lib/python3.14/site-packages/pip-*.dist-info \
+    && rm -f /usr/local/bin/pip /usr/local/bin/pip3 /usr/local/bin/pip3.14
 
 # Copy virtual environment and source
 COPY --from=builder /workspace/.venv /app/.venv
