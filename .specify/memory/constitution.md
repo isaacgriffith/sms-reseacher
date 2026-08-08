@@ -1,6 +1,24 @@
 <!--
 SYNC IMPACT REPORT
 ==================
+Version change: 1.9.0 → 1.10.0
+Bump rationale: MINOR — Principle XI materially expanded, no principle removed or redefined.
+
+Added to XI. Methodological Fidelity:
+  - "Context, memory and assumptions MUST NOT be trusted without verification." docs/methodology/ is
+    the only source of truth for how a review is conducted; every other description of a method in
+    the repository — including this constitution, CLAUDE.md, CONTEXT.md, MEMORY.md, feature-gaps.md,
+    specs, comments, docstrings and agent prompts — is a secondary restatement that may be stale.
+    The chapter must be opened and confirmed before a methodological rule is encoded, changed, or
+    relied upon. Where this document and a chapter disagree, the chapter wins.
+
+Propagated to (2026-08-08):
+  - README.md — Documentation table now leads with docs/methodology/ as the source of truth; the
+    stale "Principles I–X" reference corrected to I–XI.
+  - CONTEXT.md — source-of-truth note added to the orientation header.
+  - CLAUDE.md — "The research basis" section states the verification requirement explicitly.
+
+Prior entry, retained for history:
 Version change: 1.8.0 → 1.9.0
 Bump rationale: MINOR — one new principle added. Derived from the 54-paper methodology corpus
   reviewed on 2026-08-07 and written up in docs/methodology/, which established that several
@@ -903,6 +921,21 @@ are documented in `docs/methodology/`, written from the 55-paper corpus in `rese
   through `docs/methodology/PLAYBOOK.md`, which carries the register of papers already examined, the
   extraction prompts, and the rule that unresolved extraction uncertainty is recorded rather than
   guessed.
+- **Context, memory and assumptions MUST NOT be trusted without verification.** `docs/methodology/`
+  is the *only* source of truth for how a review is conducted. Every other description of a method in
+  this repository — `CLAUDE.md`, `CONTEXT.md`, `MEMORY.md`, `docs/feature-gaps.md`, feature specs,
+  code comments, docstrings, agent prompts, commit messages, and any summary of prior work — is a
+  **secondary restatement that may be stale, partial, or wrong**. So is anything a contributor or an
+  AI agent already believes about a method. Before encoding, changing, or relying on a
+  methodological rule, **open the chapter and confirm it**. Citing a secondary source in place of the
+  chapter does not satisfy this principle.
+
+  This is not hypothetical. Restatements in this repository have already been found to contradict
+  their sources: `CLAUDE.md` named four protocol-executor metric readers of which three did not
+  exist; three documents recorded two corpus PDFs as byte-identical when they were not; and agent
+  prompts scored four of five Petersen rubrics against anchors Petersen never published — each of
+  them read as authoritative until checked. **Where this document and a chapter disagree, the chapter
+  wins and this document is the defect.**
 
 _Rationale_: Every other principle here protects the code. This one protects the output. The platform
 can be entirely correct as software and still produce an invalid systematic review, and the
@@ -1081,4 +1114,4 @@ and AI coding agents operating within this repository.
   audit MUST exit clean, and every user-facing feature MUST have an e2e test that drives it
   through the UI.
 
-**Version**: 1.9.0 | **Ratified**: 2026-03-11 | **Last Amended**: 2026-08-07
+**Version**: 1.10.0 | **Ratified**: 2026-03-11 | **Last Amended**: 2026-08-08

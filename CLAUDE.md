@@ -15,7 +15,7 @@ Reviews, and Tertiary Studies.
 | ----------------------------------------------------- | ---------------------------------------------------- |
 | **[CONTEXT.md](./CONTEXT.md)**                        | Where am I? Architecture, repo map, request flow     |
 | **[MEMORY.md](./MEMORY.md)**                          | What will bite me? Non-obvious gotchas, with reasons |
-| **[constitution](./.specify/memory/constitution.md)** | What rules are binding? Principles I–X               |
+| **[constitution](./.specify/memory/constitution.md)** | What rules are binding? Principles I–XI              |
 | **[docs/feature-gaps.md](./docs/feature-gaps.md)**    | What is actually built vs. only specified?           |
 | **[docs/methodology/](./docs/methodology/)**          | How should a review actually be conducted? The research-backed processes |
 | **This file**                                         | What commands do I run?                              |
@@ -25,6 +25,30 @@ Reviews, and Tertiary Studies.
 `docs/methodology/` holds the process definitions this platform automates, written from the 55-paper
 corpus in `research/`. **Consult it before designing anything that touches how a review is
 conducted** — search, screening, quality assessment, extraction, synthesis, validity, or reporting.
+
+> ### ⚠ `docs/methodology/` is the source of truth. This file is not.
+>
+> Conformance to the documented methods is a **correctness property** — see
+> [constitution Principle XI](./.specify/memory/constitution.md). Where the platform and a chapter
+> disagree, the chapter is the specification and the platform has a defect.
+>
+> **Everything else is a secondary restatement that may be stale, partial, or wrong** — this file,
+> `CONTEXT.md`, `MEMORY.md`, `docs/feature-gaps.md`, feature specs, code comments, docstrings, agent
+> prompts, commit messages, and any summary of earlier work in your context window. **So is anything
+> you already believe about a method.** Before encoding, changing, or relying on a methodological
+> rule: **open the chapter and confirm it.** Quoting this file instead does not count.
+>
+> This has bitten repeatedly, and each case read as authoritative until checked:
+>
+> | Restatement | Reality |
+> | ----------- | ------- |
+> | This file named four protocol-executor metric readers | Three did not exist; two that do were undocumented |
+> | Three documents called two corpus PDFs "byte-identical (same MD5)" | Different MD5s, 384 bytes apart — only their *extracted text* matched |
+> | Agent prompts scored five "Petersen rubrics" | Four of five used anchors Petersen never published |
+> | A passing unit test asserted a chart "aggregates research_method via venue_type" | It was rendering venue data under a research-method label |
+>
+> If a methodological claim in this file matters to what you are about to do, **verify it against the
+> chapter and fix this file if it is wrong.**
 
 Fastest entry points:
 

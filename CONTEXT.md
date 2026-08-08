@@ -8,6 +8,17 @@ architecture changes. For commands and toolchain, see [CLAUDE.md](./CLAUDE.md). 
 lessons and gotchas, see [MEMORY.md](./MEMORY.md). For binding rules, see
 [the constitution](./.specify/memory/constitution.md).
 
+> **⚠ This file is not authoritative about research methods.**
+> [`docs/methodology/`](./docs/methodology/) is the source of truth for **how a review is
+> conducted** — search, screening, selection, quality assessment, extraction, synthesis, validity and
+> reporting. This file describes *where code lives*, and any method it mentions in passing is a
+> secondary restatement that may be stale.
+>
+> **Do not trust this file, `CLAUDE.md`, `MEMORY.md`, a prior summary, or your own prior assumptions
+> for a methodological claim — open the chapter and confirm it.** Restatements here have already been
+> found to contradict their sources. Where this file and a chapter disagree, the chapter is right.
+> See [constitution Principle XI](./.specify/memory/constitution.md).
+
 ---
 
 ## What this system is

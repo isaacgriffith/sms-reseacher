@@ -6,14 +6,33 @@ Reviews, and Tertiary Studies.
 
 ## Documentation
 
-| Document                                        | Answers                                              |
-| ----------------------------------------------- | ---------------------------------------------------- |
-| [CONTEXT.md](CONTEXT.md)                        | Where am I? Architecture, repo map, request flow     |
-| [MEMORY.md](MEMORY.md)                          | What will bite me? Non-obvious gotchas, with reasons |
-| [CLAUDE.md](CLAUDE.md)                          | What commands do I run?                              |
-| [constitution](.specify/memory/constitution.md) | What rules are binding? Principles I–X               |
-| [docs/feature-gaps.md](docs/feature-gaps.md)    | What is actually built vs. only specified?           |
-| [docs/features/](docs/features/README.md)       | What is planned next?                                |
+> ### `docs/methodology/` is the source of truth
+>
+> This platform automates published research methods, so **conformance to those methods is a
+> correctness property, not a preference** — a review that departs from the method it claims to follow
+> is wrong in a way no test here detects.
+>
+> **[`docs/methodology/`](docs/methodology/) is the specification.** Before you encode, change, or
+> rely on anything about how a review is conducted — search, screening, selection, quality
+> assessment, extraction, synthesis, validity, reporting — **open the relevant chapter and confirm
+> it**.
+>
+> **Every other document in this table is a secondary restatement**, including this README. So are
+> code comments, docstrings, agent prompts, feature specs, and anything you or an AI assistant
+> already believe about a method. They drift; the chapters are what the papers actually say. Where a
+> restatement and a chapter disagree, **the chapter is right and the restatement is a defect**.
+>
+> See [constitution Principle XI](.specify/memory/constitution.md), Methodological Fidelity.
+
+| Document                                          | Answers                                                     |
+| ------------------------------------------------- | ----------------------------------------------------------- |
+| **[docs/methodology/](docs/methodology/)**        | **How must a review actually be conducted? The source of truth** |
+| [CONTEXT.md](CONTEXT.md)                          | Where am I? Architecture, repo map, request flow            |
+| [MEMORY.md](MEMORY.md)                            | What will bite me? Non-obvious gotchas, with reasons        |
+| [CLAUDE.md](CLAUDE.md)                            | What commands do I run?                                     |
+| [constitution](.specify/memory/constitution.md)   | What rules are binding? Principles I–XI                     |
+| [docs/feature-gaps.md](docs/feature-gaps.md)      | What is actually built vs. only specified?                  |
+| [docs/features/](docs/features/README.md)         | What is planned next?                                       |
 
 ## Sub-projects
 
