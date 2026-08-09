@@ -12,16 +12,25 @@ from __future__ import annotations
 
 import csv
 import io
+from dataclasses import dataclass
 from datetime import UTC, datetime
 
 import structlog
 from db.models.candidate import CandidatePaper, CandidatePaperStatus
-from db.models.slr import SynthesisResult, SynthesisStatus
+from db.models.slr import (
+    QualityAssessmentChecklist,
+    QualityAssessmentScore,
+    SynthesisResult,
+    SynthesisStatus,
+)
 from db.models.tertiary import TertiaryDataExtraction, TertiaryStudyProtocol
 from fastapi import HTTPException, status
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from backend.services.dare_instrument import dare_total
+from backend.services.quality_assessment_service import compute_aggregate_score
 
 logger = structlog.get_logger(__name__)
 
@@ -295,7 +304,8 @@ class TertiaryReportService:
         inclusion_exclusion = _build_inclusion_exclusion(
             len(all_papers), len(accepted_papers), len(excluded_papers), protocol
         )
-        qa_results = _build_qa_results(extractions, protocol)
+        dare = await _load_dare_assessment(study_id, accepted_ids, db)
+        qa_results = _build_qa_results(len(accepted_papers), protocol, dare)
         extracted_data_section = _build_extracted_data(extractions)
         synthesis_section = _build_synthesis_section(synthesis)
         landscape = _build_landscape_section(extractions)
@@ -385,63 +395,136 @@ def _build_inclusion_exclusion(
     )
 
 
+@dataclass(frozen=True)
+class DareAssessment:
+    """Per-paper quality totals recorded with an anchored instrument.
+
+    Attributes:
+        totals: ``candidate_paper_id`` -> the paper's total, averaged across
+            reviewers when more than one has scored it.
+        max_total: The instrument's maximum — 4 for DARE, 5 with the optional
+            synthesis question.
+        instrument_name: The checklist's name, so the report can say which
+            instrument produced the figure.
+
+    """
+
+    totals: dict[int, float]
+    max_total: float
+    instrument_name: str
+
+
+async def _load_dare_assessment(
+    study_id: int,
+    accepted_ids: list[int],
+    db: AsyncSession,
+) -> DareAssessment | None:
+    """Load the study's recorded quality assessment, or ``None`` if it has none.
+
+    Args:
+        study_id: The tertiary study.
+        accepted_ids: Candidate paper ids for the study's included studies.
+        db: Active async database session.
+
+    Returns:
+        A :class:`DareAssessment`, or ``None`` when the study has no checklist.
+
+    """
+    checklist_result = await db.execute(
+        select(QualityAssessmentChecklist).where(QualityAssessmentChecklist.study_id == study_id)
+    )
+    checklist = checklist_result.scalar_one_or_none()
+    if checklist is None:
+        return None
+    await db.refresh(checklist, attribute_names=["items"])
+
+    items = list(checklist.items)
+    if not items or not accepted_ids:
+        return DareAssessment({}, float(len(items)), checklist.name)
+
+    scores_result = await db.execute(
+        select(QualityAssessmentScore).where(
+            QualityAssessmentScore.candidate_paper_id.in_(accepted_ids)
+        )
+    )
+    scores = list(scores_result.scalars().all())
+
+    # Group by (paper, reviewer) so a paper scored by two reviewers reports
+    # the mean of their totals rather than the sum, which would read as a
+    # score off the top of the instrument's scale.
+    per_reviewer: dict[tuple[int, int], list[QualityAssessmentScore]] = {}
+    for score in scores:
+        per_reviewer.setdefault((score.candidate_paper_id, score.reviewer_id), []).append(score)
+
+    per_paper: dict[int, list[float]] = {}
+    for (paper_id, _reviewer_id), reviewer_scores in per_reviewer.items():
+        average = compute_aggregate_score(reviewer_scores, items)
+        per_paper.setdefault(paper_id, []).append(dare_total(average, len(items)))
+
+    totals = {pid: sum(vals) / len(vals) for pid, vals in per_paper.items() if vals}
+    return DareAssessment(totals, float(len(items)), checklist.name)
+
+
 def _build_qa_results(
-    extractions: list[TertiaryDataExtraction],
+    accepted_count: int,
     protocol: TertiaryStudyProtocol | None,
+    dare: DareAssessment | None,
 ) -> str:
     """Summarise what quality assessment was actually recorded.
 
-    TFIX7. This read no quality data at all: it branched on
+    Two corrections live here, in order.
+
+    Originally this read no quality data at all: it branched on
     ``SynthesisResult.computed_statistics`` and returned "Quality assessment
     was performed" or "Quality assessment was completed" — both asserting the
-    step happened, for a study where nobody may have assessed anything. A
-    report that claims an unperformed step is a reporting-integrity defect,
-    and a reader cannot tell the claim from a real one.
+    step happened, for a study where nobody may have assessed anything.
 
-    Quality for a tertiary study is carried by
-    ``TertiaryDataExtraction.reviewer_quality_rating``, which is nullable and
-    means "not assessed" when null, so coverage is reported rather than
-    assumed.
+    It was then re-keyed to ``TertiaryDataExtraction.reviewer_quality_rating``,
+    a single 0-1 float. That is honest about coverage but wrong about shape:
+    ``07-quality-assessment.md`` states plainly that combining quality into a
+    single number is bad practice, and ``04-tertiary.md`` specifies DARE's four
+    anchored questions for exactly this study type. The column is deprecated
+    and no longer read (TFIX7 part 3).
 
-    Note this reports a single 0-1 rating per secondary study because that is
-    what the platform stores. ``04-tertiary.md`` specifies DARE's four anchored
-    questions and ``07-quality-assessment.md`` warns against collapsing quality
-    into one number; that mismatch is a separate, larger defect recorded on
-    TFIX7 rather than papered over here.
+    The score is reported on the instrument's own scale and the instrument is
+    named, because ``04-tertiary.md`` warns that DARE scores are not comparable
+    across review types — an unlabelled number invites that comparison.
 
     Args:
-        extractions: Extraction rows for the study's accepted papers.
+        accepted_count: Number of included secondary studies.
         protocol: The study's protocol, for its quality threshold if set.
+        dare: The recorded assessment, or ``None`` if the study has no
+            checklist.
 
     Returns:
         A human-readable QA summary that does not overstate what was done.
 
     """
-    total = len(extractions)
-    rated = [
-        e.reviewer_quality_rating for e in extractions if e.reviewer_quality_rating is not None
-    ]
+    if accepted_count == 0:
+        return "No secondary studies were included, so no quality assessment was recorded."
 
-    if total == 0:
-        return "No secondary studies were extracted, so no quality assessment was recorded."
-    if not rated:
+    if dare is None or not dare.totals:
         return (
-            f"No quality assessment was recorded: none of the {total} extracted "
-            "secondary studies carries a reviewer quality rating."
+            f"No quality assessment was recorded: none of the {accepted_count} included "
+            "secondary studies has a DARE assessment. DARE is the instrument this study "
+            "type requires, and omitting it should be justified in the report."
         )
 
-    mean_rating = sum(rated) / len(rated)
+    scored = list(dare.totals.values())
+    mean_total = sum(scored) / len(scored)
+    max_total = dare.max_total
     parts = [
-        f"{len(rated)} of {total} extracted secondary studies carry a reviewer "
-        f"quality rating (mean {mean_rating:.2f} on a 0-1 scale)."
+        f"{len(scored)} of {accepted_count} included secondary studies were assessed with "
+        f"{dare.instrument_name} (mean {mean_total:.2f} out of {max_total:.0f})."
     ]
-    if len(rated) < total:
-        parts.append(f"{total - len(rated)} were not assessed.")
-    if protocol is not None and protocol.quality_threshold is not None:
-        at_or_above = sum(1 for r in rated if r >= protocol.quality_threshold)
+    if len(scored) < accepted_count:
+        parts.append(f"{accepted_count - len(scored)} were not assessed.")
+    if protocol is not None and protocol.quality_threshold is not None and max_total:
+        threshold = protocol.quality_threshold
+        at_or_above = sum(1 for total in scored if total / max_total >= threshold)
         parts.append(
-            f"{at_or_above} of {len(rated)} rated studies meet the protocol's "
-            f"quality threshold of {protocol.quality_threshold:.2f}."
+            f"{at_or_above} of {len(scored)} assessed studies meet the protocol's "
+            f"quality threshold of {threshold:.2f} (as a proportion of the maximum)."
         )
     return " ".join(parts)
 

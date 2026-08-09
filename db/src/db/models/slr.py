@@ -68,6 +68,10 @@ class ChecklistScoringMethod(str, enum.Enum):
     BINARY = "binary"
     SCALE_1_3 = "scale_1_3"
     SCALE_1_5 = "scale_1_5"
+    #: DARE's three-point scale — Y = 1, P = 0.5, N = 0 (``04-tertiary.md`` 2.3).
+    #: The other three cannot express it: ``binary`` has no middle value, and
+    #: both ordinal scales start at 1, so DARE's "N = 0" is unreachable.
+    YES_PARTIAL_NO = "yes_partial_no"
 
 
 class AgreementRoundType(str, enum.Enum):
@@ -230,6 +234,17 @@ class QualityChecklistItem(Base):
         nullable=False,
     )
     weight: Mapped[float] = mapped_column(Float, nullable=False, default=1.0, server_default="1.0")
+    #: Descriptions of what each score value means, keyed by the value as a
+    #: string — ``{"1.0": "...", "0.5": "...", "0.0": "..."}``.
+    #:
+    #: Anchored instruments carry these; ``binary`` and free-scale items
+    #: generally do not, hence nullable.  Storing them beside the value they
+    #: describe rather than inside ``question`` is what lets the reviewer see
+    #: the anchor next to the option it belongs to — the corpus is explicit
+    #: that anchors "provide support for the assessment; it is not a strict
+    #: mutually exclusive classification process" (``04-tertiary.md``), which
+    #: only helps if the reviewer can actually read them while choosing.
+    anchors: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )

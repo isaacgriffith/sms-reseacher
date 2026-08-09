@@ -71,7 +71,7 @@ Three constraints worth knowing before they surprise you:
 ## Active Technologies
 
 - Python 3.14 (backend, db, agents); TypeScript 5.4 / Node 20 LTS (frontend) + FastAPI, Pydantic v2, SQLAlchemy 2.0 async, Alembic, ARQ, LiteLLM; React 18, MUI v5, TanStack Query v5. **No new dependencies.** (012-wire-up-unreachable-workflows)
-- PostgreSQL 16 (production), SQLite + aiosqlite (tests). Two Alembic migrations — **`0020`** adding `paper_decision.annotation` (TFIX3), and **`0021`** adding a `JobType` enum value. (012-wire-up-unreachable-workflows) — the enum one was planned as `0019`, then `0019_candidate_citation_intent` and `0020_paper_decision_annotation` took those numbers; alembic rejects a duplicate revision id, so verify with `(cd db && uv run alembic heads)` before writing it
+- PostgreSQL 16 (production), SQLite + aiosqlite (tests). Three Alembic migrations — **`0020`** adding `paper_decision.annotation` (TFIX3), **`0021`** adding the DARE instrument's `yes_partial_no` scoring method and `quality_checklist_item.anchors` (TFIX7 part 3), and **`0022`** adding a `JobType` enum value. (012-wire-up-unreachable-workflows) — **the rescreen enum migration has been renumbered twice**: planned as `0019`, moved to `0021` when `0019_candidate_citation_intent` and `0020_paper_decision_annotation` took those ids, and moved to `0022` when `0021_dare_quality_instrument` landed. Alembic rejects a duplicate revision id, so **treat every number written down here as stale** and run `(cd db && uv run alembic heads)` before writing a migration
 
 Entries above are appended per feature branch by `update-agent-context.sh`. The canonical
 stack follows; the authoritative dependency list is always each subproject's

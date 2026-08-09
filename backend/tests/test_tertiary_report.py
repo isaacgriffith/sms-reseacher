@@ -452,65 +452,93 @@ class TestBuildQaResults:
     nobody assessed anything. The existing suite only checked the field was a
     ``str``, which is how it survived: a type assertion cannot tell a true
     sentence from a false one.
+
+    TFIX7 part 3 then moved the source of truth. Quality is now DARE — four
+    anchored questions totalling out of 4 — rather than the single
+    ``reviewer_quality_rating`` float, which ``07-quality-assessment.md``
+    rejects as a shape ("combining them into a single number is bad
+    practice"). That column is deprecated and this section no longer reads it.
     """
 
     @staticmethod
-    def _extractions(ratings: list[float | None]) -> list:
-        """Build unpersisted extraction rows carrying only a quality rating."""
-        from db.models.tertiary import TertiaryDataExtraction
+    def _dare(totals: dict[int, float], max_total: float = 4.0):
+        """Build a DareAssessment carrying per-paper totals."""
+        from backend.services.tertiary_report_service import DareAssessment
 
-        return [TertiaryDataExtraction(reviewer_quality_rating=r) for r in ratings]
+        return DareAssessment(totals=totals, max_total=max_total, instrument_name="DARE")
 
-    def test_no_extractions_says_nothing_was_recorded(self) -> None:
-        """With no extractions, the summary does not claim QA was performed."""
-        # Arrange
+    def test_no_included_studies_says_nothing_was_recorded(self) -> None:
+        """With nothing included, the summary does not claim QA was performed."""
         from backend.services.tertiary_report_service import _build_qa_results
 
-        # Act
-        summary = _build_qa_results([], None)
+        summary = _build_qa_results(0, None, None)
 
-        # Assert
         assert "no quality assessment was recorded" in summary.lower()
         assert "was performed" not in summary
 
-    def test_unrated_extractions_say_nothing_was_recorded(self) -> None:
-        """Extractions with no rating are reported as unassessed, not as done."""
-        # Arrange
+    def test_no_dare_assessment_says_nothing_was_recorded(self) -> None:
+        """Included studies with no DARE scores are reported as unassessed."""
         from backend.services.tertiary_report_service import _build_qa_results
 
-        # Act
-        summary = _build_qa_results(self._extractions([None, None, None]), None)
+        summary = _build_qa_results(3, None, None)
 
-        # Assert — the count is named so a reader can see the coverage
         assert "no quality assessment was recorded" in summary.lower()
         assert "3" in summary
         assert "was performed" not in summary
 
-    def test_reports_coverage_and_mean_when_rated(self) -> None:
-        """A partly rated set reports how many were rated and the mean."""
-        # Arrange
+    def test_empty_totals_is_the_same_as_no_assessment(self) -> None:
+        """A seeded checklist with no scores yet is still "not assessed"."""
         from backend.services.tertiary_report_service import _build_qa_results
 
-        # Act
-        summary = _build_qa_results(self._extractions([0.8, 0.6, None]), None)
+        summary = _build_qa_results(3, None, self._dare({}))
 
-        # Assert
+        assert "no quality assessment was recorded" in summary.lower()
+
+    def test_reports_coverage_and_mean_on_dare_scale(self) -> None:
+        """Coverage and mean are reported as a total out of 4, not a 0-1 mean.
+
+        Presenting DARE's mean as "0.75" would be a number the instrument
+        never produces; readers compare tertiary studies on the out-of-4
+        figure that every SE tertiary study reports.
+        """
+        from backend.services.tertiary_report_service import _build_qa_results
+
+        summary = _build_qa_results(3, None, self._dare({1: 3.5, 2: 2.5}))
+
         assert "2 of 3" in summary
-        assert "0.70" in summary
+        assert "3.00 out of 4" in summary
         assert "1 were not assessed" in summary
 
+    def test_names_the_instrument(self) -> None:
+        """The reader must be able to tell which instrument produced the score.
+
+        ``04-tertiary.md`` warns that DARE scores are not comparable across
+        review types; an unnamed number invites exactly that comparison.
+        """
+        from backend.services.tertiary_report_service import _build_qa_results
+
+        summary = _build_qa_results(1, None, self._dare({1: 4.0}))
+
+        assert "DARE" in summary
+
     def test_reports_threshold_when_protocol_sets_one(self) -> None:
-        """With a quality threshold set, the summary says how many meet it."""
-        # Arrange
+        """A protocol threshold is applied as a proportion of the maximum."""
         from db.models.tertiary import TertiaryStudyProtocol
 
         from backend.services.tertiary_report_service import _build_qa_results
 
         protocol = TertiaryStudyProtocol(study_id=1, quality_threshold=0.7)
 
-        # Act
-        summary = _build_qa_results(self._extractions([0.8, 0.6]), protocol)
+        # 3.5/4 = 0.875 meets 0.7; 2.0/4 = 0.5 does not.
+        summary = _build_qa_results(2, protocol, self._dare({1: 3.5, 2: 2.0}))
 
-        # Assert — 0.8 meets 0.7, 0.6 does not
-        assert "1 of 2 rated studies meet" in summary
+        assert "1 of 2 assessed studies meet" in summary
         assert "0.70" in summary
+
+    def test_five_item_variant_reports_out_of_five(self) -> None:
+        """With the optional synthesis question seeded, the scale follows."""
+        from backend.services.tertiary_report_service import _build_qa_results
+
+        summary = _build_qa_results(1, None, self._dare({1: 4.0}, max_total=5.0))
+
+        assert "out of 5" in summary

@@ -51,6 +51,9 @@ class ChecklistItemResponse(BaseModel):
     question: str
     scoring_method: str
     weight: float
+    #: What each score value means, keyed by the value as a string. Present on
+    #: anchored instruments such as DARE; ``None`` on plain binary/scale items.
+    anchors: dict[str, str] | None = None
 
     model_config = {"from_attributes": True}
 
@@ -74,6 +77,7 @@ class ChecklistItemInput(BaseModel):
     question: str
     scoring_method: str
     weight: float = 1.0
+    anchors: dict[str, str] | None = None
 
 
 class ChecklistUpsertRequest(BaseModel):
@@ -375,6 +379,15 @@ async def submit_quality_scores(
             scores=[s.model_dump() for s in body.scores],
             db=db,
         )
+    except ValueError as exc:
+        # A scoring rule was violated — an off-scale value, or a DARE answer
+        # with no justification. This is the caller's input being wrong, not
+        # the server failing, and it must not fall through to the bare
+        # ``except Exception`` below, which re-raises as a 500.
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(exc),
+        ) from exc
     except Exception as exc:
         if "StaleDataError" in type(exc).__name__ or "conflict" in str(exc).lower():
             raise HTTPException(

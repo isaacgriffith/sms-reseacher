@@ -224,6 +224,17 @@ class TertiaryDataExtraction(Base):
     synthesis_approach_used: Mapped[str | None] = mapped_column(Text, nullable=True)
     key_findings: Mapped[str | None] = mapped_column(Text, nullable=True)
     research_gaps: Mapped[str | None] = mapped_column(Text, nullable=True)
+    #: **Deprecated (TFIX7 part 3).** A single 0-1 float standing for all of
+    #: methodological quality. ``07-quality-assessment.md`` rejects that shape
+    #: — "combining them into a single number is bad practice" — and it cannot
+    #: carry the per-answer justification the tertiary protocol makes
+    #: mandatory. Quality is now recorded with DARE, via
+    #: ``QualityAssessmentChecklist`` / ``QualityAssessmentScore``; see
+    #: :mod:`backend.services.dare_instrument`.
+    #:
+    #: Retained so existing rows keep their data. Nothing reads it: the
+    #: tertiary report moved to DARE, and the extraction form defaults it to
+    #: ``None`` rather than the fabricated 0.5 it once used.
     reviewer_quality_rating: Mapped[float | None] = mapped_column(Float, nullable=True)
 
     # Reuses the existing ExtractionStatus enum from the SMS workflow.

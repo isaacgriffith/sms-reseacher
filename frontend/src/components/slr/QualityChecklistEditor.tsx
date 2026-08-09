@@ -22,8 +22,12 @@ import { useChecklist, useUpsertChecklist } from '../../hooks/slr/useQualityAsse
 
 const ChecklistItemFormSchema = z.object({
   question: z.string().min(1, 'Question is required'),
-  scoring_method: z.enum(['binary', 'scale_1_3', 'scale_1_5']),
+  // Must match the API enum. If this stayed narrower, loading a DARE
+  // checklist into the editor and saving it would silently drop each item's
+  // scoring method — and with it the instrument.
+  scoring_method: z.enum(['binary', 'scale_1_3', 'scale_1_5', 'yes_partial_no']),
   weight: z.number().min(0),
+  anchors: z.record(z.string(), z.string()).nullable().optional(),
 });
 
 const ChecklistFormSchema = z.object({
@@ -63,6 +67,11 @@ export default function QualityChecklistEditor({ studyId }: QualityChecklistEdit
           question: item.question,
           scoring_method: item.scoring_method,
           weight: item.weight,
+          // Carried through the form untouched. `upsert_checklist` replaces
+          // every item on save, so an anchor the editor forgets is an anchor
+          // deleted — opening a DARE checklist and pressing Save would strip
+          // the instrument down to four unanchored questions.
+          anchors: item.anchors ?? null,
         })) ?? [],
     },
   });
@@ -78,6 +87,7 @@ export default function QualityChecklistEditor({ studyId }: QualityChecklistEdit
         question: item.question,
         scoring_method: item.scoring_method,
         weight: item.weight,
+        anchors: item.anchors ?? null,
       })),
     });
   }

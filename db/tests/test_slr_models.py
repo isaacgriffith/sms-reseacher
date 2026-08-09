@@ -95,7 +95,7 @@ class TestSynthesisApproachEnum:
 
 
 class TestChecklistScoringMethodEnum:
-    """ChecklistScoringMethod enum has three scoring types."""
+    """ChecklistScoringMethod enum covers every scoring type an instrument needs."""
 
     def test_binary(self) -> None:
         assert ChecklistScoringMethod.BINARY.value == "binary"
@@ -105,6 +105,25 @@ class TestChecklistScoringMethodEnum:
 
     def test_scale_1_5(self) -> None:
         assert ChecklistScoringMethod.SCALE_1_5.value == "scale_1_5"
+
+    def test_yes_partial_no(self) -> None:
+        """DARE scores Y = 1, P = 0.5, N = 0 (04-tertiary.md 2.3).
+
+        None of binary, scale_1_3 or scale_1_5 can express that: binary has no
+        middle value, and both scales start at 1, so "N = 0" is unreachable.
+        Without this member DARE cannot be stored at all (TFIX7 part 3).
+        """
+        assert ChecklistScoringMethod.YES_PARTIAL_NO.value == "yes_partial_no"
+
+    def test_column_enumerates_every_member(self) -> None:
+        """The mapped column accepts every member of the Python enum.
+
+        Guards the failure that bit ``TertiaryStudyProtocol.synthesis_approach``
+        in 703ed13, where the column hand-listed a subset: writes of the missing
+        values succeeded and every subsequent read raised ``LookupError``.
+        """
+        col = QualityChecklistItem.__table__.c["scoring_method"]
+        assert set(col.type.enums) == {m.value for m in ChecklistScoringMethod}
 
 
 class TestAgreementRoundTypeEnum:
@@ -214,6 +233,73 @@ class TestOptimisticLocking:
         """GreyLiteratureSource does NOT have optimistic locking."""
         mapper = inspect(GreyLiteratureSource)
         assert mapper.version_id_col is None
+
+
+# ---------------------------------------------------------------------------
+# Anchor storage tests (TFIX7 part 3)
+# ---------------------------------------------------------------------------
+
+
+class TestChecklistItemAnchors:
+    """``QualityChecklistItem.anchors`` stores the descriptions per score value.
+
+    DARE supplies three anchor descriptions per question, and the corpus is
+    explicit that they "provide support for the assessment; it is not a strict
+    mutually exclusive classification process" (04-tertiary.md:164-165) — so
+    they must reach the reviewer's screen, which means they must be stored
+    beside the value they describe rather than mashed into the question text.
+    """
+
+    def test_anchors_column_exists_and_is_nullable(self) -> None:
+        """Nullable, because binary and scale items carry no anchors."""
+        col = QualityChecklistItem.__table__.c["anchors"]
+        assert col.nullable is True
+
+    @pytest.mark.asyncio
+    async def test_anchors_round_trip(self, session) -> None:
+        """A three-key anchor mapping survives a write and read unchanged."""
+        checklist = QualityAssessmentChecklist(study_id=1, name="DARE")
+        session.add(checklist)
+        await session.flush()
+
+        anchors = {
+            "1.0": "Inclusion criteria explicitly defined in the paper",
+            "0.5": "Inclusion criteria implicit",
+            "0.0": "Not defined and not readily inferable",
+        }
+        item = QualityChecklistItem(
+            checklist_id=checklist.id,
+            order=1,
+            question="Are the review's inclusion and exclusion criteria described?",
+            scoring_method=ChecklistScoringMethod.YES_PARTIAL_NO,
+            weight=1.0,
+            anchors=anchors,
+        )
+        session.add(item)
+        await session.commit()
+
+        await session.refresh(item)
+        assert item.anchors == anchors
+
+    @pytest.mark.asyncio
+    async def test_anchors_default_to_none(self, session) -> None:
+        """An item created without anchors reads back None, not {}."""
+        checklist = QualityAssessmentChecklist(study_id=2, name="Ad hoc")
+        session.add(checklist)
+        await session.flush()
+
+        item = QualityChecklistItem(
+            checklist_id=checklist.id,
+            order=1,
+            question="Was the sample size justified?",
+            scoring_method=ChecklistScoringMethod.BINARY,
+            weight=1.0,
+        )
+        session.add(item)
+        await session.commit()
+
+        await session.refresh(item)
+        assert item.anchors is None
 
 
 # ---------------------------------------------------------------------------

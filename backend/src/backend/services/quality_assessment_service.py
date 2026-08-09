@@ -17,6 +17,7 @@ import structlog
 from db.models.candidate import CandidatePaper, CandidatePaperStatus
 from db.models.slr import (
     AgreementRoundType,
+    ChecklistScoringMethod,
     QualityAssessmentChecklist,
     QualityAssessmentScore,
     QualityChecklistItem,
@@ -26,6 +27,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.services import inter_rater_service
+from backend.services.dare_instrument import validate_yes_partial_no
 
 logger = structlog.get_logger(__name__)
 
@@ -110,6 +112,9 @@ async def upsert_checklist(
             question=item_data["question"],
             scoring_method=item_data["scoring_method"],
             weight=item_data.get("weight", 1.0),
+            # Anchored instruments (DARE, Garousi, the Petersen rubrics) carry
+            # a description per score value; unanchored items pass None.
+            anchors=item_data.get("anchors"),
         )
         db.add(item)
 
@@ -145,6 +150,43 @@ async def get_scores(
     return scores_by_reviewer
 
 
+async def _validate_scores(scores: list[dict], db: AsyncSession) -> None:
+    """Validate a batch of submitted scores against the items they target.
+
+    Only ``yes_partial_no`` items are constrained, and they are constrained by
+    DARE's rules: the value must be 0, 0.5 or 1, and a justification is
+    mandatory (see :func:`dare_instrument.validate_yes_partial_no`).  Items
+    scored by any other method are left exactly as they were — the mandate
+    belongs to the instrument, not to the platform, and applying it everywhere
+    would reject every SLR submission that scores a binary item without notes.
+
+    The check has to live here rather than in the request schema because the
+    rule depends on the *item*: a Pydantic validator over one submitted score
+    cannot tell which item its ``checklist_item_id`` refers to.
+
+    Args:
+        scores: The submitted score dicts.
+        db: Active async database session.
+
+    Raises:
+        ValueError: If any answer violates its item's scoring rules.
+
+    """
+    item_ids = [s["checklist_item_id"] for s in scores]
+    if not item_ids:
+        return
+
+    result = await db.execute(
+        select(QualityChecklistItem).where(QualityChecklistItem.id.in_(item_ids))
+    )
+    methods = {item.id: item.scoring_method for item in result.scalars().all()}
+
+    for score_data in scores:
+        method = methods.get(score_data["checklist_item_id"])
+        if method == ChecklistScoringMethod.YES_PARTIAL_NO:
+            validate_yes_partial_no(score_data["score_value"], score_data.get("notes"))
+
+
 async def submit_scores(
     candidate_paper_id: int,
     reviewer_id: int,
@@ -172,6 +214,10 @@ async def submit_scores(
 
     """
     bound = logger.bind(candidate_paper_id=candidate_paper_id, reviewer_id=reviewer_id)
+
+    # Validate the whole batch before touching a single row, so a rejected
+    # submission never leaves half an assessment recorded (TFIX7 part 3).
+    await _validate_scores(scores, db)
 
     # Fetch existing scores for this (paper, reviewer) pair
     existing_result = await db.execute(

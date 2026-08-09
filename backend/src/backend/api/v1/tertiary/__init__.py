@@ -9,12 +9,14 @@ Sub-routers registered here (implemented in later phases):
 - ``seed_imports`` — seed import list and trigger (Phase 4, T021).
 - ``extractions`` — extraction CRUD and AI-assist (Phase 6, T027).
 - ``report`` — report generation and export (Phase 7, T037).
+- ``quality`` — DARE quality assessment (TFIX7 part 3).
 """
 
 from fastapi import APIRouter
 
 from backend.api.v1.tertiary.extractions import router as extractions_router
 from backend.api.v1.tertiary.protocol import router as protocol_router
+from backend.api.v1.tertiary.quality import router as quality_router
 from backend.api.v1.tertiary.report import router as report_router
 from backend.api.v1.tertiary.seed_imports import router as seed_imports_router
 
@@ -23,3 +25,4 @@ router.include_router(protocol_router)
 router.include_router(seed_imports_router)
 router.include_router(extractions_router)
 router.include_router(report_router)
+router.include_router(quality_router)

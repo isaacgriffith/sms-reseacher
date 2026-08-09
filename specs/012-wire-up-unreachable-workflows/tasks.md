@@ -234,7 +234,7 @@ database by `backend/tests/integration/test_search_pipeline_screening.py`.
   >
   > Backend 1182 passed (from 1174), frontend 1371 (from 1365), 22 new tests.
 
-- [ ] TFIX7 **REWRITTEN 2026-08-09 — the original complaint was dissolved by TFIX9, and what is underneath is worse.** As first written this said Tertiary phase 4 was unreachable because the gate demanded a `QualityAssessmentScore` that no UI writes. TFIX9 re-keyed that gate to accepted papers, so the deadlock is gone and phase 4 opens. Revisiting it showed the premise was also wrong in a second way: **Tertiary quality assessment is captured**, just not in `QualityAssessmentScore`. It lives on `TertiaryDataExtraction.reviewer_quality_rating` — a single `float | None` (`db/src/db/models/tertiary.py:227`) driven by a slider at `TertiaryExtractionForm.tsx:317`. Three defects remain, none of which the original entry named:
+- [x] TFIX7 **REWRITTEN 2026-08-09 — the original complaint was dissolved by TFIX9, and what is underneath is worse.** As first written this said Tertiary phase 4 was unreachable because the gate demanded a `QualityAssessmentScore` that no UI writes. TFIX9 re-keyed that gate to accepted papers, so the deadlock is gone and phase 4 opens. Revisiting it showed the premise was also wrong in a second way: **Tertiary quality assessment is captured**, just not in `QualityAssessmentScore`. It lives on `TertiaryDataExtraction.reviewer_quality_rating` — a single `float | None` (`db/src/db/models/tertiary.py:227`) driven by a slider at `TertiaryExtractionForm.tsx:317`. Three defects remain, none of which the original entry named:
   1. **The rating defaults to `0.5` and is submitted as a judgement.** `TertiaryExtractionForm.tsx:108` seeds the form with `extraction.reviewer_quality_rating ?? 0.5`, and line 126 submits whatever the form holds. A reviewer who never touches the slider persists a mid-scale quality rating they never made. This is the same class as the rejected TFIX8 "make the form save `validated`" fix — fabricated evidence of an assessment that did not happen — except that this one already ships. The honest default is `null`, with the control showing "not assessed".
   2. **The report says quality assessment was performed whether or not it was.** `_build_qa_results` (`tertiary_report_service.py:388`) never reads a quality rating at all — it branches on `synthesis.computed_statistics` and returns _"Quality assessment was performed. Computed statistics: …"_ or _"Quality assessment was completed. No computed statistics are available."_ Both assert it happened. A tertiary report therefore claims quality assessment for a study where nobody assessed anything, which is a reporting-integrity defect, not a UI gap.
   3. **A single float is the wrong instrument.** `04-tertiary.md` specifies DARE's four anchored Y/P/N questions for tertiary studies, and `07-quality-assessment.md` warns explicitly against collapsing methodological quality into one number. `reviewer_quality_rating` is exactly that number. Correcting the shape is feature-sized and should not be bundled with (1) and (2), which are small and independently correct.
@@ -258,10 +258,78 @@ when null is passed`, whose comment described the fabrication as intended behavi
   > assertion cannot tell a true sentence from a false one** — which is how a report claiming an
   > unperformed methodological step survived from feature 009. Four real assertions replace it.
   >
-  > **Part 3 — the DARE shape — is deliberately not bundled.** `reviewer_quality_rating` is a
-  > single 0–1 float where `04-tertiary.md` specifies four anchored Y/P/N questions and
-  > `07-quality-assessment.md` warns against collapsing quality into one number. Reshaping it is
-  > feature-sized: a new instrument, new storage, and a migration.
+  > **Part 3 — the DARE shape — was deliberately not bundled**, and was then done on its own.
+  > `reviewer_quality_rating` is a single 0–1 float where `04-tertiary.md` specifies four anchored
+  > Y/P/N questions and `07-quality-assessment.md` warns against collapsing quality into one
+  > number.
+
+  > **Status 2026-08-09 — part 3 complete, so this entry now closes.** DARE is implemented,
+  > reachable from Tertiary phase 4, and read by the report.
+  >
+  > **The sizing in the line above was wrong, and wrong in the useful direction.** "A new
+  > instrument, new storage, and a migration" assumed DARE needed a table of its own. It did not:
+  > `QualityAssessmentChecklist` → `QualityChecklistItem` → `QualityAssessmentScore` already models
+  > a study-scoped anchored checklist with per-item notes, and DARE *is* a four-item anchored
+  > checklist. Reuse also inherits the Cohen's κ pipeline, which matters rather than being a bonus
+  > — `07-quality-assessment.md` records agreement on quality scoring at **0.54** on average score
+  > even between two expert authors, so a tertiary study that cannot measure its own disagreement
+  > is reporting a number it has no grounds to trust. What was actually missing was one enum value
+  > and one column.
+  >
+  > | Assumed | Actual |
+  > | ------- | ------ |
+  > | New table for DARE | Reuse the existing checklist tables |
+  > | New scoring UI | Reuse `QualityScoreForm`, the component TFIX5 made reachable |
+  > | — | `ChecklistScoringMethod` had only `binary`/`scale_1_3`/`scale_1_5`; **none can express Y=1/P=0.5/N=0** — binary has no middle, both scales start at 1 so N=0 is unreachable |
+  > | — | Nowhere to store the three anchors per question, so they could not reach the reviewer |
+  > | — | `notes` was labelled "Notes (optional)" where the corpus makes justification **mandatory** |
+  >
+  > **Migration `0021_dare_quality_instrument`** adds `yes_partial_no` to
+  > `checklist_scoring_method_enum` and a nullable `anchors` JSON column on
+  > `quality_checklist_item`. **Executed against PostgreSQL 16**, not merely written: `upgrade` to
+  > head, enum confirmed to carry all four values, `anchors json` confirmed present, `downgrade -1`
+  > confirmed to drop the column, and `upgrade` re-applied. The enum value is left in place on
+  > downgrade — PostgreSQL has no `ALTER TYPE ... DROP VALUE`, the same call 0016 made.
+  >
+  > **This takes revision `0021`, so T043's rescreen migration becomes `0022`** — corrected in that
+  > task. That number has now moved twice (`0019` → `0021` → `0022`); it is a plan artefact, and
+  > `(cd db && uv run alembic heads)` is the only trustworthy source.
+  >
+  > **Four decisions worth keeping, because each was a chance to fabricate:**
+  >
+  > 1. **Nothing is preselected.** A `yes_partial_no` item defaults to unanswered, and submission
+  >    is blocked until every item has both a score and a justification. Defaulting to "Yes" would
+  >    have reproduced part 1's defect exactly — a judgement the reviewer never made, submitted on
+  >    their behalf — one instrument over.
+  > 2. **The optional fifth question is CRD's criterion 3, "Were the included studies
+  >    synthesized?"** — mandatory in the original DARE, dropped by SE, and
+  >    `10-reporting-and-evaluation.md` calls restoring it "worth" doing. **The corpus gives no
+  >    Y/P/N anchors for it**, because CRD scored it binary, so the three written here are marked
+  >    *platform-authored* in the constant, in the docstring, and in the anchor text itself. This is
+  >    the failure this repo already has on record — agent prompts once scored "five Petersen
+  >    rubrics" where four used anchors Petersen never published.
+  > 3. **The score is reported out of 4, and the instrument is named.**
+  >    `compute_aggregate_score` returns a weighted *mean* (0–1); presenting that unchanged would
+  >    show "0.75" where DARE says "3 out of 4". `04-tertiary.md` warns DARE scores are not
+  >    comparable across review types, and an unlabelled number invites exactly that comparison.
+  > 4. **A second copy of the checklist routes under `/tertiary` was built and then removed.** It
+  >    looked tidier than a Tertiary study calling `/api/v1/slr/...`, but the frontend calls the
+  >    `/slr` paths, so the duplicate answered nobody. Adding an unreachable endpoint to tidy a
+  >    prefix is the defect this whole feature exists to delete. Only `POST
+  >    /tertiary/studies/{id}/quality-checklist/dare` is new. Moving those routes out of `/slr`
+  >    entirely is the real fix and breaks existing callers, so it belongs in its own change.
+  >
+  > **`reviewer_quality_rating` is deprecated, not dropped** — the user's call. Existing rows keep
+  > their data; nothing reads it. Dropping it would destroy values that are partly real and partly
+  > the fabricated 0.5 the old default wrote, irreversibly and without being able to tell which.
+  >
+  > Two silent data-loss paths were found while wiring it, neither of which any test would have
+  > caught: the frontend's `scoring_method` Zod enum is **strict**, so an unlisted
+  > `yes_partial_no` fails the *whole* checklist response rather than one field; and
+  > `QualityChecklistEditor` rebuilds items field-by-field while `upsert_checklist` replaces all
+  > items, so opening a DARE checklist and pressing Save would have stripped every anchor.
+  >
+  > Backend 1245 passed · frontend 1379 passed · db 164 passed · mypy clean · audit unchanged at 7.
 
 - [x] ~~TFIX7 (original — superseded, kept because how it was wrong is the reusable part)~~ **Tertiary phase 4 gates on a quality score no UI can write.** `tertiary_phase_gate.py` unlocks phase 4 only when a `QualityAssessmentScore` exists for one of the study's candidate papers. The single writer of that table is `backend/src/backend/services/quality_assessment_service.py:195`, reached from `PUT /api/v1/slr/papers/{id}/quality-scores`; the single frontend caller is `useSubmitScores` in `frontend/src/hooks/slr/useQualityAssessment.ts`, whose single consumer is `frontend/src/components/slr/QualityScoreForm.tsx` — which nothing imports but its own test. So **no user can open Tertiary phase 4**, and phase 5 sits behind it. This is TFIX5's root cause with a consequence TFIX5 does not mention: an unreachable SLR form silently locks an unrelated study type out of two entire phases. **Blocks the extraction and report legs of T025**
 
@@ -317,6 +385,26 @@ when null is passed`, whose comment described the fabrication as intended behavi
   >
   > The seeded `validated` extractions stay in the fixture; they now exercise a value the gate
   > still accepts rather than one nothing writes.
+
+- [ ] TFIX13 **`TertiaryQAGuidancePanel` teaches an instrument that does not exist.** Found while wiring TFIX7 part 3, because its name made it look like the thing to reuse. `frontend/src/components/tertiary/TertiaryQAGuidancePanel.tsx:3` describes "the six **mandatory** secondary-study quality assessment dimensions used in Tertiary Studies", and line 93 states it to the user as fact. **There is no such set.** `07-quality-assessment.md:146` assigns tertiary studies **DARE — four questions**, and the same chapter says omission is permissible *with a rationale*, so nothing here is mandatory in that sense. Four of its six map loosely onto DARE (Inclusion/Exclusion Criteria Clarity ≈ Q1, Search Strategy Adequacy ≈ Q2, Quality Assessment Approach ≈ Q3, Synthesis Method Appropriateness ≈ the dropped CRD criterion 3); it **invents two** — Protocol Documentation Completeness and Validity Threats Discussion — **omits DARE Q4 entirely** (traceability, "were the basic data adequately described"), and supplies neither anchors nor scoring.
+
+  > **Deliberately left unwired.** It is one of the seven modules the audit reports, and wiring it
+  > would have taken that to six — a tempting trade that is the wrong way round. An unreachable
+  > component misleads nobody; a reachable one that presents a fabricated standard as mandatory
+  > misleads every reviewer who reads it, and under Principle XI that is a correctness defect, not
+  > a copy problem. Its nine tests pass, and pass against the fabrication — a fourth instance of a
+  > green test pinning a defect, after `QualityAssessmentPage.test.tsx` (TFIX5),
+  > `test_phase_4_locked_without_qa_scores` (TFIX9) and `defaults reviewer_quality_rating to 0.50`
+  > (TFIX7).
+  >
+  > **Not fixed here because the fix is a choice, not a correction**: delete it as superseded — the
+  > real DARE guidance now ships with anchors in `dare_instrument.py` and renders beside each
+  > option — or rewrite it to describe DARE and mount it above the scoring form. Deleting a
+  > component and its test suite is beyond "finish TFIX7".
+  >
+  > This is the same shape as **G51** and as the "five Petersen rubrics" entry in `CLAUDE.md`'s own
+  > table: plausible methodological content, authored rather than sourced, surviving because
+  > nothing checks prose against the corpus. See [[verify_consequence_claims]].
 
 - [x] TFIX9 **Three phase gates required the output of the phase they gate, so they could never open.** `slr_phase_gate.py` unlocked phase 4 only once a `QualityAssessmentScore` existed — and `QualityAssessmentPage`, mounted at phase 4, is the only UI that defines a checklist or submits a score. Phase 5 wanted a completed `SynthesisResult`, and `SynthesisPage` at phase 5 is the only thing that starts one. `tertiary_phase_gate.py` phase 4 carried the same predicate. Each is unsatisfiable by construction: the artifact is produced inside the phase the artifact unlocks.
 
@@ -555,7 +643,7 @@ when null is passed`, whose comment described the fabrication as intended behavi
 ### Implementation for User Story 4
 
 - [ ] T042 [US4] Add `RESCREEN = "rescreen"` to `JobType` in `db/src/db/models/jobs.py` (R1)
-- [ ] T043 [US4] Create Alembic migration `db/alembic/versions/0021_rescreen_job_type.py` adding the value to `background_job_type_enum`, with a working `downgrade()` (R1 — the PRD's "no migration" claim is wrong on this point). **Revision `0021`, revising `0020`, not `0019` as originally planned**: `0019_candidate_citation_intent` landed on this branch after the plan was written and now holds head. Alembic rejects a duplicate revision id, so the number in `plan.md`, `data-model.md`, `research.md` R1, and `CLAUDE.md` is stale — confirmed with `(cd db && uv run alembic heads)` → `0019 (head)`
+- [ ] T043 [US4] Create Alembic migration `db/alembic/versions/0022_rescreen_job_type.py` adding the value to `background_job_type_enum`, with a working `downgrade()` (R1 — the PRD's "no migration" claim is wrong on this point). **Revision `0022`, revising `0021`.** This number has now moved twice: planned as `0019`, corrected to `0021` when `0019_candidate_citation_intent` and `0020_paper_decision_annotation` took those ids, and corrected again to `0022` when TFIX7 part 3 landed `0021_dare_quality_instrument` on 2026-08-09. Alembic rejects a duplicate revision id, so `plan.md`, `data-model.md`, `research.md` R1 and `CLAUDE.md` are all stale on this point and **`(cd db && uv run alembic heads)` is the only source worth trusting** — it currently returns `0021 (head)`
 - [ ] T044 [US4] Create `backend/src/backend/jobs/rescreen_job.py` composing the extracted screening pipeline, creating one reviewer per round and deriving outstanding candidates from decision rows (R2, R5). **On failure it must commit the assessments it completed and record its coverage — it must NOT call `_fail_search_run`, which rolls back** (R9). The search jobs restart because re-running a query is cheap; a re-screen resumes because each assessment is a paid provider call and R5's cursor-free resume reads the very rows a rollback would destroy
 - [ ] T045 [US4] Register the re-screen job in `backend/src/backend/jobs/worker.py`
 - [ ] T046 [US4] Create `backend/src/backend/api/v1/screening_runs.py` implementing `POST /studies/{id}/screening-runs` with the 202/409/422 responses per `contracts/screening-runs.md`, gated on `require_study_member` (FR-023)
@@ -708,14 +796,14 @@ in one commit — a required field and its callers must move together.
 | Refactoring (C1–C3) | TREF1–TREF10 | 10     |
 | Setup ✅            | T001–T002    | 2      |
 | Foundational ✅     | T003–T006    | 4      |
-| Defects found       | TFIX1–TFIX12 | 12     |
+| Defects found       | TFIX1–TFIX13 | 13     |
 | US1 (P1) 🎯 MVP ✅  | T007–T019    | 13     |
 | US2 (P2)            | T020–T026    | 7      |
 | US3 (P3)            | T027–T033    | 7      |
 | US4 (P4)            | T034–T050    | 17     |
 | Polish              | T051–T055    | 5      |
 | Documentation       | TDOC1–TDOC7  | 7      |
-| **Total**           |              | **84** |
+| **Total**           |              | **85** |
 
 TREF1–TREF10, T001–T019 and TFIX1–TFIX4 plus TFIX6 are complete — **the MVP is delivered**: a
 reviewer can screen papers on SMS and SLR studies, driven end-to-end by an e2e against a live

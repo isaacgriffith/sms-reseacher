@@ -17,8 +17,13 @@ export const ChecklistItemSchema = z.object({
   id: z.number(),
   order: z.number(),
   question: z.string(),
-  scoring_method: z.enum(['binary', 'scale_1_3', 'scale_1_5']),
+  // `yes_partial_no` is DARE's Y = 1 / P = 0.5 / N = 0 scale. It must be
+  // listed here or the whole checklist response fails to parse — a strict
+  // enum rejects the payload, not just the field.
+  scoring_method: z.enum(['binary', 'scale_1_3', 'scale_1_5', 'yes_partial_no']),
   weight: z.number(),
+  /** Anchor text per score value, e.g. `{ '1.0': '...', '0.5': '...' }`. */
+  anchors: z.record(z.string(), z.string()).nullable().optional(),
 });
 export type ChecklistItem = z.infer<typeof ChecklistItemSchema>;
 
@@ -61,8 +66,10 @@ export type QualityScores = z.infer<typeof QualityScoresSchema>;
 export const ChecklistItemInputSchema = z.object({
   order: z.number(),
   question: z.string().min(1),
-  scoring_method: z.enum(['binary', 'scale_1_3', 'scale_1_5']),
+  scoring_method: z.enum(['binary', 'scale_1_3', 'scale_1_5', 'yes_partial_no']),
   weight: z.number().min(0),
+  /** Anchor text per score value; preserved on round-trip through the editor. */
+  anchors: z.record(z.string(), z.string()).nullable().optional(),
 });
 export type ChecklistItemInput = z.infer<typeof ChecklistItemInputSchema>;
 
@@ -117,6 +124,29 @@ export async function getChecklist(studyId: number): Promise<Checklist> {
  */
 export async function upsertChecklist(studyId: number, data: ChecklistUpsert): Promise<Checklist> {
   const raw = await api.put<unknown>(`/api/v1/slr/studies/${studyId}/quality-checklist`, data);
+  return ChecklistSchema.parse(raw);
+}
+
+/**
+ * Seed the DARE instrument for a Tertiary study.
+ *
+ * DARE is the instrument `07-quality-assessment.md` assigns to tertiary
+ * studies. Idempotent and non-destructive server-side: a study that already
+ * has a checklist gets it back untouched, so this never discards a team's own
+ * instrument or the scores recorded against it.
+ *
+ * @param studyId - The Tertiary study integer ID.
+ * @param includeSynthesis - Also seed the optional fifth (synthesis) question.
+ * @returns The study's {@link Checklist}.
+ */
+export async function seedDareChecklist(
+  studyId: number,
+  includeSynthesis = false,
+): Promise<Checklist> {
+  const raw = await api.post<unknown>(
+    `/api/v1/tertiary/studies/${studyId}/quality-checklist/dare?include_synthesis=${includeSynthesis}`,
+    {},
+  );
   return ChecklistSchema.parse(raw);
 }
 

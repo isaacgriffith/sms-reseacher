@@ -30,6 +30,7 @@ import SeedImportPanel from '../components/tertiary/SeedImportPanel';
 import TertiaryExtractionForm from '../components/tertiary/TertiaryExtractionForm';
 import TertiaryReportPage from './TertiaryReportPage';
 import ScreeningView from '../components/studies/ScreeningView';
+import TertiaryQualityPanel from '../components/tertiary/TertiaryQualityPanel';
 import {
   useTertiaryProtocol,
   useUpdateTertiaryProtocol,
@@ -325,6 +326,29 @@ function Phase4Panel({ studyId }: Phase4PanelProps) {
           results.
         </Alert>
       )}
+
+      {/*
+        Quality assessment comes before extraction, and that order is
+        deliberate rather than cosmetic. The corpus's sharpest warning for a
+        platform like this one is that extraction decoupled from quality
+        appraisal produces results "very quickly [that] will be wrong". The
+        tertiary study this instrument comes from also ordered its own form so
+        quality was collected first, as a partial guard against knowing a
+        study's provenance while judging it.
+      */}
+      <Box sx={{ mb: 3 }}>
+        <TertiaryQualityPanel
+          studyId={studyId}
+          papers={extractions.map((e) => ({
+            id: e.candidate_paper_id,
+            title: e.paper_title ?? `Paper ${e.candidate_paper_id}`,
+          }))}
+        />
+      </Box>
+
+      <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+        Data extraction
+      </Typography>
 
       {extractions.length === 0 ? (
         <Alert severity="info">

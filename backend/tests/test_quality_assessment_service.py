@@ -227,6 +227,240 @@ class TestUpsertChecklist:
         assert "Old Q?" not in questions
         assert "New Q1?" in questions
 
+    @pytest.mark.asyncio
+    async def test_upsert_checklist_persists_anchors(self, db_session) -> None:
+        """Anchors submitted with an item survive the write (TFIX7 part 3).
+
+        ``upsert_checklist`` builds each ``QualityChecklistItem`` field by
+        field, so a key it does not read is dropped in silence — the item is
+        created, the request succeeds, and the anchors are simply gone.
+        """
+        from backend.services.quality_assessment_service import upsert_checklist
+
+        study_id = await _insert_study(db_session)
+        anchors = {"1.0": "Explicit", "0.5": "Implicit", "0.0": "Absent"}
+        data = {
+            "name": "DARE",
+            "items": [
+                {
+                    "order": 1,
+                    "question": "Criteria described?",
+                    "scoring_method": "yes_partial_no",
+                    "weight": 1.0,
+                    "anchors": anchors,
+                },
+            ],
+        }
+        checklist = await upsert_checklist(study_id, data, db_session)
+        assert checklist.items[0].anchors == anchors
+
+    @pytest.mark.asyncio
+    async def test_upsert_checklist_without_anchors_stores_none(self, db_session) -> None:
+        """Items that carry no anchors are unaffected."""
+        from backend.services.quality_assessment_service import upsert_checklist
+
+        study_id = await _insert_study(db_session)
+        data = {
+            "name": "CL",
+            "items": [
+                {"order": 1, "question": "Q1?", "scoring_method": "binary", "weight": 1.0},
+            ],
+        }
+        checklist = await upsert_checklist(study_id, data, db_session)
+        assert checklist.items[0].anchors is None
+
+
+# ---------------------------------------------------------------------------
+# Tests — yes/partial/no validation (TFIX7 part 3)
+# ---------------------------------------------------------------------------
+
+
+class TestYesPartialNoValidation:
+    """submit_scores enforces DARE's rules on yes_partial_no items.
+
+    Validation belongs in the service rather than the request schema because
+    the rule depends on the *item* being scored: only ``yes_partial_no`` items
+    are constrained, and a Pydantic model validating ``ScoreItemInput`` alone
+    cannot see which item an id refers to.
+    """
+
+    @staticmethod
+    async def _dare_fixture(db_session) -> tuple[int, int, list[int]]:
+        """Create a study with a two-item DARE checklist; return ids.
+
+        Two items rather than one: the batch-atomicity test needs a valid
+        answer and an invalid one in the same submission, and reusing a single
+        item id twice would trip the ``(paper, reviewer, item)`` unique
+        constraint before validation ever ran.
+        """
+        from backend.services.quality_assessment_service import upsert_checklist
+
+        study_id = await _insert_study(db_session)
+        reviewer_id = await _insert_reviewer(db_session, study_id)
+        exec_id = await _insert_search_exec(db_session, study_id)
+        paper_id = await _insert_paper(db_session)
+        cp_id = await _insert_candidate_paper(db_session, study_id, paper_id, exec_id, "accepted")
+
+        checklist = await upsert_checklist(
+            study_id,
+            {
+                "name": "DARE",
+                "items": [
+                    {
+                        "order": 1,
+                        "question": "Criteria described?",
+                        "scoring_method": "yes_partial_no",
+                        "weight": 1.0,
+                        "anchors": {"1.0": "Explicit", "0.5": "Implicit", "0.0": "Absent"},
+                    },
+                    {
+                        "order": 2,
+                        "question": "Search adequate?",
+                        "scoring_method": "yes_partial_no",
+                        "weight": 1.0,
+                        "anchors": {"1.0": "Four or more", "0.5": "Three", "0.0": "Two"},
+                    },
+                ],
+            },
+            db_session,
+        )
+        item_ids = [item.id for item in sorted(checklist.items, key=lambda i: i.order)]
+        return cp_id, reviewer_id, item_ids
+
+    @pytest.mark.asyncio
+    async def test_rejects_answer_without_justification(self, db_session) -> None:
+        """A DARE answer with no justification is refused.
+
+        ``04-tertiary.md`` requires reviewers to answer "providing a
+        justification for each answer", and its implementation note calls this
+        out as "not optional metadata". A stored score with no reasoning cannot
+        be adjudicated against a second reviewer's, which is the whole reason
+        scores are held per reviewer.
+        """
+        from backend.services.quality_assessment_service import submit_scores
+
+        cp_id, reviewer_id, item_ids = await self._dare_fixture(db_session)
+
+        with pytest.raises(ValueError, match="justification"):
+            await submit_scores(
+                cp_id,
+                reviewer_id,
+                [{"checklist_item_id": item_ids[0], "score_value": 1.0, "notes": None}],
+                db_session,
+            )
+
+    @pytest.mark.asyncio
+    async def test_rejects_off_scale_value(self, db_session) -> None:
+        """0.75 is not a finer-grained DARE judgement; it is unreadable."""
+        from backend.services.quality_assessment_service import submit_scores
+
+        cp_id, reviewer_id, item_ids = await self._dare_fixture(db_session)
+
+        with pytest.raises(ValueError, match="0.0, 0.5 or 1.0"):
+            await submit_scores(
+                cp_id,
+                reviewer_id,
+                [{"checklist_item_id": item_ids[0], "score_value": 0.75, "notes": "Mostly."}],
+                db_session,
+            )
+
+    @pytest.mark.asyncio
+    async def test_accepts_valid_answer(self, db_session) -> None:
+        """A scored answer with a justification is stored."""
+        from backend.services.quality_assessment_service import submit_scores
+
+        cp_id, reviewer_id, item_ids = await self._dare_fixture(db_session)
+
+        with patch(
+            "backend.services.quality_assessment_service._maybe_trigger_kappa",
+            new_callable=AsyncMock,
+        ):
+            result = await submit_scores(
+                cp_id,
+                reviewer_id,
+                [
+                    {
+                        "checklist_item_id": item_ids[0],
+                        "score_value": 0.5,
+                        "notes": "Criteria are implied by the RQs but never stated.",
+                    }
+                ],
+                db_session,
+            )
+
+        assert result[0].score_value == 0.5
+        assert "implied" in result[0].notes
+
+    @pytest.mark.asyncio
+    async def test_nothing_is_written_when_one_answer_is_invalid(self, db_session) -> None:
+        """A rejected batch stores none of its answers.
+
+        Validation runs over the whole batch before any row is touched, so a
+        reviewer never ends up with half a DARE assessment recorded.
+        """
+        from backend.services.quality_assessment_service import get_scores, submit_scores
+
+        cp_id, reviewer_id, item_ids = await self._dare_fixture(db_session)
+
+        with pytest.raises(ValueError):
+            await submit_scores(
+                cp_id,
+                reviewer_id,
+                [
+                    {"checklist_item_id": item_ids[0], "score_value": 1.0, "notes": "Fine."},
+                    {"checklist_item_id": item_ids[1], "score_value": 0.75, "notes": "Off."},
+                ],
+                db_session,
+            )
+
+        assert await get_scores(cp_id, db_session) == {}
+
+    @pytest.mark.asyncio
+    async def test_binary_items_still_accept_null_notes(self, db_session) -> None:
+        """Existing instruments are untouched — notes stay optional for them.
+
+        The mandate is DARE's, not the platform's. Applying it to every
+        checklist would break every SLR study already scoring binary items
+        without notes.
+        """
+        from backend.services.quality_assessment_service import submit_scores, upsert_checklist
+
+        study_id = await _insert_study(db_session)
+        reviewer_id = await _insert_reviewer(db_session, study_id)
+        exec_id = await _insert_search_exec(db_session, study_id)
+        paper_id = await _insert_paper(db_session)
+        cp_id = await _insert_candidate_paper(db_session, study_id, paper_id, exec_id, "accepted")
+
+        checklist = await upsert_checklist(
+            study_id,
+            {
+                "name": "CL",
+                "items": [
+                    {"order": 1, "question": "Q?", "scoring_method": "binary", "weight": 1.0},
+                ],
+            },
+            db_session,
+        )
+
+        with patch(
+            "backend.services.quality_assessment_service._maybe_trigger_kappa",
+            new_callable=AsyncMock,
+        ):
+            result = await submit_scores(
+                cp_id,
+                reviewer_id,
+                [
+                    {
+                        "checklist_item_id": checklist.items[0].id,
+                        "score_value": 1.0,
+                        "notes": None,
+                    }
+                ],
+                db_session,
+            )
+
+        assert result[0].notes is None
+
 
 # ---------------------------------------------------------------------------
 # Tests — get_scores
