@@ -235,16 +235,37 @@ database by `backend/tests/integration/test_search_pipeline_screening.py`.
   > Backend 1182 passed (from 1174), frontend 1371 (from 1365), 22 new tests.
 
 - [ ] TFIX7 **REWRITTEN 2026-08-09 — the original complaint was dissolved by TFIX9, and what is underneath is worse.** As first written this said Tertiary phase 4 was unreachable because the gate demanded a `QualityAssessmentScore` that no UI writes. TFIX9 re-keyed that gate to accepted papers, so the deadlock is gone and phase 4 opens. Revisiting it showed the premise was also wrong in a second way: **Tertiary quality assessment is captured**, just not in `QualityAssessmentScore`. It lives on `TertiaryDataExtraction.reviewer_quality_rating` — a single `float | None` (`db/src/db/models/tertiary.py:227`) driven by a slider at `TertiaryExtractionForm.tsx:317`. Three defects remain, none of which the original entry named:
-
   1. **The rating defaults to `0.5` and is submitted as a judgement.** `TertiaryExtractionForm.tsx:108` seeds the form with `extraction.reviewer_quality_rating ?? 0.5`, and line 126 submits whatever the form holds. A reviewer who never touches the slider persists a mid-scale quality rating they never made. This is the same class as the rejected TFIX8 "make the form save `validated`" fix — fabricated evidence of an assessment that did not happen — except that this one already ships. The honest default is `null`, with the control showing "not assessed".
   2. **The report says quality assessment was performed whether or not it was.** `_build_qa_results` (`tertiary_report_service.py:388`) never reads a quality rating at all — it branches on `synthesis.computed_statistics` and returns _"Quality assessment was performed. Computed statistics: …"_ or _"Quality assessment was completed. No computed statistics are available."_ Both assert it happened. A tertiary report therefore claims quality assessment for a study where nobody assessed anything, which is a reporting-integrity defect, not a UI gap.
   3. **A single float is the wrong instrument.** `04-tertiary.md` specifies DARE's four anchored Y/P/N questions for tertiary studies, and `07-quality-assessment.md` warns explicitly against collapsing methodological quality into one number. `reviewer_quality_rating` is exactly that number. Correcting the shape is feature-sized and should not be bundled with (1) and (2), which are small and independently correct.
 
   > Worth keeping as a lesson about this ledger rather than about the code: TFIX7 was written from a gate condition and an absent UI, and it inferred a missing capability from them. The capability was present the whole time, one table over, and the real defects were a fabricating default and a report that asserts an unperformed step. **A defect entry is a restatement too, and this file's own preamble warns that restatements go stale.** It survived three days and one commit that cited it.
 
-- [ ] ~~TFIX7 (original)~~ **Tertiary phase 4 gates on a quality score no UI can write.** `tertiary_phase_gate.py` unlocks phase 4 only when a `QualityAssessmentScore` exists for one of the study's candidate papers. The single writer of that table is `backend/src/backend/services/quality_assessment_service.py:195`, reached from `PUT /api/v1/slr/papers/{id}/quality-scores`; the single frontend caller is `useSubmitScores` in `frontend/src/hooks/slr/useQualityAssessment.ts`, whose single consumer is `frontend/src/components/slr/QualityScoreForm.tsx` — which nothing imports but its own test. So **no user can open Tertiary phase 4**, and phase 5 sits behind it. This is TFIX5's root cause with a consequence TFIX5 does not mention: an unreachable SLR form silently locks an unrelated study type out of two entire phases. **Blocks the extraction and report legs of T025**
+  > **Status 2026-08-09 — parts 1 and 2 fixed in `5eb9582`; part 3 remains open, which is why this
+  > entry stays unchecked.** The form now defaults `reviewer_quality_rating` to `null` rather than
+  > `0.5`, and `_build_qa_results` reads the ratings it describes — reporting coverage, the mean,
+  > how many were not assessed, and how many meet the protocol threshold — instead of asserting
+  > "Quality assessment was performed" from `SynthesisResult.computed_statistics`. Backend
+  > 1190 → 1194.
+  >
+  > A **third** test was found encoding its own defect: `defaults reviewer_quality_rating to 0.50
+when null is passed`, whose comment described the fabrication as intended behaviour. The other
+  > two were `QualityAssessmentPage.test.tsx` asserting the placeholder exists (TFIX5) and
+  > `test_phase_4_locked_without_qa_scores` asserting the deadlock (TFIX9). All three were green,
+  > and none could be fixed without first deleting an assertion.
+  >
+  > The report tests asserted only `isinstance(quality_assessment_results, str)`. **A type
+  > assertion cannot tell a true sentence from a false one** — which is how a report claiming an
+  > unperformed methodological step survived from feature 009. Four real assertions replace it.
+  >
+  > **Part 3 — the DARE shape — is deliberately not bundled.** `reviewer_quality_rating` is a
+  > single 0–1 float where `04-tertiary.md` specifies four anchored Y/P/N questions and
+  > `07-quality-assessment.md` warns against collapsing quality into one number. Reshaping it is
+  > feature-sized: a new instrument, new storage, and a migration.
 
-- [ ] TFIX8 **Tertiary phase 5 gates on a status literal the form never sends.** The gate requires ≥2 `TertiaryDataExtraction` rows with `extraction_status == "validated"`. `frontend/src/components/tertiary/TertiaryExtractionForm.tsx:127` hardcodes `extraction_status: 'human_reviewed'` on save, and **nothing in `backend/src` or `frontend/src` writes `"validated"` for a `TertiaryDataExtraction` at all** — the column is a free-form string and the PUT endpoint accepts any value, so neither side is individually wrong and neither side's tests can notice. A one-word disagreement between a gate and the only form meant to satisfy it. **Blocks the report leg of T025**
+- [x] ~~TFIX7 (original — superseded, kept because how it was wrong is the reusable part)~~ **Tertiary phase 4 gates on a quality score no UI can write.** `tertiary_phase_gate.py` unlocks phase 4 only when a `QualityAssessmentScore` exists for one of the study's candidate papers. The single writer of that table is `backend/src/backend/services/quality_assessment_service.py:195`, reached from `PUT /api/v1/slr/papers/{id}/quality-scores`; the single frontend caller is `useSubmitScores` in `frontend/src/hooks/slr/useQualityAssessment.ts`, whose single consumer is `frontend/src/components/slr/QualityScoreForm.tsx` — which nothing imports but its own test. So **no user can open Tertiary phase 4**, and phase 5 sits behind it. This is TFIX5's root cause with a consequence TFIX5 does not mention: an unreachable SLR form silently locks an unrelated study type out of two entire phases. **Blocks the extraction and report legs of T025**
+
+- [x] TFIX8 **Tertiary phase 5 gates on a status literal the form never sends.** The gate requires ≥2 `TertiaryDataExtraction` rows with `extraction_status == "validated"`. `frontend/src/components/tertiary/TertiaryExtractionForm.tsx:127` hardcodes `extraction_status: 'human_reviewed'` on save, and **nothing in `backend/src` or `frontend/src` writes `"validated"` for a `TertiaryDataExtraction` at all** — the column is a free-form string and the PUT endpoint accepts any value, so neither side is individually wrong and neither side's tests can notice. A one-word disagreement between a gate and the only form meant to satisfy it. **Blocks the report leg of T025**
 
   > **Both are seeded, not skipped — the user's call on 2026-08-08**, in preference to marking the
   > blocked legs `test.fixme`. `_seed_tertiary_study` now creates the `QualityAssessmentScore`
@@ -267,6 +288,64 @@ database by `backend/tests/integration/test_search_pipeline_screening.py`.
   > validated protocol is inserted, and `[1]` again after that insert is rolled back — confirming
   > the fixture opens phases 4 and 5 and that the study still ends with no protocol row, so T025
   > still starts where it is meant to.
+
+  > **TFIX8 resolved 2026-08-09 in `23030f6` — the gate was wrong, not the form.** Phase 5 now
+  > accepts `extraction_status.in_(("validated", "human_reviewed"))`. Two independent methodology
+  > investigations were run against `docs/methodology/`, the second deliberately not told the
+  > first's conclusion, and **they disagreed**. The first read `04-tertiary.md` §2.4's two-reviewer
+  > consensus protocol and concluded the gate should stay strict while the platform grew a
+  > validation workflow. The second found the passages that limit §2.4's force — it is framed as
+  > "the only fully specified multi-rater extraction protocol in the corpus", an exemplar, and the
+  > same chapter records a tertiary study where _"One person seeing every paper is a known bias,
+  > **accepted deliberately**… Record the trade-off rather than pretending it does not exist"_,
+  > while `08-extraction-and-synthesis.md` asks for double extraction _"where feasible"_. The
+  > corpus prescribes **disclosure, not prohibition**. Verified both citations directly before
+  > adjudicating.
+  >
+  > The first investigation inferred a requirement from an exemplar and stopped twelve lines above
+  > the caveat that contradicts it. Had it been accepted, the platform would have grown a
+  > multi-reviewer consensus workflow the corpus never demanded.
+  >
+  > **The opposite fix was rejected as worse than the defect**: making the form save `"validated"`
+  > asserts a consensus event that never happened. Apparent conformance outranks an unreachable
+  > phase under Principle XI.
+  >
+  > **Deliberately not widened to `!= "pending"`**, which is how `phase_gate.py` gates SMS — that
+  > admits `ai_complete`, an AI pre-fill no reviewer has read. A guard test pins this so a later
+  > tidy-up cannot align the two gates by loosening the correct one. The SMS gate's own weakness is
+  > **TFIX10**.
+  >
+  > The seeded `validated` extractions stay in the fixture; they now exercise a value the gate
+  > still accepts rather than one nothing writes.
+
+- [x] TFIX9 **Three phase gates required the output of the phase they gate, so they could never open.** `slr_phase_gate.py` unlocked phase 4 only once a `QualityAssessmentScore` existed — and `QualityAssessmentPage`, mounted at phase 4, is the only UI that defines a checklist or submits a score. Phase 5 wanted a completed `SynthesisResult`, and `SynthesisPage` at phase 5 is the only thing that starts one. `tertiary_phase_gate.py` phase 4 carried the same predicate. Each is unsatisfiable by construction: the artifact is produced inside the phase the artifact unlocks.
+
+  **Fixed 2026-08-09 in `23030f6`**, re-keying each gate to the **previous** phase's output:
+
+  | Gate             | Was                 | Now                   |
+  | ---------------- | ------------------- | --------------------- |
+  | slr phase 4      | QA score exists     | accepted papers exist |
+  | slr phase 5      | synthesis completed | QA scores exist       |
+  | tertiary phase 4 | QA score exists     | accepted papers exist |
+
+  Tertiary phase 5 was left alone: it asks for phase 4's extractions, so its **shape** was already
+  right and only its literal was wrong — that is TFIX8, decided on separate grounds.
+
+  > **This is what completes TFIX5.** That commit made `QualityScoreForm` importable and the audit
+  > dropped 8 → 7, and I reported it as fixed. No user could reach it: SLR phase 4 never opened.
+  > An import-graph audit cannot see a phase gate — "reachable" and "navigable" are different
+  > properties and only one of them has a tool. I walked into that distinction two hours after
+  > writing it into TDOC7.
+  >
+  > An existing test encoded the deadlock: `test_phase_4_locked_without_qa_scores` asserted that an
+  > accepted paper with no QA score keeps phase 4 locked. Its precondition **is** the bug. Flipped,
+  > renamed, and a real guard test added so the fix cannot degenerate into "always unlock".
+  >
+  > `StudyPage.tsx`'s hardcoded `[...unlocked_phases, 6, 7]` was suspected to be a workaround for
+  > this and is **not**: `get_slr_unlocked_phases` never computes 6 or 7 at all, so those tabs
+  > would be unreachable without it. Left in place.
+  >
+  > Backend 1182 → 1187. **TFIX12** was found while building its fixtures.
 
 - [ ] TFIX12 **Every phase gate 500s once a study has two of anything it expects one of.** The gates ask `scalar_one_or_none()`, which raises `MultipleResultsFound` on more than one row — it is not a "give me any one" helper. Eight such calls carry no `LIMIT`: `slr_phase_gate.py:49` (`ReviewProtocol`) and `:67` (completed `SearchExecution`), `rr_phase_gate.py:50`, `:68`, `:89`, `tertiary_phase_gate.py:47`, and `phase_gate.py:44` (`PICO`) and `:64` (completed `SearchExecution`). Only the `_is_quality_complete`-style helpers carry `.limit(1)`.
 
@@ -593,14 +672,14 @@ in one commit — a required field and its callers must move together.
 | Refactoring (C1–C3) | TREF1–TREF10 | 10     |
 | Setup ✅            | T001–T002    | 2      |
 | Foundational ✅     | T003–T006    | 4      |
-| Defects found       | TFIX1–TFIX8  | 8      |
+| Defects found       | TFIX1–TFIX12 | 12     |
 | US1 (P1) 🎯 MVP ✅  | T007–T019    | 13     |
 | US2 (P2)            | T020–T026    | 7      |
 | US3 (P3)            | T027–T033    | 7      |
 | US4 (P4)            | T034–T050    | 17     |
 | Polish              | T051–T055    | 5      |
 | Documentation       | TDOC1–TDOC7  | 7      |
-| **Total**           |              | **80** |
+| **Total**           |              | **84** |
 
 TREF1–TREF10, T001–T019 and TFIX1–TFIX4 plus TFIX6 are complete — **the MVP is delivered**: a
 reviewer can screen papers on SMS and SLR studies, driven end-to-end by an e2e against a live
