@@ -68,10 +68,10 @@ export default function TertiaryQualityPanel({ studyId, papers }: TertiaryQualit
     return (
       <Box>
         <Alert severity="info" sx={{ mb: 2 }}>
-          No quality instrument is set up for this study. DARE — four anchored questions
-          scored Yes (1) / Partly (0.5) / No (0) — is the instrument for tertiary studies.
-          Omitting quality assessment is a legitimate choice, but it should be stated and
-          justified in the report rather than left silent.
+          No quality instrument is set up for this study. DARE — four anchored questions scored Yes
+          (1) / Partly (0.5) / No (0) — is the instrument for tertiary studies. Omitting quality
+          assessment is a legitimate choice, but it should be stated and justified in the report
+          rather than left silent.
         </Alert>
         <Button
           variant="contained"
@@ -103,9 +103,9 @@ export default function TertiaryQualityPanel({ studyId, papers }: TertiaryQualit
         {checklist.name} quality assessment
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-        Every answer needs a justification. Scores are recorded per reviewer, so two
-        reviewers can be compared — agreement on quality scoring is known to be low even
-        among experts, which is why the disagreement is worth seeing.
+        Every answer needs a justification. Scores are recorded per reviewer, so two reviewers can
+        be compared — agreement on quality scoring is known to be low even among experts, which is
+        why the disagreement is worth seeing.
       </Typography>
 
       <TextField

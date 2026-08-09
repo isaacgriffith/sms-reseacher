@@ -208,11 +208,7 @@ export default function QualityScoreForm({ candidatePaperId, studyId }: QualityS
                               {YES_PARTIAL_NO_LABELS[value]} ({value})
                             </Typography>
                             {anchorFor(item, value) && (
-                              <Typography
-                                variant="caption"
-                                display="block"
-                                color="text.secondary"
-                              >
+                              <Typography variant="caption" display="block" color="text.secondary">
                                 {anchorFor(item, value)}
                               </Typography>
                             )}

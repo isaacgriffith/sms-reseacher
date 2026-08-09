@@ -89,7 +89,7 @@ describe('QualityScoreForm — yes/partial/no items', () => {
     renderForm();
 
     expect(
-      screen.getByText('Inclusion criteria explicitly defined in the paper')
+      screen.getByText('Inclusion criteria explicitly defined in the paper'),
     ).toBeInTheDocument();
     expect(screen.getByText('Inclusion criteria implicit')).toBeInTheDocument();
     expect(screen.getByText('Not defined and not readily inferable')).toBeInTheDocument();
