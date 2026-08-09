@@ -347,13 +347,42 @@ when null is passed`, whose comment described the fabrication as intended behavi
   >
   > Backend 1182 → 1187. **TFIX12** was found while building its fixtures.
 
-- [ ] TFIX12 **Every phase gate 500s once a study has two of anything it expects one of.** The gates ask `scalar_one_or_none()`, which raises `MultipleResultsFound` on more than one row — it is not a "give me any one" helper. Eight such calls carry no `LIMIT`: `slr_phase_gate.py:49` (`ReviewProtocol`) and `:67` (completed `SearchExecution`), `rr_phase_gate.py:50`, `:68`, `:89`, `tertiary_phase_gate.py:47`, and `phase_gate.py:44` (`PICO`) and `:64` (completed `SearchExecution`). Only the `_is_quality_complete`-style helpers carry `.limit(1)`.
+- [x] TFIX12 **A phase gate 500s once a study has two of something it asks for one of.** The gates ask `scalar_one_or_none()`, which raises `MultipleResultsFound` on more than one row — it is not a "give me any one" helper.
+
+  > **This entry originally said "eight such calls". It is four**, and the error is the same one the
+  > entry below describes in someone else's work. I wrote it from a grep for `scalar_one_or_none()`
+  > without checking whether each table can actually return two rows. Four of the eight are
+  > uniqueness-protected and correct as written — `ReviewProtocol.study_id`, `RapidReviewProtocol
+.study_id`, `TertiaryStudyProtocol.study_id` and `PICOComponent.study_id` are all declared
+  > `unique=True`, so a second row is a genuine data defect and raising is the right response.
+  > Corrected 2026-08-09 while fixing it. See [[defect_entries_go_stale]].
 
   **The search-execution case is reachable in ordinary use, on every study type.** `db/src/db/models/search_exec.py` has **no** unique constraint scoping executions to a study — its only `UniqueConstraint` is on `search_metrics` — so two completed rows are perfectly legal, and a full search **plus a snowball** produces exactly that (TREF9 made `run_snowball` mark its own `SearchExecution` completed, which is correct, and which makes this easier to reach). The moment a study runs both, `GET /studies/{id}` raises and the workspace cannot compute its unlocked phases at all.
 
   Fix by asking the question actually being asked — existence, not uniqueness: `select(...).limit(1)` with `scalar_one_or_none()`, or `select(func.count())`. The protocol lookups differ from the search ones: for `ReviewProtocol` / `RapidReviewProtocol` / `TertiaryStudyProtocol` a second row per study may be a genuine data defect worth surfacing rather than silently taking the first — decide per call site rather than applying `.limit(1)` everywhere by reflex.
 
-  > Found by the TFIX9 agent, which hit it while building a fixture and **worked around it** by reusing one execution rather than reporting it as blocking. Verified independently afterwards, and the scope grew: it was reported as an SLR phase-3 issue, and it is eight call sites across all four gates. A workaround in a test is a defect nobody has to look at — the fixture went green and the bug stayed live.
+  > Found by the TFIX9 agent, which hit it while building a fixture and **worked around it** by reusing one execution rather than reporting it as blocking — the comment it left at `test_slr_phase_gate.py:98` documents the bug inside the fixture that avoids it. A workaround in a test is a defect nobody has to look at: the fixture went green and the bug stayed live.
+
+  > **Fixed 2026-08-09.** `.limit(1)` at all four sites, because every one is an existence check —
+  > the selected row is discarded — so no per-site judgement was needed after all. The four
+  > uniqueness-protected calls are deliberately left bare.
+  >
+  > **The Rapid case was the worst and I had ranked it last.** `RRNarrativeSynthesisSection` is
+  > `UniqueConstraint(study_id, rq_index)` — one row per research question — so two completed
+  > sections is the _ordinary_ path for any multi-RQ review, not a rare combination. The
+  > search-execution cases need a full search plus a snowball.
+  >
+  > **Why this was invisible in the Rapid suite**: every existing phase-5 test there stubs
+  > `session.execute` and returns a `MagicMock` whose `scalar_one_or_none` yields whatever it is
+  > told. A mocked result never raises `MultipleResultsFound` however many rows the real query
+  > would match, so those tests assert that the code _calls_ the method, not that the query behind
+  > it is correct. The SMS gate had a real-session test and reproduced the failure on the first
+  > run. Two real-session tests added here; `db.models.search` / `db.models.search_exec` had to be
+  > registered in that module for the tables to exist at all.
+  >
+  > Both reproductions proven RED by temporarily removing the limit —
+  > `sqlalchemy.exc.MultipleResultsFound: Multiple rows were found when one or none was required`.
+  > Backend 1194 → 1197.
 
 - [ ] TFIX10 **The SMS phase gate admits extractions no human has looked at.** `backend/src/backend/services/phase_gate.py:85` unlocks phases 4 and 5 on `DataExtraction.extraction_status != ExtractionStatus.PENDING`. That set includes **`ai_complete`** — a record the AI pre-fill wrote and no reviewer has touched. So an SMS study can reach reporting on wholly unreviewed AI output. `01-slr.md` §2.4 is the corpus's sharpest warning for a platform like this one: extracting without checking whether a study used an invalid metric yields results _"very quickly but will be wrong"_ — _"It does not forbid automation; it forbids extraction decoupled from appraisal."_ Gating on `!= pending` is exactly that decoupling. Narrow the SMS gate the way TFIX8 narrows Tertiary's: accept `human_reviewed` and `validated`, not `ai_complete`
   - Found while deciding TFIX8, by asking why Tertiary should _not_ simply copy the SMS precedent. The precedent turned out to be the weaker of the two — which is the argument for never treating in-repo consistency as evidence of correctness

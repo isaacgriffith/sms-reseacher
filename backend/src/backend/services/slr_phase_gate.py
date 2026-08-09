@@ -58,11 +58,18 @@ async def get_slr_unlocked_phases(study_id: int, db: AsyncSession) -> list[int]:
             SearchExecutionStatus,
         )
 
+        # TFIX12: `.limit(1)` because this asks whether *any* completed search
+        # exists, not whether exactly one does. Without it `scalar_one_or_none`
+        # raises MultipleResultsFound, and a study that ran a full search and a
+        # snowball has two — `search_exec.py` has no constraint scoping
+        # executions to a study, so that is legal and ordinary.
         search_result = await db.execute(
-            select(SearchExecution).where(
+            select(SearchExecution)
+            .where(
                 SearchExecution.study_id == study_id,
                 SearchExecution.status == SearchExecutionStatus.COMPLETED,
             )
+            .limit(1)
         )
         if search_result.scalar_one_or_none() is None:
             return unlocked

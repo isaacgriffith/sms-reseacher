@@ -162,6 +162,29 @@ class TestGetUnlockedPhasesPhase3:
         assert 3 in result
 
     @pytest.mark.asyncio
+    async def test_phase_3_unlocked_with_two_completed_searches(self, db_session) -> None:
+        """Two completed searches still unlock phase 3 — TFIX12.
+
+        The gate asked ``scalar_one_or_none()``, which raises
+        ``MultipleResultsFound`` on more than one row rather than returning any
+        one of them. It is an existence check — the row itself is never used —
+        so a second completed execution turned the whole study's phase lookup
+        into a 500. ``search_exec.py`` has no constraint scoping executions to
+        a study, and a full search plus a snowball produces exactly two.
+        """
+        # Arrange
+        db_session.add(PICOComponent(study_id=STUDY_ID, variant="PICO", population="X"))
+        await self._insert_search_execution(db_session, STUDY_ID, SearchExecutionStatus.COMPLETED)
+        await self._insert_search_execution(db_session, STUDY_ID, SearchExecutionStatus.COMPLETED)
+        await db_session.commit()
+
+        # Act
+        result = await get_unlocked_phases(STUDY_ID, db_session)
+
+        # Assert
+        assert 3 in result
+
+    @pytest.mark.asyncio
     async def test_phase_3_not_unlocked_when_search_running(self, db_session) -> None:
         """A running (not completed) SearchExecution does not unlock phase 3."""
         db_session.add(PICOComponent(study_id=STUDY_ID, variant="PICO", population="X"))

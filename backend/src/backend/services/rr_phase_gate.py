@@ -59,11 +59,16 @@ async def get_rr_unlocked_phases(study_id: int, db: AsyncSession) -> list[int]:
             SearchExecutionStatus,
         )
 
+        # TFIX12: `.limit(1)` — see the phase-5 note below. This asks whether
+        # *any* completed search exists, and a study that ran a full search
+        # and a snowball has two.
         search_result = await db.execute(
-            select(SearchExecution).where(
+            select(SearchExecution)
+            .where(
                 SearchExecution.study_id == study_id,
                 SearchExecution.status == SearchExecutionStatus.COMPLETED,
             )
+            .limit(1)
         )
         if search_result.scalar_one_or_none() is None:
             return unlocked
@@ -80,11 +85,19 @@ async def get_rr_unlocked_phases(study_id: int, db: AsyncSession) -> list[int]:
     unlocked.append(4)
 
     # Phase 5: at least one RRNarrativeSynthesisSection with is_complete=True.
+    # TFIX12: `.limit(1)` because this asks whether *any* section is complete.
+    # `RRNarrativeSynthesisSection` is UniqueConstraint(study_id, rq_index) —
+    # one row per research question — so several complete sections is the
+    # designed shape, not an anomaly, and it is the ordinary path for any
+    # multi-RQ review. Without the limit `scalar_one_or_none` raised
+    # MultipleResultsFound the moment a second section was finished.
     section_result = await db.execute(
-        select(RRNarrativeSynthesisSection).where(
+        select(RRNarrativeSynthesisSection)
+        .where(
             RRNarrativeSynthesisSection.study_id == study_id,
             RRNarrativeSynthesisSection.is_complete.is_(True),
         )
+        .limit(1)
     )
     if section_result.scalar_one_or_none() is not None:
         unlocked.append(5)

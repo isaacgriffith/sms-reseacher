@@ -18,6 +18,8 @@ from unittest.mock import AsyncMock, MagicMock
 # Register all ORM models before creating tables
 import db.models  # noqa: F401
 import db.models.rapid_review  # noqa: F401
+import db.models.search  # noqa: F401  — TFIX12 needs real SearchExecution rows
+import db.models.search_exec  # noqa: F401
 import db.models.study  # noqa: F401
 import db.models.users  # noqa: F401
 import pytest
@@ -367,6 +369,98 @@ class TestGetRrUnlockedPhasesPhase5:
         session.execute.side_effect = [protocol_fetch, search_fetch, section_fetch]
 
         result = await get_rr_unlocked_phases(STUDY_ID, session)
+        assert 5 not in result
+
+
+class TestPhase5WithRealRows:
+    """Phase 5 against a real session rather than a mocked result — TFIX12.
+
+    Every other phase-5 test here stubs ``session.execute`` and hands back a
+    ``MagicMock`` whose ``scalar_one_or_none`` returns whatever it is told. A
+    mocked result never raises ``MultipleResultsFound`` however many rows the
+    real query would match, so those tests assert that the code *calls* the
+    method, not that the query behind it is correct — which is exactly why
+    this defect was invisible in this file.
+
+    ``RRNarrativeSynthesisSection`` is ``UniqueConstraint(study_id, rq_index)``:
+    one row per research question. Two complete sections is the ordinary path
+    for any multi-RQ review, not an edge case.
+    """
+
+    @pytest.mark.asyncio
+    async def test_phase_5_unlocked_with_two_complete_sections(self, db_session) -> None:
+        """Two complete synthesis sections still unlock phase 5."""
+        # Arrange
+        from db.models.search import SearchString
+        from db.models.search_exec import SearchExecution, SearchExecutionStatus
+
+        from backend.services.rr_phase_gate import get_rr_unlocked_phases
+
+        db_session.add(
+            RapidReviewProtocol(
+                study_id=STUDY_ID,
+                status=RRProtocolStatus.VALIDATED,
+                quality_appraisal_mode=RRQualityAppraisalMode.SKIPPED,
+            )
+        )
+        ss = SearchString(study_id=STUDY_ID, version=1, string_text="(rapid)")
+        db_session.add(ss)
+        await db_session.flush()
+        db_session.add(
+            SearchExecution(
+                study_id=STUDY_ID,
+                search_string_id=ss.id,
+                status=SearchExecutionStatus.COMPLETED,
+            )
+        )
+        for rq_index in (0, 1):
+            db_session.add(
+                RRNarrativeSynthesisSection(study_id=STUDY_ID, rq_index=rq_index, is_complete=True)
+            )
+        await db_session.commit()
+
+        # Act
+        result = await get_rr_unlocked_phases(STUDY_ID, db_session)
+
+        # Assert
+        assert 5 in result
+
+    @pytest.mark.asyncio
+    async def test_phase_5_locked_with_no_complete_sections(self, db_session) -> None:
+        """Incomplete sections do not unlock phase 5 — the gate still gates."""
+        # Arrange
+        from db.models.search import SearchString
+        from db.models.search_exec import SearchExecution, SearchExecutionStatus
+
+        from backend.services.rr_phase_gate import get_rr_unlocked_phases
+
+        db_session.add(
+            RapidReviewProtocol(
+                study_id=STUDY_ID,
+                status=RRProtocolStatus.VALIDATED,
+                quality_appraisal_mode=RRQualityAppraisalMode.SKIPPED,
+            )
+        )
+        ss = SearchString(study_id=STUDY_ID, version=1, string_text="(rapid)")
+        db_session.add(ss)
+        await db_session.flush()
+        db_session.add(
+            SearchExecution(
+                study_id=STUDY_ID,
+                search_string_id=ss.id,
+                status=SearchExecutionStatus.COMPLETED,
+            )
+        )
+        for rq_index in (0, 1):
+            db_session.add(
+                RRNarrativeSynthesisSection(study_id=STUDY_ID, rq_index=rq_index, is_complete=False)
+            )
+        await db_session.commit()
+
+        # Act
+        result = await get_rr_unlocked_phases(STUDY_ID, db_session)
+
+        # Assert
         assert 5 not in result
 
 
