@@ -1,12 +1,19 @@
-"""Phase-gate unlock logic for SLR studies (feature 007).
+"""Phase-gate unlock logic for SLR studies (feature 007, corrected in 012).
 
 SLR studies have a different phase sequence from SMS studies:
   - Phase 1: Protocol editor (always accessible)
   - Phase 2: Database search — requires validated ReviewProtocol
   - Phase 3: Screening — requires at least one completed SearchExecution
-  - Phase 4: Quality assessment — requires all accepted papers to have QA
-             scores from all assigned reviewers
-  - Phase 5: Synthesis — requires a completed SynthesisResult
+  - Phase 4: Quality assessment — requires at least one *accepted*
+             CandidatePaper (phase 3's output)
+  - Phase 5: Synthesis — requires at least one QualityAssessmentScore
+             (phase 4's output)
+
+Each gate deliberately checks the *previous* phase's output, never its own.
+Before 012, phase 4 required a QualityAssessmentScore and phase 5 required a
+completed SynthesisResult — but Quality Assessment and Synthesis are the
+*only* UIs that create those rows respectively, so both phases were
+permanently unreachable. See docs/features/012-wire-up-unreachable-workflows.md.
 
 Phases 1 and 3 delegate to :func:`phase_gate.get_unlocked_phases` for
 shared SMS/SLR logic where applicable.
@@ -14,7 +21,7 @@ shared SMS/SLR logic where applicable.
 
 from __future__ import annotations
 
-from db.models.slr import ReviewProtocol, ReviewProtocolStatus, SynthesisResult, SynthesisStatus
+from db.models.slr import ReviewProtocol, ReviewProtocolStatus
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -63,40 +70,73 @@ async def get_slr_unlocked_phases(study_id: int, db: AsyncSession) -> list[int]:
     except ImportError:
         return unlocked
 
-    # Phase 4: all accepted papers have QA scores from all assigned reviewers.
-    # We approximate this by checking whether any QualityAssessmentScore exists
-    # for this study (full enforcement is in quality_assessment_service).
-    quality_complete = await _is_quality_complete(study_id, db)
-    if not quality_complete:
+    # Phase 4: at least one accepted CandidatePaper — screening's (phase 3's)
+    # output. NOT a QualityAssessmentScore: that is what phase 4 itself
+    # produces, and a gate that requires its own phase's output can never
+    # open (012).
+    has_accepted_papers = await _has_accepted_papers(study_id, db)
+    if not has_accepted_papers:
         return unlocked
     unlocked.append(4)
 
-    # Phase 5: at least one SynthesisResult with status=completed
-    synthesis_result = await db.execute(
-        select(SynthesisResult).where(
-            SynthesisResult.study_id == study_id,
-            SynthesisResult.status == SynthesisStatus.COMPLETED,
-        )
-    )
-    if synthesis_result.scalar_one_or_none() is not None:
+    # Phase 5: at least one QualityAssessmentScore — Quality Assessment's
+    # (phase 4's) output. NOT a completed SynthesisResult: that is what
+    # phase 5 itself produces (012). Reuses _is_quality_complete, which is
+    # exactly "a QA score exists" — the same predicate that gated phase 4
+    # before this fix, now correctly applied one phase later.
+    quality_complete = await _is_quality_complete(study_id, db)
+    if quality_complete:
         unlocked.append(5)
 
     return unlocked
 
 
-async def _is_quality_complete(study_id: int, db: AsyncSession) -> bool:
-    """Return True when the quality assessment phase is sufficiently complete.
+async def _has_accepted_papers(study_id: int, db: AsyncSession) -> bool:
+    """Return True when at least one accepted CandidatePaper exists for the study.
 
-    Approximation: QA is considered complete when at least one
-    :class:`QualityAssessmentScore` exists for an accepted candidate paper
-    belonging to this study.
+    This is screening's (phase 3's) output, and the correct prerequisite for
+    unlocking phase 4 (012 — see module docstring).
 
     Args:
         study_id: The study to evaluate.
         db: Active async database session.
 
     Returns:
-        ``True`` if QA is complete, ``False`` otherwise.
+        ``True`` if an accepted candidate paper exists, ``False`` otherwise.
+
+    """
+    try:
+        from db.models.candidate import (  # type: ignore[import]
+            CandidatePaper,
+            CandidatePaperStatus,
+        )
+
+        result = await db.execute(
+            select(CandidatePaper)
+            .where(
+                CandidatePaper.study_id == study_id,
+                CandidatePaper.current_status == CandidatePaperStatus.ACCEPTED,
+            )
+            .limit(1)
+        )
+        return result.scalar_one_or_none() is not None
+    except ImportError, Exception:
+        return False
+
+
+async def _is_quality_complete(study_id: int, db: AsyncSession) -> bool:
+    """Return True when at least one QualityAssessmentScore exists for the study.
+
+    Used as the prerequisite for phase 5 (012): Quality Assessment's
+    (phase 4's) output. The name predates 012, when this same predicate
+    (incorrectly) gated phase 4 itself.
+
+    Args:
+        study_id: The study to evaluate.
+        db: Active async database session.
+
+    Returns:
+        ``True`` if a QA score exists, ``False`` otherwise.
 
     """
     try:

@@ -267,12 +267,30 @@ class TestPhase3CandidatePapers:
 # ---------------------------------------------------------------------------
 
 
-class TestPhase4QualityAssessment:
-    """Phase 4 is locked when no QA scores exist."""
+class TestPhase4RequiresAcceptedPapers:
+    """Phase 4 (Quality Assessment) gates on phase 3's output, not its own.
+
+    A gate that requires its own phase's output can never open: Quality
+    Assessment is the *only* UI that creates a ``QualityAssessmentScore``,
+    so requiring one to unlock phase 4 made phase 4 permanently unreachable
+    (012 — circular phase-gate defect). The correct prerequisite is what
+    screening (phase 3) produces: at least one accepted candidate paper.
+
+    NOTE: this class replaces ``TestPhase4QualityAssessment`` /
+    ``test_phase_4_locked_without_qa_scores``, which encoded the old
+    circular rule — it asserted that an accepted paper with no QA score
+    keeps phase 4 locked. Under the corrected rule that same precondition
+    (accepted paper exists, no QA score) must now *unlock* phase 4.
+    """
 
     @pytest.mark.asyncio
-    async def test_phase_4_locked_without_qa_scores(self, db_session) -> None:
-        """Phase 4 is locked when no QualityAssessmentScore exists."""
+    async def test_phase_4_unlocked_with_accepted_papers_and_no_qa_scores(self, db_session) -> None:
+        """A Tertiary study past screening with accepted papers unlocks phase 4.
+
+        Today (before the fix) this fails: the gate requires a
+        QualityAssessmentScore, which can only be created from inside phase 4
+        itself — the deadlock this test exists to catch.
+        """
         from db.models.tertiary import TertiaryProtocolStatus, TertiaryStudyProtocol
 
         from backend.services.tertiary_phase_gate import get_tertiary_unlocked_phases
@@ -283,6 +301,57 @@ class TestPhase4QualityAssessment:
         )
         await db_session.commit()
         await _insert_candidate_paper(db_session, study_id)
+
+        unlocked = await get_tertiary_unlocked_phases(study_id, db_session)
+        assert 4 in unlocked
+
+    @pytest.mark.asyncio
+    async def test_phase_4_locked_without_accepted_papers(self, db_session) -> None:
+        """A study whose screening produced no accepted papers does not unlock phase 4.
+
+        This is the test that stops the fix degenerating into "always
+        unlock": the gate must still gate on something real.
+        """
+        from db.models.candidate import CandidatePaper, CandidatePaperStatus
+        from db.models.search import SearchString
+        from db.models.search_exec import SearchExecution, SearchExecutionStatus
+        from db.models.tertiary import TertiaryProtocolStatus, TertiaryStudyProtocol
+
+        from backend.services.tertiary_phase_gate import get_tertiary_unlocked_phases
+
+        study_id = await _insert_study(db_session)
+        db_session.add(
+            TertiaryStudyProtocol(study_id=study_id, status=TertiaryProtocolStatus.VALIDATED)
+        )
+        await db_session.commit()
+
+        ss = SearchString(study_id=study_id, version=1, string_text="test", is_active=True)
+        db_session.add(ss)
+        await db_session.flush()
+
+        se = SearchExecution(
+            study_id=study_id,
+            search_string_id=ss.id,
+            status=SearchExecutionStatus.COMPLETED,
+        )
+        db_session.add(se)
+        await db_session.flush()
+
+        from db.models import Paper
+
+        paper = Paper(title="Rejected Paper", doi="10.0000/test.rejected")
+        db_session.add(paper)
+        await db_session.flush()
+
+        cp = CandidatePaper(
+            study_id=study_id,
+            paper_id=paper.id,
+            search_execution_id=se.id,
+            phase_tag="phase2",
+            current_status=CandidatePaperStatus.REJECTED,
+        )
+        db_session.add(cp)
+        await db_session.commit()
 
         unlocked = await get_tertiary_unlocked_phases(study_id, db_session)
         assert 4 not in unlocked
@@ -312,3 +381,127 @@ class TestReturnOrdering:
 
         unlocked = await get_tertiary_unlocked_phases(99999, db_session)
         assert unlocked == [1]
+
+
+# ---------------------------------------------------------------------------
+# Phase 5 — extractions a human has reviewed (TFIX8)
+# ---------------------------------------------------------------------------
+
+
+async def _insert_reviewed_study(db: AsyncSession, extraction_statuses: list[str]) -> int:
+    """Insert a study past phase 4 with one extraction per given status.
+
+    Args:
+        db: Active async database session.
+        extraction_statuses: One ``extraction_status`` per candidate paper to
+            create, e.g. ``["human_reviewed", "human_reviewed"]``.
+
+    Returns:
+        The integer study id.
+
+    """
+    from db.models import Paper
+    from db.models.candidate import CandidatePaper, CandidatePaperStatus
+    from db.models.search import SearchString
+    from db.models.search_exec import SearchExecution, SearchExecutionStatus
+    from db.models.tertiary import (
+        TertiaryDataExtraction,
+        TertiaryProtocolStatus,
+        TertiaryStudyProtocol,
+    )
+
+    study_id = await _insert_study(db)
+    db.add(TertiaryStudyProtocol(study_id=study_id, status=TertiaryProtocolStatus.VALIDATED))
+
+    ss = SearchString(study_id=study_id, version=1, string_text="test", is_active=True)
+    db.add(ss)
+    await db.flush()
+    se = SearchExecution(
+        study_id=study_id, search_string_id=ss.id, status=SearchExecutionStatus.COMPLETED
+    )
+    db.add(se)
+    await db.flush()
+
+    for index, extraction_status in enumerate(extraction_statuses):
+        paper = Paper(title=f"Secondary study {index}", doi=f"10.0000/tfix8.{study_id}.{index}")
+        db.add(paper)
+        await db.flush()
+        cp = CandidatePaper(
+            study_id=study_id,
+            paper_id=paper.id,
+            search_execution_id=se.id,
+            phase_tag="phase2",
+            current_status=CandidatePaperStatus.ACCEPTED,
+        )
+        db.add(cp)
+        await db.flush()
+        db.add(
+            TertiaryDataExtraction(candidate_paper_id=cp.id, extraction_status=extraction_status)
+        )
+
+    await db.commit()
+    return study_id
+
+
+class TestPhase5RequiresReviewedExtractions:
+    """Phase 5 unlocks on extractions a human has reviewed — TFIX8.
+
+    The gate asked for ``== "validated"`` alone, a literal nothing in the
+    platform writes: ``TertiaryExtractionForm`` saves ``human_reviewed``. Phase
+    5 was unreachable by any sequence of user actions, and the e2e reached it
+    only because the seed fixture wrote ``validated`` directly.
+
+    The corpus settles which side was wrong — see the comment on the phase-5
+    query. These tests pin both halves: that a reviewed extraction counts, and
+    that an AI pre-fill nobody has read does not.
+    """
+
+    @pytest.mark.asyncio
+    async def test_phase_5_unlocked_by_human_reviewed_extractions(self, db_session) -> None:
+        """Two ``human_reviewed`` extractions unlock phase 5.
+
+        The state the only extraction UI actually writes.
+        """
+        # Arrange
+        from backend.services.tertiary_phase_gate import get_tertiary_unlocked_phases
+
+        study_id = await _insert_reviewed_study(db_session, ["human_reviewed", "human_reviewed"])
+
+        # Act
+        unlocked = await get_tertiary_unlocked_phases(study_id, db_session)
+
+        # Assert
+        assert 5 in unlocked
+
+    @pytest.mark.asyncio
+    async def test_phase_5_locked_by_ai_complete_extractions(self, db_session) -> None:
+        """Two ``ai_complete`` extractions do not unlock phase 5.
+
+        This is the guard that stops the fix widening to ``!= "pending"``.
+        ``ai_complete`` is an AI pre-fill no reviewer has read, and
+        ``01-slr.md`` forbids extraction decoupled from appraisal.
+        """
+        # Arrange
+        from backend.services.tertiary_phase_gate import get_tertiary_unlocked_phases
+
+        study_id = await _insert_reviewed_study(db_session, ["ai_complete", "ai_complete"])
+
+        # Act
+        unlocked = await get_tertiary_unlocked_phases(study_id, db_session)
+
+        # Assert
+        assert 5 not in unlocked
+
+    @pytest.mark.asyncio
+    async def test_phase_5_locked_below_two_reviewed_extractions(self, db_session) -> None:
+        """One reviewed extraction is not enough — the threshold still holds."""
+        # Arrange
+        from backend.services.tertiary_phase_gate import get_tertiary_unlocked_phases
+
+        study_id = await _insert_reviewed_study(db_session, ["human_reviewed", "pending"])
+
+        # Act
+        unlocked = await get_tertiary_unlocked_phases(study_id, db_session)
+
+        # Assert
+        assert 5 not in unlocked
