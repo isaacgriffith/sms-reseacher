@@ -105,6 +105,27 @@ export default function ExtractionView({ studyId, extractionId, onConflict }: Ex
     reset();
   });
 
+  // TFIX10. `handleSave` only reaches `human_reviewed` by *changing* a field,
+  // so a reviewer who read the AI pre-fill and agreed with it had no way to
+  // say so — and the phase gate no longer opens phases 4 and 5 on
+  // `ai_complete`. Without this control the only route to reporting would be
+  // editing something, which rewards a token change that invents a
+  // disagreement the reviewer never had.
+  const reviewMutation = useMutation({
+    mutationFn: (versionId: number) =>
+      api.post<Extraction>(`/api/v1/studies/${studyId}/extractions/${extractionId}/review`, {
+        version_id: versionId,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['extraction', studyId, extractionId] });
+    },
+    onError: (err: unknown) => {
+      if (err instanceof ApiError && err.status === 409) {
+        onConflict(err.detail as unknown as ConflictPayload);
+      }
+    },
+  });
+
   const handleCancel = () => {
     setEditingField(null);
     reset();
@@ -167,8 +188,27 @@ export default function ExtractionView({ studyId, extractionId, onConflict }: Ex
           >
             {extraction.extraction_status.replace('_', ' ')}
           </Typography>
+          {extraction.extraction_status === 'ai_complete' && (
+            <Button
+              type="button"
+              size="small"
+              variant="outlined"
+              disabled={reviewMutation.isPending}
+              onClick={() => reviewMutation.mutate(extraction.version_id)}
+            >
+              {reviewMutation.isPending ? 'Recording…' : 'Mark reviewed'}
+            </Button>
+          )}
         </Box>
       </Box>
+
+      {extraction.extraction_status === 'ai_complete' && (
+        <Typography sx={{ color: '#6b7280', fontSize: '0.8125rem', marginBottom: '1rem' }}>
+          This extraction was pre-filled by {extraction.extracted_by_agent ?? 'an agent'} and has
+          not been checked. Correct anything that is wrong, then mark it reviewed — reporting stays
+          locked until at least one extraction has been appraised.
+        </Typography>
+      )}
 
       <form onSubmit={handleSave}>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>

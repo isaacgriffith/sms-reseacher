@@ -8,6 +8,7 @@
  * - Clicking Edit on a field shows the input
  * - Saving a field triggers api.patch with the correct version_id
  * - 409 conflict response calls onConflict with the conflict payload
+ * - Marking an AI extraction reviewed without editing it (TFIX10)
  */
 
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
@@ -18,6 +19,7 @@ vi.mock('../../../services/api', () => ({
   api: {
     get: vi.fn(),
     patch: vi.fn(),
+    post: vi.fn(),
   },
   ApiError: class ApiError extends Error {
     status: number;
@@ -37,6 +39,7 @@ import ExtractionView from '../ExtractionView';
 const mockApi = api as unknown as {
   get: ReturnType<typeof vi.fn>;
   patch: ReturnType<typeof vi.fn>;
+  post: ReturnType<typeof vi.fn>;
 };
 
 function renderWithQuery(ui: React.ReactElement) {
@@ -121,6 +124,82 @@ describe('ExtractionView', () => {
       await waitFor(() => {
         // status badge exists but 'Conflict' badge should not
         expect(screen.queryByText(/^Conflict$/i)).toBeNull();
+      });
+    });
+  });
+
+  describe('Marking an extraction reviewed (TFIX10)', () => {
+    it('offers a review control for an unreviewed AI extraction', async () => {
+      mockApi.get.mockResolvedValueOnce(MOCK_EXTRACTION);
+      renderWithQuery(<ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />);
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /mark reviewed/i })).toBeTruthy();
+      });
+    });
+
+    it('posts the review with the observed version_id', async () => {
+      // Not `...Once`: a successful review invalidates the query, so the
+      // component refetches and a single-shot mock would resolve undefined.
+      mockApi.get.mockResolvedValue(MOCK_EXTRACTION);
+      mockApi.post.mockResolvedValueOnce({
+        ...MOCK_EXTRACTION,
+        extraction_status: 'human_reviewed',
+        version_id: 2,
+      });
+      renderWithQuery(<ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />);
+
+      await waitFor(() => screen.getByRole('button', { name: /mark reviewed/i }));
+      fireEvent.click(screen.getByRole('button', { name: /mark reviewed/i }));
+
+      await waitFor(() => {
+        expect(mockApi.post).toHaveBeenCalledWith('/api/v1/studies/1/extractions/1/review', {
+          version_id: 1,
+        });
+      });
+    });
+
+    it('hides the review control once the extraction is human_reviewed', async () => {
+      mockApi.get.mockResolvedValueOnce({
+        ...MOCK_EXTRACTION,
+        extraction_status: 'human_reviewed',
+      });
+      renderWithQuery(<ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />);
+
+      await waitFor(() => screen.getAllByText(/human reviewed/i));
+      expect(screen.queryByRole('button', { name: /mark reviewed/i })).toBeNull();
+    });
+
+    it('offers no review control while the extraction is still pending', async () => {
+      // The server rejects this with 422 — there is no extracted data to
+      // appraise — so offering the button would promise something the API
+      // refuses.
+      mockApi.get.mockResolvedValueOnce({ ...MOCK_EXTRACTION, extraction_status: 'pending' });
+      renderWithQuery(<ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />);
+
+      await waitFor(() => screen.getAllByText(/pending/i));
+      expect(screen.queryByRole('button', { name: /mark reviewed/i })).toBeNull();
+    });
+
+    it('routes a 409 from the review call to onConflict', async () => {
+      mockApi.get.mockResolvedValueOnce(MOCK_EXTRACTION);
+      // `ApiError.detail` is declared `string` but carries FastAPI's object
+      // payload; the double cast is the convention the 409 tests below already
+      // use.
+      mockApi.post.mockRejectedValueOnce(
+        new ApiError(409, {
+          error: 'conflict',
+          your_version: { version_id: 1 },
+          current_version: { version_id: 2 },
+        } as unknown as string),
+      );
+      renderWithQuery(<ExtractionView studyId={1} extractionId={1} onConflict={onConflict} />);
+
+      await waitFor(() => screen.getByRole('button', { name: /mark reviewed/i }));
+      fireEvent.click(screen.getByRole('button', { name: /mark reviewed/i }));
+
+      await waitFor(() => {
+        expect(onConflict).toHaveBeenCalledWith(expect.objectContaining({ error: 'conflict' }));
       });
     });
   });

@@ -472,9 +472,62 @@ when null is passed`, whose comment described the fabrication as intended behavi
   > `sqlalchemy.exc.MultipleResultsFound: Multiple rows were found when one or none was required`.
   > Backend 1194 → 1197.
 
-- [ ] TFIX10 **The SMS phase gate admits extractions no human has looked at.** `backend/src/backend/services/phase_gate.py:85` unlocks phases 4 and 5 on `DataExtraction.extraction_status != ExtractionStatus.PENDING`. That set includes **`ai_complete`** — a record the AI pre-fill wrote and no reviewer has touched. So an SMS study can reach reporting on wholly unreviewed AI output. `01-slr.md` §2.4 is the corpus's sharpest warning for a platform like this one: extracting without checking whether a study used an invalid metric yields results _"very quickly but will be wrong"_ — _"It does not forbid automation; it forbids extraction decoupled from appraisal."_ Gating on `!= pending` is exactly that decoupling. Narrow the SMS gate the way TFIX8 narrows Tertiary's: accept `human_reviewed` and `validated`, not `ai_complete`
+- [x] TFIX10 **The SMS phase gate admits extractions no human has looked at.** `backend/src/backend/services/phase_gate.py:85` unlocks phases 4 and 5 on `DataExtraction.extraction_status != ExtractionStatus.PENDING`. That set includes **`ai_complete`** — a record the AI pre-fill wrote and no reviewer has touched. So an SMS study can reach reporting on wholly unreviewed AI output. `01-slr.md` §2.4 is the corpus's sharpest warning for a platform like this one: extracting without checking whether a study used an invalid metric yields results _"very quickly but will be wrong"_ — _"It does not forbid automation; it forbids extraction decoupled from appraisal."_ Gating on `!= pending` is exactly that decoupling. Narrow the SMS gate the way TFIX8 narrows Tertiary's: accept `human_reviewed` and `validated`, not `ai_complete`
   - Found while deciding TFIX8, by asking why Tertiary should _not_ simply copy the SMS precedent. The precedent turned out to be the weaker of the two — which is the argument for never treating in-repo consistency as evidence of correctness
   - Related and separate: `ExtractionStatus.VALIDATED` is **never assigned anywhere in `backend/src`** — only read in filters. The general extraction lifecycle has the same dead terminal state TFIX8 found in the tertiary one
+
+  **Fixed 2026-08-09.** `phase_gate.py` now reads `extraction_status.in_([VALIDATED, HUMAN_REVIEWED])`.
+  `validated` is kept admissible even though nothing writes it: a status ranked above
+  `human_reviewed` must not be *less* able to unlock a phase than the one below it.
+
+  > **The one-line fix was not sufficient, and shipping it alone would have recreated TFIX9.**
+  > Tracing who *writes* each status — rather than trusting this entry — turned up the reason:
+  >
+  > | Status | Written by |
+  > | ------ | ---------- |
+  > | `ai_complete` | `extraction_job.py:222`, unattended |
+  > | `human_reviewed` | `extractions.py:404` — **only when a PATCH changes a field value** |
+  > | `validated` | nothing, anywhere |
+  >
+  > So a reviewer who read an AI pre-fill and **agreed with it** changed nothing, and the record
+  > stayed `ai_complete` for ever. Gate on `human_reviewed` alone and the platform asks "did
+  > somebody *edit* the AI?" while claiming to ask "did somebody *check* it" — and pays for a
+  > token edit that invents a disagreement the reviewer never had. Appraisal that confirms is
+  > still appraisal. Worse, the only writer of `human_reviewed` sits behind `ExtractionView`,
+  > which the reachability audit lists as unreachable, so phases 4 and 5 would have become
+  > **unsatisfiable through the UI** — TFIX9's defect exactly, one gate over.
+  >
+  > Delivered as two halves:
+  >
+  > 1. `phase_gate.py` narrowed, matching `tertiary_phase_gate.py` (TFIX8).
+  > 2. New `POST /api/v1/studies/{id}/extractions/{eid}/review` recording appraisal that changes
+  >    nothing — `version_id` optimistic locking and a 409 identical to PATCH's, 422 on a
+  >    `pending` record (no extracted data to appraise), idempotent so a repeated click cannot
+  >    bump `version_id` out from under another member's open edit form. It is the first writer
+  >    of `validated_by_reviewer_id`, a column both extraction APIs already read back and nothing
+  >    had ever populated. A "Mark reviewed" control in `ExtractionView` calls it, shown only for
+  >    `ai_complete`, alongside a line stating that reporting stays locked until an extraction
+  >    has been appraised.
+  >
+  > The endpoint deliberately accepts **only** `version_id`. One that could confirm *and* edit
+  > would let "confirmed as written" and "rewritten" arrive as a single indistinguishable event.
+  >
+  > **Reachability is unchanged at 7 and the gate is still UI-unsatisfiable until US3 lands** —
+  > `ExtractionPage`/`ExtractionView` are two of the seven, and **T030** mounts them. That is an
+  > ordering dependency, not a regression: phases 4 and 5 currently render "will be available in
+  > a future sprint" placeholders (**T032** deletes them), so nothing of value is behind the gate
+  > yet. The backend contract is complete and tested; the button is wired to a component US3
+  > mounts.
+  >
+  > Three tests in `test_phase_gate.py` seeded `AI_COMPLETE` as their stand-in for "non-pending".
+  > Two of them are TFIX1's cross-study isolation guards, and leaving them would have kept them
+  > green for the **new** reason (inadmissible status) rather than the one they exist to check
+  > (wrong study) — a passing test quietly losing its coverage. Both were re-seeded with
+  > `HUMAN_REVIEWED`.
+
+- [ ] TFIX14 **Every downstream consumer of extractions still aggregates `ai_complete`.** Found while fixing TFIX10, by asking what the narrowed gate actually protects. `results_job.py:118`, `quality_job.py:168`, `validity_job.py:163` and `export.py:86` each filter `extraction_status.in_([AI_COMPLETE, VALIDATED, HUMAN_REVIEWED])`. So the gate now requires **one** appraised extraction to open reporting, and reporting then computes over **all** of them — a study that AI-extracted 200 papers and had one checked reports charts, quality figures and validity threats derived from 199 unread records. This is the same `01-slr.md` §2.4 clause TFIX10 turns on, applied one layer down: the gate governs *entry* to reporting, these four govern *what reporting says*.
+  - **Not fixed under TFIX10 because the remedy is a choice, not a correction.** Excluding `ai_complete` outright would make a large study's first report near-empty, which may be honest or may be useless; labelling each figure with its appraised/total denominator keeps the data and states its provenance; a third option gates the export but not the working charts. Picking one silently, inside a task scoped to a phase gate, would be deciding what the platform's numbers *mean* without saying so
+  - `08-extraction-and-synthesis.md` should be read before choosing — this entry cites §2.4 of `01-slr.md` only, which is about extraction, not about what synthesis may consume
 
 - [ ] TFIX11 **Single-reviewer bias is declared for one study type out of four, and its prescribed mitigation does not exist.** A lone researcher — or a study with a single reviewer — is a legitimate configuration, not an error. The corpus's position is disclosure plus mitigation, never prohibition: `04-tertiary.md` records that _"One person seeing every paper is a known bias, **accepted deliberately**… Record the trade-off rather than pretending it does not exist,"_ and `01-slr.md` §2.4 names the remedy — _"A lone researcher uses supervisor cross-check on a sample, or test–retest."_ Two gaps:
   1. **The threat is recorded only for Rapid Reviews.** `rr_protocol_service.set_single_reviewer_mode` creates an `RRThreatToValidity` of type `SINGLE_REVIEWER` and surfaces it through `SingleReviewerWarningBanner`. SLR, SMS and Tertiary have no equivalent, so on three of four study types the bias is accepted silently — precisely what the corpus says not to do.
@@ -582,7 +635,8 @@ when null is passed`, whose comment described the fabrication as intended behavi
     The eight that remain are US3's four (`ExtractionPage`, `ExtractionView`, `ValidityForm`,
     `QualityReport`), TFIX5's `QualityScoreForm`, `TertiaryQAGuidancePanel`, and the two G21
     modules. Twelve modules became reachable from one dispatch entry: `TertiaryStudyPage`, `TertiaryReportPage`, four `components/tertiary/*`, three `hooks/tertiary/*`, three `services/tertiary/*`. Frontend suite 1365 tests green
-  - A takeover needs a **second** map, not a `STUDY_TYPE_PHASES` entry: that map is keyed by phase, and `StudyPage` renders `PHASE_META` unconditionally, so a phase entry would have left its own Phase 1–7 strip above the workspace's own — the two phase bars R7 rejects. `STUDY_TYPE_TAKEOVER` is consulted _before_ the tab strip is built
+  - A takeover needs a **second** map, not a `STUDY_TYPE_PHASES` entry: that map is keyed by phase, and `StudyPage` renders `PHASE_META` unconditionally, so a phase entry would have left its own Phase 1–7 strip above the workspace's own — the .
+  two phase bars R7 rejects. `STUDY_TYPE_TAKEOVER` is consulted _before_ the tab strip is built
   - **"Wholesale" was refined to exclude phase 0** — see the dated note on R7 in `research.md`. A literal reading deletes the tab strip, and phase 0 is the Protocol tab; `assign_default_protocol` runs for every study type at creation, so every Tertiary study would have had a `ProtocolGraph` and `ExecutionStateView` no user could open — closing G19 by opening a gap of the same kind. Takeover types get a two-button strip, **Protocol Graph** and **Workspace**, whose labels also avoid colliding with `TertiaryStudyPage`'s own `Phase 1: Protocol`
   - `groupId` is `number | null` and **not** coerced with `?? 0`; `Phase2Panel` explains the absence, because the group is needed by phase 2 alone. Coercing would have rebuilt the `reviewerId={0}` shape TFIX5 catalogues
   - `STUDY_TYPE_TAKEOVER` is typed `Partial<Record<string, StudyTakeover>>`: this repo does not set `noUncheckedIndexedAccess`, so a plain `Record` makes indexing always-defined and `tsc` rejects the truthiness check with `TS2774`. `Partial` is also the honest type — most study types have no takeover
@@ -803,7 +857,7 @@ in one commit — a required field and its callers must move together.
 | US4 (P4)            | T034–T050    | 17     |
 | Polish              | T051–T055    | 5      |
 | Documentation       | TDOC1–TDOC7  | 7      |
-| **Total**           |              | **85** |
+| **Total**           |              | **86** |
 
 TREF1–TREF10, T001–T019 and TFIX1–TFIX4 plus TFIX6 are complete — **the MVP is delivered**: a
 reviewer can screen papers on SMS and SLR studies, driven end-to-end by an e2e against a live

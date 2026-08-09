@@ -7,6 +7,9 @@ Covers (T151):
 - PATCH /extractions/{id} with correct version_id → 200, audit row created
 - PATCH /extractions/{id} with stale version_id → 409 with your_version + current_version
 - 401 when unauthenticated
+
+Also covers POST /extractions/{id}/review (TFIX10) — recording that a human
+appraised an extraction without editing it.
 """
 
 from __future__ import annotations
@@ -325,4 +328,147 @@ class TestPatchExtraction:
             "/api/v1/studies/1/extractions/1",
             json={"version_id": 1, "venue_type": "journal"},
         )
+        assert resp.status_code == 401
+
+
+class TestReviewExtraction:
+    """POST /studies/{study_id}/extractions/{id}/review — appraisal without edits.
+
+    Before TFIX10, ``human_reviewed`` was reachable only as a side effect of
+    PATCH changing a field value. A reviewer who read an AI extraction and
+    agreed with it had no way to say so, so the record stayed ``ai_complete``
+    indefinitely. Once the phase gate stopped accepting ``ai_complete``, that
+    gap would have left phases 4 and 5 unreachable for any study whose
+    extractions were simply correct — and would have rewarded a token edit,
+    which manufactures a difference that was never there.
+    """
+
+    @pytest.mark.asyncio
+    async def test_review_promotes_ai_complete_to_human_reviewed(
+        self, client, alice, db_engine
+    ) -> None:
+        """Confirming an AI pre-fill without editing it records the appraisal."""
+        user, _ = alice
+        study_id = await _setup_study(client, db_engine, user)
+        cp_id = await _insert_candidate_paper(db_engine, study_id)
+        ext_id = await _insert_extraction(
+            db_engine, cp_id, version_id=1, extraction_status=ExtractionStatus.AI_COMPLETE
+        )
+
+        resp = await client.post(
+            f"/api/v1/studies/{study_id}/extractions/{ext_id}/review",
+            json={"version_id": 1},
+            headers=_bearer(user.id),
+        )
+
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["extraction_status"] == "human_reviewed"
+        assert body["validated_by_reviewer_id"] is not None
+
+    @pytest.mark.asyncio
+    async def test_review_leaves_extracted_fields_untouched(self, client, alice, db_engine) -> None:
+        """Appraisal records who checked the data, never what the data says."""
+        user, _ = alice
+        study_id = await _setup_study(client, db_engine, user)
+        cp_id = await _insert_candidate_paper(db_engine, study_id)
+        ext_id = await _insert_extraction(db_engine, cp_id, version_id=1)
+
+        resp = await client.post(
+            f"/api/v1/studies/{study_id}/extractions/{ext_id}/review",
+            json={"version_id": 1},
+            headers=_bearer(user.id),
+        )
+
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["venue_type"] == "conference"
+        assert body["venue_name"] == "ICSE"
+        assert body["summary"] == "A test summary."
+        assert body["keywords"] == ["TDD", "agile"]
+        assert body["audit_history"] == []
+
+    @pytest.mark.asyncio
+    async def test_review_is_idempotent(self, client, alice, db_engine) -> None:
+        """Reviewing an already-reviewed extraction succeeds without bumping version.
+
+        A no-op that still incremented ``version_id`` would invalidate an edit
+        form another member had open, turning a repeated click into somebody
+        else's 409.
+        """
+        user, _ = alice
+        study_id = await _setup_study(client, db_engine, user)
+        cp_id = await _insert_candidate_paper(db_engine, study_id)
+        ext_id = await _insert_extraction(db_engine, cp_id, version_id=1)
+
+        first = await client.post(
+            f"/api/v1/studies/{study_id}/extractions/{ext_id}/review",
+            json={"version_id": 1},
+            headers=_bearer(user.id),
+        )
+        assert first.status_code == 200
+        settled_version = first.json()["version_id"]
+
+        second = await client.post(
+            f"/api/v1/studies/{study_id}/extractions/{ext_id}/review",
+            json={"version_id": settled_version},
+            headers=_bearer(user.id),
+        )
+        assert second.status_code == 200
+        assert second.json()["extraction_status"] == "human_reviewed"
+        assert second.json()["version_id"] == settled_version
+
+    @pytest.mark.asyncio
+    async def test_review_of_pending_extraction_returns_422(self, client, alice, db_engine) -> None:
+        """A pending record holds no extracted data, so there is nothing to appraise."""
+        user, _ = alice
+        study_id = await _setup_study(client, db_engine, user)
+        cp_id = await _insert_candidate_paper(db_engine, study_id)
+        ext_id = await _insert_extraction(
+            db_engine, cp_id, version_id=1, extraction_status=ExtractionStatus.PENDING
+        )
+
+        resp = await client.post(
+            f"/api/v1/studies/{study_id}/extractions/{ext_id}/review",
+            json={"version_id": 1},
+            headers=_bearer(user.id),
+        )
+
+        assert resp.status_code == 422
+
+    @pytest.mark.asyncio
+    async def test_review_with_stale_version_returns_409(self, client, alice, db_engine) -> None:
+        """Stale version_id → 409, the same contract PATCH offers."""
+        user, _ = alice
+        study_id = await _setup_study(client, db_engine, user)
+        cp_id = await _insert_candidate_paper(db_engine, study_id)
+        ext_id = await _insert_extraction(db_engine, cp_id, version_id=1)
+
+        resp = await client.post(
+            f"/api/v1/studies/{study_id}/extractions/{ext_id}/review",
+            json={"version_id": 99},
+            headers=_bearer(user.id),
+        )
+
+        assert resp.status_code == 409
+        assert resp.json()["detail"]["error"] == "conflict"
+
+    @pytest.mark.asyncio
+    async def test_review_of_unknown_extraction_returns_404(self, client, alice, db_engine) -> None:
+        """An extraction id outside this study → 404."""
+        user, _ = alice
+        study_id = await _setup_study(client, db_engine, user)
+
+        resp = await client.post(
+            f"/api/v1/studies/{study_id}/extractions/999999/review",
+            json={"version_id": 1},
+            headers=_bearer(user.id),
+        )
+
+        assert resp.status_code == 404
+
+    @pytest.mark.asyncio
+    async def test_unauthenticated_review_returns_401(self, client) -> None:
+        """No auth token → 401."""
+        resp = await client.post("/api/v1/studies/1/extractions/1/review", json={"version_id": 1})
         assert resp.status_code == 401

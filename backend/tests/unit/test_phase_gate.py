@@ -205,13 +205,22 @@ class TestGetUnlockedPhasesPhase3:
 
 
 class TestGetUnlockedPhasesPhases4And5:
-    """Phases 4 and 5 require a non-pending DataExtraction *for this study*.
+    """Phases 4 and 5 require a *human-appraised* DataExtraction for this study.
 
-    The cross-study case is the one that matters. ``get_unlocked_phases``
-    already asserts study isolation for phase 2 (see
-    ``test_pico_for_different_study_does_not_unlock``), and phases 4 and 5 need
-    the same guarantee: a study's own extraction work is what unlocks its
-    reporting phases, not somebody else's.
+    Two independent properties are asserted here, and they failed for different
+    reasons at different times:
+
+    - **Study isolation** (TFIX1). ``get_unlocked_phases`` already asserts this
+      for phase 2 (see ``test_pico_for_different_study_does_not_unlock``);
+      phases 4 and 5 need the same guarantee, because a study's own extraction
+      work is what unlocks its reporting phases, not somebody else's. The
+      cross-study tests below seed ``HUMAN_REVIEWED`` deliberately: leaving
+      them on ``AI_COMPLETE`` would keep them green for the *new* reason (the
+      status is inadmissible) rather than the one they exist to check (the
+      study does not match), silently retiring the regression guard.
+    - **Appraisal** (TFIX10). The gate formerly read ``!= PENDING``, which
+      admits ``AI_COMPLETE`` — a pre-fill written by ``extraction_job`` that no
+      reviewer has read.
     """
 
     async def _reach_phase_3(self, db_session, study_id: int) -> SearchExecution:
@@ -268,10 +277,28 @@ class TestGetUnlockedPhasesPhases4And5:
         await db_session.commit()
 
     @pytest.mark.asyncio
-    async def test_own_non_pending_extraction_unlocks_4_and_5(self, db_session) -> None:
-        """A non-pending extraction on this study unlocks phases 4 and 5."""
+    async def test_own_human_reviewed_extraction_unlocks_4_and_5(self, db_session) -> None:
+        """A human-reviewed extraction on this study unlocks phases 4 and 5."""
         await self._add_extraction(
-            db_session, STUDY_ID, "10.1000/own-1", ExtractionStatus.AI_COMPLETE
+            db_session, STUDY_ID, "10.1000/own-1", ExtractionStatus.HUMAN_REVIEWED
+        )
+
+        result = await get_unlocked_phases(STUDY_ID, db_session)
+        assert 4 in result
+        assert 5 in result
+
+    @pytest.mark.asyncio
+    async def test_own_validated_extraction_unlocks_4_and_5(self, db_session) -> None:
+        """``validated`` is admissible too, even though nothing writes it yet.
+
+        ``ExtractionStatus.VALIDATED`` is assigned nowhere in ``backend/src``;
+        it is only ever read back in filters. The gate still accepts it,
+        because a status that outranks ``human_reviewed`` must not be *less*
+        able to unlock a phase than the status below it — a gate that rejected
+        it would turn the day someone starts writing it into a regression.
+        """
+        await self._add_extraction(
+            db_session, STUDY_ID, "10.1000/own-validated", ExtractionStatus.VALIDATED
         )
 
         result = await get_unlocked_phases(STUDY_ID, db_session)
@@ -290,6 +317,25 @@ class TestGetUnlockedPhasesPhases4And5:
         assert 5 not in result
 
     @pytest.mark.asyncio
+    async def test_own_ai_complete_extraction_does_not_unlock(self, db_session) -> None:
+        """An AI pre-fill nobody has read must not unlock reporting (TFIX10).
+
+        ``extraction_job`` writes ``AI_COMPLETE`` unattended, so under the
+        former ``!= PENDING`` predicate a batch extraction run was by itself
+        enough to open phases 4 and 5 — a mapping study could reach reporting
+        on wholly unreviewed model output. ``01-slr.md`` 2.4 is explicit that
+        extracting without appraisal yields results "very quickly but will be
+        wrong", and that the objection is to "extraction decoupled from
+        appraisal", not to automation.
+        """
+        await self._add_extraction(
+            db_session, STUDY_ID, "10.1000/own-ai", ExtractionStatus.AI_COMPLETE
+        )
+
+        result = await get_unlocked_phases(STUDY_ID, db_session)
+        assert result == [1, 2, 3]
+
+    @pytest.mark.asyncio
     async def test_extraction_for_different_study_does_not_unlock(self, db_session) -> None:
         """Another study's extraction must not unlock this study's phases 4 and 5.
 
@@ -298,7 +344,9 @@ class TestGetUnlockedPhasesPhases4And5:
         non-pending extraction anywhere in the database unlocked reporting for
         every mapping study that had reached phase 3.
         """
-        await self._add_extraction(db_session, 999, "10.1000/other-1", ExtractionStatus.AI_COMPLETE)
+        await self._add_extraction(
+            db_session, 999, "10.1000/other-1", ExtractionStatus.HUMAN_REVIEWED
+        )
         await self._reach_phase_3(db_session, STUDY_ID)
         await db_session.commit()
 
@@ -308,7 +356,9 @@ class TestGetUnlockedPhasesPhases4And5:
     @pytest.mark.asyncio
     async def test_current_phase_ignores_another_studys_extraction(self, db_session) -> None:
         """compute_current_phase inherits the isolation, reading the same list."""
-        await self._add_extraction(db_session, 999, "10.1000/other-2", ExtractionStatus.AI_COMPLETE)
+        await self._add_extraction(
+            db_session, 999, "10.1000/other-2", ExtractionStatus.HUMAN_REVIEWED
+        )
         await self._reach_phase_3(db_session, STUDY_ID)
         await db_session.commit()
 

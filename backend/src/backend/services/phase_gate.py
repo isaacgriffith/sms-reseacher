@@ -5,8 +5,10 @@ Phase unlock rules (enforced at service layer, not DB):
   - Phase 1: always accessible
   - Phase 2: pico_components non-empty
   - Phase 3: at least one SearchExecution with status=completed
-  - Phase 4 & 5: at least one DataExtraction with status != pending, on a
-    CandidatePaper belonging to *this* study
+  - Phase 4 & 5: at least one DataExtraction with status ``validated`` or
+    ``human_reviewed``, on a CandidatePaper belonging to *this* study.
+    Deliberately not "status != pending", which admits the ``ai_complete``
+    pre-fill no reviewer has read — see TFIX10 at the query below.
 
 Staleness rules (FR-008a):
   - Phase 2 data is stale if PICO was re-saved after the last search ran.
@@ -75,11 +77,28 @@ async def get_unlocked_phases(study_id: int, db: AsyncSession) -> list[int]:
     except ImportError:
         return unlocked
 
-    # Phases 4 & 5: at least one non-pending DataExtraction *belonging to this
-    # study*. DataExtraction carries no study_id of its own — it hangs off a
-    # CandidatePaper — so the scope has to come from the join. Without it the
+    # Phases 4 & 5: at least one *human-appraised* DataExtraction *belonging to
+    # this study*. DataExtraction carries no study_id of its own — it hangs off
+    # a CandidatePaper — so the scope has to come from the join. Without it the
     # query reads the whole table, and one extraction anywhere in the database
-    # unlocks reporting for every mapping study that has reached phase 3.
+    # unlocks reporting for every mapping study that has reached phase 3
+    # (TFIX1).
+    #
+    # TFIX10: this predicate was `!= PENDING`, which admits `ai_complete` — the
+    # status `extraction_job` writes unattended. A batch extraction run was
+    # therefore sufficient on its own to open reporting, so a mapping study
+    # could reach phases 4 and 5 on wholly unreviewed model output.
+    # `01-slr.md` 2.4 calls results extracted without checking whether a study
+    # used an invalid metric obtainable "very quickly but will be wrong", and
+    # is explicit that what it forbids is "extraction decoupled from
+    # appraisal" rather than automation as such. Gating on "not pending" was
+    # exactly that decoupling. Matches `tertiary_phase_gate.py`, which TFIX8
+    # narrowed the same way.
+    #
+    # `validated` is included though nothing in `backend/src` assigns it: a
+    # status ranked above `human_reviewed` must not be *less* able to unlock a
+    # phase than the one below it. Its dead-terminal-state problem is a
+    # separate defect, recorded as such rather than papered over here.
     try:
         from db.models.candidate import CandidatePaper  # type: ignore[import]
         from db.models.extraction import DataExtraction, ExtractionStatus  # type: ignore[import]
@@ -89,7 +108,9 @@ async def get_unlocked_phases(study_id: int, db: AsyncSession) -> list[int]:
             .join(CandidatePaper, DataExtraction.candidate_paper_id == CandidatePaper.id)
             .where(
                 CandidatePaper.study_id == study_id,
-                DataExtraction.extraction_status != ExtractionStatus.PENDING,
+                DataExtraction.extraction_status.in_(
+                    [ExtractionStatus.VALIDATED, ExtractionStatus.HUMAN_REVIEWED]
+                ),
             )
             .limit(1)
         )

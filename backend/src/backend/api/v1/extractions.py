@@ -75,6 +75,19 @@ class PatchExtractionRequest(BaseModel):
     research_type: str | None = None
 
 
+class ReviewExtractionRequest(BaseModel):
+    """Body for POST /studies/{study_id}/extractions/{id}/review.
+
+    ``version_id`` must match the current DB value, the same optimistic-locking
+    contract :class:`PatchExtractionRequest` uses. Nothing else is accepted:
+    appraisal records *that* a human checked the extraction, never *what* it
+    says. An endpoint that could do both would let "confirmed as written" and
+    "rewritten" arrive as one indistinguishable event.
+    """
+
+    version_id: int
+
+
 class BatchRunResponse(BaseModel):
     """Response for POST batch-run."""
 
@@ -439,3 +452,115 @@ async def patch_extraction(
     )
     audit_rows = list(audit_result.scalars().all())
     return _to_extraction_response(extraction, audit_rows)
+
+
+# ---------------------------------------------------------------------------
+# TFIX10: recording an appraisal that changes nothing
+# ---------------------------------------------------------------------------
+
+
+@router.post(
+    "/studies/{study_id}/extractions/{extraction_id}/review",
+    response_model=ExtractionResponse,
+    summary="Record that a human has appraised this extraction",
+    responses={
+        409: {
+            "description": "Concurrent edit conflict — version_id is stale",
+            "model": ConflictResponse,
+        },
+        422: {"description": "The extraction is still pending — there is nothing to appraise"},
+    },
+)
+async def review_extraction(
+    study_id: int,
+    extraction_id: int,
+    body: ReviewExtractionRequest,
+    current_user: CurrentUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> ExtractionResponse:
+    """Mark an extraction human-reviewed without altering any extracted field.
+
+    ``patch_extraction`` promotes an extraction to ``human_reviewed`` only when
+    a field value actually changes, so agreement was previously unrecordable:
+    a reviewer who read an AI pre-fill and found it correct left it sitting at
+    ``ai_complete`` indefinitely. That matters now that ``phase_gate`` no
+    longer accepts ``ai_complete`` (TFIX10) — without this endpoint the gate
+    would ask "did somebody *edit* the AI?" while claiming to ask "did somebody
+    *check* it", and would pay reviewers in unlocked phases for making a token
+    edit that invents a disagreement. ``01-slr.md`` 2.4 objects to "extraction
+    decoupled from appraisal"; appraisal that confirms is still appraisal.
+
+    Idempotent: an extraction already at ``human_reviewed`` or ``validated`` is
+    returned unchanged, without an UPDATE, so a repeated click cannot bump
+    ``version_id`` out from under someone else's open edit form.
+
+    Args:
+        study_id: Study owning the extraction; caller must be a member.
+        extraction_id: The extraction to mark reviewed.
+        body: Carries the caller's observed ``version_id``.
+        current_user: Authenticated caller, resolved to a study Reviewer.
+        db: Active async session.
+
+    Returns:
+        The extraction, with its audit history.
+
+    Raises:
+        HTTPException: 404 if the extraction is not in this study, 409 if
+            ``version_id`` is stale, 422 if the extraction is still pending.
+
+    """
+    from db.models.extraction import ExtractionFieldAudit, ExtractionStatus
+
+    from backend.api.v1.papers import resolve_session_reviewer
+
+    await require_study_member(study_id, current_user, db)
+
+    extraction = await _load_extraction(study_id, extraction_id, db)
+
+    if extraction.extraction_status == ExtractionStatus.PENDING:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=(
+                "Extraction is still pending — there is no extracted data to appraise. "
+                "Run extraction first, or enter the data directly."
+            ),
+        )
+
+    if extraction.version_id != body.version_id:
+        current_dict = _to_extraction_dict(extraction)
+        submitted_dict = dict(current_dict)
+        submitted_dict["version_id"] = body.version_id
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={
+                "error": "conflict",
+                "your_version": submitted_dict,
+                "current_version": current_dict,
+            },
+        )
+
+    already_appraised = extraction.extraction_status in (
+        ExtractionStatus.HUMAN_REVIEWED,
+        ExtractionStatus.VALIDATED,
+    )
+    if not already_appraised:
+        reviewer = await resolve_session_reviewer(study_id, current_user, db)
+        extraction.extraction_status = ExtractionStatus.HUMAN_REVIEWED
+        # Who appraised it. The column predates this endpoint and is read back
+        # by both extraction APIs, but nothing had ever written to it.
+        extraction.validated_by_reviewer_id = reviewer.id
+        await db.commit()
+        await db.refresh(extraction)
+        logger.info(
+            "review_extraction: marked human_reviewed",
+            study_id=study_id,
+            extraction_id=extraction_id,
+            reviewer_id=reviewer.id,
+        )
+
+    audit_result = await db.execute(
+        select(ExtractionFieldAudit)
+        .where(ExtractionFieldAudit.extraction_id == extraction_id)
+        .order_by(ExtractionFieldAudit.changed_at)
+    )
+    return _to_extraction_response(extraction, list(audit_result.scalars().all()))
