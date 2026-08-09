@@ -47,8 +47,6 @@ function computeAggregate(values: Record<string, number>, items: ChecklistItem[]
 interface QualityScoreFormProps {
   /** Candidate paper to score. */
   candidatePaperId: number;
-  /** Reviewer submitting scores. */
-  reviewerId: number;
   /** Study whose checklist to load. */
   studyId: number;
 }
@@ -57,27 +55,31 @@ interface QualityScoreFormProps {
  * QualityScoreForm renders scoring inputs for each checklist item.
  *
  * Binary items render as a Checkbox, scale items render as a Slider.
- * A live aggregate score is shown below the items.
+ * A live aggregate score is shown below the items. The submitting reviewer
+ * is resolved server-side from the session — this form never sends a
+ * client-supplied reviewer id. It prefills from the viewer's own prior score
+ * using `viewer_reviewer_id` from the scores response, matched explicitly
+ * against `null`/`undefined` rather than truthiness, because `0` is a valid
+ * reviewer id.
  *
  * @param candidatePaperId - The paper being scored.
- * @param reviewerId - The reviewer submitting scores.
  * @param studyId - The study whose checklist defines the items.
  */
-export default function QualityScoreForm({
-  candidatePaperId,
-  reviewerId,
-  studyId,
-}: QualityScoreFormProps) {
+export default function QualityScoreForm({ candidatePaperId, studyId }: QualityScoreFormProps) {
   const { data: checklist, isLoading: checklistLoading } = useChecklist(studyId);
   const { data: scores } = useQualityScores(candidatePaperId);
   const submitMutation = useSubmitScores(candidatePaperId);
 
   const items = checklist?.items ?? [];
 
-  // Build default values from existing scores
+  // Build default values from the viewer's own prior scores, if any. `0` is
+  // a legitimate reviewer id, so this must not use a truthiness check.
   const defaultValues: Record<string, number | string> = {};
-  const existingItems =
-    scores?.reviewer_scores.find((r) => r.reviewer_id === reviewerId)?.items ?? [];
+  const viewerReviewerId = scores?.viewer_reviewer_id;
+  const hasViewerReviewerId = viewerReviewerId !== null && viewerReviewerId !== undefined;
+  const existingItems = hasViewerReviewerId
+    ? (scores?.reviewer_scores.find((r) => r.reviewer_id === viewerReviewerId)?.items ?? [])
+    : [];
   for (const item of items) {
     const existing = existingItems.find((s) => s.checklist_item_id === item.id);
     defaultValues[`score_${item.id}`] =
@@ -102,7 +104,7 @@ export default function QualityScoreForm({
       score_value: Number(values[`score_${item.id}`] ?? 0),
       notes: (values[`notes_${item.id}`] as string) || null,
     }));
-    submitMutation.mutate({ reviewer_id: reviewerId, scores: scoresList });
+    submitMutation.mutate({ scores: scoresList });
   }
 
   if (checklistLoading) return <CircularProgress size={24} />;

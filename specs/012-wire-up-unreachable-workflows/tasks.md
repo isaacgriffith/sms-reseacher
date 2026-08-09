@@ -163,7 +163,7 @@ database by `backend/tests/integration/test_search_pipeline_screening.py`.
   > what the feature actually models. `test_reviewer_not_in_study_returns_422` was replaced by
   > `test_non_member_returns_403` — the guarantee that now carries the weight.
 
-- [ ] TFIX5 **SLR quality scoring cannot be reached, and the identity trap is already laid behind it.** Two separate problems that look like one, because a hardcoded `reviewerId={0}` makes the second one visible while the first hides it.
+- [x] TFIX5 **SLR quality scoring cannot be reached, and the identity trap is already laid behind it.** Two separate problems that look like one, because a hardcoded `reviewerId={0}` makes the second one visible while the first hides it.
 
   **1. `QualityScoreForm` is unreachable.** Nothing imports it but its own test; it is one of the 20 modules `scripts/audit_unreachable_frontend.py` reports. `QualityAssessmentPage`'s "Score Papers" tab renders the string `Select an accepted paper to score it.` and no form — the accepted-paper selector that sentence implies does not exist. So **no quality score can be submitted through the UI at all**. Wiring it is feature work (selector + mount), takes the audit 20 → 19, and overlaps US3's territory rather than being a one-line fix.
 
@@ -186,6 +186,53 @@ database by `backend/tests/integration/test_search_pipeline_screening.py`.
   > Recorded rather than silently corrected because `docs/feature-gaps.md` already tracks
   > "present and wrong" as a defect class with **no automated instrument**, and this is a worked
   > example of a human (and an AI) producing one under exactly the conditions that class predicts.
+
+  > **Resolved 2026-08-08 — and there were four parts, not three.** Audit **8 → 7**;
+  > `QualityScoreForm` is mounted behind an accepted-paper selector on the Score Papers tab, which
+  > replaces the `Select an accepted paper to score it.` placeholder. No new endpoint: the selector
+  > reuses `GET /studies/{id}/papers?status=accepted`, already gated on `require_study_member` and
+  > already called by `PaperQueue`.
+  >
+  > **Part 4, which this entry missed: none of the four routes in `slr/quality.py` checked study
+  > membership at all.** The module imported only `get_current_user`, so any authenticated user
+  > could read _and write_ quality scores for any paper in any study — while `rapid/quality.py`,
+  > the direct analogue, has always had the check. Demonstrated, not inferred:
+  > `assert 200 == 403` on all four routes with a non-member caller, and
+  > `assert 1 not in {1}` showing a spoofed `reviewer_id` accepted verbatim.
+  >
+  > **All four parts share one cause, and it is the argument for Principle X being a gate rather
+  > than a report.** Every one of them was unexploitable while the form was unreachable: a
+  > client-supplied `reviewer_id` cannot be abused through a form nobody can open, a missing
+  > authorization check cannot be exercised by a UI that never calls the endpoint, and
+  > `reviewerId={0}` cannot corrupt data it never reaches. Unreachability does not merely hide
+  > defects, it **suppresses** them — so they accumulate silently and go live together the moment
+  > someone wires the thing up. Fixing them in the same commit as the wiring is not tidiness; it is
+  > the only ordering that never ships the hole.
+  >
+  > Two design points the entry could not have anticipated:
+  >
+  > - **The same identity is resolved two different ways.** The PUT creates the caller's `Reviewer`
+  >   row on demand (`resolve_session_reviewer`, shared with screening); the GET must **look up
+  >   only** and return `viewer_reviewer_id: int | None`, because a read must not have the side
+  >   effect of creating a row. One shared helper would have been the obvious refactor and would
+  >   have made every page load write to the database. No test can see the difference — only
+  >   reading the code can.
+  > - **`0` is a valid reviewer id on both sides.** The backend must not coerce a missing lookup to
+  >   `0`; the frontend must not treat a received `0` as missing. Same value, opposite errors, each
+  >   invisible in the other half's tests. Pinned by
+  >   `prefills correctly when viewer_reviewer_id is legitimately 0, not just truthy`.
+  >
+  > Incidentally fixed: `get_quality_scores` re-queried `CandidatePaper` **and** refetched the
+  > checklist inside its per-reviewer loop, with an `import` in the function body — an N+1 that ran
+  > once per reviewer. A nonexistent `candidate_paper_id` now 404s instead of answering 200 with an
+  > empty score list; membership cannot be checked without resolving the owning study, so the
+  > lookup has to happen and its failure has to mean something.
+  >
+  > `_resolve_session_reviewer` lost its underscore and is now `resolve_session_reviewer`: an
+  > underscore claims module-private, and it is imported across modules. **TREF10** renamed
+  > `_ensure_*` to `ensure_*` in `scripts/seed_helpers.py` on the same rule, in this same feature.
+  >
+  > Backend 1182 passed (from 1174), frontend 1371 (from 1365), 22 new tests.
 
 - [ ] TFIX7 **Tertiary phase 4 gates on a quality score no UI can write.** `tertiary_phase_gate.py` unlocks phase 4 only when a `QualityAssessmentScore` exists for one of the study's candidate papers. The single writer of that table is `backend/src/backend/services/quality_assessment_service.py:195`, reached from `PUT /api/v1/slr/papers/{id}/quality-scores`; the single frontend caller is `useSubmitScores` in `frontend/src/hooks/slr/useQualityAssessment.ts`, whose single consumer is `frontend/src/components/slr/QualityScoreForm.tsx` — which nothing imports but its own test. So **no user can open Tertiary phase 4**, and phase 5 sits behind it. This is TFIX5's root cause with a consequence TFIX5 does not mention: an unreachable SLR form silently locks an unrelated study type out of two entire phases. **Blocks the extraction and report legs of T025**
 

@@ -51,6 +51,8 @@ export type ReviewerScores = z.infer<typeof ReviewerScoresSchema>;
 /** Schema for all scores on a candidate paper. */
 export const QualityScoresSchema = z.object({
   candidate_paper_id: z.number(),
+  /** The caller's own reviewer id, or `null` if they have never scored this paper. */
+  viewer_reviewer_id: z.number().nullable(),
   reviewer_scores: z.array(ReviewerScoresSchema),
 });
 export type QualityScores = z.infer<typeof QualityScoresSchema>;
@@ -80,9 +82,13 @@ export const ScoreItemInputSchema = z.object({
 });
 export type ScoreItemInput = z.infer<typeof ScoreItemInputSchema>;
 
-/** Schema for PUT /quality-scores request body. */
+/**
+ * Schema for PUT /quality-scores request body.
+ *
+ * No `reviewer_id` field: the reviewer is resolved server-side from the
+ * session, the same shape TFIX4 established for screening decisions.
+ */
 export const SubmitScoresSchema = z.object({
-  reviewer_id: z.number(),
   scores: z.array(ScoreItemInputSchema),
 });
 export type SubmitScores = z.infer<typeof SubmitScoresSchema>;

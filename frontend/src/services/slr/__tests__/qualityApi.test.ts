@@ -25,6 +25,7 @@ const CHECKLIST = {
 
 const QUALITY_SCORES = {
   candidate_paper_id: 7,
+  viewer_reviewer_id: null,
   reviewer_scores: [
     {
       reviewer_id: 3,
@@ -88,7 +89,6 @@ describe('submitQualityScores', () => {
   it('calls PUT and returns scores', async () => {
     mockApi.put.mockResolvedValue(QUALITY_SCORES);
     const result = await submitQualityScores(7, {
-      reviewer_id: 3,
       scores: [{ checklist_item_id: 1, score_value: 1.0, notes: null }],
     });
     expect(mockApi.put).toHaveBeenCalledWith(

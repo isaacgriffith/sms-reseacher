@@ -304,7 +304,7 @@ const SLR_PHASES: PhaseMap = {
   1: ({ study }) => <SLRProtocolEditorPage studyId={study.id} />,
   2: renderSearchSetup,
   3: ({ study }) => <SLRScreeningView studyId={study.id} />,
-  4: ({ study }) => <QualityAssessmentPage studyId={study.id} reviewerId={0} />,
+  4: ({ study }) => <QualityAssessmentPage studyId={study.id} />,
   5: ({ study }) => <SynthesisPage studyId={study.id} />,
   6: ({ study, unlocked }) => <ReportPage studyId={study.id} synthesisComplete={unlocked.has(5)} />,
   7: ({ study }) => <GreyLiteraturePage studyId={study.id} />,

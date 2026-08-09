@@ -64,7 +64,7 @@ describe('useSubmitScores', () => {
   it('executes mutation', async () => {
     const { result } = renderHook(() => useSubmitScores(7), { wrapper: makeWrapper() });
     await act(async () => {
-      result.current.mutate({ reviewer_id: 1, scores: [] });
+      result.current.mutate({ scores: [] });
     });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
   });

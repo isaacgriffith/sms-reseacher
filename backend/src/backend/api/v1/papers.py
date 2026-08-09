@@ -222,7 +222,7 @@ async def _load_candidate(study_id: int, candidate_id: int, db: AsyncSession) ->
     return cp
 
 
-async def _resolve_session_reviewer(
+async def resolve_session_reviewer(
     study_id: int, current_user: CurrentUser, db: AsyncSession
 ) -> Reviewer:
     """Resolve the calling user's human Reviewer row for a study, creating it if absent.
@@ -487,7 +487,7 @@ async def submit_decision(
 
     """
     await require_study_member(study_id, current_user, db)
-    reviewer = await _resolve_session_reviewer(study_id, current_user, db)
+    reviewer = await resolve_session_reviewer(study_id, current_user, db)
     cp = await _load_candidate(study_id, candidate_id, db)
 
     decision_enum = _parse_decision_type(body.decision)
@@ -547,7 +547,7 @@ async def resolve_conflict(
     clears conflict_flag.
     """
     await require_study_member(study_id, current_user, db)
-    reviewer = await _resolve_session_reviewer(study_id, current_user, db)
+    reviewer = await resolve_session_reviewer(study_id, current_user, db)
 
     cp = await _load_candidate(study_id, candidate_id, db)
 
