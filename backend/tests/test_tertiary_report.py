@@ -436,3 +436,81 @@ class TestSerialisationMethods:
         report = self._make_report()
         data = report.to_markdown()
         assert b"RQ1" in data
+
+
+# ---------------------------------------------------------------------------
+# Quality assessment summary (TFIX7)
+# ---------------------------------------------------------------------------
+
+
+class TestBuildQaResults:
+    """The QA section reports what was recorded, never that it happened.
+
+    This previously read no quality data at all — it branched on
+    ``SynthesisResult.computed_statistics`` and said "Quality assessment was
+    performed" either way, so a report asserted the step for a study where
+    nobody assessed anything. The existing suite only checked the field was a
+    ``str``, which is how it survived: a type assertion cannot tell a true
+    sentence from a false one.
+    """
+
+    @staticmethod
+    def _extractions(ratings: list[float | None]) -> list:
+        """Build unpersisted extraction rows carrying only a quality rating."""
+        from db.models.tertiary import TertiaryDataExtraction
+
+        return [TertiaryDataExtraction(reviewer_quality_rating=r) for r in ratings]
+
+    def test_no_extractions_says_nothing_was_recorded(self) -> None:
+        """With no extractions, the summary does not claim QA was performed."""
+        # Arrange
+        from backend.services.tertiary_report_service import _build_qa_results
+
+        # Act
+        summary = _build_qa_results([], None)
+
+        # Assert
+        assert "no quality assessment was recorded" in summary.lower()
+        assert "was performed" not in summary
+
+    def test_unrated_extractions_say_nothing_was_recorded(self) -> None:
+        """Extractions with no rating are reported as unassessed, not as done."""
+        # Arrange
+        from backend.services.tertiary_report_service import _build_qa_results
+
+        # Act
+        summary = _build_qa_results(self._extractions([None, None, None]), None)
+
+        # Assert — the count is named so a reader can see the coverage
+        assert "no quality assessment was recorded" in summary.lower()
+        assert "3" in summary
+        assert "was performed" not in summary
+
+    def test_reports_coverage_and_mean_when_rated(self) -> None:
+        """A partly rated set reports how many were rated and the mean."""
+        # Arrange
+        from backend.services.tertiary_report_service import _build_qa_results
+
+        # Act
+        summary = _build_qa_results(self._extractions([0.8, 0.6, None]), None)
+
+        # Assert
+        assert "2 of 3" in summary
+        assert "0.70" in summary
+        assert "1 were not assessed" in summary
+
+    def test_reports_threshold_when_protocol_sets_one(self) -> None:
+        """With a quality threshold set, the summary says how many meet it."""
+        # Arrange
+        from db.models.tertiary import TertiaryStudyProtocol
+
+        from backend.services.tertiary_report_service import _build_qa_results
+
+        protocol = TertiaryStudyProtocol(study_id=1, quality_threshold=0.7)
+
+        # Act
+        summary = _build_qa_results(self._extractions([0.8, 0.6]), protocol)
+
+        # Assert — 0.8 meets 0.7, 0.6 does not
+        assert "1 of 2 rated studies meet" in summary
+        assert "0.70" in summary

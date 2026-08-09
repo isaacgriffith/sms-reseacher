@@ -295,7 +295,7 @@ class TertiaryReportService:
         inclusion_exclusion = _build_inclusion_exclusion(
             len(all_papers), len(accepted_papers), len(excluded_papers), protocol
         )
-        qa_results = _build_qa_results(synthesis)
+        qa_results = _build_qa_results(extractions, protocol)
         extracted_data_section = _build_extracted_data(extractions)
         synthesis_section = _build_synthesis_section(synthesis)
         landscape = _build_landscape_section(extractions)
@@ -385,20 +385,65 @@ def _build_inclusion_exclusion(
     )
 
 
-def _build_qa_results(synthesis: SynthesisResult) -> str:
-    """Summarise quality assessment outcomes from the synthesis.
+def _build_qa_results(
+    extractions: list[TertiaryDataExtraction],
+    protocol: TertiaryStudyProtocol | None,
+) -> str:
+    """Summarise what quality assessment was actually recorded.
+
+    TFIX7. This read no quality data at all: it branched on
+    ``SynthesisResult.computed_statistics`` and returned "Quality assessment
+    was performed" or "Quality assessment was completed" — both asserting the
+    step happened, for a study where nobody may have assessed anything. A
+    report that claims an unperformed step is a reporting-integrity defect,
+    and a reader cannot tell the claim from a real one.
+
+    Quality for a tertiary study is carried by
+    ``TertiaryDataExtraction.reviewer_quality_rating``, which is nullable and
+    means "not assessed" when null, so coverage is reported rather than
+    assumed.
+
+    Note this reports a single 0-1 rating per secondary study because that is
+    what the platform stores. ``04-tertiary.md`` specifies DARE's four anchored
+    questions and ``07-quality-assessment.md`` warns against collapsing quality
+    into one number; that mismatch is a separate, larger defect recorded on
+    TFIX7 rather than papered over here.
 
     Args:
-        synthesis: The completed :class:`SynthesisResult`.
+        extractions: Extraction rows for the study's accepted papers.
+        protocol: The study's protocol, for its quality threshold if set.
 
     Returns:
-        A human-readable QA summary.
+        A human-readable QA summary that does not overstate what was done.
 
     """
-    if synthesis.computed_statistics:
-        stats_keys = ", ".join(str(k) for k in synthesis.computed_statistics.keys())
-        return f"Quality assessment was performed. Computed statistics: {stats_keys}."
-    return "Quality assessment was completed. No computed statistics are available."
+    total = len(extractions)
+    rated = [
+        e.reviewer_quality_rating for e in extractions if e.reviewer_quality_rating is not None
+    ]
+
+    if total == 0:
+        return "No secondary studies were extracted, so no quality assessment was recorded."
+    if not rated:
+        return (
+            f"No quality assessment was recorded: none of the {total} extracted "
+            "secondary studies carries a reviewer quality rating."
+        )
+
+    mean_rating = sum(rated) / len(rated)
+    parts = [
+        f"{len(rated)} of {total} extracted secondary studies carry a reviewer "
+        f"quality rating (mean {mean_rating:.2f} on a 0-1 scale)."
+    ]
+    if len(rated) < total:
+        parts.append(f"{total - len(rated)} were not assessed.")
+    if protocol is not None and protocol.quality_threshold is not None:
+        at_or_above = sum(1 for r in rated if r >= protocol.quality_threshold)
+        parts.append(
+            f"{at_or_above} of {len(rated)} rated studies meet the protocol's "
+            f"quality threshold of {protocol.quality_threshold:.2f}."
+        )
+    return " ".join(parts)
 
 
 def _build_extracted_data(extractions: list[TertiaryDataExtraction]) -> str:

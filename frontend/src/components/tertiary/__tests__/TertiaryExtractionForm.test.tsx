@@ -138,10 +138,16 @@ describe('TertiaryExtractionForm', () => {
       expect(screen.getByText(/Reviewer Quality Rating/)).toHaveTextContent('0.80');
     });
 
-    it('defaults reviewer_quality_rating to 0.50 when null is passed', () => {
+    it('shows an unassessed rating as not assessed, not as 0.50', () => {
+      // TFIX7. This asserted the opposite — that a null rating renders 0.50 —
+      // and its comment described the form default as intended behaviour. It
+      // was not: `handleSave` submits whatever the form holds, so a reviewer
+      // who never touched the slider persisted a mid-scale rating they never
+      // made. The test pinned the fabrication in place.
       renderForm(makeExtraction({ reviewer_quality_rating: null }));
-      // The form default sets it to 0.5 when null, so the watch returns 0.5.
-      expect(screen.getByText(/Reviewer Quality Rating/)).toHaveTextContent('0.50');
+      const label = screen.getByText(/Reviewer Quality Rating/);
+      expect(label).toHaveTextContent('—');
+      expect(label).not.toHaveTextContent('0.50');
     });
 
     it('renders without crashing when text fields are null', () => {

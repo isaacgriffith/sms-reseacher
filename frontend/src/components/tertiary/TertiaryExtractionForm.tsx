@@ -105,7 +105,12 @@ export default function TertiaryExtractionForm({
       synthesis_approach_used: extraction.synthesis_approach_used ?? '',
       key_findings: extraction.key_findings ?? '',
       research_gaps: extraction.research_gaps ?? '',
-      reviewer_quality_rating: extraction.reviewer_quality_rating ?? 0.5,
+      // TFIX7. This defaulted to 0.5, and `handleSave` submits whatever the
+      // form holds — so a reviewer who never touched the slider persisted a
+      // mid-scale quality rating they never made. `null` means "not assessed",
+      // which `QualityRow` already renders as an em dash, and the column, the
+      // form schema and the API schema are all already nullable.
+      reviewer_quality_rating: extraction.reviewer_quality_rating ?? null,
     },
   });
 
