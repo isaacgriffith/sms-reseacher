@@ -152,6 +152,26 @@ the same shape as the `viewer_role` addition in `342fc4b`.
 round-trip for data the study response should already carry; and a route change to
 `/groups/:groupId/studies/:studyId` — breaks existing links for no benefit.
 
+> **Refined 2026-08-08, while implementing T024: "wholesale" excludes phase 0.** Taken literally,
+> delegating everything means `StudyPage` renders no tab strip at all — and phase 0, the Protocol
+> tab, lives in that strip. `assign_default_protocol` runs for **every** study type at creation,
+> Tertiary included, so a literal takeover would give every Tertiary study a protocol graph and an
+> `ExecutionStateView` that no user could ever open. That closes G19 by opening a new gap of the
+> same kind, in the feature whose whole purpose is to eliminate them.
+>
+> The objection this decision actually records is "rendering two phase bars". Phase 0 is not a
+> phase of the review methodology — `StudyPage`'s own comment calls it "common to every study
+> type". So for a takeover study type `StudyPage` renders a two-button strip, **Protocol Graph**
+> and **Workspace**, and the workspace's own phase bar is the only phase bar on the page.
+>
+> A second reason the labels change: `TertiaryStudyPage`'s first tab is already
+> `Phase 1: Protocol`, meaning the _tertiary study protocol_. Keeping `Phase 0: Protocol` beside it
+> would put two identically-labelled tabs on one page meaning different things.
+>
+> `StudyPage.dispatch.test.tsx` pins the property that matters — `StudyPage` contributes **no**
+> `Phase N:` tab of its own for a takeover type — which both readings satisfy, and only this one
+> keeps the protocol reachable.
+
 ---
 
 ## R8 — `ExtractionPage` takes a prop rather than relying on a route coincidence

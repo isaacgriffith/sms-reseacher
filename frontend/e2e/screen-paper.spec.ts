@@ -1,8 +1,8 @@
 /**
  * E2E spec: Phase 3 — recording a screening decision.
  *
- * Covers the Screening phase on the StudyPage, for the two study types that
- * reach it down different paths:
+ * Covers the Screening phase on the StudyPage, for the three study types that
+ * reach it down different paths — SMS, SLR, and (T026) Tertiary:
  *
  *  - the queue renders and a row can be selected
  *  - accept and reject controls become available once a paper is selected
@@ -14,8 +14,27 @@
  * database already held — its name does not.
  *
  * Prerequisites: `scripts/seed_e2e_user.py` has been run against the backend's
- * database. It seeds both studies at phase 3 with pending candidates, and
+ * database. It seeds all four studies below with pending candidates, and
  * clears any decision an earlier run of this spec recorded on them.
+ *
+ * **The Tertiary block uses its own, separate study — `E2E Tertiary
+ * Screening Study`, not `E2E Tertiary Seed Study`.** `tertiary_phase_gate.py`
+ * locks phase 3 until the study's protocol is validated, and
+ * `tertiary-workflow.spec.ts` (T025) validates `E2E Tertiary Seed Study`'s
+ * protocol *through the UI*, as the very journey it exists to exercise —
+ * seeding it pre-validated would skip past that. Pointing this block at that
+ * same study raced the two files over the same one-way transition: whichever
+ * ran first left the other looking at an already-validated, read-only form.
+ * Confirmed empirically, not assumed — even `--workers=1` (no cross-file
+ * parallelism at all) still failed tertiary-workflow.spec.ts deterministically,
+ * because this file sorts before it alphabetically and so always validated
+ * first. `E2E Tertiary Screening Study` (`scripts/seed_e2e_user.py`,
+ * `_seed_tertiary_screening_study`) sidesteps this entirely: its own protocol
+ * is seeded already-validated, directly through the ORM
+ * (`ensure_validated_tertiary_protocol`) — exactly how `E2E SLR Seed Study`'s
+ * protocol is seeded for the same reason (see that helper's docstring). This
+ * test is not about protocol validation, so it does not need to earn that
+ * precondition through the UI to be meaningful.
  */
 
 import { test, expect, type Page } from '@playwright/test';
@@ -26,11 +45,16 @@ const TEST_GROUP_ID = process.env.E2E_GROUP_ID ?? '1';
 
 const SMS_STUDY_NAME = process.env.E2E_STUDY_NAME ?? 'E2E Seed Study';
 const SLR_STUDY_NAME = process.env.E2E_SLR_STUDY_NAME ?? 'E2E SLR Seed Study';
+/** T026's own dedicated Tertiary study — see the file docblock for why. */
+const TERTIARY_SCREENING_STUDY_NAME =
+  process.env.E2E_TERTIARY_SCREENING_STUDY_NAME ?? 'E2E Tertiary Screening Study';
 
 /** A pending candidate on the SMS study — SEED_PAPERS[0] in the seed script. */
 const SMS_PENDING_PAPER = 'Continuous integration practices in agile teams';
 /** A pending candidate on the SLR study — SLR_PAPERS[0] in the seed script. */
 const SLR_PENDING_PAPER = 'Effectiveness of code review at scale';
+/** The pending candidate on the Tertiary screening study — TERTIARY_SCREENING_PENDING_PAPERS[0]. */
+const TERTIARY_PENDING_PAPER = 'A tertiary review of empirical software engineering methods';
 
 async function login(page: Page): Promise<void> {
   await page.goto('/login');
@@ -171,5 +195,28 @@ test.describe('Screen paper (Phase 3) — SLR study', () => {
     await expect(page.getByText(/running|queued|progress/i).first()).toBeVisible({
       timeout: 10_000,
     });
+  });
+});
+
+test.describe('Screen paper (Phase 3) — Tertiary study', () => {
+  // T026 — Phase3Panel rendered a bare PaperQueue until this feature: no
+  // control on a Tertiary study could record a decision at all. This is what
+  // proves ScreeningView's ReviewerPanel closes that gap, completing FR-006
+  // (a screening decision must be recordable regardless of study type) across
+  // all three types SMS, SLR, and Tertiary.
+  test.beforeEach(async ({ page }) => {
+    await login(page);
+    await openScreening(page, TERTIARY_SCREENING_STUDY_NAME);
+  });
+
+  test('records an accept decision, and the queue reflects it', async ({ page }) => {
+    const annotation = 'Accepted during the Tertiary e2e run.';
+    const row = await selectPaper(page, TERTIARY_PENDING_PAPER);
+
+    await recordDecision(page, 'accepted', annotation);
+
+    await expect(page.getByText('Decision submitted.')).toBeVisible({ timeout: 10_000 });
+    await expect(row.getByText('accepted', { exact: true })).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByTestId('decision-annotation').first()).toContainText(annotation);
   });
 });

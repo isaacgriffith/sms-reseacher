@@ -95,6 +95,11 @@ class StudyDetail(BaseModel):
     #: LEAD-only controls on this — without it the UI cannot tell whether to
     #: offer actions the API restricts to the study lead.
     viewer_role: str
+    #: The owning research group's ID, or None if the group was deleted
+    #: (ON DELETE SET NULL). The Tertiary workspace's seed import lists the
+    #: owning group's other studies, and the route /studies/:studyId carries
+    #: no group segment — without this field seed import cannot function.
+    research_group_id: int | None
     created_at: str
     updated_at: str
 
@@ -347,6 +352,7 @@ async def create_study(
         unlocked_phases=[0],
         stale_phases=compute_staleness_flags(study),
         viewer_role=viewer_role,
+        research_group_id=study.research_group_id,
         created_at=study.created_at.isoformat(),
         updated_at=study.updated_at.isoformat(),
     )
@@ -392,6 +398,7 @@ async def get_study(
         unlocked_phases=unlocked,
         stale_phases=compute_staleness_flags(study),
         viewer_role=viewer_role,
+        research_group_id=study.research_group_id,
         created_at=study.created_at.isoformat(),
         updated_at=study.updated_at.isoformat(),
     )
@@ -467,6 +474,7 @@ async def patch_study(
         unlocked_phases=unlocked,
         stale_phases=compute_staleness_flags(study),
         viewer_role=viewer_role,
+        research_group_id=study.research_group_id,
         created_at=study.created_at.isoformat(),
         updated_at=study.updated_at.isoformat(),
     )

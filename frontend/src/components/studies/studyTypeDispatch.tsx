@@ -50,6 +50,7 @@ import RRSearchConfigPage from '../../pages/rapid/SearchConfigPage';
 import RRQualityConfigPage from '../../pages/rapid/QualityConfigPage';
 import RRNarrativeSynthesisPage from '../../pages/rapid/NarrativeSynthesisPage';
 import RREvidenceBriefingPage from '../../pages/rapid/EvidenceBriefingPage';
+import TertiaryStudyPage from '../../pages/TertiaryStudyPage';
 
 /** A study as returned by `GET /api/v1/studies/{id}`. */
 export interface StudyDetail {
@@ -66,6 +67,8 @@ export interface StudyDetail {
   unlocked_phases: number[];
   /** The current user's role on this study — "lead" or "member". */
   viewer_role: string;
+  /** The owning research group's ID, or null if the group was deleted. */
+  research_group_id: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -332,6 +335,39 @@ export const STUDY_TYPE_PHASES: Record<string, PhaseMap> = {
 
 /** Used for a study type with no map of its own. */
 export const DEFAULT_PHASE_MAP: PhaseMap = MAPPING_STUDY_PHASES;
+
+// ---------------------------------------------------------------------------
+// Takeover study types
+// ---------------------------------------------------------------------------
+
+/** Renders an entire workspace for one study type, replacing per-phase dispatch. */
+type StudyTakeover = (ctx: PhaseContext) => ReactNode;
+
+/**
+ * Study types that own their whole workspace rather than filling in cells of
+ * `STUDY_TYPE_PHASES`.
+ *
+ * A takeover workspace owns its own phase navigation and keeps its phase
+ * panels module-private, so an entry here **replaces** the phase map for that
+ * study type instead of supplementing it — `StudyPage` must not also consult
+ * `STUDY_TYPE_PHASES` for a type listed here, or the page would render two
+ * phase bars (research.md R7). A type must not appear in both maps.
+ *
+ * Phase 0, the Protocol tab, is the one exception: it is common to every
+ * study type (see `renderStudyPhase`'s docstring) and stays with `StudyPage`
+ * even for a takeover type, so `StudyPage` renders a two-button "Protocol
+ * Graph" / "Workspace" strip instead of its usual `PHASE_META` tabs for these
+ * types.
+ */
+export const STUDY_TYPE_TAKEOVER: Partial<Record<string, StudyTakeover>> = {
+  Tertiary: ({ study, unlocked }) => (
+    <TertiaryStudyPage
+      studyId={study.id}
+      unlockedPhases={unlocked}
+      groupId={study.research_group_id}
+    />
+  ),
+};
 
 /**
  * Renders the body of one phase for one study type.

@@ -29,7 +29,7 @@ import TertiaryProtocolForm from '../components/tertiary/TertiaryProtocolForm';
 import SeedImportPanel from '../components/tertiary/SeedImportPanel';
 import TertiaryExtractionForm from '../components/tertiary/TertiaryExtractionForm';
 import TertiaryReportPage from './TertiaryReportPage';
-import PaperQueue from '../components/phase2/PaperQueue';
+import ScreeningView from '../components/studies/ScreeningView';
 import {
   useTertiaryProtocol,
   useUpdateTertiaryProtocol,
@@ -69,8 +69,13 @@ export interface TertiaryStudyPageProps {
   studyId: number;
   /** Set of unlocked phase numbers from the phase gate. */
   unlockedPhases: Set<number>;
-  /** Research group ID — required for listing available import sources. */
-  groupId: number;
+  /**
+   * Research group ID — required for listing available import sources.
+   * `null` when the study's owning group was deleted (`StudyDetail.research_group_id`
+   * is `ON DELETE SET NULL`); Phase 2 alone needs it, so it is handled there
+   * rather than gating the whole workspace.
+   */
+  groupId: number | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -217,14 +222,20 @@ function ValidateButton({ isValidating, hasProtocol, onValidate }: ValidateButto
 
 interface Phase2PanelProps {
   studyId: number;
-  groupId: number;
+  groupId: number | null;
 }
 
 /**
  * Phase 2 content: seed import panel.
  *
+ * When the study has no owning group (`groupId` is `null` — the group was
+ * deleted), there is no source of platform studies to import from, so this
+ * shows an explanatory warning instead of `SeedImportPanel`, which requires a
+ * non-null group id. Every other phase is unaffected.
+ *
  * @param studyId - The Tertiary Study ID.
- * @param groupId - The research group ID for listing source studies.
+ * @param groupId - The research group ID for listing source studies, or
+ *   `null` if the study is not in a research group.
  */
 function Phase2Panel({ studyId, groupId }: Phase2PanelProps) {
   return (
@@ -232,7 +243,13 @@ function Phase2Panel({ studyId, groupId }: Phase2PanelProps) {
       <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
         Search &amp; Import
       </Typography>
-      <SeedImportPanel studyId={studyId} groupId={groupId} />
+      {groupId === null ? (
+        <Alert severity="warning">
+          This study is not in a research group, so there are no platform studies to import from.
+        </Alert>
+      ) : (
+        <SeedImportPanel studyId={studyId} groupId={groupId} />
+      )}
     </Box>
   );
 }
@@ -246,9 +263,11 @@ interface Phase3PanelProps {
 }
 
 /**
- * Phase 3 content: candidate paper queue for screening seed-imported secondary
- * studies. Reuses the existing PaperQueue component, which supports
- * accept/reject/duplicate decisions and phase-tag filtering.
+ * Phase 3 content: screening workflow for seed-imported secondary studies.
+ * Reuses the existing ScreeningView, which composes the paper queue,
+ * PaperCard, and ReviewerPanel — the only control that records a decision.
+ * A bare PaperQueue left no way to accept, reject, or annotate a candidate on
+ * a Tertiary study.
  *
  * @param studyId - The Tertiary Study ID.
  */
@@ -258,7 +277,7 @@ function Phase3Panel({ studyId }: Phase3PanelProps) {
       <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
         Screening
       </Typography>
-      <PaperQueue studyId={studyId} />
+      <ScreeningView studyId={studyId} />
     </Box>
   );
 }

@@ -24,8 +24,23 @@ from db.models.criteria import ExclusionCriterion, InclusionCriterion
 from db.models.pico import PICOComponent, PICOVariant
 from db.models.search import SearchString
 from db.models.search_exec import SearchExecution, SearchExecutionStatus
-from db.models.slr import ReviewProtocol, ReviewProtocolStatus, SynthesisApproach
+from db.models.slr import (
+    ChecklistScoringMethod,
+    QualityAssessmentChecklist,
+    QualityAssessmentScore,
+    QualityChecklistItem,
+    ReviewProtocol,
+    ReviewProtocolStatus,
+    SynthesisApproach,
+)
 from db.models.study import Reviewer, ReviewerType, StudyMember, StudyMemberRole
+from db.models.tertiary import (
+    SecondaryStudySeedImport,
+    SecondaryStudyType,
+    TertiaryDataExtraction,
+    TertiaryProtocolStatus,
+    TertiaryStudyProtocol,
+)
 from db.models.users import GroupMembership, GroupRole, ResearchGroup, User
 from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -472,6 +487,90 @@ async def reset_screening_queue(
     )
 
 
+async def reset_tertiary_workspace(session: AsyncSession, study: Study) -> None:
+    """Undo the state T025 (``tertiary-workflow.spec.ts``) writes through the UI.
+
+    The same class of problem ``reset_screening_queue`` exists for (T025/T026
+    write real state, and the suite runs repeatedly against a database it also
+    writes to — see that function's docstring) applies here too, for two
+    actions the Tertiary journey performs that ``reset_screening_queue`` does
+    not touch:
+
+    - **Protocol validation.** ``_seed_tertiary_study`` deliberately seeds no
+      ``TertiaryStudyProtocol`` row so the US2 journey can create and validate
+      one through the UI. Once validated, ``TertiaryProtocolForm`` goes
+      read-only (see its ``isReadOnly`` check), so a second run without this
+      reset would have nothing to fill in or validate.
+    - **Seed import.** ``SeedImportPanel``'s dialog disables a source study
+      once it appears in ``existingSourceIds``, so a second import attempt at
+      the same source has nothing clickable to select.
+
+    Deletes the protocol row, the seed-import audit rows, the candidates those
+    imports created (identified by ``phase_tag == "seed-import"``, disjoint
+    from the ``"initial-search"`` tag the study's own fixture candidates
+    carry), and the sentinel ``SearchExecution``/``SearchString`` pair
+    ``TertiaryExtractionService._get_or_create_seed_import_execution`` creates
+    on the first import — so a reseed always starts the journey from the same
+    protocol-less, import-less state ``_seed_tertiary_study`` documents.
+
+    That sentinel pair is not optional cleanup: ``ensure_search_execution``
+    (used below, for the study's own ``"initial-search"`` execution) looks up
+    *at most one* ``SearchString`` and *at most one* ``SearchExecution`` per
+    study and raises ``MultipleResultsFound`` the moment a second row of
+    either exists — which is exactly what an unreset seed-import sentinel
+    leaves behind.
+
+    Args:
+        session: Active async session.
+        study: The Tertiary study to reset.
+
+    """
+    protocol_result = await session.execute(
+        delete(TertiaryStudyProtocol).where(TertiaryStudyProtocol.study_id == study.id)
+    )
+    protocol_count: int = protocol_result.rowcount  # type: ignore[attr-defined]
+    import_result = await session.execute(
+        delete(SecondaryStudySeedImport).where(
+            SecondaryStudySeedImport.target_study_id == study.id
+        )
+    )
+    import_count: int = import_result.rowcount  # type: ignore[attr-defined]
+    candidate_result = await session.execute(
+        delete(CandidatePaper).where(
+            CandidatePaper.study_id == study.id,
+            CandidatePaper.phase_tag == "seed-import",
+        )
+    )
+    imported_candidates: int = candidate_result.rowcount  # type: ignore[attr-defined]
+
+    sentinel_execution = (
+        await session.execute(
+            select(SearchExecution).where(
+                SearchExecution.study_id == study.id,
+                SearchExecution.phase_tag == "seed-import",
+            )
+        )
+    ).scalar_one_or_none()
+    sentinel_count = 0
+    if sentinel_execution is not None:
+        sentinel_string_id = sentinel_execution.search_string_id
+        await session.delete(sentinel_execution)
+        await session.flush()
+        await session.execute(
+            delete(SearchString).where(SearchString.id == sentinel_string_id)
+        )
+        sentinel_count = 1
+
+    await session.flush()
+    if protocol_count or import_count or imported_candidates or sentinel_count:
+        print(
+            f"reset tertiary workspace on study {study.id} "
+            f"({protocol_count} protocol, {import_count} seed imports, "
+            f"{imported_candidates} imported candidates, "
+            f"{sentinel_count} seed-import search execution cleared)"
+        )
+
+
 async def ensure_validated_review_protocol(
     session: AsyncSession, study: Study
 ) -> ReviewProtocol:
@@ -512,3 +611,240 @@ async def ensure_validated_review_protocol(
         await session.flush()
         print(f"created validated review protocol for study {study.id} (unlocks 2-3)")
     return protocol
+
+
+async def ensure_validated_tertiary_protocol(
+    session: AsyncSession, study: Study
+) -> TertiaryStudyProtocol:
+    """Return *study*'s Tertiary protocol, creating a **validated** one if absent.
+
+    Exists for exactly one reason: giving T026's Tertiary screening test in
+    ``screen-paper.spec.ts`` its own study, separate from ``E2E Tertiary Seed
+    Study``. Both files reach a Tertiary study's phase 3, and both write a
+    real, one-way protocol-validation transition — T025
+    (``tertiary-workflow.spec.ts``) *through the UI*, as the very journey it
+    exists to exercise, and T026 needed it *already true* as a precondition
+    for a screen it isn't testing. Pointing both at the same row raced them:
+    whichever file's process got there first left the other looking at an
+    already-validated, read-only form. Verified empirically, not assumed —
+    even `--workers=1` (no cross-file parallelism at all) still failed
+    tertiary-workflow.spec.ts deterministically, because `screen-paper.spec.ts`
+    sorts before `tertiary-workflow.spec.ts` and so always ran, and validated,
+    first.
+
+    Mirrors `ensure_validated_review_protocol`'s reasoning for the SLR study
+    exactly: the study this creates a protocol for exists to be screened, not
+    to have its protocol-validation journey re-tested.
+
+    Args:
+        session: Active async session.
+        study: The Tertiary study to scaffold.
+
+    Returns:
+        The existing or newly created protocol.
+
+    """
+    protocol = (
+        await session.execute(
+            select(TertiaryStudyProtocol).where(
+                TertiaryStudyProtocol.study_id == study.id
+            )
+        )
+    ).scalar_one_or_none()
+    if protocol is None:
+        protocol = TertiaryStudyProtocol(
+            study_id=study.id,
+            status=TertiaryProtocolStatus.VALIDATED,
+            background="Seeded protocol for the e2e Tertiary screening journey.",
+            research_questions=[
+                "Which secondary study designs report the strongest evidence?"
+            ],
+            synthesis_approach=SynthesisApproach.DESCRIPTIVE.value,
+        )
+        session.add(protocol)
+        await session.flush()
+        print(
+            f"created validated tertiary protocol for study {study.id} (unlocks phases 2-3)"
+        )
+    elif protocol.status != TertiaryProtocolStatus.VALIDATED:
+        protocol.status = TertiaryProtocolStatus.VALIDATED
+        print(f"set tertiary protocol {protocol.id} to validated")
+    return protocol
+
+
+async def ensure_quality_checklist(
+    session: AsyncSession, study: Study, *, name: str, description: str | None = None
+) -> QualityAssessmentChecklist:
+    """Return *study*'s quality assessment checklist, creating one if absent.
+
+    A study has at most one checklist (``study_id`` is unique), so the
+    checklist itself is the natural key here.
+
+    Args:
+        session: Active async session.
+        study: The study to scaffold.
+        name: Checklist name, used when creating.
+        description: Optional checklist description, used when creating.
+
+    Returns:
+        The existing or newly created checklist.
+
+    """
+    checklist = (
+        await session.execute(
+            select(QualityAssessmentChecklist).where(
+                QualityAssessmentChecklist.study_id == study.id
+            )
+        )
+    ).scalar_one_or_none()
+    if checklist is None:
+        checklist = QualityAssessmentChecklist(
+            study_id=study.id, name=name, description=description
+        )
+        session.add(checklist)
+        await session.flush()
+        print(f"created quality checklist {name!r} for study {study.id}")
+    return checklist
+
+
+async def ensure_quality_checklist_item(
+    session: AsyncSession,
+    checklist: QualityAssessmentChecklist,
+    *,
+    order: int,
+    question: str,
+    scoring_method: ChecklistScoringMethod = ChecklistScoringMethod.BINARY,
+    weight: float = 1.0,
+) -> QualityChecklistItem:
+    """Return the item at *order* on *checklist*, creating it if absent.
+
+    ``order`` is the natural key within a checklist: nothing else uniquely
+    identifies an item, and re-running with the same *order* must not create
+    a duplicate row.
+
+    Args:
+        session: Active async session.
+        checklist: Owning checklist.
+        order: Display order within the checklist.
+        question: Item question text, used when creating.
+        scoring_method: Scoring input type, used when creating.
+        weight: Weight applied to this item's score, used when creating.
+
+    Returns:
+        The existing or newly created item.
+
+    """
+    item = (
+        await session.execute(
+            select(QualityChecklistItem).where(
+                QualityChecklistItem.checklist_id == checklist.id,
+                QualityChecklistItem.order == order,
+            )
+        )
+    ).scalar_one_or_none()
+    if item is None:
+        item = QualityChecklistItem(
+            checklist_id=checklist.id,
+            order=order,
+            question=question,
+            scoring_method=scoring_method,
+            weight=weight,
+        )
+        session.add(item)
+        await session.flush()
+        print(f"created checklist item {order} for checklist {checklist.id}")
+    return item
+
+
+async def ensure_quality_score(
+    session: AsyncSession,
+    candidate: CandidatePaper,
+    reviewer: Reviewer,
+    item: QualityChecklistItem,
+    score_value: float,
+) -> QualityAssessmentScore:
+    """Return the (candidate, reviewer, item) score row, creating it if absent.
+
+    The natural key matches ``uq_quality_assessment_score`` on
+    ``QualityAssessmentScore`` — the same triple the unique constraint uses.
+
+    Args:
+        session: Active async session.
+        candidate: The candidate paper being scored.
+        reviewer: The reviewer submitting the score.
+        item: The checklist item scored.
+        score_value: The score, used when creating.
+
+    Returns:
+        The existing or newly created score.
+
+    """
+    score = (
+        await session.execute(
+            select(QualityAssessmentScore).where(
+                QualityAssessmentScore.candidate_paper_id == candidate.id,
+                QualityAssessmentScore.reviewer_id == reviewer.id,
+                QualityAssessmentScore.checklist_item_id == item.id,
+            )
+        )
+    ).scalar_one_or_none()
+    if score is None:
+        score = QualityAssessmentScore(
+            candidate_paper_id=candidate.id,
+            reviewer_id=reviewer.id,
+            checklist_item_id=item.id,
+            score_value=score_value,
+        )
+        session.add(score)
+        await session.flush()
+        print(
+            f"created quality score for candidate {candidate.id} "
+            f"(reviewer {reviewer.id}, item {item.id}) — unlocks tertiary phase 4"
+        )
+    return score
+
+
+async def ensure_validated_tertiary_extraction(
+    session: AsyncSession, candidate: CandidatePaper, *, key_findings: str
+) -> TertiaryDataExtraction:
+    """Return *candidate*'s tertiary extraction forced to ``validated``.
+
+    No UI path ever writes ``extraction_status="validated"`` — see TFIX8 in
+    ``tasks.md`` — so this is the only writer of that state, and it is a
+    seeding compromise rather than a stand-in for a reachable feature. Read
+    that caveat before treating an e2e pass through tertiary phase 5 as proof
+    a user can produce this state themselves.
+
+    Args:
+        session: Active async session.
+        candidate: The candidate paper (an included secondary study) to extract.
+        key_findings: Summary text, used when creating.
+
+    Returns:
+        The existing or newly created extraction, with status ``validated``.
+
+    """
+    extraction = (
+        await session.execute(
+            select(TertiaryDataExtraction).where(
+                TertiaryDataExtraction.candidate_paper_id == candidate.id
+            )
+        )
+    ).scalar_one_or_none()
+    if extraction is None:
+        extraction = TertiaryDataExtraction(
+            candidate_paper_id=candidate.id,
+            secondary_study_type=SecondaryStudyType.SMS,
+            key_findings=key_findings,
+            extraction_status="validated",
+        )
+        session.add(extraction)
+        await session.flush()
+        print(
+            f"created validated tertiary extraction for candidate {candidate.id} "
+            "(unlocks tertiary phase 5 with a second one)"
+        )
+    elif extraction.extraction_status != "validated":
+        extraction.extraction_status = "validated"
+        print(f"set tertiary extraction {extraction.id} to validated")
+    return extraction

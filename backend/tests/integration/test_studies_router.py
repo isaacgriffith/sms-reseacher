@@ -4,6 +4,7 @@ Covers wizard POST, GET detail, PATCH, archive, and delete including 401/403 pat
 """
 
 import pytest
+from db.models import StudyType
 from db.models.users import GroupMembership, GroupRole, ResearchGroup
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
@@ -327,3 +328,28 @@ class TestDeleteStudyEdgeCases:
         # Bob tries to delete — should get 403
         resp = await client.delete(f"/api/v1/studies/{study_id}", headers=_bearer(bob_user.id))
         assert resp.status_code == 403
+
+
+class TestGetStudyResearchGroupId:
+    """GET /studies/{study_id} — research_group_id field (FR-010)."""
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("study_type", list(StudyType))
+    async def test_returns_research_group_id_matching_owning_group(
+        self, client, alice, db_engine, study_type
+    ):
+        """For every study type, GET detail's research_group_id matches the owning group."""
+        user, _ = alice
+        group_id = await _create_group(db_engine, user.id)
+        create_resp = await client.post(
+            f"/api/v1/groups/{group_id}/studies",
+            json={**_WIZARD_PAYLOAD, "study_type": study_type.value},
+            headers=_bearer(user.id),
+        )
+        assert create_resp.status_code == 201, create_resp.text
+        study_id = create_resp.json()["id"]
+
+        resp = await client.get(f"/api/v1/studies/{study_id}", headers=_bearer(user.id))
+
+        assert resp.status_code == 200
+        assert resp.json()["research_group_id"] == group_id

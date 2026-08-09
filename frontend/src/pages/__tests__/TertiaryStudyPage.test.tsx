@@ -128,11 +128,15 @@ describe('TertiaryStudyPage', () => {
     expect(screen.getByText(/Tertiary Study Protocol/i)).toBeInTheDocument();
   });
 
-  it('switches to Phase 3 (Screening) and shows paper queue', () => {
+  it('switches to Phase 3 (Screening) and shows the screening view with its paper queue', () => {
     render(<TertiaryStudyPage studyId={1} unlockedPhases={ALL_UNLOCKED} groupId={10} />, {
       wrapper: makeWrapper(),
     });
     fireEvent.click(screen.getByRole('button', { name: /Phase 3.*Screening/i }));
+    // ScreeningView (not a bare PaperQueue) is what gives Tertiary a control that
+    // can record a decision — see the ReviewerPanel it composes once a paper is
+    // selected. This asserts the composed view, not just the queue it contains.
+    expect(screen.getByTestId('screening-view')).toBeInTheDocument();
     expect(screen.getByTestId('paper-queue')).toBeInTheDocument();
   });
 

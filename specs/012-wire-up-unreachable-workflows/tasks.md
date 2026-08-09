@@ -187,6 +187,32 @@ database by `backend/tests/integration/test_search_pipeline_screening.py`.
   > "present and wrong" as a defect class with **no automated instrument**, and this is a worked
   > example of a human (and an AI) producing one under exactly the conditions that class predicts.
 
+- [ ] TFIX7 **Tertiary phase 4 gates on a quality score no UI can write.** `tertiary_phase_gate.py` unlocks phase 4 only when a `QualityAssessmentScore` exists for one of the study's candidate papers. The single writer of that table is `backend/src/backend/services/quality_assessment_service.py:195`, reached from `PUT /api/v1/slr/papers/{id}/quality-scores`; the single frontend caller is `useSubmitScores` in `frontend/src/hooks/slr/useQualityAssessment.ts`, whose single consumer is `frontend/src/components/slr/QualityScoreForm.tsx` — which nothing imports but its own test. So **no user can open Tertiary phase 4**, and phase 5 sits behind it. This is TFIX5's root cause with a consequence TFIX5 does not mention: an unreachable SLR form silently locks an unrelated study type out of two entire phases. **Blocks the extraction and report legs of T025**
+
+- [ ] TFIX8 **Tertiary phase 5 gates on a status literal the form never sends.** The gate requires ≥2 `TertiaryDataExtraction` rows with `extraction_status == "validated"`. `frontend/src/components/tertiary/TertiaryExtractionForm.tsx:127` hardcodes `extraction_status: 'human_reviewed'` on save, and **nothing in `backend/src` or `frontend/src` writes `"validated"` for a `TertiaryDataExtraction` at all** — the column is a free-form string and the PUT endpoint accepts any value, so neither side is individually wrong and neither side's tests can notice. A one-word disagreement between a gate and the only form meant to satisfy it. **Blocks the report leg of T025**
+
+  > **Both are seeded, not skipped — the user's call on 2026-08-08**, in preference to marking the
+  > blocked legs `test.fixme`. `_seed_tertiary_study` now creates the `QualityAssessmentScore`
+  > (with the `QualityChecklist`, item and human `Reviewer` its unique triple requires) and two
+  > `validated` extractions, so T025 can drive all five phases through the UI.
+  >
+  > **State the consequence wherever the result is read**: an e2e that reaches Tertiary phases 4
+  > and 5 demonstrates that those panels work. It does **not** demonstrate that a user can navigate
+  > to them, because the fixture opened the gate rather than the UI. Read as reachability evidence
+  > it is precisely the "green and wrong" artefact this feature exists to delete.
+  >
+  > Neither defect is visible to `scripts/audit_unreachable_frontend.py`. After T024 the audit
+  > counts `TertiaryExtractionForm`, `TertiaryReportPage` and `LandscapeSummarySection` as
+  > reachable — correctly, by its own definition, because they are imported. The audit answers
+  > _is this module in the import graph_; these two defects live in the gap between that and _can a
+  > user get there_. Worth a `MEMORY.md` entry under TDOC7.
+  >
+  > Verified empirically rather than by reading, against a live PostgreSQL:
+  > `get_tertiary_unlocked_phases` returns `[1]` for the seeded study, `[1, 2, 3, 4, 5]` once a
+  > validated protocol is inserted, and `[1]` again after that insert is rolled back — confirming
+  > the fixture opens phases 4 and 5 and that the study still ends with no protocol row, so T025
+  > still starts where it is meant to.
+
 ---
 
 ## Phase 3: User Story 1 — Record a screening decision (Priority: P1) 🎯 MVP
@@ -268,14 +294,29 @@ database by `backend/tests/integration/test_search_pipeline_screening.py`.
 
 ### Tests for User Story 2 ⚠️ write first, must fail
 
-- [ ] T020 [P] [US2] Integration test in `backend/tests/integration/test_studies.py`: `GET /studies/{id}` returns `research_group_id` matching the owning group, for **every** study type (FR-010)
-- [ ] T021 [P] [US2] Component test in `frontend/src/pages/__tests__/StudyPage.dispatch.test.tsx`: a study whose type is Tertiary renders the tertiary workspace, not the SMS phase panels (FR-007)
+- [x] T020 [P] [US2] Integration test in `backend/tests/integration/test_studies.py`: `GET /studies/{id}` returns `research_group_id` matching the owning group, for **every** study type (FR-010)
+  - **`test_studies.py` does not exist** — the file is `backend/tests/integration/test_studies_router.py`. Added there as `TestGetStudyResearchGroupId`, parametrised over `list(StudyType)` rather than a hand-written list, so a study type added later is covered without anyone remembering to extend it. RED for the right reason: `201` on create, `200` on GET, then `KeyError: 'research_group_id'` — not an import, fixture or 404 failure
+- [x] T021 [P] [US2] Component test in `frontend/src/pages/__tests__/StudyPage.dispatch.test.tsx`: a study whose type is Tertiary renders the tertiary workspace, not the SMS phase panels (FR-007)
+  - Replaces the two `Tertiary (current defect — see G19)` cases the file was written to carry until this task. RED for the right reason: the DOM dump showed `pico-form` and `seed-papers` still rendering for a Tertiary study, and all 8 of `StudyPage`'s own `Phase N:` tabs present. The other 24 cases in the file were untouched and stayed green
 
 ### Implementation for User Story 2
 
-- [ ] T022 [US2] Add `research_group_id: int` to `StudyDetail` and populate it in `backend/src/backend/api/v1/studies/__init__.py` (FR-009, FR-010 — seed import cannot function without it)
-- [ ] T023 [P] [US2] Add `research_group_id: number` to the `StudyDetail` interface in `frontend/src/pages/StudyPage.tsx`, mirroring the backend model
-- [ ] T024 [US2] Register Tertiary in `frontend/src/components/studies/studyTypeDispatch.tsx` so `StudyPage` renders its header then delegates wholesale to `TertiaryStudyPage`, passing `studyId`, `unlockedPhases`, and `groupId` (R7 — takeover, not per-phase dispatch)
+- [x] T022 [US2] Add `research_group_id: int` to `StudyDetail` and populate it in `backend/src/backend/api/v1/studies/__init__.py` (FR-009, FR-010 — seed import cannot function without it)
+  - **The type is `int | None`, not `int`.** `db/src/db/models/__init__.py:256` declares `Mapped[int | None]` with `ForeignKey(..., ondelete="SET NULL")`, so deleting a research group nulls the field on every study that belonged to it. Populated at **all three** `return StudyDetail(` sites — create, get, patch. A missed site would not fail at import or type-check: the field is required, so it raises `ValidationError` at request time on one endpoint only, and `create_study` / `patch_study` are far less covered than `get_study`
+- [x] T023 [P] [US2] Add `research_group_id: number` to the `StudyDetail` interface in `frontend/src/pages/StudyPage.tsx`, mirroring the backend model
+  - **The interface is not in `StudyPage.tsx`** — that file imports the type. It is declared in `frontend/src/components/studies/studyTypeDispatch.tsx:55`, and is typed `number | null` to mirror the nullable column
+- [x] T024 [US2] Register Tertiary in `frontend/src/components/studies/studyTypeDispatch.tsx` so `StudyPage` renders its header then delegates wholesale to `TertiaryStudyPage`, passing `studyId`, `unlockedPhases`, and `groupId` (R7 — takeover, not per-phase dispatch)
+  - **Audit 20 → 8.** Still **exit 1**, and correctly so — the script exits 0 only at zero
+    unreachable, which is T055's definition of done, not T024's. (Recorded because this entry first
+    read "exit 0": `$?` was sampled after a pipe into `tail`, so it reported `tail`'s status rather
+    than the script's. Any audit check written as `audit.py | tail; echo $?` measures nothing.)
+    The eight that remain are US3's four (`ExtractionPage`, `ExtractionView`, `ValidityForm`,
+    `QualityReport`), TFIX5's `QualityScoreForm`, `TertiaryQAGuidancePanel`, and the two G21
+    modules. Twelve modules became reachable from one dispatch entry: `TertiaryStudyPage`, `TertiaryReportPage`, four `components/tertiary/*`, three `hooks/tertiary/*`, three `services/tertiary/*`. Frontend suite 1365 tests green
+  - A takeover needs a **second** map, not a `STUDY_TYPE_PHASES` entry: that map is keyed by phase, and `StudyPage` renders `PHASE_META` unconditionally, so a phase entry would have left its own Phase 1–7 strip above the workspace's own — the two phase bars R7 rejects. `STUDY_TYPE_TAKEOVER` is consulted _before_ the tab strip is built
+  - **"Wholesale" was refined to exclude phase 0** — see the dated note on R7 in `research.md`. A literal reading deletes the tab strip, and phase 0 is the Protocol tab; `assign_default_protocol` runs for every study type at creation, so every Tertiary study would have had a `ProtocolGraph` and `ExecutionStateView` no user could open — closing G19 by opening a gap of the same kind. Takeover types get a two-button strip, **Protocol Graph** and **Workspace**, whose labels also avoid colliding with `TertiaryStudyPage`'s own `Phase 1: Protocol`
+  - `groupId` is `number | null` and **not** coerced with `?? 0`; `Phase2Panel` explains the absence, because the group is needed by phase 2 alone. Coercing would have rebuilt the `reviewerId={0}` shape TFIX5 catalogues
+  - `STUDY_TYPE_TAKEOVER` is typed `Partial<Record<string, StudyTakeover>>`: this repo does not set `noUncheckedIndexedAccess`, so a plain `Record` makes indexing always-defined and `tsc` rejects the truthiness check with `TS2774`. `Partial` is also the honest type — most study types have no takeover
 - [ ] T025 [US2] Create `frontend/e2e/tertiary-workflow.spec.ts` covering protocol → seed import → screening → extraction → report against a live backend (FR-021 — this workflow has no e2e coverage today because it could not be reached)
 - [ ] T026 [US2] Extend `frontend/e2e/screen-paper.spec.ts` to record a decision on a Tertiary study, completing FR-006 across all three screening study types
 
@@ -355,7 +396,33 @@ database by `backend/tests/integration/test_search_pipeline_screening.py`.
 - [ ] TDOC4 [P] Update `backend/README.md`, `db/README.md`, and `frontend/README.md` for the modified subprojects
 - [ ] TDOC5 [P] Update `backend/CHANGELOG.md`, `db/CHANGELOG.md`, and `frontend/CHANGELOG.md`
 - [ ] TDOC6 Mark **G18, G19, G20** closed in `docs/feature-gaps.md` and update the built-but-never-wired audit count from 23 to the two remaining G21 modules
-- [ ] TDOC7 [P] Add a `MEMORY.md` entry if implementation surfaces a further non-obvious trap, per that file's own guidance
+- [ ] TDOC7 [P] Add a `MEMORY.md` entry if implementation surfaces a further non-obvious trap, per that file's own guidance. **Three are already owed, found during US2:**
+  1. **"Reachable" and "navigable" are different properties, and only one has an instrument.**
+     `scripts/audit_unreachable_frontend.py` walks the import graph from `main.tsx`; it answers
+     _is this module imported_. It cannot answer _can a user get there_. After T024 the audit
+     counts `TertiaryExtractionForm`, `TertiaryReportPage` and `LandscapeSummarySection` as
+     reachable — correctly by its own definition — while **TFIX7** and **TFIX8** keep every user
+     out of the phases that render them. A green audit is necessary and not sufficient; the
+     complement is an e2e that actually navigates, which is why FR-021 exists. Note the two
+     failures are of different kinds and both invisible to the same tool: TFIX7 is a missing
+     writer (nothing imports `QualityScoreForm`, so no `QualityAssessmentScore` can be created),
+     TFIX8 is a mismatched literal (`TertiaryExtractionForm` saves `human_reviewed`; the gate
+     wants `validated`).
+
+  2. **`unlocked_phases` carries two different numbering schemes.** `StudyPage`'s `PHASE_META`
+     runs 0–7, where 0 is the protocol tab; a Tertiary study's gate returns 1–5, and
+     `TertiaryStudyPage` labels those `Phase 1: Protocol` … `Phase 5: Synthesis & Report`. One
+     field, two vocabularies. Nothing is broken today only because the takeover means the two
+     strips never render together — a study type that dispatched per phase _and_ had a five-phase
+     gate would mis-index in silence. Anyone adding a study type must decide which scheme it
+     speaks before writing a gate.
+
+  3. **`Record<string, T>` indexing is typed as always-defined here.** This repo does not set
+     `noUncheckedIndexedAccess`, so `const t = MAP[key]; t ? a : b` fails `tsc` with `TS2774` —
+     the compiler calls the check pointless while the runtime value really is `undefined` for
+     every unmapped key. Declare such maps `Partial<Record<string, T>>`, which is also the honest
+     type. `STUDY_TYPE_PHASES` escapes this only because it is always read through
+     `?? DEFAULT_PHASE_MAP` and so never asks whether the lookup succeeded.
 
 ---
 
@@ -453,14 +520,14 @@ in one commit — a required field and its callers must move together.
 | Refactoring (C1–C3) | TREF1–TREF10 | 10     |
 | Setup ✅            | T001–T002    | 2      |
 | Foundational ✅     | T003–T006    | 4      |
-| Defects found       | TFIX1–TFIX6  | 6      |
+| Defects found       | TFIX1–TFIX8  | 8      |
 | US1 (P1) 🎯 MVP ✅  | T007–T019    | 13     |
 | US2 (P2)            | T020–T026    | 7      |
 | US3 (P3)            | T027–T033    | 7      |
 | US4 (P4)            | T034–T050    | 17     |
 | Polish              | T051–T055    | 5      |
 | Documentation       | TDOC1–TDOC7  | 7      |
-| **Total**           |              | **78** |
+| **Total**           |              | **80** |
 
 TREF1–TREF10, T001–T019 and TFIX1–TFIX4 plus TFIX6 are complete — **the MVP is delivered**: a
 reviewer can screen papers on SMS and SLR studies, driven end-to-end by an e2e against a live

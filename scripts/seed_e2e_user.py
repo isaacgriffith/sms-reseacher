@@ -24,10 +24,28 @@ Users, group, memberships    Every spec — logging in and reaching ``/groups``
   - 1 conflicted candidate   T005 — the disagreement path in the reviewer panel
   - inclusion/exclusion      T019 — the reviewer panel renders its reason
     criteria                 selector only for a study that has criteria
-``E2E Tertiary Study``       T003 — the Tertiary workspace has something to open
+``E2E Tertiary Study``       T003/T025 — the Tertiary workspace has something to
+                             open, and its protocol starts *unvalidated* so
+                             tertiary-workflow.spec.ts can validate one through
+                             the UI as its own first leg
+  - 2 accepted + QA score     T025 — a seeded QualityAssessmentScore and two
+    + 2 validated extractions validated TertiaryDataExtraction rows unlock phases
+                               4 and 5 without a protocol (see TFIX7/TFIX8 below)
+  - 2 pending candidates      T025 — its own screening leg needs something
+                               un-judged to list in the queue
 ``E2E Source Mapping Study`` T006 — Tertiary seed import has a source to offer
 ``E2E SLR Seed Study``       T019 — recording a decision on an SLR study, whose
                              phase 3 unlocks on different conditions from SMS
+``E2E Tertiary Screening     T026 — recording a decision on a Tertiary study.
+  Study``                    Deliberately a *second*, disjoint Tertiary study
+                             with its protocol pre-validated directly (never
+                             through the UI, unlike ``E2E Tertiary Study``):
+                             pointing this test at the same study
+                             tertiary-workflow.spec.ts validates raced the two
+                             files over the same one-way transition — see
+                             ``ensure_validated_tertiary_protocol``.
+  - 1 pending candidate       T026 — a screening decision needs something
+                               un-judged to decide on
 ===========================  =================================================
 
 Usage::
@@ -50,6 +68,7 @@ from db.models.candidate import (
 )
 from db.models.extraction import DataExtraction, ExtractionStatus, ResearchType
 from db.models.search_exec import SearchExecution
+from db.models.slr import ChecklistScoringMethod
 from db.models.users import ResearchGroup, User
 from seed_helpers import (
     ensure_candidate,
@@ -59,11 +78,17 @@ from seed_helpers import (
     ensure_human_reviewer,
     ensure_paper,
     ensure_pico,
+    ensure_quality_checklist,
+    ensure_quality_checklist_item,
+    ensure_quality_score,
     ensure_search_execution,
     ensure_study,
     ensure_study_members,
     ensure_validated_review_protocol,
+    ensure_validated_tertiary_extraction,
+    ensure_validated_tertiary_protocol,
     reset_screening_queue,
+    reset_tertiary_workspace,
     upsert_user,
 )
 from sqlalchemy import select
@@ -99,6 +124,13 @@ TERTIARY_STUDY_NAME = os.environ.get(
 )
 SOURCE_STUDY_NAME = os.environ.get("E2E_SOURCE_STUDY_NAME", "E2E Source Mapping Study")
 SLR_STUDY_NAME = os.environ.get("E2E_SLR_STUDY_NAME", "E2E SLR Seed Study")
+#: T026 — a *second*, disjoint Tertiary study, separate from TERTIARY_STUDY_NAME.
+#: See `ensure_validated_tertiary_protocol`'s docstring: pointing screen-paper.spec.ts's
+#: Tertiary decision test at the same study tertiary-workflow.spec.ts validates raced
+#: the two files over the same one-way protocol-validation transition.
+TERTIARY_SCREENING_STUDY_NAME = os.environ.get(
+    "E2E_TERTIARY_SCREENING_STUDY_NAME", "E2E Tertiary Screening Study"
+)
 
 #: Papers seeded into the screening queue so the accept/reject controls render.
 SEED_PAPERS = [
@@ -127,6 +159,40 @@ CONFLICT_PAPER = (
 SOURCE_PAPERS = [
     ("A systematic mapping of DevOps adoption", "10.1000/e2e-source-1"),
     ("Microservice migration patterns: a review", "10.1000/e2e-source-2"),
+]
+
+#: T025/T026 — accepted candidates on the Tertiary study. One carries the
+#: seeded QualityAssessmentScore (unlocks phase 4); both carry a validated
+#: TertiaryDataExtraction (unlocks phase 5 at >=2). See TFIX7/TFIX8 in
+#: tasks.md — neither state has a UI writer, hence seeding it directly.
+TERTIARY_ACCEPTED_PAPERS = [
+    (
+        "Systematic reviews of test case prioritization: a tertiary study",
+        "10.1000/e2e-tert-accepted-1",
+    ),
+    (
+        "A survey of secondary studies on code smell detection",
+        "10.1000/e2e-tert-accepted-2",
+    ),
+]
+
+#: T026 — pending candidates on the Tertiary study, so its screening queue has
+#: something un-judged to decide on. Distinct DOIs from every other fixture
+#: for the same reason SLR_PAPERS are distinct from SEED_PAPERS.
+TERTIARY_PENDING_PAPERS = [
+    ("A meta-analysis of pair programming outcomes", "10.1000/e2e-tert-pending-1"),
+    ("A mapping study of chaos engineering practices", "10.1000/e2e-tert-pending-2"),
+]
+
+#: T026 — pending candidates on the dedicated Tertiary *screening* study
+#: (TERTIARY_SCREENING_STUDY_NAME). Distinct DOIs from every other fixture,
+#: including TERTIARY_PENDING_PAPERS, for the same reason SLR_PAPERS are
+#: distinct from SEED_PAPERS.
+TERTIARY_SCREENING_PENDING_PAPERS = [
+    (
+        "A tertiary review of empirical software engineering methods",
+        "10.1000/e2e-tert-screen-1",
+    ),
 ]
 
 #: T019 — pending candidates on the SLR study, so its screening queue has rows
@@ -296,6 +362,29 @@ async def _seed_tertiary_study(
     would skip past the first step of the very workflow the e2e is meant to
     exercise.
 
+    Phases 4 and 5 are unlocked anyway, by writing a ``QualityAssessmentScore``
+    and two ``validated`` ``TertiaryDataExtraction`` rows straight through the
+    ORM (T025/T026). Both are seeding compromises, not stand-ins for reachable
+    features, and are recorded as such in ``docs/features/012-...tasks.md``:
+
+    - **TFIX7** (phase 4): the only writer of ``QualityAssessmentScore`` is
+      ``quality_assessment_service.py`` via ``PUT
+      /api/v1/slr/papers/{id}/quality-scores``, whose only frontend caller is
+      ``useSubmitScores`` in ``useQualityAssessment.ts``, whose only consumer
+      is ``QualityScoreForm.tsx`` — which nothing imports but its own test.
+      No UI path reaches it.
+    - **TFIX8** (phase 5): ``TertiaryExtractionForm.tsx`` hardcodes
+      ``extraction_status: 'human_reviewed'`` on save. Nothing anywhere in
+      ``backend/src`` or ``frontend/src`` ever writes ``"validated"`` for a
+      ``TertiaryDataExtraction``.
+
+    So an e2e run that reaches tertiary phases 4 and 5 demonstrates those
+    panels render and behave correctly for data that already exists — it does
+    **not** demonstrate that a user can navigate there and produce that data
+    themselves. Treating the passing test as proof of reachability is exactly
+    the failure mode this feature exists to close; do not make that mistake
+    with this fixture.
+
     Args:
         session: Active async session.
         group: Owning research group.
@@ -313,6 +402,62 @@ async def _seed_tertiary_study(
         group=group,
     )
     await ensure_study_members(session, study, members)
+    # T025 drives protocol validation and seed import through the UI, both
+    # one-way transitions on a rerun (see reset_tertiary_workspace's
+    # docstring) — reset on every seed run, matching reset_screening_queue's
+    # precedent for the screening decisions below.
+    await reset_tertiary_workspace(session, study)
+    await ensure_criteria(session, study, INCLUSION_CRITERIA, EXCLUSION_CRITERIA)
+    execution = await ensure_search_execution(
+        session,
+        study,
+        '("systematic review" OR "mapping study") AND "software testing"',
+    )
+
+    accepted_candidates = []
+    for title, doi in TERTIARY_ACCEPTED_PAPERS:
+        paper = await ensure_paper(session, title, doi)
+        candidate = await ensure_candidate(
+            session, study, paper, execution, CandidatePaperStatus.ACCEPTED
+        )
+        accepted_candidates.append(candidate)
+
+    for title, doi in TERTIARY_PENDING_PAPERS:
+        paper = await ensure_paper(session, title, doi)
+        await ensure_candidate(
+            session, study, paper, execution, CandidatePaperStatus.PENDING
+        )
+    await reset_screening_queue(
+        session, study, [doi for _, doi in TERTIARY_PENDING_PAPERS]
+    )
+
+    # TFIX7 — unlock phase 4 with a directly-written QualityAssessmentScore.
+    reviewer = await ensure_human_reviewer(session, study, members[0])
+    checklist = await ensure_quality_checklist(
+        session,
+        study,
+        name="Tertiary QA Checklist",
+        description="Seeded so tertiary phase 4 has a score to unlock it.",
+    )
+    checklist_item = await ensure_quality_checklist_item(
+        session,
+        checklist,
+        order=0,
+        question="Does the secondary study report its search strategy?",
+        scoring_method=ChecklistScoringMethod.BINARY,
+    )
+    await ensure_quality_score(
+        session, accepted_candidates[0], reviewer, checklist_item, score_value=1.0
+    )
+
+    # TFIX8 — unlock phase 5 with two directly-written validated extractions.
+    for candidate, (title, _doi) in zip(
+        accepted_candidates, TERTIARY_ACCEPTED_PAPERS, strict=True
+    ):
+        await ensure_validated_tertiary_extraction(
+            session, candidate, key_findings=f"Seeded finding summary for {title}."
+        )
+
     return study
 
 
@@ -403,6 +548,57 @@ async def _seed_slr_study(
             session, study, paper, execution, CandidatePaperStatus.PENDING
         )
     await reset_screening_queue(session, study, [doi for _, doi in SLR_PAPERS])
+    return study
+
+
+async def _seed_tertiary_screening_study(
+    session: AsyncSession, group: ResearchGroup, members: list[User]
+) -> Study:
+    """T026 — a Tertiary study sitting at phase 3, dedicated to screen-paper.spec.ts.
+
+    Separate from TERTIARY_STUDY_NAME (the study ``tertiary-workflow.spec.ts``
+    validates the protocol on) for exactly the reason
+    ``ensure_validated_tertiary_protocol`` documents: both files write a
+    real, one-way protocol-validation transition, and pointing them at the
+    same row let whichever ran first — deterministically
+    ``screen-paper.spec.ts``, since it sorts before ``tertiary-workflow.spec.ts``
+    — leave the other looking at an already-validated, read-only form.
+
+    Mirrors ``_seed_slr_study`` exactly, substituting the Tertiary protocol
+    and phase gate.
+
+    Args:
+        session: Active async session.
+        group: Owning research group.
+        members: Users granted study membership.
+
+    Returns:
+        The Tertiary screening study.
+
+    """
+    study = await ensure_study(
+        session,
+        name=TERTIARY_SCREENING_STUDY_NAME,
+        topic="A tertiary review dedicated to the screening-decision e2e journey",
+        study_type=StudyType.TERTIARY,
+        group=group,
+    )
+    await ensure_study_members(session, study, members)
+    await ensure_validated_tertiary_protocol(session, study)
+    await ensure_criteria(session, study, INCLUSION_CRITERIA, EXCLUSION_CRITERIA)
+    execution = await ensure_search_execution(
+        session,
+        study,
+        '("tertiary review" OR "umbrella review") AND "software engineering"',
+    )
+    for title, doi in TERTIARY_SCREENING_PENDING_PAPERS:
+        paper = await ensure_paper(session, title, doi)
+        await ensure_candidate(
+            session, study, paper, execution, CandidatePaperStatus.PENDING
+        )
+    await reset_screening_queue(
+        session, study, [doi for _, doi in TERTIARY_SCREENING_PENDING_PAPERS]
+    )
     return study
 
 
@@ -511,6 +707,9 @@ async def seed() -> None:
         tertiary_study = await _seed_tertiary_study(session, group, members)
         source_study = await _seed_seed_import_source(session, group, members)
         slr_study = await _seed_slr_study(session, group, members)
+        tertiary_screening_study = await _seed_tertiary_screening_study(
+            session, group, members
+        )
 
         await session.commit()
 
@@ -520,6 +719,7 @@ async def seed() -> None:
         print(f"  E2E_TERTIARY_STUDY_ID={tertiary_study.id}")
         print(f"  E2E_SOURCE_STUDY_ID={source_study.id}")
         print(f"  E2E_SLR_STUDY_ID={slr_study.id}")
+        print(f"  E2E_TERTIARY_SCREENING_STUDY_ID={tertiary_screening_study.id}")
 
     await engine.dispose()
 

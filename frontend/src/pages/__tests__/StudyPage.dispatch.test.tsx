@@ -16,9 +16,13 @@
  * 2. Negative cells are asserted. Rapid at phase 7 renders nothing at all — a
  *    real consequence of the boolean chain that a dispatch map must reproduce.
  *
- * The Tertiary cases record today's *defect* (G19): a Tertiary study falls
- * through every `!isSLR && !isRapid` branch and renders the mapping-study
- * workspace. Task T024 changes that deliberately, and will update them.
+ * The Tertiary case pins the *intended* behaviour instead (research.md R7,
+ * closing G19): StudyPage renders its header and then delegates wholesale to
+ * `TertiaryStudyPage` rather than dispatching per phase — no per-phase body of
+ * its own, and no second "Phase N:" tab strip alongside the tertiary
+ * workspace's own. These tests fail against today's boolean-chain
+ * implementation, which still falls through to the mapping-study workspace,
+ * until Task T024 wires the delegation in.
  */
 
 import { render, screen, fireEvent } from '@testing-library/react';
@@ -30,6 +34,10 @@ import StudyPage from '../StudyPage';
 
 vi.mock('../../services/api', () => ({
   api: { get: vi.fn(), post: vi.fn() },
+}));
+
+vi.mock('../TertiaryStudyPage', () => ({
+  default: () => <div data-testid="tertiary-workspace">Tertiary Workspace</div>,
 }));
 
 vi.mock('../../components/phase1/PICOForm', () => ({
@@ -160,9 +168,14 @@ const BASE_STUDY = {
  * Renders StudyPage for a study of the given type.
  *
  * @param studyType - Value for the study's `study_type` field.
+ * @param overrides - Additional fields to merge into the fetched study, for
+ *   cases (e.g. Tertiary) that need fields `BASE_STUDY` does not carry.
  */
-async function renderStudyOfType(studyType: string): Promise<void> {
-  vi.mocked(api.get).mockResolvedValue({ ...BASE_STUDY, study_type: studyType });
+async function renderStudyOfType(
+  studyType: string,
+  overrides: Record<string, unknown> = {},
+): Promise<void> {
+  vi.mocked(api.get).mockResolvedValue({ ...BASE_STUDY, study_type: studyType, ...overrides });
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
     <QueryClientProvider client={qc}>
@@ -295,35 +308,38 @@ describe('StudyPage study-type dispatch (characterisation)', () => {
   });
 
   // ---------------------------------------------------------------------------
-  // Tertiary — records the G19 defect, not the intended behaviour
+  // Tertiary — the intended behaviour (FR-007 / research.md R7): StudyPage
+  // delegates wholesale to TertiaryStudyPage instead of dispatching per phase.
   // ---------------------------------------------------------------------------
 
-  describe('Tertiary (current defect — see G19)', () => {
-    it('falls through to the mapping-study workspace at phase 1', async () => {
+  describe('Tertiary', () => {
+    it('renders the tertiary workspace, not any SMS phase body', async () => {
       // Arrange
-      await renderStudyOfType('Tertiary');
+      await renderStudyOfType('Tertiary', { research_group_id: 10 });
 
-      // Act
-      openPhase(1);
-
-      // Assert — a Tertiary study should show its own workspace. It does not:
-      // `!isSLR && !isRapid` holds, so it renders the SMS branch. Task T024
-      // replaces this expectation with the tertiary workspace (FR-007).
-      expect(screen.getByTestId('pico-form')).toBeInTheDocument();
-      expect(screen.getByTestId('seed-papers')).toBeInTheDocument();
-    });
-
-    it('shows the SMS placeholder at phase 4 rather than tertiary extraction', async () => {
-      // Arrange
-      await renderStudyOfType('Tertiary');
-
-      // Act
-      openPhase(4);
+      // Act — StudyPage delegates wholesale (R7); there is no per-phase tab
+      // of its own to open for a Tertiary study.
 
       // Assert
-      expect(
-        screen.getByText('Phase 4 content will be available in a future sprint.'),
-      ).toBeInTheDocument();
+      expect(screen.getByTestId('tertiary-workspace')).toBeInTheDocument();
+      for (const testId of ALL_PHASE_BODIES) {
+        expect(screen.queryByTestId(testId)).not.toBeInTheDocument();
+      }
+    });
+
+    it("does not render StudyPage's own phase tab strip alongside the tertiary workspace", async () => {
+      // Arrange
+      await renderStudyOfType('Tertiary', { research_group_id: 10 });
+
+      // Act — none; the absence of the tab strip is itself what's under test.
+
+      // Assert — R7 explicitly rejects "rendering two phase bars": once a
+      // Tertiary study takes over, none of StudyPage's own "Phase N: ..."
+      // tabs (from PHASE_META) should be present.
+      const phaseTabs = screen
+        .getAllByRole('button')
+        .filter((button) => /Phase \d+:/.test(button.textContent ?? ''));
+      expect(phaseTabs).toHaveLength(0);
     });
   });
 });

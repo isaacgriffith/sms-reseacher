@@ -28,8 +28,14 @@ import {
   useResetProtocol,
 } from '../hooks/protocols/useProtocol';
 import type { ProtocolNode } from '../services/protocols/protocolsApi';
-import { renderStudyPhase } from '../components/studies/studyTypeDispatch';
-import type { StudyDetail } from '../components/studies/studyTypeDispatch';
+import { renderStudyPhase, STUDY_TYPE_TAKEOVER } from '../components/studies/studyTypeDispatch';
+import type { PhaseContext, StudyDetail } from '../components/studies/studyTypeDispatch';
+
+/** Two-button strip shown instead of `PHASE_META` for a takeover study type (research.md R7). */
+const TAKEOVER_TABS = [
+  { phase: 0, label: 'Protocol Graph', icon: '🔗' },
+  { phase: 1, label: 'Workspace', icon: '🧭' },
+];
 
 const PHASE_META = [
   { phase: 0, label: 'Protocol', icon: '🔗' },
@@ -87,6 +93,27 @@ export default function StudyPage() {
     usesSlrPhaseGate && slrPhases ? [...slrPhases.unlocked_phases, 6, 7] : study.unlocked_phases;
   const unlocked = new Set([0, ...unlockedPhaseList]);
 
+  // A takeover study type (see STUDY_TYPE_TAKEOVER) owns its whole workspace
+  // and renders its own phase navigation, so StudyPage shows a two-button
+  // "Protocol Graph" / "Workspace" strip instead of PHASE_META, and delegates
+  // wholesale at activePhase > 0 rather than consulting the phase map
+  // (research.md R7).
+  const takeover = STUDY_TYPE_TAKEOVER[study.study_type];
+  const tabs = takeover
+    ? TAKEOVER_TABS.map(({ phase, label, icon }) => ({ phase, icon, displayText: label }))
+    : PHASE_META.map(({ phase, label, icon }) => ({
+        phase,
+        icon,
+        displayText: `Phase ${phase}: ${label}`,
+      }));
+
+  const ctx: PhaseContext = {
+    study,
+    activeJobId,
+    onJobStarted: setActiveJobId,
+    unlocked,
+  };
+
   return (
     <Box>
       {/* Study header */}
@@ -128,7 +155,7 @@ export default function StudyPage() {
           borderBottom: '2px solid #e2e8f0',
         }}
       >
-        {PHASE_META.map(({ phase, label, icon }) => {
+        {tabs.map(({ phase, icon, displayText }) => {
           const isUnlocked = unlocked.has(phase);
           const isActive = activePhase === phase;
           return (
@@ -158,9 +185,7 @@ export default function StudyPage() {
               }}
             >
               <span>{icon}</span>
-              <span>
-                Phase {phase}: {label}
-              </span>
+              <span>{displayText}</span>
               {!isUnlocked && <span style={{ fontSize: '0.75rem' }}>🔒</span>}
             </Button>
           );
@@ -261,14 +286,10 @@ export default function StudyPage() {
         </Box>
       )}
 
-      {/* Phases 1–7 — dispatched on study type */}
+      {/* Phases 1+ — a takeover type renders its own workspace wholesale;
+          everything else dispatches per phase on study type. */}
       {activePhase > 0 &&
-        renderStudyPhase(study.study_type, activePhase, {
-          study,
-          activeJobId,
-          onJobStarted: setActiveJobId,
-          unlocked,
-        })}
+        (takeover ? takeover(ctx) : renderStudyPhase(study.study_type, activePhase, ctx))}
     </Box>
   );
 }
