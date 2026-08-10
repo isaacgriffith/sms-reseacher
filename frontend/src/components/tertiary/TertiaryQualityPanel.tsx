@@ -107,6 +107,16 @@ export default function TertiaryQualityPanel({ studyId, papers }: TertiaryQualit
         be compared — agreement on quality scoring is known to be low even among experts, which is
         why the disagreement is worth seeing.
       </Typography>
+      {/* TFIX13. The one DARE rule the UI did not state, and the
+          counter-intuitive one: scoring diligently and then ignoring the result
+          scores *worse* than never scoring at all. Sourced from
+          07-quality-assessment.md, not authored — which is the distinction the
+          deleted TertiaryQAGuidancePanel failed. */}
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+        These scores are meant to be used, not filed. DARE Q3 scores <strong>No</strong> where
+        quality data was extracted but not used, so collecting scores and ignoring them is worse
+        than not collecting them.
+      </Typography>
 
       <TextField
         select

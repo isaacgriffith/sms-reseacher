@@ -386,7 +386,7 @@ when null is passed`, whose comment described the fabrication as intended behavi
   > The seeded `validated` extractions stay in the fixture; they now exercise a value the gate
   > still accepts rather than one nothing writes.
 
-- [ ] TFIX13 **`TertiaryQAGuidancePanel` teaches an instrument that does not exist.** Found while wiring TFIX7 part 3, because its name made it look like the thing to reuse. `frontend/src/components/tertiary/TertiaryQAGuidancePanel.tsx:3` describes "the six **mandatory** secondary-study quality assessment dimensions used in Tertiary Studies", and line 93 states it to the user as fact. **There is no such set.** `07-quality-assessment.md:146` assigns tertiary studies **DARE — four questions**, and the same chapter says omission is permissible *with a rationale*, so nothing here is mandatory in that sense. Four of its six map loosely onto DARE (Inclusion/Exclusion Criteria Clarity ≈ Q1, Search Strategy Adequacy ≈ Q2, Quality Assessment Approach ≈ Q3, Synthesis Method Appropriateness ≈ the dropped CRD criterion 3); it **invents two** — Protocol Documentation Completeness and Validity Threats Discussion — **omits DARE Q4 entirely** (traceability, "were the basic data adequately described"), and supplies neither anchors nor scoring.
+- [x] TFIX13 **`TertiaryQAGuidancePanel` teaches an instrument that does not exist.** Found while wiring TFIX7 part 3, because its name made it look like the thing to reuse. `frontend/src/components/tertiary/TertiaryQAGuidancePanel.tsx:3` describes "the six **mandatory** secondary-study quality assessment dimensions used in Tertiary Studies", and line 93 states it to the user as fact. **There is no such set.** `07-quality-assessment.md:146` assigns tertiary studies **DARE — four questions**, and the same chapter says omission is permissible *with a rationale*, so nothing here is mandatory in that sense. Four of its six map loosely onto DARE (Inclusion/Exclusion Criteria Clarity ≈ Q1, Search Strategy Adequacy ≈ Q2, Quality Assessment Approach ≈ Q3, Synthesis Method Appropriateness ≈ the dropped CRD criterion 3); it **invents two** — Protocol Documentation Completeness and Validity Threats Discussion — **omits DARE Q4 entirely** (traceability, "were the basic data adequately described"), and supplies neither anchors nor scoring.
 
   > **Deliberately left unwired.** It is one of the seven modules the audit reports, and wiring it
   > would have taken that to six — a tempting trade that is the wrong way round. An unreachable
@@ -405,6 +405,42 @@ when null is passed`, whose comment described the fabrication as intended behavi
   > This is the same shape as **G51** and as the "five Petersen rubrics" entry in `CLAUDE.md`'s own
   > table: plausible methodological content, authored rather than sourced, surviving because
   > nothing checks prose against the corpus. See [[verify_consequence_claims]].
+
+  **Fixed 2026-08-10 — deleted, plus one sourced rule the UI was missing.** User chose delete over
+  rewrite after the evidence was laid out.
+
+  > **Deletion was the right call because the component was wholly superseded, not merely wrong.**
+  > `TertiaryQualityPanel` is already mounted at `TertiaryStudyPage.tsx:340` and already states, in
+  > user-visible text, everything a corrected guidance panel would have said: *"DARE — four
+  > anchored questions scored Yes (1) / Partly (0.5) / No (0) — is the instrument for tertiary
+  > studies. Omitting quality assessment is a legitimate choice, but it should be stated and
+  > justified in the report rather than left silent."* Per-question anchors render beside each
+  > option in `QualityScoreForm`, sourced from `dare_instrument.py`. Rewriting would have created a
+  > **second** copy of guidance that already renders from the seeded checklist — a copy free to
+  > drift, which is the mechanism that produced this defect.
+  >
+  > **A detail the entry did not record:** the panel's own usage note said *"Render this component
+  > above the existing `QualityChecklistEditor`"* — the **SLR** path. Tertiary uses
+  > `TertiaryQualityPanel`. Its mounting instruction pointed at the wrong component for its own
+  > study type, so wiring it as written would not even have put it where it claimed to belong.
+  >
+  > 124 lines of component and 60 of test deleted. **Reachability 7 → 6** — by removing something
+  > misleading rather than by wiring it, which is the trade this entry argued for.
+  >
+  > **One rule was genuinely missing, and it is the counter-intuitive one.**
+  > `07-quality-assessment.md` records that DARE Q3 scores **N** for *"quality data extracted but
+  > not used"*, so **collecting scores and ignoring them is worse than not collecting them** — a
+  > reviewer who appraises diligently and then files the result away scores *below* one who never
+  > appraised. Nothing in the UI said so. Added to `TertiaryQualityPanel`, attributed to Q3 rather
+  > than asserted, so a reader can check it.
+  >
+  > **`TertiaryQualityPanel` had no test file at all** — which is how a component carrying
+  > user-visible methodological claims came to have none of them pinned. Eight tests added, and
+  > deliberately written to assert the *sourced claim* rather than that some text rendered: each
+  > names the chapter line it protects. The deleted panel's nine tests passed against a
+  > fabrication precisely because they asserted the latter.
+  >
+  > Frontend 1395 → 1394 (−9 deleted, +8 added), 129 files, tsc/eslint/prettier clean.
 
 - [x] TFIX9 **Three phase gates required the output of the phase they gate, so they could never open.** `slr_phase_gate.py` unlocked phase 4 only once a `QualityAssessmentScore` existed — and `QualityAssessmentPage`, mounted at phase 4, is the only UI that defines a checklist or submits a score. Phase 5 wanted a completed `SynthesisResult`, and `SynthesisPage` at phase 5 is the only thing that starts one. `tertiary_phase_gate.py` phase 4 carried the same predicate. Each is unsatisfiable by construction: the artifact is produced inside the phase the artifact unlocks.
 
