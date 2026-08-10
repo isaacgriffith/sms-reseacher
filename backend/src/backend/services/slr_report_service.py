@@ -29,6 +29,8 @@ from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from backend.services import validity_threat_service
+
 logger = structlog.get_logger(__name__)
 
 
@@ -209,7 +211,7 @@ async def generate_report(study_id: int, db: AsyncSession) -> SLRReport:
     )
     inter_rater_section = _build_inter_rater_agreement(agreement_rows)
 
-    validity = _build_validity(protocol)
+    validity = await _build_validity(study_id, protocol, db)
     recommendations = _build_recommendations(synthesis, rqs)
 
     return SLRReport(
@@ -564,23 +566,32 @@ def _build_inter_rater_agreement(records: Sequence[Any]) -> str:
     return "Inter-rater agreement. " + " ".join(lines) + "."
 
 
-def _build_validity(protocol: ReviewProtocol | None) -> str:
+async def _build_validity(study_id: int, protocol: ReviewProtocol | None, db: AsyncSession) -> str:
     """Produce a threats-to-validity discussion section.
 
+    TFIX11 / Ampatzoglou step 1. This previously returned a fixed sentence —
+    "publication bias, database coverage limitations, and inter-rater
+    variability during screening" — that read no study data at all. Two things
+    were wrong with it. It published none of the threats the platform derives,
+    so a lone researcher compelled by the report gate to record an
+    acknowledgement had it discarded on the way to the page. And it was
+    actively false for exactly the study that triggers the gate: a
+    single-reviewer review has one rater, so it has no inter-rater variability
+    to report as a threat.
+
     Args:
+        study_id: The study whose threats are reported.
         protocol: The review protocol, or ``None``.
+        db: Active async session.
 
     Returns:
         A human-readable validity discussion.
 
     """
-    base = (
-        "Potential threats to validity include publication bias, database "
-        "coverage limitations, and inter-rater variability during screening."
-    )
+    section = await validity_threat_service.build_threats_section(study_id, db)
     if protocol and protocol.search_strategy:
-        base += f" The search strategy was: {protocol.search_strategy}."
-    return base
+        section += f"\n\nThe search strategy was: {protocol.search_strategy}."
+    return section
 
 
 def _build_recommendations(synthesis: SynthesisResult, rqs: list[str]) -> str:

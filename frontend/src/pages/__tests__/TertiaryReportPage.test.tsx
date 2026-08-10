@@ -42,6 +42,9 @@ const REPORT_FIXTURE = {
     research_question_evolution: 'RQ evolution text.',
     synthesis_method_shifts: 'Synthesis method text.',
   },
+  // TFIX11 / Ampatzoglou step 1: required by the schema, because a report that
+  // silently omitted its threats section is the defect this field fixes.
+  threats_to_validity: 'TV7 — Study inclusion/exclusion. Acknowledged as not fully mitigated.',
   recommendations: 'Recommendations text.',
 };
 
@@ -135,5 +138,16 @@ describe('TertiaryReportPage', () => {
     render(<TertiaryReportPage studyId={1} />, { wrapper: makeWrapper() });
     await screen.findByText('Test Tertiary Study');
     expect(screen.getByText('Recommendations text.')).toBeInTheDocument();
+  });
+
+  it('renders the Threats to Validity section (TFIX11)', async () => {
+    // The report gate compels the researcher to record a mitigation or an
+    // acknowledgement. If the report does not carry it, the platform has
+    // extracted a disclosure and thrown it away.
+    mockApi.get.mockResolvedValue(REPORT_FIXTURE);
+    render(<TertiaryReportPage studyId={1} />, { wrapper: makeWrapper() });
+    await screen.findByText('Test Tertiary Study');
+    expect(screen.getByText('Threats to Validity')).toBeInTheDocument();
+    expect(screen.getByText(/Acknowledged as not fully mitigated/)).toBeInTheDocument();
   });
 });

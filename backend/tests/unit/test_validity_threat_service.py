@@ -34,6 +34,7 @@ from sqlalchemy.pool import StaticPool
 
 from backend.services.validity_threat_service import (
     address_threat,
+    build_threats_section,
     list_threats,
     sync_derived_threats,
     unaddressed_applicable_threats,
@@ -403,3 +404,135 @@ class TestUnaddressedApplicableThreats:
         await sync_derived_threats(study_id, db_session)
 
         assert await unaddressed_applicable_threats(study_id, db_session) == []
+
+
+# ---------------------------------------------------------------------------
+# The report section (Ampatzoglou step 1)
+# ---------------------------------------------------------------------------
+
+
+class TestBuildThreatsSection:
+    """Step 1: a dedicated threats-to-validity section in the final report.
+
+    The gate compels the researcher to address each threat; this is what makes
+    that compulsion mean something. Without it the platform extracts a
+    disclosure and then discards it — the acknowledgement never reaches a
+    reader.
+    """
+
+    @pytest.mark.asyncio
+    async def test_section_names_each_threat(self, db_session) -> None:
+        """Every applicable threat appears, by catalogue id."""
+        study_id = await _make_study(db_session)
+        await _add_human_reviewers(db_session, study_id, 1)
+        await sync_derived_threats(study_id, db_session)
+
+        section = await build_threats_section(study_id, db_session)
+
+        assert "TV7" in section
+        assert "TV13.4" in section
+        assert "TV16" in section
+
+    @pytest.mark.asyncio
+    async def test_section_files_threats_under_reporting_categories(self, db_session) -> None:
+        """Petersen & Gencel headings appear, per ch.09 Framework B."""
+        study_id = await _make_study(db_session)
+        await _add_human_reviewers(db_session, study_id, 1)
+        await sync_derived_threats(study_id, db_session)
+
+        section = await build_threats_section(study_id, db_session)
+
+        assert "theoretical validity" in section.lower()
+        assert "descriptive validity" in section.lower()
+        assert "interpretive validity" in section.lower()
+
+    @pytest.mark.asyncio
+    async def test_acknowledgement_reaches_the_report(self, db_session) -> None:
+        """The whole point: what the researcher wrote must be published.
+
+        A lone researcher is compelled by the gate to write this. If it does
+        not appear in the report, the platform has extracted a disclosure and
+        thrown it away.
+        """
+        study_id = await _make_study(db_session)
+        await _add_human_reviewers(db_session, study_id, 1)
+        await sync_derived_threats(study_id, db_session)
+        await address_threat(
+            study_id,
+            ValidityThreatId.TV7,
+            db_session,
+            acknowledgement="No second reviewer was available; the bias is accepted.",
+        )
+
+        section = await build_threats_section(study_id, db_session)
+
+        assert "No second reviewer was available; the bias is accepted." in section
+
+    @pytest.mark.asyncio
+    async def test_mitigation_reaches_the_report(self, db_session) -> None:
+        """Both step-4 outcomes are published, not just one."""
+        study_id = await _make_study(db_session)
+        await _add_human_reviewers(db_session, study_id, 1)
+        await sync_derived_threats(study_id, db_session)
+        await address_threat(
+            study_id,
+            ValidityThreatId.TV13_4,
+            db_session,
+            mitigation="A supervisor cross-checked a random sample of 30 extractions.",
+        )
+
+        section = await build_threats_section(study_id, db_session)
+
+        assert "A supervisor cross-checked a random sample of 30 extractions." in section
+
+    @pytest.mark.asyncio
+    async def test_unmitigated_threats_are_labelled_as_such(self, db_session) -> None:
+        """An acknowledgement must read as an acknowledgement, not a mitigation.
+
+        Collapsing the two would let a reader take "accepted, not mitigated"
+        for "handled" — which is the misreading ch.09's step 4 exists to stop.
+        """
+        study_id = await _make_study(db_session)
+        await _add_human_reviewers(db_session, study_id, 1)
+        await sync_derived_threats(study_id, db_session)
+        await address_threat(
+            study_id, ValidityThreatId.TV7, db_session, acknowledgement="Accepted deliberately."
+        )
+
+        section = await build_threats_section(study_id, db_session)
+
+        assert "not fully mitigated" in section.lower()
+
+    @pytest.mark.asyncio
+    async def test_section_does_not_claim_catalogue_completeness(self, db_session) -> None:
+        """The platform derives 3 of ~22 entries, so it must not imply step 3.
+
+        Ampatzoglou's step 3 is "check every threat for whether it pertains to
+        the study". The platform does not do that, and a report that listed
+        three threats without saying so would overstate what was checked.
+        """
+        study_id = await _make_study(db_session)
+        await _add_human_reviewers(db_session, study_id, 1)
+        await sync_derived_threats(study_id, db_session)
+
+        section = await build_threats_section(study_id, db_session)
+
+        assert "automatically" in section.lower()
+
+    @pytest.mark.asyncio
+    async def test_no_threats_says_so_without_inventing_any(self, db_session) -> None:
+        """A study with no derived threats must not get a canned threat list.
+
+        The SLR report previously asserted "inter-rater variability during
+        screening" for every study — false for a single-reviewer study, which
+        has exactly one rater and no inter-rater variability at all.
+        """
+        study_id = await _make_study(db_session)
+        await _add_human_reviewers(db_session, study_id, 2)
+        await sync_derived_threats(study_id, db_session)
+
+        section = await build_threats_section(study_id, db_session)
+
+        assert "inter-rater variability" not in section.lower()
+        assert "publication bias" not in section.lower()
+        assert section.strip() != ""

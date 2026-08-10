@@ -192,11 +192,17 @@ class TestLoadStudyData:
         charts_result = MagicMock()
         charts_result.scalars.return_value.all.return_value = []
 
+        # TFIX11: _load_study_data now also reads derived validity threats, so
+        # the ordered result list gains a fifth entry.
+        threats_result = MagicMock()
+        threats_result.scalars.return_value.all.return_value = []
+
         mock_session.execute.side_effect = [
             study_result,
             extractions_result,
             dm_result,
             charts_result,
+            threats_result,
         ]
 
         mock_ctx = AsyncMock()
@@ -210,6 +216,7 @@ class TestLoadStudyData:
         assert result["extractions"] == []
         assert result["domain_model"] == {}
         assert result["charts"] == []
+        assert "threats_to_validity" in result
 
     @pytest.mark.asyncio
     async def test_returns_populated_dicts_when_data_exists(self) -> None:
@@ -264,11 +271,16 @@ class TestLoadStudyData:
         charts_result = MagicMock()
         charts_result.scalars.return_value.all.return_value = [mock_chart]
 
+        # TFIX11: the derived-threats read is the fifth query.
+        threats_result = MagicMock()
+        threats_result.scalars.return_value.all.return_value = []
+
         mock_session.execute.side_effect = [
             study_result,
             extractions_result,
             dm_result,
             charts_result,
+            threats_result,
         ]
 
         mock_ctx = AsyncMock()

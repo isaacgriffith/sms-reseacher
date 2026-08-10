@@ -311,6 +311,96 @@ async def unaddressed_applicable_threats(
     return [t for t in await list_threats(study_id, db) if not t.is_addressed]
 
 
+_THREAT_LABELS: dict[ValidityThreatId, str] = {
+    ValidityThreatId.TV7: "TV7 — Study inclusion/exclusion",
+    ValidityThreatId.TV13_4: "TV13.4 — Unverified data extraction",
+    ValidityThreatId.TV16: "TV16 — Researcher bias",
+}
+
+_CATEGORY_LABELS: dict[ValidityCategory, str] = {
+    ValidityCategory.DESCRIPTIVE: "descriptive validity",
+    ValidityCategory.THEORETICAL: "theoretical validity",
+    ValidityCategory.GENERALIZABILITY_INTERNAL: "generalizability (internal)",
+    ValidityCategory.GENERALIZABILITY_EXTERNAL: "generalizability (external)",
+    ValidityCategory.INTERPRETIVE: "interpretive validity",
+    ValidityCategory.REPEATABILITY: "repeatability",
+}
+
+# Stated in every generated section, whether or not any threat was derived.
+#
+# Ampatzoglou's step 3 is "check every threat for whether it pertains to the
+# study", against the full TV1-TV22 catalogue. The platform derives three
+# entries from configuration and checks nothing else, so a section that simply
+# listed what it found would imply a completeness it has not earned. Saying so
+# costs one sentence; leaving it out would make the report overstate its own
+# rigour, which is the failure the chapter's closing caution is about.
+_COVERAGE_CAVEAT = (
+    "The threats below were derived automatically from this study's "
+    "configuration. They are not a complete application of a threat catalogue, "
+    "and do not replace the authors' own review of threats specific to this "
+    "review."
+)
+
+
+async def build_threats_section(study_id: int, db: AsyncSession) -> str:
+    """Render the study's threats-to-validity section for its report.
+
+    This is Ampatzoglou's **step 1** — "create a dedicated threats-to-validity
+    section in both the protocol and the final report" — and it is what makes
+    the step-4 gate mean anything. Without it the platform compels a researcher
+    to record a mitigation or an acknowledgement and then publishes neither.
+
+    Each threat is rendered with its catalogue id, the Petersen & Gencel
+    heading it reports under, its description, and its step-4 outcome. The two
+    outcomes are labelled differently on purpose: collapsing them would let a
+    reader take "accepted, not mitigated" for "handled".
+
+    Args:
+        study_id: The study whose report is being generated.
+        db: Active async session.
+
+    Returns:
+        A human-readable section body. Never empty — a study with no derived
+        threats gets a statement to that effect rather than silence, because a
+        blank section is indistinguishable from a section that failed to build.
+
+    """
+    threats = await list_threats(study_id, db)
+
+    if not threats:
+        return (
+            "No threats to validity were derived automatically from this "
+            "study's configuration. " + _COVERAGE_CAVEAT
+        )
+
+    parts = [
+        "Threats are catalogued following Ampatzoglou et al. and reported under "
+        "the validity categories of Petersen & Gencel. " + _COVERAGE_CAVEAT,
+        "",
+    ]
+
+    for threat in threats:
+        label = _THREAT_LABELS.get(threat.threat_id, threat.threat_id.value)
+        category = _CATEGORY_LABELS.get(threat.validity_category, threat.validity_category.value)
+        parts.append(f"{label} (reported under {category}).")
+        parts.append(threat.description)
+
+        mitigation = (threat.mitigation or "").strip()
+        acknowledgement = (threat.acknowledgement or "").strip()
+        if mitigation:
+            parts.append(f"Mitigation: {mitigation}")
+        if acknowledgement:
+            parts.append(f"Acknowledged as not fully mitigated: {acknowledgement}")
+        if not mitigation and not acknowledgement:
+            # Reachable only for a report built by a path that does not call
+            # require_threats_addressed. Better to publish the omission than to
+            # let the threat vanish from the section that exists to carry it.
+            parts.append("No mitigation or acknowledgement has been recorded for this threat.")
+        parts.append("")
+
+    return "\n".join(parts).strip()
+
+
 async def require_threats_addressed(study_id: int, db: AsyncSession) -> None:
     """Raise HTTP 409 if *study_id* has an unaddressed applicable threat.
 

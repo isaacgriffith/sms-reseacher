@@ -44,6 +44,7 @@ const TertiaryReportSchema = z.object({
   extracted_data: z.string(),
   synthesis_results: z.string(),
   landscape_of_secondary_studies: LandscapeSectionSchema,
+  threats_to_validity: z.string(),
   recommendations: z.string(),
 });
 
@@ -152,6 +153,7 @@ export default function TertiaryReportPage({ studyId }: TertiaryReportPageProps)
       />
 
       <Divider sx={{ my: 3 }} />
+      <ReportSection title="Threats to Validity" content={report.threats_to_validity} />
       <ReportSection title="Recommendations" content={report.recommendations} />
 
       <Divider sx={{ my: 3 }} />

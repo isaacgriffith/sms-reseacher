@@ -606,6 +606,54 @@ when null is passed`, whose comment described the fabrication as intended behavi
   > *acknowledge* these three threats, never *mitigate* them. That is a valid step-4 outcome and
   > the study is never blocked — but it is the weaker branch, and the corpus prescribes the other.
 
+  **Step 1 completed 2026-08-10, after the first commit shipped without it.**
+
+  > The first pass enforced Ampatzoglou's **step 4** and did not implement **step 1** — "create a
+  > dedicated threats-to-validity section in … the final report". Checking rather than assuming
+  > found the consequence, and it was not cosmetic: **the gate compelled a researcher to record a
+  > mitigation or an acknowledgement, and then published neither.**
+  >
+  > | Report | Before |
+  > | ------ | ------ |
+  > | SLR | `_build_validity()` returned a fixed sentence reading **no study data at all** |
+  > | Tertiary | **No threats or validity section existed** |
+  > | SMS export | Archive carried charts and extractions, no threats |
+  >
+  > The SLR boilerplate was worse than absent. It asserted *"publication bias, database coverage
+  > limitations, and inter-rater variability during screening"* for every study — and
+  > **inter-rater variability is false for exactly the study that trips the gate**, which has one
+  > rater and therefore no inter-rater variability to report. A canned threat profile that can
+  > contradict the derived one is a fabrication, not a placeholder.
+  >
+  > `build_threats_section` now renders catalogue id, reporting category, description and the
+  > step-4 outcome, shared by all three surfaces. The two outcomes are **labelled differently** —
+  > "Mitigation:" versus "Acknowledged as not fully mitigated:" — because collapsing them would let
+  > a reader take "accepted, not mitigated" for "handled", which is the misreading step 4 exists to
+  > prevent.
+  >
+  > **Every section states that its threats were derived automatically.** The platform encodes 3 of
+  > ~22 catalogue entries, so it does *not* satisfy **step 3** ("check every threat for whether it
+  > pertains to the study"). A section that listed three threats without saying so would claim a
+  > completeness it has not earned — the exact failure the chapter's closing caution names.
+  >
+  > `TertiaryReport` gained a required `threats_to_validity` field, carried into JSON, CSV and
+  > Markdown, with the frontend Zod schema made **required** to match: a stale backend should fail
+  > loudly rather than silently drop the section. The SMS export is a data archive rather than a
+  > narrative report, so it gets the section as a payload key — the export gate refuses to run
+  > while a threat is unaddressed, and an archive omitting what *was* addressed makes that refusal
+  > pointless.
+  >
+  > Backend 1288 → 1295, frontend 1394 → 1395.
+
+  **Two conformance gaps remain open, deliberately, and neither is TFIX11's to close:**
+
+  - **Step 3 is not satisfied.** Only TV7, TV13.4 and TV16 are derivable, because they are the
+    only entries the platform can compute from configuration. Extending the catalogue means
+    deciding which of TV1–TV22 have a derivation rule and which need to be asked of the author.
+  - **Rapid still has no step-4 columns.** `RRThreatToValidity` records concessions with no
+    mitigation or acknowledgement field, so the closing caution — stated generally, not as
+    Ampatzoglou-only — is unmet there. Fixing it changes a shipped Rapid schema.
+
 ---
 
 ## Phase 3: User Story 1 — Record a screening decision (Priority: P1) 🎯 MVP

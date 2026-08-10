@@ -383,6 +383,7 @@ class TestSerialisationMethods:
                 research_question_evolution="RQs evolved over time.",
                 synthesis_method_shifts="Meta-analysis was most common.",
             ),
+            threats_to_validity="TV7 — Study inclusion/exclusion. Acknowledged.",
             recommendations="Future work should address gap X.",
         )
 

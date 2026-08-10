@@ -72,6 +72,7 @@ async def _load_study_data(study_id: int) -> dict[str, Any]:
     from sqlalchemy import select
 
     from backend.core.database import _session_maker  # noqa: PLC2701 — internal
+    from backend.services import validity_threat_service
 
     async with _session_maker() as db:
         study_result = await db.execute(select(Study).where(Study.id == study_id))
@@ -108,6 +109,11 @@ async def _load_study_data(study_id: int) -> dict[str, Any]:
             .order_by(ClassificationScheme.chart_type)
         )
         charts = charts_result.scalars().all()
+
+        # Last, so it is appended to rather than inserted into the query
+        # sequence — several tests drive this function with an ordered list of
+        # mocked results.
+        threats_section = await validity_threat_service.build_threats_section(study_id, db)
 
     study_dict: dict[str, Any] = {}
     if study:
@@ -159,6 +165,12 @@ async def _load_study_data(study_id: int) -> dict[str, Any]:
         "extractions": extraction_list,
         "domain_model": dm_dict,
         "charts": charts_list,
+        # TFIX11 / Ampatzoglou step 1. The SMS export is a data archive rather
+        # than a narrative report, so there is no prose section to write this
+        # into — but the export gate refuses to run while a threat is
+        # unaddressed, and an archive that omitted what was addressed would
+        # make that refusal pointless.
+        "threats_to_validity": threats_section,
     }
 
 

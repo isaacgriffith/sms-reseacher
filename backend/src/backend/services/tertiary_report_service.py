@@ -29,6 +29,7 @@ from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from backend.services import validity_threat_service
 from backend.services.dare_instrument import dare_total
 from backend.services.quality_assessment_service import compute_aggregate_score
 
@@ -77,6 +78,8 @@ class TertiaryReport(BaseModel):
         synthesis_results: Summary of synthesis outputs.
         landscape_of_secondary_studies: Timeline, RQ evolution, and synthesis
             method shifts across the reviewed secondary studies.
+        threats_to_validity: Identified threats with their mitigations or
+            acknowledgements (TFIX11, Ampatzoglou step 1).
         recommendations: Future research directions.
 
     """
@@ -92,6 +95,7 @@ class TertiaryReport(BaseModel):
     extracted_data: str
     synthesis_results: str
     landscape_of_secondary_studies: LandscapeSection
+    threats_to_validity: str
     recommendations: str
 
     def to_json(self) -> bytes:
@@ -129,6 +133,7 @@ class TertiaryReport(BaseModel):
         writer.writerow(["Landscape: Timeline", ls.timeline_summary])
         writer.writerow(["Landscape: RQ Evolution", ls.research_question_evolution])
         writer.writerow(["Landscape: Synthesis Method Shifts", ls.synthesis_method_shifts])
+        writer.writerow(["Threats to Validity", self.threats_to_validity])
         writer.writerow(["Recommendations", self.recommendations])
         return buf.getvalue().encode("utf-8")
 
@@ -169,6 +174,8 @@ class TertiaryReport(BaseModel):
             f"{landscape.research_question_evolution}\n",
             "### Synthesis Method Shifts\n",
             f"{landscape.synthesis_method_shifts}\n",
+            "## Threats to Validity\n",
+            f"{self.threats_to_validity}\n",
             "## Recommendations\n",
             f"{self.recommendations}\n",
         ]
@@ -309,6 +316,10 @@ class TertiaryReportService:
         extracted_data_section = _build_extracted_data(extractions)
         synthesis_section = _build_synthesis_section(synthesis)
         landscape = _build_landscape_section(extractions)
+        # TFIX11 / Ampatzoglou step 1: the tertiary report had no threats
+        # section at all, so the report gate compelled a researcher to address
+        # each threat and then published none of it.
+        threats = await validity_threat_service.build_threats_section(study_id, db)
         recommendations = _build_recommendations(synthesis, rqs)
 
         return TertiaryReport(
@@ -323,6 +334,7 @@ class TertiaryReportService:
             extracted_data=extracted_data_section,
             synthesis_results=synthesis_section,
             landscape_of_secondary_studies=landscape,
+            threats_to_validity=threats,
             recommendations=recommendations,
         )
 
