@@ -645,14 +645,19 @@ when null is passed`, whose comment described the fabrication as intended behavi
   >
   > Backend 1288 → 1295, frontend 1394 → 1395.
 
-  **Two conformance gaps remain open, deliberately, and neither is TFIX11's to close:**
+  **Two conformance gaps remain open, deliberately. Both are carried forward as TFIX15.**
 
-  - **Step 3 is not satisfied.** Only TV7, TV13.4 and TV16 are derivable, because they are the
-    only entries the platform can compute from configuration. Extending the catalogue means
-    deciding which of TV1–TV22 have a derivation rule and which need to be asked of the author.
-  - **Rapid still has no step-4 columns.** `RRThreatToValidity` records concessions with no
-    mitigation or acknowledgement field, so the closing caution — stated generally, not as
-    Ampatzoglou-only — is unmet there. Fixing it changes a shipped Rapid schema.
+- [ ] TFIX15 **The threat catalogue is three entries deep, and the Rapid map records good practice as a threat.** Both found while closing TFIX11 — the first by asking what the platform does *not* check, the second by verifying a claim rather than repeating it. `09-threats-to-validity.md` and `03-rapid-review.md` are the sources; neither part is a matter of taste.
+
+  1. **Ampatzoglou's step 3 is not performed.** The step is _"**Check every threat** for whether it pertains to the study"_, against the TV1–TV22 catalogue. `ValidityThreatId` encodes **three** entries — TV7, TV13.4 and TV16 — because those are the only ones the platform currently derives from configuration. Every generated section says so in as many words, so no report *claims* the completeness it lacks, but the check itself is absent. The chapter is explicit that the fix is derivation rather than a form: threats _"should be **derived from the protocol configuration** rather than presented as a flat checklist … This chapter supplies the full mapping"_ (ch.09 ⚙ IMPLEMENTATION, §Category 1). Closing this means partitioning TV1–TV22 into what the platform can compute — search-source counts, language limits, date windows, reviewer counts, whether QA ran, whether synthesis was formal — and what can only be *asked* of the author, then deriving the first set and prompting for the second.
+     - Ch.09 also supplies a **mutual-exclusivity rule that must be encoded, not just listed**: if digital-library selection is used, TV1.3 (venue selection) _does not apply_ — "normally only one of the two strategies is chosen" — with a quasi-gold-standard exception where both apply, while TV1.1 (string construction) applies in **both** cases. A flat checklist cannot express that; a derivation rule can, which is the chapter's own argument for deriving.
+
+  2. **The Rapid concession→threat map is inverted in one row and missing three others.** `03-rapid-review.md` §"Threats to validity in an RR" gives the full mapping and marks one row **"Explicitly NOT a threat — good practice"**: _narrowing criteria to the practitioner's context_. Its ⚙ IMPLEMENTATION note names this as load-bearing — the chapter supplies _"the full mapping, **and the exception that must not generate a threat**"_. `rr_protocol_service._auto_create_threats` does the opposite: it walks `protocol.context_restrictions` and creates a `CONTEXT_RESTRICTION` threat for **every** entry. So a Rapid Review that scopes itself to its practitioner's context — the thing Cartaxo calls good practice — has that recorded against it as a threat to validity, and rendered under "Limitations & Threats to Validity" in the published briefing.
+     - Separately, three of the eight mapped concessions have **no `RRThreatType` member at all**: title-only first screening pass → _false negatives_; narrative synthesis → _limited synthesis rigour_; excluding studies with missing data → _missing-data exclusions_. Under a regime whose whole content is "every methodological concession is itself a threat that must be recorded", an unrecordable concession is a hole in the regime.
+
+  > **A correction to what closing TFIX11 first reported.** That work claimed Rapid was non-conformant because `RRThreatToValidity` has no mitigation or acknowledgement column. Checking `03-rapid-review.md` rather than reasoning from Ampatzoglou shows that is **wrong**. Cartaxo defines no taxonomy and requires no per-threat mitigation: _"every methodological concession is itself a threat that must be recorded. All concessions go in the protocol; the report carries a disclaimer about methodological limitations, with detail deferred to the protocol"_ — the concession record **is** the acknowledgement. And the disclaimer exists: `evidence_briefing.html.j2:282` renders a "Limitations & Threats to Validity" block over those records. Rapid does not need step-4 columns. It needs its map corrected.
+
+  > **Do not fold part 2 into part 1.** They look like one "threats are incomplete" task and are not. Part 1 extends a catalogue the platform *chose* to encode partially; part 2 fixes a mapping that contradicts its own source. Part 2 also carries a data question part 1 does not: existing studies already have `CONTEXT_RESTRICTION` rows written under the wrong rule, so the remedy has to say what happens to them — the safe reading is that they were never threats, but deleting rows a researcher may have cited in a published briefing is a decision, not a migration.
 
 ---
 
@@ -970,14 +975,14 @@ in one commit — a required field and its callers must move together.
 | Refactoring (C1–C3) | TREF1–TREF10 | 10     |
 | Setup ✅            | T001–T002    | 2      |
 | Foundational ✅     | T003–T006    | 4      |
-| Defects found       | TFIX1–TFIX13 | 13     |
+| Defects found       | TFIX1–TFIX15 | 15     |
 | US1 (P1) 🎯 MVP ✅  | T007–T019    | 13     |
 | US2 (P2)            | T020–T026    | 7      |
 | US3 (P3)            | T027–T033    | 7      |
 | US4 (P4)            | T034–T050    | 17     |
 | Polish              | T051–T055    | 5      |
 | Documentation       | TDOC1–TDOC7  | 7      |
-| **Total**           |              | **86** |
+| **Total**           |              | **87** |
 
 TREF1–TREF10, T001–T019 and TFIX1–TFIX4 plus TFIX6 are complete — **the MVP is delivered**: a
 reviewer can screen papers on SMS and SLR studies, driven end-to-end by an e2e against a live
