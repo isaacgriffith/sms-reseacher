@@ -455,7 +455,10 @@ async def test_build_validity_snapshot_sets_extraction_summary_when_extractions_
     study_mock.pico_saved_at = None
     study_mock.validity = {}
 
+    # TFIX14. These rows previously carried no status at all, because the code
+    # under test ignored it — which is precisely the blind spot TFIX14 closes.
     extraction_mock = MagicMock()
+    extraction_mock.extraction_status = "human_reviewed"
     extraction_result = MagicMock()
     extraction_result.scalars.return_value.all.return_value = [extraction_mock, extraction_mock]
 
@@ -483,6 +486,64 @@ async def test_build_validity_snapshot_sets_extraction_summary_when_extractions_
 
     assert snapshot["extraction_summary"] is not None
     assert "2" in snapshot["extraction_summary"]
+    assert "every extraction was appraised" in snapshot["extraction_summary"]
+
+
+async def test_build_validity_snapshot_names_the_unappraised_remainder():
+    """The summary must not call AI-only extractions "completed" (TFIX14).
+
+    A study that AI-extracted three papers and had one checked previously
+    reported the same sentence as one that checked all three. `01-slr.md`
+    269-270 forbids extraction decoupled from appraisal; the validity snapshot
+    is the document where that decoupling has to be visible.
+    """
+    study_mock = MagicMock()
+    study_mock.name = "Mostly Unchecked Study"
+    study_mock.study_type = MagicMock()
+    study_mock.study_type.value = "SMS"
+    study_mock.current_phase = "extraction"
+    study_mock.pico_saved_at = None
+    study_mock.validity = {}
+
+    def _extraction(status: str) -> MagicMock:
+        row = MagicMock()
+        row.extraction_status = status
+        return row
+
+    extraction_result = MagicMock()
+    extraction_result.scalars.return_value.all.return_value = [
+        _extraction("ai_complete"),
+        _extraction("ai_complete"),
+        _extraction("human_reviewed"),
+    ]
+
+    empty_result = MagicMock()
+    empty_result.scalar_one_or_none.return_value = None
+    empty_result.scalars.return_value.all.return_value = []
+
+    db = AsyncMock()
+    db.execute = AsyncMock(
+        side_effect=[
+            _scalar_result(study_mock),  # Study
+            _scalar_result(None),  # PICOComponent
+            empty_result,  # SearchString
+            empty_result,  # SearchExecution
+            empty_result,  # Reviewer
+            empty_result,  # InclusionCriterion
+            empty_result,  # ExclusionCriterion
+            extraction_result,  # DataExtraction
+        ]
+    )
+
+    from backend.jobs.validity_job import _build_validity_snapshot
+
+    snapshot = await _build_validity_snapshot(db, study_id=1)
+    summary = snapshot["extraction_summary"]
+
+    assert "3" in summary
+    assert "1 were appraised" in summary
+    assert "2 remain AI-extracted and unappraised" in summary
+    assert "completed" not in summary
 
 
 async def test_run_and_persist_validity_raises_when_study_not_found():

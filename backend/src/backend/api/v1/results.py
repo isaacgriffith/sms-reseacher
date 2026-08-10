@@ -46,11 +46,27 @@ class ClassificationSchemeResponse(BaseModel):
     generated_at: datetime
 
 
+class ExtractionProvenanceResponse(BaseModel):
+    """How much of the data behind these charts a reviewer has appraised.
+
+    TFIX14. The charts are computed over AI-extracted rows as well as appraised
+    ones, and nothing in the payload used to say so. `01-slr.md` 269-270 forbids
+    extraction decoupled from appraisal, not automation — so the counts travel
+    with the figures they qualify.
+    """
+
+    total: int
+    appraised: int
+    unappraised: int
+    is_fully_appraised: bool
+
+
 class ResultsSummaryResponse(BaseModel):
     """Aggregated results for a study."""
 
     domain_model: DomainModelResponse | None
     charts: list[ClassificationSchemeResponse]
+    extraction_provenance: ExtractionProvenanceResponse
 
 
 class JobEnqueueResponse(BaseModel):
@@ -174,12 +190,21 @@ async def get_results(
     """Return the latest domain model and all classification charts for a study."""
     await require_study_member(study_id, current_user, db)
 
+    from backend.services import extraction_provenance
+
     dm = await _get_latest_domain_model(study_id, db)
     charts = await _get_charts(study_id, db)
+    provenance = await extraction_provenance.load_provenance(study_id, db)
 
     return ResultsSummaryResponse(
         domain_model=_dm_to_response(dm) if dm else None,
         charts=[_chart_to_response(c) for c in charts],
+        extraction_provenance=ExtractionProvenanceResponse(
+            total=provenance.total,
+            appraised=provenance.appraised,
+            unappraised=provenance.unappraised,
+            is_fully_appraised=provenance.is_fully_appraised,
+        ),
     )
 
 

@@ -561,9 +561,65 @@ when null is passed`, whose comment described the fabrication as intended behavi
   > (wrong study) — a passing test quietly losing its coverage. Both were re-seeded with
   > `HUMAN_REVIEWED`.
 
-- [ ] TFIX14 **Every downstream consumer of extractions still aggregates `ai_complete`.** Found while fixing TFIX10, by asking what the narrowed gate actually protects. `results_job.py:118`, `quality_job.py:168`, `validity_job.py:163` and `export.py:86` each filter `extraction_status.in_([AI_COMPLETE, VALIDATED, HUMAN_REVIEWED])`. So the gate now requires **one** appraised extraction to open reporting, and reporting then computes over **all** of them — a study that AI-extracted 200 papers and had one checked reports charts, quality figures and validity threats derived from 199 unread records. This is the same `01-slr.md` §2.4 clause TFIX10 turns on, applied one layer down: the gate governs *entry* to reporting, these four govern *what reporting says*.
+- [x] TFIX14 **Every downstream consumer of extractions still aggregates `ai_complete`.** Found while fixing TFIX10, by asking what the narrowed gate actually protects. `results_job.py:118`, `quality_job.py:168`, `validity_job.py:163` and `export.py:86` each filter `extraction_status.in_([AI_COMPLETE, VALIDATED, HUMAN_REVIEWED])`. So the gate now requires **one** appraised extraction to open reporting, and reporting then computes over **all** of them — a study that AI-extracted 200 papers and had one checked reports charts, quality figures and validity threats derived from 199 unread records. This is the same `01-slr.md` §2.4 clause TFIX10 turns on, applied one layer down: the gate governs *entry* to reporting, these four govern *what reporting says*.
   - **Not fixed under TFIX10 because the remedy is a choice, not a correction.** Excluding `ai_complete` outright would make a large study's first report near-empty, which may be honest or may be useless; labelling each figure with its appraised/total denominator keeps the data and states its provenance; a third option gates the export but not the working charts. Picking one silently, inside a task scoped to a phase gate, would be deciding what the platform's numbers *mean* without saying so
   - `08-extraction-and-synthesis.md` should be read before choosing — this entry cites §2.4 of `01-slr.md` only, which is about extraction, not about what synthesis may consume
+
+  **Fixed 2026-08-10.** Two decisions were put to the user before any code was written; both
+  recommendations were accepted: carry an appraised/total denominator through every consumer, and
+  fix the out-of-scope filter defects here rather than deferring them.
+
+  > **Reading the chapter this entry told us to read changed the answer, and it is not one of the
+  > three options the entry listed.** The entry framed the choice as exclude / label / gate. The
+  > corpus rejects the framing:
+  >
+  > - `01-slr.md` 269-270 — the caveat against automated extraction "**does not forbid automation;
+  >   it forbids extraction decoupled from appraisal**". The defect is therefore not that
+  >   unappraised rows are *used*; it is that their status was **invisible** downstream.
+  > - `08-extraction-and-synthesis.md` 89-90 — uncertainty goes to sensitivity analysis "**rather
+  >   than silently resolved**". Excluding `ai_complete` is *also* a silent resolution, and loses
+  >   data besides. The entry's first option was the same error in the opposite direction.
+  > - `08-extraction-and-synthesis.md` 461-463 — sensitivity analysis "repeat[s] over subsets" and
+  >   names this exact one: "**studies where extraction was unproblematic**".
+  >
+  > So the fix carries both denominators rather than filtering on either. Recomputing every figure
+  > over the appraised subset and reporting whether the conclusion moves is the stronger treatment
+  > 461-463 requires — that is already tracked as **G64**, and these counts are its precondition.
+
+  **The entry's own inventory was wrong in three ways**, each found by opening the file rather than
+  trusting the line reference:
+
+  | Site | Entry's claim | Actual |
+  | ---- | ------------- | ------ |
+  | `results_job.py:118` | aggregates | ✅ correct — feeds every chart |
+  | `export.py:86` | aggregates | ✅ correct — feeds the archive |
+  | `validity_job.py:163` | aggregates | ⚠️ counts, then writes prose calling every row **"completed"** |
+  | `quality_job.py:168` | aggregates | ❌ a `.limit(1)` existence check — nothing is "computed over 199 records" here |
+
+  A fifth call site the entry never mentions, `extraction_job.py:104`, is the **inverse** query —
+  papers *not yet* extracted — where counting `ai_complete` is correct. Changing it would have
+  re-extracted every paper on every run.
+
+  **Two defects the entry does not mention, fixed here by decision.** `validity_job` and
+  `quality_job` both omitted `current_status == ACCEPTED`, which `results_job` and `export` have.
+  So `validity_job` wrote "Data extraction was completed for N **accepted** paper(s)" about a count
+  that was never filtered to accepted — false about its own denominator. Currently latent, because
+  no rescreening path exists in `backend/src` yet; it goes live the moment one does, which this
+  branch is building.
+
+  Shipped: `backend/src/backend/services/extraction_provenance.py` (new — the counts, the status
+  tuples, and the prose, in one place instead of the four inlined copies); the denominator surfaced
+  on `GET /studies/{id}/results`, in the validity snapshot's prose, and in the export payload;
+  `ResultsPage` states the split above the figures it qualifies. 17 new unit tests, 4 new page
+  tests, 1 new validity-job test.
+
+  > **One existing test was asserting nothing.**
+  > `test_build_validity_snapshot_sets_extraction_summary_when_extractions_found` seeded bare
+  > `MagicMock()` rows with no `extraction_status`, because the code under test ignored it — the
+  > blind spot and its test had the same shape. Re-seeded with real statuses. The new negative page
+  > test carries the same hazard in the other direction: `ChartGallery` is mocked and renders during
+  > loading, so `findByTestId('chart-gallery')` proves nothing about the query. It awaits loaded
+  > content instead, or it would assert absence against a page that had not finished loading.
 
 - [x] TFIX11 **Single-reviewer bias is declared for one study type out of four, and its prescribed mitigation does not exist.** A lone researcher — or a study with a single reviewer — is a legitimate configuration, not an error. The corpus's position is disclosure plus mitigation, never prohibition: `04-tertiary.md` records that _"One person seeing every paper is a known bias, **accepted deliberately**… Record the trade-off rather than pretending it does not exist,"_ and `01-slr.md` §2.4 names the remedy — _"A lone researcher uses supervisor cross-check on a sample, or test–retest."_ Two gaps:
   1. **The threat is recorded only for Rapid Reviews.** `rr_protocol_service.set_single_reviewer_mode` creates an `RRThreatToValidity` of type `SINGLE_REVIEWER` and surfaces it through `SingleReviewerWarningBanner`. SLR, SMS and Tertiary have no equivalent, so on three of four study types the bias is accepted silently — precisely what the corpus says not to do.

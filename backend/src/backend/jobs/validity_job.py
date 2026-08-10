@@ -82,7 +82,7 @@ async def _build_validity_snapshot(db: AsyncSession, study_id: int) -> dict[str,
     """
     from db.models import Study
     from db.models.criteria import ExclusionCriterion, InclusionCriterion
-    from db.models.extraction import DataExtraction, ExtractionStatus
+    from db.models.extraction import DataExtraction
     from db.models.pico import PICOComponent
     from db.models.search import SearchString
     from db.models.search_exec import SearchExecution
@@ -153,29 +153,33 @@ async def _build_validity_snapshot(db: AsyncSession, study_id: int) -> dict[str,
     exclusion_criteria = [ec.description for ec in ec_result.scalars().all()]
 
     # Extraction summary — build from aggregate counts
-    from db.models.candidate import CandidatePaper
+    from db.models.candidate import CandidatePaper, CandidatePaperStatus
+
+    from backend.services import extraction_provenance
 
     done_result = await db.execute(
         select(DataExtraction)
         .join(CandidatePaper, DataExtraction.candidate_paper_id == CandidatePaper.id)
         .where(
             CandidatePaper.study_id == study_id,
-            DataExtraction.extraction_status.in_(
-                [
-                    ExtractionStatus.AI_COMPLETE,
-                    ExtractionStatus.VALIDATED,
-                    ExtractionStatus.HUMAN_REVIEWED,
-                ]
-            ),
+            # TFIX14. The summary below says "accepted paper(s)". Without this
+            # filter it counted extractions on rejected and pending papers as
+            # well, so the sentence was false about its own denominator.
+            CandidatePaper.current_status == CandidatePaperStatus.ACCEPTED,
+            DataExtraction.extraction_status.in_(extraction_provenance.REPORTABLE_STATUSES),
         )
     )
     done_extractions = list(done_result.scalars().all())
+    provenance = extraction_provenance.from_statuses(e.extraction_status for e in done_extractions)
     extraction_summary: str | None = None
     if done_extractions:
+        # TFIX14. This sentence previously called every row "completed",
+        # including rows no human had ever opened. `01-slr.md` 269-270 forbids
+        # extraction decoupled from appraisal; stating the split is what couples
+        # them back together in the one document that reports validity.
         extraction_summary = (
-            f"Data extraction was completed for {len(done_extractions)} accepted paper(s). "
-            "Fields extracted include research type, venue, author details, "
-            "open codings, and per-RQ answers."
+            f"{provenance.describe()} Fields extracted include research type, venue, "
+            "author details, open codings, and per-RQ answers."
         )
 
     return {

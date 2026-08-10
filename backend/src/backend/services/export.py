@@ -67,12 +67,12 @@ async def _load_study_data(study_id: int) -> dict[str, Any]:
     """
     from db.models import Study
     from db.models.candidate import CandidatePaper, CandidatePaperStatus
-    from db.models.extraction import DataExtraction, ExtractionStatus
+    from db.models.extraction import DataExtraction
     from db.models.results import ClassificationScheme, DomainModel
     from sqlalchemy import select
 
     from backend.core.database import _session_maker  # noqa: PLC2701 — internal
-    from backend.services import validity_threat_service
+    from backend.services import extraction_provenance, validity_threat_service
 
     async with _session_maker() as db:
         study_result = await db.execute(select(Study).where(Study.id == study_id))
@@ -84,13 +84,7 @@ async def _load_study_data(study_id: int) -> dict[str, Any]:
             .where(
                 CandidatePaper.study_id == study_id,
                 CandidatePaper.current_status == CandidatePaperStatus.ACCEPTED,
-                DataExtraction.extraction_status.in_(
-                    [
-                        ExtractionStatus.AI_COMPLETE,
-                        ExtractionStatus.VALIDATED,
-                        ExtractionStatus.HUMAN_REVIEWED,
-                    ]
-                ),
+                DataExtraction.extraction_status.in_(extraction_provenance.REPORTABLE_STATUSES),
             )
         )
         extractions = extractions_result.scalars().all()
@@ -160,11 +154,22 @@ async def _load_study_data(study_id: int) -> dict[str, Any]:
         for c in charts
     ]
 
+    # TFIX14. Computed from rows already in memory rather than by a second
+    # query, so the export's mocked query sequence stays a faithful account of
+    # what this function asks the database for.
+    provenance = extraction_provenance.from_statuses(e.extraction_status for e in extractions)
+
     return {
         "study": study_dict,
         "extractions": extraction_list,
         "domain_model": dm_dict,
         "charts": charts_list,
+        # TFIX14. Every extraction above is carried regardless of appraisal —
+        # `08-extraction-and-synthesis.md` 89-90 forbids resolving that
+        # uncertainty silently, in either direction. The archive states the
+        # split instead, so a reader can tell 200 checked extractions from 200
+        # of which 12 were checked.
+        "extraction_provenance": provenance.as_dict(),
         # TFIX11 / Ampatzoglou step 1. The SMS export is a data archive rather
         # than a narrative report, so there is no prose section to write this
         # into — but the export gate refuses to run while a threat is

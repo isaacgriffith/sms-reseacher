@@ -144,3 +144,105 @@ describe('ResultsPage', () => {
     expect(screen.getByText(/generate results/i)).toBeInTheDocument();
   });
 });
+
+/**
+ * TFIX14 — appraisal provenance.
+ *
+ * A study that AI-extracted 200 papers and had 12 checked rendered
+ * indistinguishably from one that checked all 200. These tests pin the counts
+ * to the page, because the number is the whole point: `01-slr.md` 269-270
+ * forbids extraction decoupled from appraisal, and a denominator nobody can see
+ * is still decoupled.
+ */
+describe('ResultsPage — extraction provenance (TFIX14)', () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('states both denominators when some extractions are unappraised', async () => {
+    vi.mocked(api.get).mockResolvedValue({
+      domain_model: null,
+      charts: [],
+      extraction_provenance: {
+        total: 200,
+        appraised: 12,
+        unappraised: 188,
+        is_fully_appraised: false,
+      },
+    });
+    renderResultsPage();
+
+    // ChartGallery is mocked and renders during loading too, so awaiting it
+    // proves nothing about the query. Await the banner itself.
+    expect(await screen.findByText('200')).toBeInTheDocument();
+    expect(screen.getByText('12')).toBeInTheDocument();
+    expect(screen.getByText('188')).toBeInTheDocument();
+  });
+
+  it('warns that unappraised results may be wrong', async () => {
+    // The corpus's sharpest warning for a platform like this one
+    // (`01-slr.md` 266-270): extraction without quality appraisal yields
+    // results "very quickly but will be wrong".
+    vi.mocked(api.get).mockResolvedValue({
+      domain_model: null,
+      charts: [],
+      extraction_provenance: {
+        total: 10,
+        appraised: 1,
+        unappraised: 9,
+        is_fully_appraised: false,
+      },
+    });
+    renderResultsPage();
+
+    expect(await screen.findByText(/may be\s+wrong/i)).toBeInTheDocument();
+  });
+
+  it('confirms full appraisal rather than staying silent', async () => {
+    // Absence of a warning is ambiguous — it reads as "no data" just as easily
+    // as "all checked". The fully-appraised case earns its own statement.
+    vi.mocked(api.get).mockResolvedValue({
+      domain_model: null,
+      charts: [],
+      extraction_provenance: {
+        total: 7,
+        appraised: 7,
+        unappraised: 0,
+        is_fully_appraised: true,
+      },
+    });
+    renderResultsPage();
+
+    expect(await screen.findByText(/were appraised by a reviewer/i)).toBeInTheDocument();
+    expect(screen.queryByText(/remain AI-extracted/i)).not.toBeInTheDocument();
+  });
+
+  it('shows no provenance banner when nothing has been extracted', async () => {
+    vi.mocked(api.get).mockResolvedValue({
+      domain_model: null,
+      // One chart, so "Charts: 1" proves the query resolved. With an empty
+      // array this assertion would pass while still loading — a negative test
+      // that cannot tell absence from not-yet-arrived asserts nothing.
+      charts: [
+        {
+          id: 1,
+          chart_type: 'venue',
+          version: 1,
+          chart_data: {},
+          svg_content: '<svg/>',
+          generated_at: '',
+        },
+      ],
+      extraction_provenance: {
+        total: 0,
+        appraised: 0,
+        unappraised: 0,
+        is_fully_appraised: false,
+      },
+    });
+    renderResultsPage();
+    await screen.findByText('Charts: 1');
+
+    expect(screen.queryByText(/appraised by a reviewer/i)).not.toBeInTheDocument();
+  });
+});

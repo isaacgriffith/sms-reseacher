@@ -35,9 +35,24 @@ interface Chart {
   generated_at: string;
 }
 
+/**
+ * How much of the data behind these figures a reviewer has appraised (TFIX14).
+ *
+ * The charts are computed over AI-extracted rows as well as appraised ones.
+ * `01-slr.md` 269-270 forbids extraction decoupled from appraisal — not
+ * automation — so the split is stated rather than the rows being dropped.
+ */
+interface ExtractionProvenance {
+  total: number;
+  appraised: number;
+  unappraised: number;
+  is_fully_appraised: boolean;
+}
+
 interface ResultsSummary {
   domain_model: DomainModel | null;
   charts: Chart[];
+  extraction_provenance: ExtractionProvenance;
 }
 
 interface GenerateJobResponse {
@@ -76,6 +91,7 @@ export default function ResultsPage() {
 
   const charts = results?.charts ?? [];
   const domainModel = results?.domain_model ?? null;
+  const provenance = results?.extraction_provenance ?? null;
 
   return (
     <Container maxWidth={false} sx={{ maxWidth: '72rem', margin: '0 auto', padding: '1.5rem' }}>
@@ -156,6 +172,26 @@ export default function ResultsPage() {
 
       {/* Tab content */}
       <Box sx={{ marginTop: '1.25rem' }}>
+        {/* TFIX14. Sits above the figures rather than beside the export,
+            because it qualifies every number on this page. A study that
+            AI-extracted 200 papers and had 12 checked used to render
+            indistinguishably from one that checked all 200. */}
+        {provenance && provenance.total > 0 && !provenance.is_fully_appraised && (
+          <Alert severity="warning" sx={{ marginBottom: '1rem' }}>
+            These figures are derived from <strong>{provenance.total}</strong> extractions, of which{' '}
+            <strong>{provenance.appraised}</strong> were appraised by a reviewer and{' '}
+            <strong>{provenance.unappraised}</strong> remain AI-extracted and unappraised.
+            Extraction that is not checked against quality appraisal yields results quickly, but
+            they may be wrong — appraise the remainder before relying on these numbers.
+          </Alert>
+        )}
+        {provenance && provenance.is_fully_appraised && (
+          <Alert severity="success" sx={{ marginBottom: '1rem' }}>
+            All <strong>{provenance.total}</strong> extractions behind these figures were appraised
+            by a reviewer.
+          </Alert>
+        )}
+
         {activeTab === 'charts' && <ChartGallery studyId={numericStudyId} charts={charts} />}
 
         {activeTab === 'domain_model' && domainModel && (

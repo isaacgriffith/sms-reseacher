@@ -86,7 +86,7 @@ async def _build_study_snapshot(db: AsyncSession, study_id: int) -> dict[str, An
     """
     from db.models import Study
     from db.models.criteria import ExclusionCriterion, InclusionCriterion
-    from db.models.extraction import DataExtraction, ExtractionStatus
+    from db.models.extraction import DataExtraction
     from db.models.search import SearchString, SearchStringIteration
     from db.models.search_exec import SearchExecution, SearchMetrics
     from db.models.study import Reviewer
@@ -158,20 +158,21 @@ async def _build_study_snapshot(db: AsyncSession, study_id: int) -> dict[str, An
     exclusion = [ec.description for ec in ec_result.scalars().all()]
 
     # Extractions done?
-    from db.models.candidate import CandidatePaper
+    from db.models.candidate import CandidatePaper, CandidatePaperStatus
+
+    from backend.services import extraction_provenance
 
     done_count_result = await db.execute(
         select(DataExtraction)
         .join(CandidatePaper, DataExtraction.candidate_paper_id == CandidatePaper.id)
         .where(
             CandidatePaper.study_id == study_id,
-            DataExtraction.extraction_status.in_(
-                [
-                    ExtractionStatus.AI_COMPLETE,
-                    ExtractionStatus.VALIDATED,
-                    ExtractionStatus.HUMAN_REVIEWED,
-                ]
-            ),
+            # TFIX14. Without this filter an extraction left behind on a
+            # rejected paper reported the study's extraction work as begun.
+            # Every sibling consumer already filtered on accepted; this one and
+            # `validity_job` did not.
+            CandidatePaper.current_status == CandidatePaperStatus.ACCEPTED,
+            DataExtraction.extraction_status.in_(extraction_provenance.REPORTABLE_STATUSES),
         )
         .limit(1)
     )
