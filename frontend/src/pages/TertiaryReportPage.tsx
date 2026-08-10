@@ -20,6 +20,7 @@ import { z } from 'zod';
 import { api } from '../services/api';
 import LandscapeSummarySection from '../components/tertiary/LandscapeSummarySection';
 import type { LandscapeSection } from '../components/tertiary/LandscapeSummarySection';
+import ValidityThreatPanel from '../components/validity/ValidityThreatPanel';
 
 // ---------------------------------------------------------------------------
 // Zod schema for the report JSON response
@@ -95,7 +96,18 @@ export default function TertiaryReportPage({ studyId }: TertiaryReportPageProps)
   }
 
   if (error) {
-    return <Alert severity="error">Failed to load report: {(error as Error).message}</Alert>;
+    // TFIX11: the threat panel must render on this path, not only the happy
+    // one. The report gate returns 409 from the very GET that populates this
+    // page, so an early return carrying just the error would state the problem
+    // and hide the only control that fixes it.
+    return (
+      <Box sx={{ maxWidth: 900, mx: 'auto', mt: 2, px: 2 }}>
+        <Alert severity="error" sx={{ mb: 3 }}>
+          Failed to load report: {(error as Error).message}
+        </Alert>
+        <ValidityThreatPanel studyId={studyId} />
+      </Box>
+    );
   }
 
   if (!report) return null;
@@ -141,6 +153,9 @@ export default function TertiaryReportPage({ studyId }: TertiaryReportPageProps)
 
       <Divider sx={{ my: 3 }} />
       <ReportSection title="Recommendations" content={report.recommendations} />
+
+      <Divider sx={{ my: 3 }} />
+      <ValidityThreatPanel studyId={studyId} />
     </Box>
   );
 }

@@ -11,6 +11,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { vi } from 'vitest';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import ReportPage from '../ReportPage';
 
 // ---------------------------------------------------------------------------
@@ -21,6 +22,17 @@ vi.mock('../../../services/slr/reportApi', () => ({
   downloadSLRReport: vi.fn().mockResolvedValue(undefined),
 }));
 
+// TFIX11 mounted ValidityThreatPanel on this page, which queries the threats
+// endpoint. An empty list is the two-reviewer case, and keeps these tests
+// about the export controls rather than about threats — the panel has its own
+// suite in components/validity/__tests__.
+vi.mock('../../../services/api', () => ({
+  api: {
+    get: vi.fn().mockResolvedValue({ threats: [] }),
+    patch: vi.fn(),
+  },
+}));
+
 import { downloadSLRReport } from '../../../services/slr/reportApi';
 
 // ---------------------------------------------------------------------------
@@ -28,7 +40,12 @@ import { downloadSLRReport } from '../../../services/slr/reportApi';
 // ---------------------------------------------------------------------------
 
 function renderPage(synthesisComplete: boolean) {
-  render(<ReportPage studyId={42} synthesisComplete={synthesisComplete} />);
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  render(
+    <QueryClientProvider client={client}>
+      <ReportPage studyId={42} synthesisComplete={synthesisComplete} />
+    </QueryClientProvider>,
+  );
 }
 
 // ---------------------------------------------------------------------------

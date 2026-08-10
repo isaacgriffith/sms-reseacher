@@ -185,6 +185,9 @@ from db.models.tertiary import TertiaryDataExtraction as TertiaryDataExtraction 
 from db.models.tertiary import TertiaryProtocolStatus as TertiaryProtocolStatus  # noqa: F401
 from db.models.tertiary import TertiaryStudyProtocol as TertiaryStudyProtocol  # noqa: F401
 from db.models.users import ThemePreference as ThemePreference  # noqa: F401
+from db.models.validity import StudyValidityThreat as StudyValidityThreat  # noqa: F401
+from db.models.validity import ValidityCategory as ValidityCategory  # noqa: F401
+from db.models.validity import ValidityThreatId as ValidityThreatId  # noqa: F401
 
 
 class StudyType(str, enum.Enum):

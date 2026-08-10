@@ -10,6 +10,7 @@ import { api } from '../services/api';
 import ChartGallery from '../components/results/ChartGallery';
 import DomainModelViewer from '../components/results/DomainModelViewer';
 import ExportPanel from '../components/results/ExportPanel';
+import ValidityThreatPanel from '../components/validity/ValidityThreatPanel';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
@@ -175,7 +176,17 @@ export default function ResultsPage() {
           </Box>
         )}
 
-        {activeTab === 'export' && <ExportPanel studyId={numericStudyId} />}
+        {activeTab === 'export' && (
+          <>
+            <ExportPanel studyId={numericStudyId} />
+            {/* TFIX11. The export 409s while any identified threat lacks both a
+                mitigation and an acknowledgement, so the panel that clears it
+                belongs on the same tab as the button that fails. */}
+            <Box sx={{ mt: 4 }}>
+              <ValidityThreatPanel studyId={numericStudyId} />
+            </Box>
+          </>
+        )}
       </Box>
     </Container>
   );

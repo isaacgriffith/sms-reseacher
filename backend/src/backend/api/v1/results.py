@@ -324,6 +324,13 @@ async def enqueue_export(
             detail=f"Invalid format. Must be one of {sorted(valid_formats)}",
         )
 
+    # TFIX11: see the identical guard in slr/report.py. Placed before the queue
+    # so a blocked export never leaves an orphaned ARQ job or BackgroundJob row
+    # behind — the caller gets 409 and nothing else happens.
+    from backend.services import validity_threat_service
+
+    await validity_threat_service.require_threats_addressed(study_id, db)
+
     settings = get_settings()
     redis = await arq.connections.create_pool(
         arq.connections.RedisSettings.from_dsn(settings.redis_url)

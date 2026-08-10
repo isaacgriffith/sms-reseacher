@@ -18,6 +18,7 @@ import RadioGroup from '@mui/material/RadioGroup';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { downloadSLRReport } from '../../services/slr/reportApi';
+import ValidityThreatPanel from '../../components/validity/ValidityThreatPanel';
 
 interface ReportPageProps {
   /** The integer study ID. */
@@ -102,6 +103,14 @@ export default function ReportPage({ studyId, synthesisComplete }: ReportPagePro
           </Button>
         </span>
       </Tooltip>
+
+      {/* TFIX11. Placed on the export page rather than beside the validity
+          discussion because this is where the step-4 requirement actually
+          bites — the export 409s while any threat is unaddressed, so the
+          remedy belongs next to the button that fails. */}
+      <Box sx={{ mt: 4 }}>
+        <ValidityThreatPanel studyId={studyId} />
+      </Box>
     </Box>
   );
 }

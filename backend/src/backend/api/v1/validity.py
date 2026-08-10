@@ -5,6 +5,7 @@ from __future__ import annotations
 from datetime import UTC
 
 import arq.connections
+from db.models.validity import ValidityThreatId
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 from sqlalchemy import select
@@ -59,6 +60,42 @@ class ValidityGenerateResponse(BaseModel):
 
     job_id: str
     study_id: int
+
+
+class ValidityThreatResponse(BaseModel):
+    """One identified threat to validity, with its step-4 outcome.
+
+    ``is_addressed`` is computed rather than stored, so a client never has to
+    re-derive the "mitigation or acknowledgement, non-blank" rule and risk
+    disagreeing with the report gate about whether a study is complete.
+    """
+
+    threat_id: str
+    validity_category: str
+    description: str
+    source_detail: str | None = None
+    mitigation: str | None = None
+    acknowledgement: str | None = None
+    is_addressed: bool
+
+
+class ValidityThreatListResponse(BaseModel):
+    """All currently applicable threats for a study."""
+
+    threats: list[ValidityThreatResponse]
+
+
+class ValidityThreatUpdateRequest(BaseModel):
+    """Record Ampatzoglou's step 4 for one threat.
+
+    Both fields are optional and both may be sent together. An empty string
+    clears the corresponding outcome, which returns the threat to unaddressed —
+    retracting an acknowledgement has to reopen the report gate rather than
+    leave it ajar.
+    """
+
+    mitigation: str | None = None
+    acknowledgement: str | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -199,3 +236,107 @@ async def generate_validity(
 
     logger.info("generate_validity: enqueued", study_id=study_id, job_id=job_id)
     return ValidityGenerateResponse(job_id=job_id, study_id=study_id)
+
+
+# ---------------------------------------------------------------------------
+# Threats to validity (TFIX11)
+# ---------------------------------------------------------------------------
+
+
+def _threat_to_response(threat) -> ValidityThreatResponse:
+    """Serialise a :class:`StudyValidityThreat` for the API.
+
+    Args:
+        threat: The ORM row to serialise.
+
+    Returns:
+        A :class:`ValidityThreatResponse`.
+
+    """
+    return ValidityThreatResponse(
+        threat_id=threat.threat_id.value,
+        validity_category=threat.validity_category.value,
+        description=threat.description,
+        source_detail=threat.source_detail,
+        mitigation=threat.mitigation,
+        acknowledgement=threat.acknowledgement,
+        is_addressed=threat.is_addressed,
+    )
+
+
+@router.get(
+    "/studies/{study_id}/validity/threats",
+    response_model=ValidityThreatListResponse,
+    summary="List the identified threats to validity for a study",
+)
+async def list_validity_threats(
+    study_id: int,
+    current_user: CurrentUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> ValidityThreatListResponse:
+    """Return the study's currently applicable threats, deriving them first.
+
+    Derivation runs on read rather than being triggered by a reviewer-count
+    change, because human ``Reviewer`` rows are created lazily — the first time
+    a member records a decision — so there is no single mutation site to hook.
+    Reading is idempotent; the ``(study_id, threat_id)`` unique constraint is
+    what makes that safe.
+
+    Rapid Reviews always return an empty list: they use Cartaxo's disclosure
+    regime, served by the ``/rapid`` threat endpoints.
+    """
+    from backend.services import validity_threat_service
+
+    await require_study_member(study_id, current_user, db)
+    await _load_study(study_id, db)
+
+    await validity_threat_service.sync_derived_threats(study_id, db)
+    threats = await validity_threat_service.list_threats(study_id, db)
+
+    return ValidityThreatListResponse(threats=[_threat_to_response(t) for t in threats])
+
+
+@router.patch(
+    "/studies/{study_id}/validity/threats/{threat_id}",
+    response_model=ValidityThreatResponse,
+    summary="Record a mitigation or acknowledgement for one threat",
+    responses={
+        404: {
+            "description": (
+                "The study has no such threat — it was never derived, or no longer applies"
+            )
+        },
+    },
+)
+async def update_validity_threat(
+    study_id: int,
+    threat_id: ValidityThreatId,
+    body: ValidityThreatUpdateRequest,
+    current_user: CurrentUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> ValidityThreatResponse:
+    """Record Ampatzoglou's step-4 outcome for one threat.
+
+    Either outcome completes the step and neither outranks the other. That
+    matters here rather than being a detail: the corpus permits single-reviewer
+    studies and asks only that the bias be recorded, so a lone researcher who
+    has no supervisor to cross-check must still be able to finish by
+    acknowledging.
+    """
+    from backend.services import validity_threat_service
+
+    await require_study_member(study_id, current_user, db)
+    await _load_study(study_id, db)
+
+    try:
+        threat = await validity_threat_service.address_threat(
+            study_id,
+            threat_id,
+            db,
+            mitigation=body.mitigation,
+            acknowledgement=body.acknowledgement,
+        )
+    except LookupError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+
+    return _threat_to_response(threat)

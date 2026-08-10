@@ -529,11 +529,82 @@ when null is passed`, whose comment described the fabrication as intended behavi
   - **Not fixed under TFIX10 because the remedy is a choice, not a correction.** Excluding `ai_complete` outright would make a large study's first report near-empty, which may be honest or may be useless; labelling each figure with its appraised/total denominator keeps the data and states its provenance; a third option gates the export but not the working charts. Picking one silently, inside a task scoped to a phase gate, would be deciding what the platform's numbers *mean* without saying so
   - `08-extraction-and-synthesis.md` should be read before choosing — this entry cites §2.4 of `01-slr.md` only, which is about extraction, not about what synthesis may consume
 
-- [ ] TFIX11 **Single-reviewer bias is declared for one study type out of four, and its prescribed mitigation does not exist.** A lone researcher — or a study with a single reviewer — is a legitimate configuration, not an error. The corpus's position is disclosure plus mitigation, never prohibition: `04-tertiary.md` records that _"One person seeing every paper is a known bias, **accepted deliberately**… Record the trade-off rather than pretending it does not exist,"_ and `01-slr.md` §2.4 names the remedy — _"A lone researcher uses supervisor cross-check on a sample, or test–retest."_ Two gaps:
+- [x] TFIX11 **Single-reviewer bias is declared for one study type out of four, and its prescribed mitigation does not exist.** A lone researcher — or a study with a single reviewer — is a legitimate configuration, not an error. The corpus's position is disclosure plus mitigation, never prohibition: `04-tertiary.md` records that _"One person seeing every paper is a known bias, **accepted deliberately**… Record the trade-off rather than pretending it does not exist,"_ and `01-slr.md` §2.4 names the remedy — _"A lone researcher uses supervisor cross-check on a sample, or test–retest."_ Two gaps:
   1. **The threat is recorded only for Rapid Reviews.** `rr_protocol_service.set_single_reviewer_mode` creates an `RRThreatToValidity` of type `SINGLE_REVIEWER` and surfaces it through `SingleReviewerWarningBanner`. SLR, SMS and Tertiary have no equivalent, so on three of four study types the bias is accepted silently — precisely what the corpus says not to do.
   2. **Test-retest does not cover the step that needs it.** `frontend/src/components/phase2/TestRetest.tsx` is _search-string_ test-retest — iterations, `test_set_recall`, adequacy judgement. There is no test-retest for **screening** or **extraction** consistency, which is the mitigation `01-slr.md` actually prescribes for a lone researcher.
 
   > The right shape is a **disclosure**, not a gate. The platform must not block a single-reviewer study from proceeding; it must make the study say so, and offer the consistency check that makes the claim defensible. Blocking would contradict the corpus; staying silent already does.
+
+  **Fixed 2026-08-09 — the disclosure half. The test-retest half is deliberately deferred.**
+  Four decisions were put to the user before any code was written; all four recommendations were
+  accepted.
+
+  > **Reading `09-threats-to-validity.md` changed the shape of the fix, and this entry did not cite
+  > it.** The entry's two quotes both verify verbatim — `04-tertiary.md` 259-261 and `01-slr.md`
+  > 256-257 — but the chapter that governs the *shape of a threat record* was never consulted when
+  > the entry was written, and it contradicts the entry's prescription in three places:
+  >
+  > 1. **"Copy the Rapid pattern to the other three" would have imported the wrong framework.**
+  >    Ch.09 255-262 assigns frameworks *by study type*: Rapid gets **Cartaxo's disclosure regime**
+  >    ("every methodological concession is itself a threat"), SLR/SMS/Tertiary get **Ampatzoglou's
+  >    catalogue**. `RRThreatType`'s members — `year_range`, `language`, `qa_skipped` — are Cartaxo
+  >    concessions, a different vocabulary answering a different question.
+  > 2. **The model the entry says to copy is itself incomplete.** Ampatzoglou's **step 4** requires
+  >    every identified threat to carry *either* a mitigation *or* an explicit acknowledgement, and
+  >    ch.09 173 singles it out as the enforceable one — "an identified threat with neither … is an
+  >    incomplete study". `RRThreatToValidity` has **neither column**. Copying it three more times
+  >    would have tripled that omission.
+  > 3. **Single-reviewer bias is three threats, not one.** Ch.09 catalogues them at three separate
+  >    steps: **TV7** (selection), **TV13.4** (unverified extraction) and **TV16** (researcher bias,
+  >    defined as "including **only one author doing the synthesis**"). That is also why `01-slr.md`
+  >    prescribes test-retest *twice* — 2.2 for screening, 2.4 for extraction. One generic "single
+  >    reviewer" row would have collapsed three distinct mitigations into one box.
+  >
+  > **Decisions taken** (user-approved, recommendations in each case):
+  >
+  > | Decision | Choice | Why |
+  > | -------- | ------ | --- |
+  > | Scope | Disclosure only | The disclosure is the correctness defect; test-retest is a tracked feature (**G4** screening, **G84** extraction) with its own sizing |
+  > | Threat record | New study-generic table | Keeps Cartaxo and Ampatzoglou apart, and adds the step-4 columns the Rapid model lacks |
+  > | Detection | Derived from `Reviewer` rows | Cannot be forgotten, and is knowable *before* screening — a flag can go stale, and observed-decision counting is only knowable too late to act on |
+  > | Enforcement | Report/export only | Ch.09 makes step 4 enforceable; TFIX11 forbids blocking progress. Gating publication satisfies both, and acknowledging always clears it |
+  >
+  > **Delivered.** `db/models/validity.py` (`StudyValidityThreat`, `ValidityThreatId`,
+  > `ValidityCategory`) + migration **0022**; `validity_threat_service` (derive, list, address,
+  > report gate); `GET`/`PATCH /api/v1/studies/{id}/validity/threats` on the existing validity
+  > router; `ValidityThreatPanel` mounted on the SLR export page, the Tertiary report page and the
+  > SMS results export tab. Reachability **unchanged at 7** — the panel is mounted, not orphaned.
+  >
+  > **`is_addressed` rejects whitespace.** A gate a space bar satisfies is not a gate. It is a
+  > Python property rather than a column so that the API, the panel and the report gate cannot
+  > drift apart about what "addressed" means; the gate filters in Python for the same reason.
+  >
+  > **`is_applicable` is a flag, not a delete.** Human `Reviewer` rows are created *lazily* — the
+  > first time a member records a decision — so a study genuinely crosses from one reviewer to two
+  > long after screening starts. Deleting on that transition would discard the text the first
+  > reviewer wrote, and lose it for good if the study dropped back to one. Derivation therefore
+  > runs on *read* and is idempotent, which the `(study_id, threat_id)` unique constraint enforces.
+  >
+  > **A trap found while wiring the frontend.** `TertiaryReportPage` fetches its report with
+  > `useQuery` and returns early on error — and the gate makes that very GET return 409. Mounted
+  > naïvely, an unaddressed threat would have rendered "Failed to load report" while the early
+  > return hid the only control that fixes it. **A gate on a GET that a page uses to render itself
+  > can conceal its own remedy.** The panel is mounted on both branches there. SLR and SMS do not
+  > have this shape — their exports are button actions, so the page still renders.
+  >
+  > **Zero reviewers derives nothing.** Treating "no reviewer rows yet" as single-reviewer would
+  > announce the bias before anyone had the chance to introduce it. **AI reviewers do not count**
+  > as a second reviewer either: the mitigations the corpus names are human acts, so counting an
+  > agent would let the platform declare the bias resolved by adding automation to it.
+  >
+  > One existing test needed its harness widened: `slr/__tests__/ReportPage.test.tsx` rendered the
+  > page with no `QueryClientProvider`, which the newly mounted panel requires. Assertions
+  > unchanged; the mock returns the empty-threat-list case.
+  >
+  > **Still open, and named as such:** gap 2 of this entry. There is still no test-retest for
+  > screening (**G4**) or extraction (**G84**), so a single-reviewer study can currently only
+  > *acknowledge* these three threats, never *mitigate* them. That is a valid step-4 outcome and
+  > the study is never blocked — but it is the weaker branch, and the corpus prescribes the other.
 
 ---
 
@@ -636,6 +707,7 @@ when null is passed`, whose comment described the fabrication as intended behavi
     `QualityReport`), TFIX5's `QualityScoreForm`, `TertiaryQAGuidancePanel`, and the two G21
     modules. Twelve modules became reachable from one dispatch entry: `TertiaryStudyPage`, `TertiaryReportPage`, four `components/tertiary/*`, three `hooks/tertiary/*`, three `services/tertiary/*`. Frontend suite 1365 tests green
   - A takeover needs a **second** map, not a `STUDY_TYPE_PHASES` entry: that map is keyed by phase, and `StudyPage` renders `PHASE_META` unconditionally, so a phase entry would have left its own Phase 1–7 strip above the workspace's own — the .
+  
   two phase bars R7 rejects. `STUDY_TYPE_TAKEOVER` is consulted _before_ the tab strip is built
   - **"Wholesale" was refined to exclude phase 0** — see the dated note on R7 in `research.md`. A literal reading deletes the tab strip, and phase 0 is the Protocol tab; `assign_default_protocol` runs for every study type at creation, so every Tertiary study would have had a `ProtocolGraph` and `ExecutionStateView` no user could open — closing G19 by opening a gap of the same kind. Takeover types get a two-button strip, **Protocol Graph** and **Workspace**, whose labels also avoid colliding with `TertiaryStudyPage`'s own `Phase 1: Protocol`
   - `groupId` is `number | null` and **not** coerced with `?? 0`; `Phase2Panel` explains the absence, because the group is needed by phase 2 alone. Coercing would have rebuilt the `reviewerId={0}` shape TFIX5 catalogues

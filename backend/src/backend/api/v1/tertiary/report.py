@@ -13,6 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.core.auth import CurrentUser, get_current_user
 from backend.core.config import get_logger
 from backend.core.database import get_db
+from backend.services import validity_threat_service
 from backend.services.tertiary_report_service import TertiaryReportService
 
 router = APIRouter(tags=["tertiary-report"])
@@ -71,6 +72,11 @@ async def get_tertiary_report(
         )
 
     logger.info("get_tertiary_report: request", study_id=study_id, format=format)
+
+    # TFIX11: see the identical guard in slr/report.py. Blocks publication of a
+    # report carrying a threat that is neither mitigated nor acknowledged;
+    # never blocks the study from progressing.
+    await validity_threat_service.require_threats_addressed(study_id, db)
 
     report = await _service.generate_report(study_id, db)
 
