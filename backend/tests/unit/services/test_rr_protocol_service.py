@@ -176,7 +176,17 @@ class TestApplyFields:
 
 
 class TestAutoCreateThreats:
-    """_auto_create_threats auto-creates CONTEXT_RESTRICTION threat entries."""
+    """_auto_create_threats records the concessions ch.03 actually names.
+
+    TFIX15. This class previously asserted that one ``CONTEXT_RESTRICTION``
+    threat is created per context restriction — the exact behaviour
+    `03-rapid-review.md` 302 forbids, since narrowing criteria to the
+    practitioner's context is marked "**Explicitly NOT a threat — good
+    practice**". The old fixtures used ``{"type": "geography"}`` and
+    ``{"type": "language"}`` as *context* restrictions, which is the conflation
+    that produced the defect: those are **search** restrictions, and they have
+    their own correct path through :func:`set_search_restrictions`.
+    """
 
     def _make_protocol(
         self,
@@ -198,44 +208,60 @@ class TestAutoCreateThreats:
         p.threats = threats if threats is not None else []
         return p
 
-    def test_does_nothing_when_no_restrictions(self) -> None:
-        """Does nothing when context_restrictions is empty/None."""
-        from backend.services.rr_protocol_service import _auto_create_threats
+    def test_never_creates_a_context_restriction_threat(self) -> None:
+        """Practitioner-context narrowing is good practice, not a threat.
 
-        protocol = self._make_protocol(context_restrictions=None)
-        _auto_create_threats(protocol, study_id=1)
-        assert len(protocol.threats) == 0
-
-    def test_creates_threat_for_each_restriction(self) -> None:
-        """Appends one CONTEXT_RESTRICTION threat per restriction dict."""
+        `03-rapid-review.md` 302 and its ⚙ IMPLEMENTATION note, which names
+        this as "the exception that must *not* generate a threat".
+        """
         from backend.services.rr_protocol_service import _auto_create_threats
 
         protocol = self._make_protocol(
             context_restrictions=[
-                {"type": "geography", "description": "Europe only"},
-                {"type": "language", "description": "English only"},
+                {"type": "practitioner_context", "description": "Fintech teams only"},
+                {"type": "team_size", "description": "Teams under 20 people"},
             ],
             threats=[],
         )
         _auto_create_threats(protocol, study_id=1)
-        assert len(protocol.threats) == 2
 
-    def test_skips_already_existing_threats(self) -> None:
-        """Does not duplicate a threat whose source_detail already exists."""
+        assert not [
+            t for t in protocol.threats if t.threat_type == RRThreatType.CONTEXT_RESTRICTION
+        ]
+
+    def test_records_limited_synthesis_rigour(self) -> None:
+        """Every validated RR uses narrative synthesis, so it always applies.
+
+        `03-rapid-review.md` 300 maps narrative synthesis to "limited synthesis
+        rigour". The caller creates one narrative section per research question
+        immediately after this function runs, so the concession is certain.
+        """
         from backend.services.rr_protocol_service import _auto_create_threats
 
-        existing_threat = MagicMock()
-        existing_threat.threat_type = RRThreatType.CONTEXT_RESTRICTION
-        existing_threat.source_detail = "geography"
-
-        protocol = self._make_protocol(
-            context_restrictions=[
-                {"type": "geography", "description": "Europe only"},
-            ],
-            threats=[existing_threat],
-        )
+        protocol = self._make_protocol(context_restrictions=None, threats=[])
         _auto_create_threats(protocol, study_id=1)
-        # Length unchanged — the existing threat was not duplicated
+
+        assert [
+            t for t in protocol.threats if t.threat_type == RRThreatType.LIMITED_SYNTHESIS_RIGOUR
+        ]
+
+    def test_records_synthesis_threat_even_with_no_restrictions(self) -> None:
+        """The old early-return on empty restrictions skipped everything."""
+        from backend.services.rr_protocol_service import _auto_create_threats
+
+        protocol = self._make_protocol(context_restrictions=[], threats=[])
+        _auto_create_threats(protocol, study_id=1)
+
+        assert len(protocol.threats) == 1
+
+    def test_is_idempotent(self) -> None:
+        """Re-validating a protocol must not duplicate the threat."""
+        from backend.services.rr_protocol_service import _auto_create_threats
+
+        protocol = self._make_protocol(context_restrictions=None, threats=[])
+        _auto_create_threats(protocol, study_id=1)
+        _auto_create_threats(protocol, study_id=1)
+
         assert len(protocol.threats) == 1
 
     def test_uses_description_from_restriction(self) -> None:

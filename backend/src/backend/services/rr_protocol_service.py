@@ -514,35 +514,47 @@ def _apply_fields(protocol: RapidReviewProtocol, data: dict[str, Any]) -> None:
 
 
 def _auto_create_threats(protocol: RapidReviewProtocol, study_id: int) -> None:
-    """Auto-create :class:`RRThreatToValidity` rows for active context restrictions.
+    """Auto-create :class:`RRThreatToValidity` rows for certain concessions.
 
-    Called during protocol validation.  Creates a ``CONTEXT_RESTRICTION``
-    threat entry for each restriction in
-    :attr:`RapidReviewProtocol.context_restrictions` that is not already
-    recorded.
+    Called during protocol validation.
+
+    TFIX15. This function used to create one ``CONTEXT_RESTRICTION`` threat per
+    entry in :attr:`RapidReviewProtocol.context_restrictions`. That is the one
+    row of `03-rapid-review.md`'s concession map marked "**Explicitly NOT a
+    threat — good practice**" (302), and its ⚙ IMPLEMENTATION note singles the
+    exception out as the thing the mapping must honour. So a Rapid Review that
+    scoped itself to its practitioner's context — the recommended thing — had
+    that published against it under "Limitations & Threats to Validity" in the
+    evidence briefing. The restrictions themselves are untouched; only their
+    miscategorisation as threats is gone.
+
+    What *is* recorded here is narrative synthesis. Every validated Rapid Review
+    gets one :class:`RRNarrativeSynthesisSection` per research question created
+    immediately after this call, so the concession ch.03 300 maps to "limited
+    synthesis rigour" is certain rather than conditional.
+
+    Search restrictions — date, language, geography, study design — are the
+    map's first row and reach their threats through
+    :func:`set_search_restrictions`, not here.
 
     Args:
         protocol: The protocol being validated.
         study_id: The study ID for threat records.
 
     """
-    if not protocol.context_restrictions:
-        return
+    existing_types = {t.threat_type for t in (protocol.threats or [])}
 
-    existing_details = {
-        t.source_detail
-        for t in (protocol.threats or [])
-        if t.threat_type == RRThreatType.CONTEXT_RESTRICTION
-    }
-    for restriction in protocol.context_restrictions:
-        detail = restriction.get("type", "")
-        if detail not in existing_details:
-            desc = restriction.get("description", f"Context restriction: {detail}")
-            protocol.threats.append(
-                RRThreatToValidity(
-                    study_id=study_id,
-                    threat_type=RRThreatType.CONTEXT_RESTRICTION,
-                    description=desc,
-                    source_detail=detail,
-                )
+    if RRThreatType.LIMITED_SYNTHESIS_RIGOUR not in existing_types:
+        protocol.threats.append(
+            RRThreatToValidity(
+                study_id=study_id,
+                threat_type=RRThreatType.LIMITED_SYNTHESIS_RIGOUR,
+                description=(
+                    "Findings are combined by narrative synthesis rather than a "
+                    "formal synthesis method, which limits the rigour of the "
+                    "combination and leaves more of the interpretation to the "
+                    "reviewer."
+                ),
+                source_detail="narrative synthesis",
             )
+        )

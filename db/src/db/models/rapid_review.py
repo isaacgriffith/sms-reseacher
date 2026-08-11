@@ -73,7 +73,14 @@ class RRInvolvementType(str, enum.Enum):
 
 
 class RRThreatType(str, enum.Enum):
-    """Category of a threat-to-validity entry in a Rapid Review."""
+    """Category of a threat-to-validity entry in a Rapid Review.
+
+    Cartaxo defines no threat taxonomy. The regime is disclosure: "**every
+    methodological concession is itself a threat that must be recorded**"
+    (`03-rapid-review.md` 287-288). These members are therefore the concessions
+    the chapter names, one per row of its map — so a concession with no member
+    is a hole in the regime, not a gap in a taxonomy.
+    """
 
     SINGLE_SOURCE = "single_source"
     YEAR_RANGE = "year_range"
@@ -83,6 +90,26 @@ class RRThreatType(str, enum.Enum):
     SINGLE_REVIEWER = "single_reviewer"
     QA_SKIPPED = "qa_skipped"
     QA_SIMPLIFIED = "qa_simplified"
+
+    # TFIX15. The final three rows of `03-rapid-review.md` 293-302, which had no
+    # member at all. Only the middle one is derivable today: every validated
+    # Rapid Review gets narrative synthesis sections created for it, so it
+    # always incurs that concession. The other two describe choices the platform
+    # does not yet model, and exist so a researcher can record them by hand
+    # rather than having nowhere to put them.
+    FALSE_NEGATIVES = "false_negatives"
+    LIMITED_SYNTHESIS_RIGOUR = "limited_synthesis_rigour"
+    MISSING_DATA_EXCLUSIONS = "missing_data_exclusions"
+
+    #: **Retained, never created.** `03-rapid-review.md` 302 marks narrowing
+    #: criteria to the practitioner's context "Explicitly NOT a threat — good
+    #: practice", and its ⚙ IMPLEMENTATION note calls that exception out as the
+    #: thing the mapping must honour. The platform auto-created one of these per
+    #: context restriction, so a Rapid Review that did the recommended thing had
+    #: it published against itself under "Limitations & Threats to Validity".
+    #: Migration 0023 deletes the rows; the member survives because a PostgreSQL
+    #: enum value cannot be dropped without recreating the type, the same
+    #: reasoning that retains ``ChartType.RESEARCH_METHOD``.
     CONTEXT_RESTRICTION = "context_restriction"
 
 
