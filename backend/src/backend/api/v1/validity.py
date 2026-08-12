@@ -71,12 +71,21 @@ class ValidityThreatResponse(BaseModel):
     """
 
     threat_id: str
-    validity_category: str
+    label: str
+    phase: str
+    validity_category: str | None = None
+    category_source: str | None = None
     description: str
     source_detail: str | None = None
     mitigation: str | None = None
     acknowledgement: str | None = None
     is_addressed: bool
+    #: Step 3. ``None`` means nobody has checked this threat yet — distinct from
+    #: ``False``, which means it was checked and ruled out.
+    is_applicable: bool | None = None
+    #: ``True`` when the platform computed :attr:`is_applicable` from
+    #: configuration, so the UI can show it as answered rather than ask again.
+    applicability_is_derived: bool = False
 
 
 class ValidityThreatListResponse(BaseModel):
@@ -86,16 +95,23 @@ class ValidityThreatListResponse(BaseModel):
 
 
 class ValidityThreatUpdateRequest(BaseModel):
-    """Record Ampatzoglou's step 4 for one threat.
+    """Record Ampatzoglou's step 3 or step 4 for one threat.
 
-    Both fields are optional and both may be sent together. An empty string
-    clears the corresponding outcome, which returns the threat to unaddressed —
-    retracting an acknowledgement has to reopen the report gate rather than
-    leave it ajar.
+    All fields are optional and may be sent together. An empty string clears the
+    corresponding outcome, which returns the threat to unaddressed — retracting
+    an acknowledgement has to reopen the report gate rather than leave it ajar.
     """
 
     mitigation: str | None = None
     acknowledgement: str | None = None
+    #: Step 3 — "check every threat for whether it pertains to the study". Send
+    #: ``true`` or ``false`` to answer; omit to leave the answer unchanged.
+    #: Answering marks the row as human-decided, so re-derivation will not
+    #: overwrite it.
+    is_applicable: bool | None = None
+    #: The Petersen & Gencel heading the researcher files this threat under.
+    #: Most threats arrive unfiled — ch.09 sources only three pairings.
+    validity_category: str | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -253,9 +269,20 @@ def _threat_to_response(threat) -> ValidityThreatResponse:
         A :class:`ValidityThreatResponse`.
 
     """
+    from backend.services import validity_catalogue
+
+    definition = validity_catalogue.BY_ID.get(threat.threat_id)
+
     return ValidityThreatResponse(
         threat_id=threat.threat_id.value,
-        validity_category=threat.validity_category.value,
+        label=definition.label if definition else threat.threat_id.value,
+        phase=definition.phase.value if definition else "",
+        validity_category=(
+            threat.validity_category.value if threat.validity_category is not None else None
+        ),
+        category_source=definition.category_source if definition else None,
+        is_applicable=threat.is_applicable,
+        applicability_is_derived=threat.applicability_is_derived,
         description=threat.description,
         source_detail=threat.source_detail,
         mitigation=threat.mitigation,
@@ -291,7 +318,10 @@ async def list_validity_threats(
     await _load_study(study_id, db)
 
     await validity_threat_service.sync_derived_threats(study_id, db)
-    threats = await validity_threat_service.list_threats(study_id, db)
+    # TFIX15. The whole catalogue, not only what applies. Ampatzoglou's step 3
+    # is "check every threat for whether it pertains to the study", and a threat
+    # the client never receives is one nobody can check.
+    threats = await validity_threat_service.list_catalogue(study_id, db)
 
     return ValidityThreatListResponse(threats=[_threat_to_response(t) for t in threats])
 
@@ -335,6 +365,8 @@ async def update_validity_threat(
             db,
             mitigation=body.mitigation,
             acknowledgement=body.acknowledgement,
+            is_applicable=body.is_applicable,
+            validity_category=body.validity_category,
         )
     except LookupError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc

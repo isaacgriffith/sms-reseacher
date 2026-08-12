@@ -109,9 +109,19 @@ class TestSingleReviewerDerivation:
         await sync_derived_threats(study_id, db_session)
 
         by_id = {t.threat_id: t for t in await list_threats(study_id, db_session)}
+
+        # TV13.4 is the only one of the three ch.09 files for us: 222 states
+        # "TV13 (extraction bias) is filed under **descriptive validity**".
         assert by_id[ValidityThreatId.TV13_4].validity_category == ValidityCategory.DESCRIPTIVE
-        assert by_id[ValidityThreatId.TV7].validity_category == ValidityCategory.THEORETICAL
-        assert by_id[ValidityThreatId.TV16].validity_category == ValidityCategory.INTERPRETIVE
+
+        # TFIX15. TV7 and TV16 used to carry theoretical and interpretive. The
+        # chapter states neither pairing — TV7's was an extension of the pairing
+        # ch.09 220-221 makes for TV1.2 alone, and TV16's was flagged as an
+        # inference in the code that set it. ch.09 206-210 says the rest of the
+        # cross-mapping "must be verified against the PDF before being quoted",
+        # so the researcher files these rather than the platform guessing.
+        assert by_id[ValidityThreatId.TV7].validity_category is None
+        assert by_id[ValidityThreatId.TV16].validity_category is None
 
     @pytest.mark.asyncio
     async def test_two_reviewers_derive_nothing(self, db_session) -> None:
@@ -178,7 +188,19 @@ class TestSingleReviewerDerivation:
 
         await sync_derived_threats(study_id, db_session)
 
-        assert len(await list_threats(study_id, db_session)) == 3
+        applicable = {t.threat_id for t in await list_threats(study_id, db_session)}
+
+        # The three single-reviewer threats apply on every Ampatzoglou study
+        # type. TFIX15 added a fourth derivation that fires on SMS alone —
+        # ch.09 110 calls TV13.5 "mostly a mapping-study threat" — so assert the
+        # single-reviewer set is present rather than pinning a total that means
+        # something different per study type.
+        assert {
+            ValidityThreatId.TV7,
+            ValidityThreatId.TV13_4,
+            ValidityThreatId.TV16,
+        } <= applicable
+        assert (ValidityThreatId.TV13_5 in applicable) is (study_type is StudyType.SMS)
 
     @pytest.mark.asyncio
     async def test_threats_scope_to_their_own_study(self, db_session) -> None:
@@ -360,9 +382,15 @@ class TestUnaddressedApplicableThreats:
         study_id = await _make_study(db_session)
         await _add_human_reviewers(db_session, study_id, 1)
         await sync_derived_threats(study_id, db_session)
-        for threat_id in ValidityThreatId:
+
+        # TFIX15. This iterated every ValidityThreatId, which worked while the
+        # enum held exactly the three derived threats. The catalogue is now the
+        # full TV1–TV22 set including six group umbrellas, which are never
+        # materialised — addressing one raises LookupError. Only threats that
+        # actually apply can block the gate, so only those need addressing.
+        for threat in await list_threats(study_id, db_session):
             await address_threat(
-                study_id, threat_id, db_session, acknowledgement="Accepted deliberately."
+                study_id, threat.threat_id, db_session, acknowledgement="Accepted deliberately."
             )
 
         assert await unaddressed_applicable_threats(study_id, db_session) == []
@@ -442,9 +470,16 @@ class TestBuildThreatsSection:
 
         section = await build_threats_section(study_id, db_session)
 
-        assert "theoretical validity" in section.lower()
+        # ch.09 222 files TV13 under descriptive validity — the one heading of
+        # the three that the chapter states for a threat derived here.
         assert "descriptive validity" in section.lower()
-        assert "interpretive validity" in section.lower()
+
+        # TFIX15. The section used to assert theoretical and interpretive too.
+        # Neither pairing is in the chapter, and ch.09 206-210 warns the
+        # cross-mapping "must be verified against the PDF before being quoted".
+        # An unfiled threat is named as unfiled rather than given a heading the
+        # corpus does not support.
+        assert "not yet filed" in section.lower()
 
     @pytest.mark.asyncio
     async def test_acknowledgement_reaches_the_report(self, db_session) -> None:

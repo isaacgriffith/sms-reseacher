@@ -739,7 +739,7 @@ when null is passed`, whose comment described the fabrication as intended behavi
 
   **Two conformance gaps remain open, deliberately. Both are carried forward as TFIX15.**
 
-- [ ] TFIX15 **The threat catalogue is three entries deep, and the Rapid map records good practice as a threat.** Both found while closing TFIX11 — the first by asking what the platform does *not* check, the second by verifying a claim rather than repeating it. `09-threats-to-validity.md` and `03-rapid-review.md` are the sources; neither part is a matter of taste.
+- [x] TFIX15 **The threat catalogue is three entries deep, and the Rapid map records good practice as a threat.** Both found while closing TFIX11 — the first by asking what the platform does *not* check, the second by verifying a claim rather than repeating it. `09-threats-to-validity.md` and `03-rapid-review.md` are the sources; neither part is a matter of taste.
 
   1. **Ampatzoglou's step 3 is not performed.** The step is _"**Check every threat** for whether it pertains to the study"_, against the TV1–TV22 catalogue. `ValidityThreatId` encodes **three** entries — TV7, TV13.4 and TV16 — because those are the only ones the platform currently derives from configuration. Every generated section says so in as many words, so no report *claims* the completeness it lacks, but the check itself is absent. The chapter is explicit that the fix is derivation rather than a form: threats _"should be **derived from the protocol configuration** rather than presented as a flat checklist … This chapter supplies the full mapping"_ (ch.09 ⚙ IMPLEMENTATION, §Category 1). Closing this means partitioning TV1–TV22 into what the platform can compute — search-source counts, language limits, date windows, reviewer counts, whether QA ran, whether synthesis was formal — and what can only be *asked* of the author, then deriving the first set and prompting for the second.
      - Ch.09 also supplies a **mutual-exclusivity rule that must be encoded, not just listed**: if digital-library selection is used, TV1.3 (venue selection) _does not apply_ — "normally only one of the two strategies is chosen" — with a quasi-gold-standard exception where both apply, while TV1.1 (string construction) applies in **both** cases. A flat checklist cannot express that; a derivation rule can, which is the chapter's own argument for deriving.
@@ -750,6 +750,77 @@ when null is passed`, whose comment described the fabrication as intended behavi
   > **A correction to what closing TFIX11 first reported.** That work claimed Rapid was non-conformant because `RRThreatToValidity` has no mitigation or acknowledgement column. Checking `03-rapid-review.md` rather than reasoning from Ampatzoglou shows that is **wrong**. Cartaxo defines no taxonomy and requires no per-threat mitigation: _"every methodological concession is itself a threat that must be recorded. All concessions go in the protocol; the report carries a disclaimer about methodological limitations, with detail deferred to the protocol"_ — the concession record **is** the acknowledgement. And the disclaimer exists: `evidence_briefing.html.j2:282` renders a "Limitations & Threats to Validity" block over those records. Rapid does not need step-4 columns. It needs its map corrected.
 
   > **Do not fold part 2 into part 1.** They look like one "threats are incomplete" task and are not. Part 1 extends a catalogue the platform *chose* to encode partially; part 2 fixes a mapping that contradicts its own source. Part 2 also carries a data question part 1 does not: existing studies already have `CONTEXT_RESTRICTION` rows written under the wrong rule, so the remedy has to say what happens to them — the safe reading is that they were never threats, but deleting rows a researcher may have cited in a published briefing is a decision, not a migration.
+
+  **Fixed 2026-08-11, as two commits, in the order the entry demands.** Four decisions were put to
+  the user; all four recommendations were accepted.
+
+  **Part 2 — the Rapid map** (`c0775a9`). Verified exactly as written: ch.03 302 marks narrowing
+  criteria to the practitioner's context "Explicitly NOT a threat — good practice", and
+  `_auto_create_threats` wrote one `CONTEXT_RESTRICTION` per entry.
+
+  > **The data question was much smaller than the entry feared, and the reason matters.** No UI
+  > ever wrote `context_restrictions` — it is in the Zod schema and the PUT body, but no form
+  > populates it — so the expected affected row count is **zero**. More decisive: the information
+  > is not in the threat rows at all. `rapid_review_protocol.context_restrictions` holds it and is
+  > untouched, so deleting the threats removes a miscategorisation, not a record. That is what
+  > made deletion the safe option rather than the destructive one.
+  >
+  > **The search concessions were never the bug.** Date, language, geography and study design
+  > reach their threats correctly through `set_search_restrictions`. The old tests hid this by
+  > using `{"type": "geography"}` as a *context* restriction fixture — the same conflation that
+  > produced the defect, encoded in the test that was supposed to catch it.
+
+  Of the three missing `RRThreatType` members, exactly one is derivable: every validated Rapid
+  Review gets `RRNarrativeSynthesisSection` rows created for it by the same function's caller, so
+  `LIMITED_SYNTHESIS_RIGOUR` always applies and is now auto-created. `FALSE_NEGATIVES` and
+  `MISSING_DATA_EXCLUSIONS` describe choices nothing models yet, and exist to be recordable.
+  Migration `0023`.
+
+  **Part 1 — Ampatzoglou step 3** (this commit). `ValidityThreatId` went 3 → **39**: all of the
+  chapter's three tables, six of them group umbrellas, **33 individually assessable**. Migration
+  `0024`.
+
+  > **The count in the chapter is not the count to encode, and that is load-bearing.** ch.09 40
+  > quotes the source as "**34 distinct named threats**", but the tables yield 33. ch.09 43-46
+  > explains it: the source's own figures duplicate the labels "TV1.3" and "TV15", and the chapter
+  > "follows the checklist, which is internally consistent". A future reader who spots 33-vs-34
+  > must **not** reconcile it by inventing a `TV22_1`; there is a test asserting exactly that.
+
+  > **The reporting categories are the part that had to be given back, not filled in.** ch.09
+  > 220-223 states **three** Ampatzoglou→Petersen pairings, and 206-210 warns that the rest of the
+  > cross-mapping "must be verified against the PDF before being quoted" because Tables IV and V
+  > "were displaced by one row in text extraction". Assigning 33 categories by inference would
+  > have been TFIX13's defect rebuilt at scale. So the column is now **nullable** and mostly
+  > empty, and two categories already shipped were **withdrawn**: TV7's `theoretical` (an
+  > extension of the pairing ch.09 makes for TV1.2 *alone*) and TV16's `interpretive` (already
+  > flagged in-code as an inference when TFIX11 wrote it). TV13.4 keeps `descriptive`, which
+  > ch.09 222 does state.
+
+  **`is_applicable` became three-valued**, which the entry did not anticipate and step 3 requires:
+  `True` applies, `False` was checked and ruled out, `NULL` has not been checked. A two-valued
+  column cannot tell an unexamined threat from a dismissed one, so a study could not report how
+  much of step 3 it had done. `applicability_is_derived` records who answered, so re-derivation
+  cannot overwrite a researcher's judgement.
+
+  Seven threats derive, each from a sentence that makes applicability conditional on something the
+  configuration holds: TV1.2/TV1.3 by the mutual-exclusivity rule, TV13.2 by ch.09 107, TV13.5 by
+  ch.09 110, and TV7/TV13.4/TV16 by reviewer count. The other 26 are asked.
+
+  > **A defect in my own first derivation, caught by a failing test.** TV1.3 was derived as
+  > applicable whenever no digital libraries were enabled. But ch.09 85-88's rule presupposes that
+  > *a strategy was chosen* — an empty `study_database_selection` table does not distinguish a
+  > venue-based search from a study that has not configured its search yet. Deriving from that
+  > absence announces a threat on the strength of an empty table. Only the positive branch is
+  > derivable now; both stay unanswered until libraries appear.
+
+  **One consequence worth knowing:** every SMS study now carries TV13.5 as applicable (ch.09 110,
+  "mostly a mapping-study threat"), so the TFIX11 report/export gate requires one more
+  acknowledgement than before. This surfaced as a failing export test, not as a design note.
+
+  Shipped: `validity_catalogue.py` (39 entries, each quoting the chapter, with `category_source`
+  recording what licenses every category), full-catalogue materialisation, `list_catalogue`, a
+  step-3 checklist in `ValidityThreatPanel` with Applies / Does not apply, and 25 + 6 new tests
+  whose subject is fidelity to the chapter rather than internal consistency.
 
 ---
 

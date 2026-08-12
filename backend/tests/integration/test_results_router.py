@@ -275,6 +275,22 @@ class TestEnqueueExport:
         user, _ = alice
         study_id = await _setup_study(client, db_engine, user)
 
+        # TFIX15. This study is an SMS, and ch.09 110 calls misclassification of
+        # primary studies (TV13.5) "mostly a mapping-study threat", so it now
+        # derives as applicable. The TFIX11 export gate refuses while any
+        # applicable threat carries neither a mitigation nor an
+        # acknowledgement — acknowledging is a complete answer, so do that.
+        threats_resp = await client.get(
+            f"/api/v1/studies/{study_id}/validity/threats", headers=_bearer(user.id)
+        )
+        for threat in threats_resp.json()["threats"]:
+            if threat["is_applicable"] is True and not threat["is_addressed"]:
+                await client.patch(
+                    f"/api/v1/studies/{study_id}/validity/threats/{threat['threat_id']}",
+                    json={"acknowledgement": "Accepted deliberately for this test fixture."},
+                    headers=_bearer(user.id),
+                )
+
         mock_job = AsyncMock()
         mock_job.job_id = "export_job_1"
         mock_pool = AsyncMock()

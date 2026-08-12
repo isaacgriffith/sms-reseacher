@@ -223,7 +223,17 @@ class TestValidityThreats:
 
         assert resp.status_code == 200
         threats = resp.json()["threats"]
-        assert {t["threat_id"] for t in threats} == {"tv7", "tv13_4", "tv16"}
+
+        # TFIX15. GET now returns the whole catalogue, because Ampatzoglou's
+        # step 3 is "check every threat for whether it pertains to the study"
+        # and a threat the client never receives is one nobody can check. The
+        # single-reviewer three are the ones derived as *applicable*.
+        applicable = {t["threat_id"] for t in threats if t["is_applicable"] is True}
+        # tv13_5 joins the three because this fixture is an SMS and ch.09 110
+        # calls misclassification of primary studies "mostly a mapping-study
+        # threat" — a derivation that does not depend on reviewer count.
+        assert applicable == {"tv7", "tv13_4", "tv16", "tv13_5"}
+        assert len(threats) == 33
 
     @pytest.mark.asyncio
     async def test_threats_carry_their_reporting_category(self, client, alice, db_engine) -> None:
@@ -237,9 +247,16 @@ class TestValidityThreats:
         )
 
         by_id = {t["threat_id"]: t for t in resp.json()["threats"]}
-        assert by_id["tv7"]["validity_category"] == "theoretical"
+
+        # ch.09 222 states this pairing outright.
         assert by_id["tv13_4"]["validity_category"] == "descriptive"
-        assert by_id["tv16"]["validity_category"] == "interpretive"
+
+        # TFIX15. TV7 and TV16 arrive unfiled. ch.09 220-223 gives three
+        # pairings and 206-210 warns the rest of the cross-mapping "must be
+        # verified against the PDF before being quoted", so the researcher files
+        # these rather than the platform asserting a heading for them.
+        assert by_id["tv7"]["validity_category"] is None
+        assert by_id["tv16"]["validity_category"] is None
 
     @pytest.mark.asyncio
     async def test_threats_start_unaddressed(self, client, alice, db_engine) -> None:
@@ -265,7 +282,14 @@ class TestValidityThreats:
             f"/api/v1/studies/{study_id}/validity/threats", headers=_bearer(user.id)
         )
 
-        assert resp.json()["threats"] == []
+        # TFIX15. The catalogue is still returned in full — step 3 has to be
+        # performed whatever the reviewer count. What two reviewers change is
+        # that none of the single-reviewer threats derives as applicable.
+        threats = resp.json()["threats"]
+        applicable = {t["threat_id"] for t in threats if t["is_applicable"] is True}
+        # None of the single-reviewer three. tv13_5 survives because it derives
+        # from the study *type*, not from how many people are screening.
+        assert applicable == {"tv13_5"}
 
     @pytest.mark.asyncio
     async def test_repeated_gets_do_not_duplicate(self, client, alice, db_engine) -> None:
@@ -279,7 +303,11 @@ class TestValidityThreats:
                 f"/api/v1/studies/{study_id}/validity/threats", headers=_bearer(user.id)
             )
 
-        assert len(resp.json()["threats"]) == 3
+        # One row per assessable catalogue entry, no matter how many times the
+        # page is refreshed. The unique constraint on (study_id, threat_id) is
+        # what holds this, and it matters more now that a single GET
+        # materialises 33 rows rather than 3.
+        assert len(resp.json()["threats"]) == 33
 
     @pytest.mark.asyncio
     async def test_acknowledging_marks_it_addressed(self, client, alice, db_engine) -> None:

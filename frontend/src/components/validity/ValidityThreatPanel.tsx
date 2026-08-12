@@ -35,12 +35,29 @@ import { api } from '../../services/api';
 /** One identified threat as returned by the API. */
 export interface ValidityThreat {
   threat_id: string;
-  validity_category: string;
+  /** The chapter's short name, sent by the server from the catalogue. */
+  label: string;
+  /** Which of ch.09's three categories the threat belongs to. */
+  phase: string;
+  /**
+   * Petersen & Gencel heading, or `null` when unfiled. Most threats arrive
+   * unfiled: ch.09 sources only three pairings and warns the rest must be
+   * checked against the PDF before being quoted.
+   */
+  validity_category: string | null;
+  category_source: string | null;
   description: string;
   source_detail: string | null;
   mitigation: string | null;
   acknowledgement: string | null;
   is_addressed: boolean;
+  /**
+   * Step 3. `null` means nobody has checked this threat yet — deliberately
+   * distinct from `false`, which means it was checked and ruled out.
+   */
+  is_applicable: boolean | null;
+  /** True when the platform computed applicability, so the user is not asked. */
+  applicability_is_derived: boolean;
 }
 
 interface ValidityThreatListResponse {
@@ -110,6 +127,19 @@ export default function ValidityThreatPanel({ studyId }: ValidityThreatPanelProp
     },
   });
 
+  // TFIX15 / step 3. Answering applicability is a separate act from recording a
+  // step-4 outcome, and the server marks the row human-decided so the next
+  // derivation pass cannot silently overwrite the answer.
+  const applicabilityMutation = useMutation({
+    mutationFn: ({ threatId, isApplicable }: { threatId: string; isApplicable: boolean }) =>
+      api.patch<ValidityThreat>(`/api/v1/studies/${studyId}/validity/threats/${threatId}`, {
+        is_applicable: isApplicable,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['validity-threats', studyId] });
+    },
+  });
+
   if (isLoading) {
     return <Typography variant="body2">Loading threats to validity…</Typography>;
   }
@@ -136,7 +166,15 @@ export default function ValidityThreatPanel({ studyId }: ValidityThreatPanelProp
     );
   }
 
-  const unaddressed = threats.filter((t) => !t.is_addressed).length;
+  // TFIX15 / Ampatzoglou step 3. The catalogue arrives whole, so the panel has
+  // three populations rather than one: threats that apply and need a step-4
+  // outcome, threats nobody has checked yet, and threats checked and ruled out.
+  // Only the first can block a report — an unchecked threat is unknown, not
+  // outstanding, and treating the two alike would lock every study behind 33
+  // questions the moment the page loaded.
+  const applicable = threats.filter((t) => t.is_applicable === true);
+  const unchecked = threats.filter((t) => t.is_applicable === null);
+  const unaddressed = applicable.filter((t) => !t.is_addressed).length;
 
   const draftFor = (threat: ValidityThreat) =>
     drafts[threat.threat_id] ?? {
@@ -173,18 +211,76 @@ export default function ValidityThreatPanel({ studyId }: ValidityThreatPanelProp
         </Alert>
       )}
 
-      {threats.map((threat) => {
+      {unchecked.length > 0 ? (
+        <Box sx={{ mb: 2 }} data-testid="step-three-checklist">
+          <Alert severity="info" sx={{ mb: 1 }}>
+            {unchecked.length} of {threats.length} catalogue threats have not been checked yet.
+            Ampatzoglou&apos;s step 3 asks whether each one pertains to this study; the platform has
+            already answered the ones its configuration decides.
+          </Alert>
+          <Stack spacing={1}>
+            {unchecked.map((threat) => (
+              <Paper
+                key={threat.threat_id}
+                variant="outlined"
+                sx={{ p: 1.5 }}
+                data-testid={`unchecked-${threat.threat_id}`}
+              >
+                <Typography variant="subtitle2">{threat.label}</Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                  {threat.description}
+                </Typography>
+                <Stack direction="row" spacing={1}>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    disabled={applicabilityMutation.isPending}
+                    onClick={() =>
+                      applicabilityMutation.mutate({
+                        threatId: threat.threat_id,
+                        isApplicable: true,
+                      })
+                    }
+                  >
+                    Applies to this study
+                  </Button>
+                  <Button
+                    size="small"
+                    variant="text"
+                    disabled={applicabilityMutation.isPending}
+                    onClick={() =>
+                      applicabilityMutation.mutate({
+                        threatId: threat.threat_id,
+                        isApplicable: false,
+                      })
+                    }
+                  >
+                    Does not apply
+                  </Button>
+                </Stack>
+              </Paper>
+            ))}
+          </Stack>
+        </Box>
+      ) : null}
+
+      {applicable.map((threat) => {
         const draft = draftFor(threat);
         return (
           <Accordion key={threat.threat_id} data-testid={`threat-${threat.threat_id}`}>
             <AccordionSummary>
               <Stack direction="row" spacing={1} alignItems="center" sx={{ width: '100%' }}>
                 <Typography sx={{ flexGrow: 1 }}>
-                  {THREAT_LABELS[threat.threat_id] ?? threat.threat_id}
+                  {threat.label || THREAT_LABELS[threat.threat_id] || threat.threat_id}
                 </Typography>
                 <Chip
                   size="small"
-                  label={CATEGORY_LABELS[threat.validity_category] ?? threat.validity_category}
+                  variant={threat.validity_category ? 'filled' : 'outlined'}
+                  label={
+                    threat.validity_category
+                      ? (CATEGORY_LABELS[threat.validity_category] ?? threat.validity_category)
+                      : 'Category not filed'
+                  }
                 />
                 <Chip
                   size="small"
